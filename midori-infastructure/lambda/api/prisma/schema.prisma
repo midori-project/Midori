@@ -54,6 +54,12 @@ enum DeployState {
   failed
 }
 
+enum GenerationChangeType {
+  create
+  update
+  delete
+}
+
 model User {
   id           String            @id @default(uuid())
   email        String?           @unique
@@ -236,7 +242,7 @@ model GenerationFile {
   generationId  String
   filePath      String
   fileContent   String?
-  changeType    String  @default("create") // or use enum ifต้องการ
+  changeType    GenerationChangeType  @default(create)
 
   generation    Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
 
