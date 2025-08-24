@@ -2,11 +2,12 @@ import React from 'react';
 
 interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
   children: React.ReactNode;
+  onClick?: () => void;
   className?: string;
 }
 
@@ -17,6 +18,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   loading = false,
   children,
+  onClick,
   className = '',
 }) => {
   const baseClasses =
@@ -27,6 +29,7 @@ export const Button: React.FC<ButtonProps> = ({
     secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
     ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+    outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
   };
 
   const sizeClasses = {
@@ -50,6 +53,7 @@ export const Button: React.FC<ButtonProps> = ({
       type={type}
       className={classes}
       disabled={disabled || loading}
+      onClick={onClick}
     >
       {loading && (
         <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">

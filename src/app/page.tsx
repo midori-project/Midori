@@ -1,133 +1,187 @@
-
 'use client';
-import { useAuth } from '@/contexts/AuthContext';
-import Link from 'next/link';
-import { Button } from '@/components/Button/Button';
+import { useState } from 'react';
+import { InfoGatheringForm } from '@/components/InfoGatheringForm/InfoGatheringForm';
+import { FinalOutput } from '@/types/openaiQuestion/route';
 
 export default function Home() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const [result, setResult] = useState<FinalOutput | null>(null);
+  const [showResult, setShowResult] = useState(false);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="text-gray-600">กำลังโหลด...</span>
-        </div>
-      </div>
-    );
-  }
+  const handleComplete = (result: FinalOutput) => {
+    console.log('ผลลัพธ์สุดท้าย:', result);
+    setResult(result);
+    setShowResult(true);
+  };
+
+  const handleReset = () => {
+    setResult(null);
+    setShowResult(false);
+  };
+
+  const downloadResult = () => {
+    if (!result) return;
+    
+    const dataStr = JSON.stringify(result, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'midori-website-config.json';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-50 to-purple-50 py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
-            สร้างเว็บไซต์ด้วย
-            <span className="text-blue-600"> AI</span>
-          </h1>
-          <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-            Midori ใช้ AI ที่ทรงพลังช่วยให้คุณสร้างเว็บไซต์ที่สวยงามและใช้งานได้จริงได้ในเวลาเพียงไม่กี่นาที
-          </p>
-          
-          {isAuthenticated && user ? (
-            <div className="mt-10">
-              <div className="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
-                <div className="flex items-center space-x-4 mb-4">
-                  {user.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={user.displayName || user.email}
-                      className="w-12 h-12 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-lg font-medium">
-                        {user.displayName?.charAt(0) || user.email.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="text-left">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      ยินดีต้อนรับ {user.displayName || user.email}!
-                    </h3>
-                    <p className="text-gray-600">พร้อมสร้างเว็บไซต์ใหม่แล้วหรือยัง?</p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <Link href="/projects">
-                    <Button className="w-full">
-                      ดูโปรเจคของฉัน
-                    </Button>
-                  </Link>
-                  <Link href="/create">
-                    <Button variant="secondary" className="w-full">
-                      สร้างเว็บไซต์ใหม่
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-10 space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
-              <Link href="/register">
-                <Button size="lg" className="w-full sm:w-auto">
-                  เริ่มต้นใช้งานฟรี
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                  เข้าสู่ระบบ
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-              ทำไมต้องเลือก Midori?
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              เครื่องมือสร้างเว็บไซต์ที่ขับเคลื่อนด้วย AI เพื่อประสบการณ์ที่ดีที่สุด
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-black">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-800 mb-4">
+              Midori - สร้างเว็บไซต์ด้วย AI
+            </h1>
+            <p className="text-lg text-gray-600">
+              บอกความต้องการของคุณ แล้วให้ AI ช่วยสร้างเว็บไซต์ที่สมบูรณ์แบบ
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Form Section */}
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">สร้างเว็บไซต์</h2>
+                {showResult && (
+                  <button
+                    onClick={handleReset}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    เริ่มใหม่
+                  </button>
+                )}
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">รวดเร็วเหมือนฟ้าแลบ</h3>
-              <p className="text-gray-600">สร้างเว็บไซต์ได้ในเวลาเพียงไม่กี่นาที ด้วยพลัง AI ที่ทันสมัย</p>
+              <InfoGatheringForm onComplete={handleComplete} />
             </div>
-            
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+
+            {/* Result Section */}
+            {showResult && result && (
+              <div className="bg-white rounded-xl shadow-lg p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800">ผลลัพธ์จาก AI</h2>
+                  <button
+                    onClick={downloadResult}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    ดาวน์โหลด JSON
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Website Configuration */}
+                  {result.json && (
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-blue-800 mb-3">การตั้งค่าเว็บไซต์</h3>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>ชื่อ:</strong> {result.json.name}</div>
+                        <div><strong>ประเภท:</strong> {result.json.type}</div>
+                        <div><strong>ฟีเจอร์:</strong> {result.json.features?.join(', ')}</div>
+                        {result.json.design && (
+                          <div>
+                            <strong>การออกแบบ:</strong> {result.json.design.theme} - {result.json.design.colorScheme}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Summary */}
+                  {result.summary && (
+                    <div className="space-y-4">
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <h3 className="font-semibold text-green-800 mb-3">สรุปความต้องการ</h3>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          {result.summary.requirements?.map((req, index) => (
+                            <li key={index} className="text-green-700">{req}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <h3 className="font-semibold text-yellow-800 mb-3">ข้อเสนอแนะ</h3>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          {result.summary.recommendations?.map((rec, index) => (
+                            <li key={index} className="text-yellow-700">{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-purple-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-purple-800 mb-2">เวลาที่ประมาณการ</h4>
+                          <p className="text-purple-700 text-sm">{result.summary.estimatedTime}</p>
+                        </div>
+                        <div className="bg-red-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-red-800 mb-2">ต้นทุนที่ประมาณการ</h4>
+                          <p className="text-red-700 text-sm">{result.summary.estimatedCost}</p>
+                        </div>
+                      </div>
+
+                      {result.summary.risks && result.summary.risks.length > 0 && (
+                        <div className="bg-orange-50 p-4 rounded-lg">
+                          <h3 className="font-semibold text-orange-800 mb-3">ความเสี่ยงที่อาจเกิดขึ้น</h3>
+                          <ul className="list-disc list-inside space-y-1 text-sm">
+                            {result.summary.risks.map((risk, index) => (
+                              <li key={index} className="text-orange-700">{risk}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Quality Assessment */}
+                  {result.quality && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-gray-800 mb-3">การประเมินคุณภาพ</h3>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <strong>ความครบถ้วน:</strong> {result.quality.completeness}%
+                        </div>
+                        <div>
+                          <strong>ความชัดเจน:</strong> {result.quality.clarity}%
+                        </div>
+                        <div>
+                          <strong>ความสอดคล้อง:</strong> {result.quality.consistency}%
+                        </div>
+                        <div>
+                          <strong>คะแนนรวม:</strong> {result.quality.overallScore}%
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Raw JSON View */}
+                  <div className="bg-gray-900 p-4 rounded-lg">
+                    <h3 className="font-semibold text-white mb-3">Raw JSON Data</h3>
+                    <pre className="text-xs text-green-400 overflow-auto max-h-64">
+                      {JSON.stringify(result, null, 2)}
+                    </pre>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">ใช้งานง่าย</h3>
-              <p className="text-gray-600">ไม่ต้องมีความรู้ด้านโปรแกรม แค่บอก AI ว่าคุณต้องการอะไร</p>
-            </div>
-            
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            )}
+
+            {/* Placeholder when no result */}
+            {!showResult && (
+              <div className="bg-white rounded-xl shadow-lg p-8 border-2 border-dashed border-gray-300">
+                <div className="text-center text-gray-500">
+                  <div className="text-6xl mb-4">🤖</div>
+                  <h3 className="text-xl font-semibold mb-2">รอผลลัพธ์จาก AI</h3>
+                  <p className="text-sm">
+                    กรุณากรอกข้อมูลความต้องการของคุณในช่องด้านซ้าย<br />
+                    แล้วรอผลลัพธ์จาก AI ที่จะแสดงที่นี่
+                  </p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">คุณภาพสูง</h3>
-              <p className="text-gray-600">เว็บไซต์ที่สร้างขึ้นมีคุณภาพระดับมืออาชีพ พร้อมใช้งานจริง</p>
-            </div>
+            )}
           </div>
         </div>
       </div>
