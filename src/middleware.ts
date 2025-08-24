@@ -8,8 +8,6 @@ const publicRoutes = [
   '/login',
   '/register',
   '/about',
-  '/api/auth/login',
-  '/api/auth/register',
 ];
 
 // API routes ที่ไม่ต้อง auth
@@ -31,6 +29,9 @@ const adminRoutes = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Debug log
+ /*  console.log('🔧 Middleware running for path:', pathname); */
+  
   // Skip middleware for static files และ Next.js internals
   if (
     pathname.startsWith('/_next/') ||
@@ -42,23 +43,38 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check if route is public
+  // ตรวจสอบ exact match ก่อน แล้วค่อย startsWith (ยกเว้น root path)
   const isPublicRoute = publicRoutes.includes(pathname) || 
-                       publicRoutes.some(route => pathname.startsWith(route));
+                       publicRoutes.some(route => {
+                         if (route === '/') {
+                           return pathname === '/'; // Root path ต้อง exact match
+                         }
+                         return pathname.startsWith(route);
+                       });
   
   const isPublicApiRoute = publicApiRoutes.some(route => pathname.startsWith(route));
 
+  /* console.log('🔍 Path analysis:', { pathname, isPublicRoute, isPublicApiRoute, publicRoutes }); */
+
   // Allow public routes
   if (isPublicRoute || isPublicApiRoute) {
+    /* console.log('✅ Public route allowed:', pathname); */
     const response = NextResponse.next();
     return securityHeadersMiddleware(response);
   }
 
   try {
+    /* console.log('🔐 Checking authentication for protected route:', pathname); */
+    
     // Get current session
     const session = await getCurrentSession();
     
+    /* console.log('👤 Session status:', session ? 'Authenticated' : 'Not authenticated'); */
+    
     // No session - redirect to login
     if (!session) {
+      /* console.log('❌ No session - redirecting to login'); */
+      
       if (pathname.startsWith('/api/')) {
         const response = NextResponse.json(
           { success: false, error: 'Authentication required' },
@@ -69,6 +85,7 @@ export async function middleware(request: NextRequest) {
       
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
+      /* console.log('🔄 Redirecting to:', loginUrl.toString()); */
       const response = NextResponse.redirect(loginUrl);
       return securityHeadersMiddleware(response);
     }
