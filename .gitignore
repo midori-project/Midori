@@ -43,3 +43,5 @@ next-env.d.ts
 # copilot
 .github/copilot-instructions.md
 
+
+/src/generated/prisma

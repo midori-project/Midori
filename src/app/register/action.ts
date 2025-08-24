@@ -1,8 +1,8 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { RegisterSchema } from "@/schemas/auth/register";
+import { authBusinessService } from "@/libs/auth/authBusinessService";
 
 export type State = { ok: boolean; error?: string | null };
 
@@ -28,31 +28,18 @@ export async function registerAction(
 
   const { name, email, password } = parsed.data;
 
-  // 3) TODO: เชื่อม Auth จริง (เช่น Supabase Auth, NextAuth, Prisma + bcrypt)
-  // ตรวจสอบว่าอีเมลมีอยู่ในระบบแล้วหรือไม่
-  const existingUser = email === "test@midori.dev"; // Mock: สมมติ email นี้มีแล้ว
+  try {
+    // 3) Call authBusinessService directly (Internal Flow)
+    await authBusinessService.register({ name, email, password });
 
-  if (existingUser) {
-    return { ok: false, error: "อีเมลนี้ถูกใช้งานแล้ว" };
+    // 4) Redirect to login page (user needs to verify email)
+    redirect("/login?message=กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชี");
+  } catch (error: unknown) {
+    // Handle business logic errors directly
+    if (error instanceof Error) {
+      return { ok: false, error: error.message };
+    }
+
+    return { ok: false, error: "เกิดข้อผิดพลาดระหว่างการสมัครสมาชิก" };
   }
-
-  // 4) Mock: สร้างผู้ใช้ใหม่ (ในระบบจริงจะ hash password และบันทึกลงฐานข้อมูล)
-  const userCreated = true; // Mock success
-
-  if (!userCreated) {
-    return { ok: false, error: "เกิดข้อผิดพลาดในการสมัครสมาชิก" };
-  }
-
-  // 5) Set session cookie หลังสมัครสำเร็จ
-  const cookieStore = await cookies();
-  cookieStore.set('midori_session', 'mock-new-user-session-token', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 วัน
-  });
-
-  // 6) Redirect หลังสำเร็จ
-  redirect("/");
 }

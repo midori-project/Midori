@@ -1,9 +1,9 @@
 // app/login/action.ts
 'use server';
 
-import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { LoginSchema } from '@/schemas/auth/login';
+import { authBusinessService } from '@/libs/auth/authBusinessService';
 
 type State = { ok: boolean; error?: string | null };
 
@@ -12,6 +12,7 @@ export async function loginAction(prevState: State, formData: FormData): Promise
   const raw = {
     email: String(formData.get('email') ?? ''),
     password: String(formData.get('password') ?? ''),
+    remember: formData.get('remember') === 'on',
   };
 
   // 2) Validate
@@ -20,25 +21,20 @@ export async function loginAction(prevState: State, formData: FormData): Promise
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'ข้อมูลไม่ถูกต้อง' };
   }
 
-  const { email, password } = parsed.data;
+  const { email, password, remember } = parsed.data;
 
-  // 3) TODO: เชื่อม Auth จริง (เช่น Supabase Auth, NextAuth, Prisma + bcrypt)
-  const authenticated = email === 'kornkorn@gmail.com' && password === 'kornkorn';
-
-  if (!authenticated) {
-    // แนะนำให้ส่งข้อความ error กลาง ๆ เพื่อไม่บอกใบ้ว่าอีเมลมีจริงหรือไม่
-    return { ok: false, error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' };
+  try {
+    // 3) Call authBusinessService directly (Internal Flow)
+    await authBusinessService.login({ email, password, remember });
+    
+    // 4) Redirect to home page on success
+    redirect('/');
+  } catch (error: unknown) {
+    // Handle business logic errors directly
+    if (error instanceof Error) {
+      return { ok: false, error: error.message };
+    }
+    
+    return { ok: false, error: 'เกิดข้อผิดพลาดระหว่างการเข้าสู่ระบบ' };
   }
-
-  // 4) Set session cookie (mock)
-  const cookieStore = await cookies();
-  cookieStore.set('midori_session', 'mock-session-token', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 วัน
-  });
-
-  return { ok: true, error: null };
 }
