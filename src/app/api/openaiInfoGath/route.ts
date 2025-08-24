@@ -48,22 +48,33 @@ class EnhancedAnalysisEngine {
     กรุณาวิเคราะห์พรอมท์ที่ได้รับและให้ข้อมูลในรูปแบบ JSON ตามโครงสร้างที่กำหนด:
 
     {
+      "projectName": "ชื่อโปรเจ็ค (ถ้าไม่ระบุให้เป็น null)",
       "projectType": "ประเภทโปรเจ็ค (e-commerce, blog, portfolio, business website)",
       "complexity": "ระดับความซับซ้อน (simple/medium/complex/enterprise)",
       "coreFeatures": ["ฟีเจอร์หลักที่จำเป็น"],
       "targetAudience": "กลุ่มเป้าหมาย",
-      "completeness": {
-        "score": 0-100,
-        "missingElements": ["ข้อมูลที่ขาดหายไป"],
-        "suggestions": ["ข้อเสนอแนะ"],
-        "confidence": 0-100
+      "designPreferences": {
+        "designStyle": "สไตล์การออกแบบ (modern-minimalist, classic-elegant, colorful-playful, professional-corporate, creative-artistic, luxury-premium, casual-friendly)"
       },
+      "missingElements": ["ข้อมูลที่ขาดหายไป - ระบุรายละเอียดที่จำเป็นต้องถามเพิ่มเติม"],
       "questionStrategy": {
         "totalQuestions": จำนวนคำถามที่ควรถาม,
         "questionTypes": ["ประเภทคำถาม"],
-        "adaptiveQuestions": true/false
+        "adaptiveQuestions": true/false,
+        "priorityQuestions": ["คำถามสำคัญที่ต้องถามก่อน"]
       }
-    }`;
+    }
+
+         หมายเหตุสำคัญ:
+     - ให้ตั้งค่า projectName, designPreferences.designStyle, coreFeatures, และ targetAudience เป็น null เสมอ
+     - เพิ่ม "ชื่อโปรเจ็คและธีมการออกแบบ", "ฟีเจอร์หลัก", "กลุ่มเป้าหมาย", และ "ฟีเจอร์เสริม" เข้าไปใน missingElements เสมอ
+     - คำถามชื่อโปรเจ็คและธีมการออกแบบต้องเป็นคำถามแรกเสมอ
+     - คำถามฟีเจอร์หลักต้องเป็นคำถามที่ 2 เสมอ
+     - คำถามกลุ่มเป้าหมายต้องเป็นคำถามที่ 3 เสมอ
+     - คำถามฟีเจอร์เสริมต้องเป็นคำถามที่ 4 เสมอ
+     - ไม่ต้องใช้ completeness score อีกต่อไป
+
+   `;
 
     try {
       const completion = await openai.chat.completions.create({
@@ -97,7 +108,8 @@ class EnhancedAnalysisEngine {
   }
 
   async generateQuestions(analysis: EnhancedAnalysis): Promise<Question[]> {
-    const systemPrompt = `สร้างคำถามตามการวิเคราะห์ที่ได้รับ 
+    const systemPrompt = `สร้างคำถามตามการวิเคราะห์ที่ได้รับ โดยเน้นที่ข้อมูลที่ขาดหายไป (missingElements) 
+    และคำถามสำคัญ (priorityQuestions) 
     ให้คำถามในรูปแบบ JSON array:
 
     [
@@ -105,12 +117,28 @@ class EnhancedAnalysisEngine {
         "id": "unique_id",
         "type": "basic/contextual/followup",
         "category": "หมวดหมู่คำถาม",
-        "question": "คำถาม",
+        "question": "คำถามที่ตรงกับข้อมูลที่ขาดหายไป",
         "required": true/false,
-        "options": ["ตัวเลือก"] (ถ้ามี),
-        "dependsOn": ["id ของคำถามที่ต้องตอบก่อน"] (ถ้ามี)
+        "dependsOn": ["id ของคำถามที่ต้องตอบก่อน"] (ถ้ามี),
+        "priority": "high/medium/low"
       }
-    ]`;
+    ]
+
+                  หลักการสร้างคำถาม:
+     1. คำถามแรกต้องเป็นคำถามชื่อโปรเจ็คและธีมการออกแบบเสมอ (รวมเป็นคำถามเดียว)
+     2. คำถามที่ 2 ต้องเป็นคำถามเกี่ยวกับ core features (ฟีเจอร์หลักที่ต้องการ) เสมอ
+     3. คำถามที่ 3 ต้องเป็นคำถามเกี่ยวกับกลุ่มเป้าหมายเสมอ
+     4. คำถามที่ 4 ต้องเป็นคำถามเกี่ยวกับฟีเจอร์เสริม โดยให้สร้าง options ที่เหมาะสมกับประเภทโปรเจ็ค
+     5. คำถามต่อๆ ไปต้องไม่เกี่ยวกับชื่อโปรเจ็ค, ธีมการออกแบบ, ฟีเจอร์หลัก, กลุ่มเป้าหมาย, หรือฟีเจอร์เสริม เพราะถามไปแล้ว
+     6. ดูจาก missingElements และสร้างคำถามที่ตรงกับข้อมูลที่ขาดหายไป
+     7. สร้างคำถามที่เฉพาะเจาะจงกับข้อมูลที่ต้องการ ไม่ใช่คำถามทั่วไป
+     8. ให้ความสำคัญกับ priorityQuestions ที่ระบุไว้
+     9. คำถาม 4 ข้อแรกต้องมี priority เป็น "high" และ required เป็น true
+     10. จำนวนคำถามทั้งหมดต้องสอดคล้องกับระดับความซับซ้อน (complexity):
+         - simple: 4-6 คำถาม
+         - medium: 6-8 คำถาม  
+         - complex: 8-10 คำถาม
+         - enterprise: 10-12 คำถาม`;
 
     try {
       const completion = await openai.chat.completions.create({
@@ -196,16 +224,17 @@ class EnhancedAnalysisEngine {
     const systemPrompt = `สร้างผลลัพธ์สุดท้ายจากข้อมูลทั้งหมด 
     ให้ผลลัพธ์ในรูปแบบ JSON:
 
-    {
-      "json": {
-        "name": "ชื่อเว็บไซต์",
-        "type": "ประเภทเว็บไซต์",
-        "features": ["ฟีเจอร์"],
-        "design": {
-          "theme": "ธีม",
-          "colorScheme": "สี",
-          "layout": "เลย์เอาต์"
-        },
+         {
+       "json": {
+         "name": "ชื่อเว็บไซต์ (วิเคราะห์จากคำตอบของผู้ใช้เกี่ยวกับชื่อโปรเจ็ค)",
+         "type": "ประเภทเว็บไซต์",
+         "features": ["ฟีเจอร์ (วิเคราะห์จากคำตอบของผู้ใช้เกี่ยวกับ core features)"],
+                  "design": {
+            "designStyle": "สไตล์การออกแบบ (วิเคราะห์จากคำตอบของผู้ใช้เกี่ยวกับธีมการออกแบบ)",
+            "primaryColors": ["สีหลัก"],
+            "secondaryColors": ["สีรอง"],
+            "typography": "ฟอนต์ที่แนะนำ",
+          },
         "content": {
           "pages": ["หน้าเว็บ"],
           "sections": ["ส่วนประกอบ"]
@@ -216,30 +245,18 @@ class EnhancedAnalysisEngine {
           "analytics": true/false,
           "seo": true/false
         },
-        "technical": {
-          "frontend": "เทคโนโลยี frontend",
-          "backend": "เทคโนโลยี backend",
-          "database": "ฐานข้อมูล",
-          "deployment": "การ deploy"
-        }
-      },
-      "summary": {
-        "requirements": ["ความต้องการ"],
-        "recommendations": ["ข้อเสนอแนะ"],
-        "estimatedTime": "เวลาที่ประมาณการ",
-        "estimatedCost": "ต้นทุนที่ประมาณการ",
-        "risks": ["ความเสี่ยง"]
-      },
-      "quality": {
-        "completeness": 0-100,
-        "clarity": 0-100,
-        "consistency": 0-100,
-        "confidence": 0-100,
-        "overallScore": 0-100,
-        "recommendations": ["ข้อเสนอแนะ"],
-        "requiredFollowUps": ["คำถามเพิ่มเติม"]
+        "targetAudience": "กลุ่มเป้าหมาย",
+        "complexity": "ระดับความซับซ้อน"
       }
-    }`;
+    }
+
+         หมายเหตุสำคัญ:
+     - วิเคราะห์ชื่อเว็บไซต์จากคำตอบของผู้ใช้เกี่ยวกับชื่อโปรเจ็ค (project_name_and_theme)
+     - วิเคราะห์ฟีเจอร์หลักจากคำตอบของผู้ใช้เกี่ยวกับ core features
+     - วิเคราะห์ฟีเจอร์เสริมจากคำตอบของผู้ใช้เกี่ยวกับ additional_features (อาจเป็น array)
+     - วิเคราะห์กลุ่มเป้าหมายจากคำตอบของผู้ใช้เกี่ยวกับ target_audience
+     - วิเคราะห์สไตล์การออกแบบจากคำตอบของผู้ใช้เกี่ยวกับธีมการออกแบบ (project_name_and_theme)
+     - ใช้ข้อมูลจาก analysis และ answers เพื่อสร้างผลลัพธ์ที่สมบูรณ์`;
 
     try {
       const completion = await openai.chat.completions.create({
@@ -298,7 +315,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<OpenAIRes
           success: true,
           data: analysis,
           phase: 'initial',
-          nextAction: analysis.completeness.score >= 70 ? 'final' : 'quality',
+          nextAction: 'questions',
         };
         break;
 
@@ -334,7 +351,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<OpenAIRes
           success: true,
           data: quality,
           phase: 'quality',
-          nextAction: quality.overallScore >= 70 ? 'final' : 'followup',
+          nextAction: 'final',
         };
         break;
 

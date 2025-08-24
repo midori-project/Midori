@@ -11,14 +11,19 @@ export interface QuestionStrategy {
   totalQuestions: number;
   questionTypes: string[];
   adaptiveQuestions: boolean;
+  priorityQuestions: string[];
 }
 
 export interface EnhancedAnalysis {
+  projectName?: string | null;
   projectType: string;
   complexity: 'simple' | 'medium' | 'complex' | 'enterprise';
   coreFeatures: string[];
   targetAudience: string;
-  completeness: Completeness;
+  designPreferences: {
+    designStyle?: string;
+  };
+  missingElements: string[];
   questionStrategy: QuestionStrategy;
 }
 
@@ -30,6 +35,7 @@ export interface Question {
   required: boolean;
   options?: string[];
   dependsOn?: string[];
+  priority?: 'high' | 'medium' | 'low';
 }
 
 export interface UserAnswers {
@@ -64,9 +70,11 @@ export interface WebsiteConfig {
   type: string;
   features: string[];
   design: {
-    theme: string;
-    colorScheme: string;
-    layout: string;
+    designStyle: string;
+    primaryColors: string[];
+    secondaryColors: string[];
+    typography: string;
+    visualStyle: string;
   };
   content: {
     pages: string[];
@@ -78,6 +86,8 @@ export interface WebsiteConfig {
     analytics: boolean;
     seo: boolean;
   };
+  targetAudience: string;
+  complexity: string;
   technical: {
     frontend: string;
     backend: string;

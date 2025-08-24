@@ -154,129 +154,136 @@ export const useInfoGatheringFlow = (): UseInfoGatheringFlowReturn => {
   const generateQuestionsFromAnalysis = async (
     analysis: EnhancedAnalysis
   ): Promise<Question[]> => {
-    // สร้างคำถามตาม analysis.questionStrategy
-    const questions: Question[] = [];
-
-    // Basic questions based on project type
-    questions.push({
-      id: "project_name",
-      type: "basic",
-      category: "general",
-      question: "ชื่อโปรเจ็คของคุณคืออะไร?",
-      required: true,
-    });
-
-    questions.push({
-      id: "project_purpose",
-      type: "basic",
-      category: "general",
-      question: "วัตถุประสงค์ของเว็บไซต์คืออะไร?",
-      required: true,
-    });
-
-    // Add questions based on project type
-    if (analysis.projectType === "e-commerce") {
-      questions.push({
-        id: "product_categories",
-        type: "contextual",
-        category: "e-commerce",
-        question: "คุณต้องการขายสินค้าประเภทไหน?",
-        required: true,
-        options: [
-          "เสื้อผ้า",
-          "อิเล็กทรอนิกส์",
-          "อาหาร",
-          "เครื่องสำอาง",
-          "อื่นๆ",
-        ],
-      });
-
-      questions.push({
-        id: "payment_methods",
-        type: "contextual",
-        category: "e-commerce",
-        question: "คุณต้องการระบบชำระเงินแบบไหน?",
-        required: true,
-        options: ["บัตรเครดิต", "โอนเงิน", "COD", "e-wallet", "ทั้งหมด"],
-      });
+    try {
+      // ใช้ OpenAI API เพื่อสร้างคำถามตามข้อมูลที่ขาดหายไป
+      const response = await openAI.generateQuestions(analysis);
+      return response || generateFallbackQuestions(analysis);
+    } catch (error) {
+      console.error("Error generating questions from analysis:", error);
+      // Fallback to basic questions if API fails
+      return generateFallbackQuestions(analysis);
     }
-
-    if (analysis.projectType === "business") {
-      questions.push({
-        id: "business_type",
-        type: "contextual",
-        category: "business",
-        question: "ประเภทธุรกิจของคุณคืออะไร?",
-        required: true,
-        options: ["บริการ", "ผลิตภัณฑ์", "การศึกษา", "สุขภาพ", "อื่นๆ"],
-      });
-    }
-
-    // Add questions based on complexity
-    if (
-      analysis.complexity === "complex" ||
-      analysis.complexity === "enterprise"
-    ) {
-      questions.push({
-        id: "user_management",
-        type: "contextual",
-        category: "features",
-        question: "คุณต้องการระบบจัดการผู้ใช้หรือไม่?",
-        required: true,
-        options: ["ใช่", "ไม่"],
-      });
-
-      questions.push({
-        id: "analytics",
-        type: "contextual",
-        category: "features",
-        question: "คุณต้องการระบบวิเคราะห์ข้อมูลหรือไม่?",
-        required: true,
-        options: ["ใช่", "ไม่"],
-      });
-    }
-
-    // Add target audience question
-    questions.push({
-      id: "target_audience",
-      type: "contextual",
-      category: "audience",
-      question: "กลุ่มเป้าหมายหลักของคุณคือใคร?",
-      required: true,
-      options: ["วัยรุ่น", "วัยทำงาน", "ผู้สูงอายุ", "ทุกวัย", "เฉพาะกลุ่ม"],
-    });
-
-    return questions;
   };
 
-  // Fallback questions if generation fails
-  const generateFallbackQuestions = (
-    analysis: EnhancedAnalysis
-  ): Question[] => {
-    return [
-      {
-        id: "project_name",
-        type: "basic",
-        category: "general",
-        question: "ชื่อโปรเจ็คของคุณคืออะไร?",
-        required: true,
-      },
-      {
-        id: "project_purpose",
-        type: "basic",
-        category: "general",
-        question: "วัตถุประสงค์ของเว็บไซต์คืออะไร?",
-        required: true,
-      },
-      {
-        id: "target_audience",
-        type: "contextual",
-        category: "audience",
-        question: "กลุ่มเป้าหมายหลักของคุณคือใคร?",
-        required: true,
-        options: ["วัยรุ่น", "วัยทำงาน", "ผู้สูงอายุ", "ทุกวัย"],
-      },
-    ];
+     // Helper function to generate additional features options for mockup
+   const generateAdditionalFeaturesOptions = (projectType: string): string[] => {
+     // สำหรับ mockup ให้มีแค่ 2 ตัวเลือกเท่านั้น
+     return [
+       'ระบบ Authentication (เข้าสู่ระบบ/สมัครสมาชิก)',
+       'ระบบจัดการไฟล์ (อัปโหลด/ดาวน์โหลด/จัดการไฟล์)'
+     ];
+   };
+
+   // Fallback questions if generation fails
+   const generateFallbackQuestions = (
+     analysis: EnhancedAnalysis
+   ): Question[] => {
+    const questions: Question[] = [];
+
+    // คำถามที่ 1: ชื่อโปรเจ็คและธีมการออกแบบ (เสมอ)
+    questions.push({
+      id: "project_name_and_theme",
+      type: "basic",
+      category: "project_info",
+      question: "กรุณาระบุชื่อโปรเจ็คและธีมการออกแบบที่ต้องการ (เช่น: ร้านค้าออนไลน์สไตล์มินิมอล)",
+      required: true,
+      priority: "high",
+    });
+
+         // คำถามที่ 2: ฟีเจอร์หลัก (เสมอ)
+     questions.push({
+       id: "core_features",
+       type: "basic",
+       category: "features",
+       question: "กรุณาระบุฟีเจอร์หลักที่ต้องการในเว็บไซต์ (เช่น: ระบบชำระเงิน, ระบบสมาชิก, ระบบค้นหา)",
+       required: true,
+       priority: "high",
+     });
+
+     // คำถามที่ 3: กลุ่มเป้าหมาย (เสมอ)
+     questions.push({
+       id: "target_audience",
+       type: "basic",
+       category: "audience",
+       question: "กรุณาระบุกลุ่มเป้าหมายหลักของเว็บไซต์ (เช่น: วัยรุ่น 18-25 ปี, ผู้ประกอบการ SMEs, นักเรียนนักศึกษา)",
+       required: true,
+       priority: "high",
+     });
+
+     // คำถามที่ 4: ฟีเจอร์เสริม (เสมอ) - สร้าง options ตามประเภทโปรเจ็ค
+     const additionalFeaturesOptions = generateAdditionalFeaturesOptions(analysis.projectType);
+     questions.push({
+       id: "additional_features",
+       type: "basic",
+       category: "features",
+       question: "กรุณาเลือกฟีเจอร์เสริมที่ต้องการ (เลือกได้หลายข้อ):",
+       options: additionalFeaturesOptions,
+       required: true,
+       priority: "high",
+     });
+
+     // กำหนดจำนวนคำถามตามระดับความซับซ้อน
+     const getMaxQuestionsByComplexity = (complexity: string): number => {
+       switch (complexity) {
+         case 'simple': return 6;
+         case 'medium': return 8;
+         case 'complex': return 10;
+         case 'enterprise': return 12;
+         default: return 8;
+       }
+     };
+
+     const maxQuestions = getMaxQuestionsByComplexity(analysis.complexity);
+     let additionalQuestionsCount = 0;
+
+     // ถามข้อมูลที่ขาดหายไปจาก missingElements (ยกเว้นคำถามที่ถามไปแล้ว)
+     if (analysis.missingElements && analysis.missingElements.length > 0) {
+       analysis.missingElements.forEach((element, index) => {
+         // ตรวจสอบจำนวนคำถามไม่ให้เกิน limit
+         if (questions.length >= maxQuestions) return;
+         
+         // ข้ามถ้าเป็นคำถามที่ถามไปแล้ว
+         if (!element.includes("ชื่อโปรเจ็ค") && 
+             !element.includes("ธีมการออกแบบ") && 
+             !element.includes("ฟีเจอร์หลัก") &&
+             !element.includes("สไตล์การออกแบบ") &&
+             !element.includes("กลุ่มเป้าหมาย") &&
+             !element.includes("ฟีเจอร์เสริม")) {
+           questions.push({
+             id: `missing_${index}`,
+             type: "contextual",
+             category: "missing_info",
+             question: `กรุณาระบุรายละเอียดเกี่ยวกับ: ${element}`,
+             required: true,
+             priority: "medium",
+           });
+           additionalQuestionsCount++;
+         }
+       });
+     }
+
+     // เพิ่มคำถามทั่วไปถ้าจำนวนยังไม่ถึง limit
+     const generalQuestions = [
+       "มีข้อกำหนดพิเศษเกี่ยวกับการออกแบบหรือไม่?",
+       "ต้องการระบบการจัดการเนื้อหาหรือไม่?",
+       "มีข้อกำหนดเกี่ยวกับ SEO หรือไม่?",
+       "ต้องการระบบการวิเคราะห์ข้อมูลหรือไม่?",
+       "มีข้อกำหนดเกี่ยวกับความปลอดภัยหรือไม่?",
+       "ต้องการระบบการสำรองข้อมูลหรือไม่?"
+     ];
+
+     for (let i = 0; i < generalQuestions.length && questions.length < maxQuestions; i++) {
+       questions.push({
+         id: `general_${i}`,
+         type: "contextual",
+         category: "general",
+         question: generalQuestions[i],
+         required: false,
+         priority: "low",
+       });
+     }
+
+    return questions;
   };
 
   const continueToQuestions = useCallback(() => {

@@ -85,7 +85,7 @@ export default function Home() {
                         <div><strong>ฟีเจอร์:</strong> {result.json.features?.join(', ')}</div>
                         {result.json.design && (
                           <div>
-                            <strong>การออกแบบ:</strong> {result.json.design.theme} - {result.json.design.colorScheme}
+                            <strong>การออกแบบ:</strong> {result.json.design.designStyle}
                           </div>
                         )}
                       </div>

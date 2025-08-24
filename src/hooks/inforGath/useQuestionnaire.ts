@@ -138,17 +138,24 @@ export const useQuestionnaire = (): UseQuestionnaireReturn => {
   }, []);
 
   const setAnswer = useCallback((questionId: string, answer: string | string[]) => {
-    // Validate answer before setting
-    if (validateAnswer(questionId, answer)) {
-      setState(prev => ({
-        ...prev,
-        answers: {
-          ...prev.answers,
-          [questionId]: answer,
-        },
-      }));
+    // Always set the answer, validation will be done separately
+    setState(prev => ({
+      ...prev,
+      answers: {
+        ...prev.answers,
+        [questionId]: answer,
+      },
+    }));
+    
+    // Clear error when user starts typing
+    if (answer !== undefined && answer !== null) {
+      setState(prev => {
+        const newErrors = { ...prev.errors };
+        delete newErrors[questionId];
+        return { ...prev, errors: newErrors };
+      });
     }
-  }, [validateAnswer]);
+  }, []);
 
   const setAnswers = useCallback((answers: UserAnswers) => {
     setState(prev => ({

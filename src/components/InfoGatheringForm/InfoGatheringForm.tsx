@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useInfoGatheringFlow } from "@/hooks/inforGath";
 import { Button } from "@/components/Button/Button";
+import { Question } from "./question";
 
 interface InfoGatheringFormProps {
   onComplete?: (result: any) => void;
@@ -12,6 +13,8 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
   onComplete,
 }) => {
   const [prompt, setPrompt] = useState("");
+  const hasGeneratedFinal = useRef(false);
+  
   const {
     currentPhase,
     analysis,
@@ -29,15 +32,30 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
     clearError,
     questionnaire,
   } = useInfoGatheringFlow();
-  console.log("🔍 [InfoGatheringForm] Analysis:", analysis);
-  console.log("🔍 [InfoGatheringForm] Quality:", quality);
-  console.log("🔍 [InfoGatheringForm] Final Output:", finalOutput);
-  console.log("🔍 [InfoGatheringForm] Current Phase:", currentPhase);
-  console.log("🔍 [InfoGatheringForm] Is Analyzing:", isAnalyzing);
-  console.log("🔍 [InfoGatheringForm] Is Assessing Quality:", isAssessingQuality);
-  console.log("🔍 [InfoGatheringForm] Is Generating Final:", isGeneratingFinal);
-  console.log("🔍 [InfoGatheringForm] Is Loading:", isLoading);
-  console.log("🔍 [InfoGatheringForm] Error:", error);
+
+  // เพิ่ม useEffect เพื่อเรียก onComplete เมื่อ phase เป็น complete
+  useEffect(() => {
+    if (currentPhase === "complete" && finalOutput && onComplete) {
+      onComplete(finalOutput);
+    }
+  }, [currentPhase, finalOutput, onComplete]);
+
+  // เพิ่ม useEffect เพื่อเรียก generateFinalOutput อัตโนมัติเมื่อคะแนนคุณภาพ >= 70
+  useEffect(() => {
+    if (currentPhase === "final" && quality && quality.overallScore >= 70 && !finalOutput && !hasGeneratedFinal.current) {
+      hasGeneratedFinal.current = true;
+      generateFinalOutput();
+    }
+  }, [currentPhase, quality, finalOutput]);
+
+  // Reset flag when phase changes
+  useEffect(() => {
+    if (currentPhase !== "final") {
+      hasGeneratedFinal.current = false;
+    }
+  }, [currentPhase]);
+
+ 
 
   const handleSubmitPrompt = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +67,7 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
     await startAnalysis(prompt);
   };
 
-  const handleAnswerQuestion = (questionId: string, answer: string) => {
+  const handleAnswerQuestion = (questionId: string, answer: string | string[]) => {
     questionnaire.setAnswer(questionId, answer);
   };
 
@@ -117,104 +135,19 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
       );
     }
 
-    const questionError = questionnaire.errors[currentQuestion.id];
-
     return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">คำถามเพิ่มเติม</h2>
-        <p className="text-gray-600">
-          กรุณาตอบคำถามเพื่อให้เราเข้าใจความต้องการของคุณมากขึ้น
-        </p>
-
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <div className="mb-4">
-            <span className="text-sm text-gray-500">
-              คำถามที่ {questionnaire.currentQuestionIndex + 1} จาก{" "}
-              {questionnaire.questions.length}
-            </span>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${questionnaire.getProgress()}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="font-semibold">
-              {currentQuestion.question}
-              {currentQuestion.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </h3>
-
-            {questionError && (
-              <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
-                <p className="text-red-700 text-sm">{questionError}</p>
-              </div>
-            )}
-
-            {currentQuestion.options ? (
-              <div className="space-y-2">
-                {currentQuestion.options.map((option) => (
-                  <label key={option} className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name={currentQuestion.id}
-                      value={option}
-                      onChange={(e) =>
-                        handleAnswerQuestion(currentQuestion.id, e.target.value)
-                      }
-                      checked={
-                        questionnaire.answers[currentQuestion.id] === option
-                      }
-                      className="text-blue-600"
-                    />
-                    <span>{option}</span>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <input
-                type="text"
-                value={questionnaire.answers[currentQuestion.id] || ""}
-                onChange={(e) =>
-                  handleAnswerQuestion(currentQuestion.id, e.target.value)
-                }
-                placeholder="พิมพ์คำตอบของคุณ..."
-                className={`w-full p-3 border rounded-lg ${
-                  questionError ? "border-red-300" : "border-gray-300"
-                }`}
-              />
-            )}
-
-            <div className="flex space-x-2">
-              {questionnaire.currentQuestionIndex > 0 && (
-                <Button
-                  onClick={questionnaire.previousQuestion}
-                  variant="outline"
-                  disabled={isLoading}
-                >
-                  ก่อนหน้า
-                </Button>
-              )}
-
-              <Button
-                onClick={handleNextQuestion}
-                disabled={
-                  !questionnaire.answers[currentQuestion.id] || isLoading
-                }
-                className="flex-1"
-              >
-                {questionnaire.currentQuestionIndex <
-                questionnaire.questions.length - 1
-                  ? "ถัดไป"
-                  : "ประเมินคุณภาพ"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Question
+        currentQuestion={currentQuestion}
+        currentQuestionIndex={questionnaire.currentQuestionIndex}
+        totalQuestions={questionnaire.questions.length}
+        answers={questionnaire.answers}
+        errors={questionnaire.errors}
+        analysis={analysis}
+        isLoading={isLoading}
+        onAnswerQuestion={handleAnswerQuestion}
+        onNextQuestion={handleNextQuestion}
+        onPreviousQuestion={questionnaire.previousQuestion}
+      />
     );
   };
 
@@ -289,48 +222,207 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
             </p>
           </div>
 
-          {finalOutput.summary && (
+          {finalOutput.json && (
             <div className="space-y-4">
+              {/* ข้อมูลพื้นฐาน */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">ความต้องการ:</h3>
-                <ul className="list-disc list-inside space-y-1">
-                  {finalOutput.summary.requirements.map((req, index) => (
-                    <li key={index} className="text-gray-700">
-                      {req}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">ข้อเสนอแนะ:</h3>
-                <ul className="list-disc list-inside space-y-1">
-                  {finalOutput.summary.recommendations.map((rec, index) => (
-                    <li key={index} className="text-blue-700">
-                      {rec}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-yellow-800">
-                    เวลาที่ประมาณการ
-                  </h3>
-                  <p className="text-yellow-700">
-                    {finalOutput.summary.estimatedTime}
-                  </p>
-                </div>
-                <div className="bg-red-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-red-800">
-                    ต้นทุนที่ประมาณการ
-                  </h3>
-                  <p className="text-red-700">
-                    {finalOutput.summary.estimatedCost}
-                  </p>
+                <h3 className="font-semibold mb-2">ข้อมูลพื้นฐาน:</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-medium">ชื่อเว็บไซต์:</span>
+                    <p className="text-gray-700">{finalOutput.json.name}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">ประเภท:</span>
+                    <p className="text-gray-700">{finalOutput.json.type}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">กลุ่มเป้าหมาย:</span>
+                    <p className="text-gray-700">{finalOutput.json.targetAudience}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">ระดับความซับซ้อน:</span>
+                    <p className="text-gray-700">{finalOutput.json.complexity}</p>
+                  </div>
                 </div>
               </div>
+
+              {/* การออกแบบ */}
+              {finalOutput.json.design && (
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2 text-purple-800">การออกแบบ:</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="font-medium">สไตล์การออกแบบ:</span>
+                      <p className="text-purple-700">{finalOutput.json.design.designStyle || 'ไม่ระบุ'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">ฟอนต์ที่แนะนำ:</span>
+                      <p className="text-purple-700">{finalOutput.json.design.typography || 'ไม่ระบุ'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">สีหลัก:</span>
+                      <p className="text-purple-700">{finalOutput.json.design.primaryColors?.join(', ') || 'ไม่ระบุ'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">สีรอง:</span>
+                      <p className="text-purple-700">{finalOutput.json.design.secondaryColors?.join(', ') || 'ไม่ระบุ'}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">สไตล์ภาพ:</span>
+                      <p className="text-purple-700">{finalOutput.json.design.visualStyle || 'ไม่ระบุ'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ฟีเจอร์ */}
+              {finalOutput.json.features && finalOutput.json.functionality && (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2 text-green-800">ฟีเจอร์:</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium text-green-700">ฟีเจอร์หลัก:</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {finalOutput.json.features.map((feature, index) => (
+                          <li key={index} className="text-green-700 text-sm">
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-green-700">ฟังก์ชันการทำงาน:</h4>
+                      <ul className="space-y-1">
+                        <li className="text-green-700 text-sm">
+                          ระบบจัดการผู้ใช้: {finalOutput.json.functionality.userManagement ? '✓' : '✗'}
+                        </li>
+                        <li className="text-green-700 text-sm">
+                          ระบบชำระเงิน: {finalOutput.json.functionality.payment ? '✓' : '✗'}
+                        </li>
+                        <li className="text-green-700 text-sm">
+                          ระบบวิเคราะห์ข้อมูล: {finalOutput.json.functionality.analytics ? '✓' : '✗'}
+                        </li>
+                        <li className="text-green-700 text-sm">
+                          SEO: {finalOutput.json.functionality.seo ? '✓' : '✗'}
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* เนื้อหา */}
+              {finalOutput.json.content && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2 text-blue-800">เนื้อหา:</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium text-blue-700">หน้าเว็บ:</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {finalOutput.json.content.pages?.map((page, index) => (
+                          <li key={index} className="text-blue-700 text-sm">
+                            {page}
+                          </li>
+                        )) || <li className="text-blue-700 text-sm">ไม่ระบุ</li>}
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-blue-700">ส่วนประกอบ:</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {finalOutput.json.content.sections?.map((section, index) => (
+                          <li key={index} className="text-blue-700 text-sm">
+                            {section}
+                          </li>
+                        )) || <li className="text-blue-700 text-sm">ไม่ระบุ</li>}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ข้อมูลเทคนิค */}
+              {finalOutput.json.technical && (
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2 text-orange-800">ข้อมูลเทคนิค:</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="font-medium">Frontend:</span>
+                      <p className="text-orange-700">{finalOutput.json.technical.frontend || 'ไม่ระบุ'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Backend:</span>
+                      <p className="text-orange-700">{finalOutput.json.technical.backend || 'ไม่ระบุ'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">ฐานข้อมูล:</span>
+                      <p className="text-orange-700">{finalOutput.json.technical.database || 'ไม่ระบุ'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">การ Deploy:</span>
+                      <p className="text-orange-700">{finalOutput.json.technical.deployment || 'ไม่ระบุ'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* สรุปและข้อเสนอแนะ */}
+              {finalOutput.summary && (
+                <div className="space-y-4">
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h3 className="font-semibold mb-2 text-yellow-800">ความต้องการ:</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {finalOutput.summary.requirements.map((req, index) => (
+                        <li key={index} className="text-yellow-700">
+                          {req}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-indigo-50 p-4 rounded-lg">
+                    <h3 className="font-semibold mb-2 text-indigo-800">ข้อเสนอแนะ:</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {finalOutput.summary.recommendations.map((rec, index) => (
+                        <li key={index} className="text-indigo-700">
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-green-800">
+                        เวลาที่ประมาณการ
+                      </h3>
+                      <p className="text-green-700">
+                        {finalOutput.summary.estimatedTime}
+                      </p>
+                    </div>
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-red-800">
+                        ต้นทุนที่ประมาณการ
+                      </h3>
+                      <p className="text-red-700">
+                        {finalOutput.summary.estimatedCost}
+                      </p>
+                    </div>
+                    <div className="bg-pink-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-pink-800">
+                        ความเสี่ยง
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {finalOutput.summary.risks.map((risk, index) => (
+                          <li key={index} className="text-pink-700 text-sm">
+                            {risk}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

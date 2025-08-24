@@ -23,6 +23,9 @@ export interface UseOpenAIInfoGatheringReturn extends UseOpenAIInfoGatheringStat
   // Initial Analysis
   analyzeInitialPrompt: (prompt: string) => Promise<EnhancedAnalysis | null>;
   
+  // Question Generation
+  generateQuestions: (analysis: EnhancedAnalysis) => Promise<Question[] | null>;
+  
   // Quality Assessment
   assessQuality: (answers: UserAnswers, context: ConversationContext) => Promise<QualityAssessment | null>;
   
@@ -180,6 +183,23 @@ export const useOpenAIInfoGathering = (): UseOpenAIInfoGatheringReturn => {
     });
   }, [makeRequest]);
 
+  const generateQuestions = useCallback(async (analysis: EnhancedAnalysis): Promise<Question[] | null> => {
+    if (!analysis) {
+      setState(prev => ({ ...prev, error: 'ไม่พบข้อมูลการวิเคราะห์' }));
+      return null;
+    }
+
+    return makeRequest<Question[]>('/api/openaiInfoGath', {
+      prompt: '', // Not needed for question generation
+      phase: 'questions',
+      context: { 
+        analysis,
+        previousAnswers: {},
+        currentPhase: 'questions'
+      },
+    });
+  }, [makeRequest]);
+
   const generateFinalOutput = useCallback(async (
     analysis: EnhancedAnalysis,
     answers: UserAnswers,
@@ -215,6 +235,7 @@ export const useOpenAIInfoGathering = (): UseOpenAIInfoGatheringReturn => {
   return {
     ...state,
     analyzeInitialPrompt,
+    generateQuestions,
     assessQuality,
     generateFinalOutput,
     reset,
