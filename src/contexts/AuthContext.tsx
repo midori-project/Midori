@@ -15,6 +15,7 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   clearError: () => void;
   refetchUser: () => Promise<void>;
+  validateSession: (force?: boolean) => Promise<void>;
 }
 
 // Actions
@@ -112,6 +113,71 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkAuth();
   }, []);
 
+  // Full session validation
+  const validateSession = async (force = false) => {
+    // ป้องกัน validate บ่อยเกินไป (ยกเว้น force)
+    const lastValidation = localStorage.getItem('lastValidation');
+    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+    
+    if (!force && state.user && lastValidation && parseInt(lastValidation) > fiveMinutesAgo) {
+      return; // Skip validation ถ้าเพิ่ง validate ไปแล้ว
+    }
+
+    try {
+      // 🔍 Full validation กับ server
+      const response = await fetch('/api/auth/validate');
+      
+      if (!response.ok) {
+        throw new Error('Validation failed');
+      }
+      
+      const { valid, user } = await response.json();
+      
+      if (valid && user) {
+        dispatch({ type: 'SET_USER', user });
+        localStorage.setItem('lastValidation', Date.now().toString());
+      } else {
+        // Session invalid
+        dispatch({ type: 'LOGOUT' });
+        localStorage.removeItem('lastValidation');
+        // Redirect to login
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Session validation failed:', error);
+      dispatch({ type: 'LOGOUT' });
+      localStorage.removeItem('lastValidation');
+      // Only redirect if not already on login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+  };
+
+  // Auto-validation strategies
+  useEffect(() => {
+    // ✅ Validate เมื่อกลับมาที่ tab (user อาจ logout ที่เครื่องอื่น)
+    const handleFocus = () => {
+      if (state.isAuthenticated) {
+        validateSession();
+      }
+    };
+    
+    // ✅ Validate ทุก 10 นาทีในพื้นหลัง
+    const interval = setInterval(() => {
+      if (state.isAuthenticated) {
+        validateSession();
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [state.isAuthenticated]);
+
   // Login function
   const login = async (email: string, password: string, remember = false) => {
     dispatch({ type: 'LOADING' });
@@ -162,6 +228,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     clearError,
     refetchUser,
+    validateSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

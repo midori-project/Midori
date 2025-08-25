@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Rate limiting configuration
 const RATE_LIMIT_CONFIG = {
-  // Auth endpoints
-  '/api/auth/login': { max: 5, window: 15 * 60 * 1000 }, // 5 attempts per 15 minutes
-  '/api/auth/register': { max: 3, window: 60 * 60 * 1000 }, // 3 attempts per hour
+  // Auth endpoints - เข้มงวดกว่าเดิม
+  '/api/auth/login': { max: 15, window: 15 * 60 * 1000 }, // 15 attempts per 15 minutes
+  '/api/auth/register': { max: 10, window: 60 * 60 * 1000 }, // 10 attempts per hour
+  '/api/auth/validate': { max: 30, window: 60 * 1000 }, // 30 validations per minute
   
   // General API
   '/api/': { max: 100, window: 60 * 1000 }, // 100 requests per minute
@@ -19,7 +20,11 @@ const requestStore = new Map<string, { count: number; resetTime: number }>();
  */
 export function rateLimitMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+  
+  // Get client IP from headers (Edge Runtime compatible)
+  const clientIP = request.headers.get('x-forwarded-for') || 
+                   request.headers.get('x-real-ip') || 
+                   'unknown';
   
   // Find matching rate limit config
   let rateLimitRule = null;
@@ -79,3 +84,6 @@ export function cleanupRateLimit() {
     }
   }
 }
+
+// Auto cleanup every 5 minutes
+setInterval(cleanupRateLimit, 5 * 60 * 1000);

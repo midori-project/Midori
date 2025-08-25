@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService, getErrorMessage, getValidationErrors } from '@/libs/auth/authService';
-import { RegisterSchema, type RegisterInput } from '@/schemas/auth/register';
+import { RegisterSchema} from '@/schemas/auth/register';
 
 
 export default function RegisterFormClient() {

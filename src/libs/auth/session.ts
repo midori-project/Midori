@@ -1,7 +1,6 @@
 // lib/auth/session.ts
-import { cookies, headers } from 'next/headers';
-import crypto from 'crypto';
-import { prisma } from '@/libs/prisma/prisma';
+import { cookies, headers } from "next/headers";
+import { prisma } from "@/libs/prisma/prisma";
 
 // Types
 export interface Session {
@@ -28,26 +27,38 @@ export interface CreateSessionResult {
 
 // Configuration
 const sessionConfig = {
-  cookieName: process.env.NODE_ENV === 'production' ? '__Host-session' : 'midori-session',
+  cookieName:
+    process.env.NODE_ENV === "production" ? "__Host-session" : "midori-session",
   absoluteTtlDays: 30,
   idleTtlMinutes: 30,
 } as const;
 
 /**
- * สร้าง SHA-256 hash จาก input string
+ * สร้าง SHA-256 hash จาก input string (Edge Runtime compatible)
  * @param input - ข้อความที่ต้องการ hash
  * @returns SHA-256 hash เป็น hex string
  */
-function sha256(input: string): string {
-  return crypto.createHash('sha256').update(input).digest('hex');
+async function sha256(input: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 /**
- * สร้าง session token แบบสุ่ม 256-bit
+ * สร้าง session token แบบสุ่ม 256-bit (Edge Runtime compatible)
  * @returns Base64URL encoded token
  */
 export function generateSessionToken(): string {
-  return crypto.randomBytes(32).toString('base64url'); // 256-bit
+  const randomBytes = new Uint8Array(32); // 256-bit
+  crypto.getRandomValues(randomBytes);
+  // Convert to base64url
+  const base64 = btoa(String.fromCharCode(...randomBytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+  return base64;
 }
 
 /**
@@ -56,12 +67,17 @@ export function generateSessionToken(): string {
  * @param remember - จำ session นานขึ้นหรือไม่
  * @returns Promise ที่ resolve เป็น token object
  */
-export async function createSession(userId: string, remember = false): Promise<CreateSessionResult> {
+export async function createSession(
+  userId: string,
+  remember = false
+): Promise<CreateSessionResult> {
   const token = generateSessionToken();
-  const tokenHash = sha256(token);
+  const tokenHash = await sha256(token);
 
   const now = new Date();
-  const abs = new Date(now.getTime() + sessionConfig.absoluteTtlDays * 24 * 60 * 60 * 1000);
+  const abs = new Date(
+    now.getTime() + sessionConfig.absoluteTtlDays * 24 * 60 * 60 * 1000
+  );
 
   try {
     await prisma.session.create({
@@ -74,18 +90,20 @@ export async function createSession(userId: string, remember = false): Promise<C
       },
     });
   } catch (error) {
-    console.error('Error creating session:', error);
-    throw new Error('Failed to create session');
+    console.error("Error creating session:", error);
+    throw new Error("Failed to create session");
   }
 
-  const maxAge = remember ? 60 * 60 * 24 * sessionConfig.absoluteTtlDays : undefined;
+  const maxAge = remember
+    ? 60 * 60 * 24 * sessionConfig.absoluteTtlDays
+    : undefined;
   const cookieStore = await cookies();
 
   cookieStore.set(sessionConfig.cookieName, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
     maxAge,
   });
 
@@ -98,24 +116,38 @@ export async function createSession(userId: string, remember = false): Promise<C
  */
 export async function getCurrentSession(): Promise<Session | null> {
   const cookieStore = await cookies();
-  const cookie = cookieStore.get(sessionConfig.cookieName);
-  if (!cookie?.value) return null;
 
-  const tokenHash = sha256(cookie.value);
-  
+  const cookie = cookieStore.get(sessionConfig.cookieName);
+
+  if (!cookie?.value) {
+    return null;
+  }
+
+  const tokenHash = await sha256(cookie.value);
+
   try {
     const session = await prisma.session.findUnique({
       where: { sessionTokenHash: tokenHash },
       include: { user: true },
     });
-    if (!session) return null;
+
+    if (session) {
+    }
+
+    if (!session) {
+      return null;
+    }
 
     // ตรวจสอบหมดอายุ absolute
-    if (session.expiresAt < new Date() || session.terminatedAt) {
+    const now = new Date();
+    const isExpired = session.expiresAt < now;
+    const isTerminated = session.terminatedAt !== null;
+
+    if (isExpired || isTerminated) {
       try {
         await prisma.session.delete({ where: { sessionTokenHash: tokenHash } });
       } catch (error) {
-        console.error('Error deleting expired session:', error);
+        console.error("Error deleting expired session:", error);
       }
       cookieStore.delete(sessionConfig.cookieName);
       return null;
@@ -123,14 +155,13 @@ export async function getCurrentSession(): Promise<Session | null> {
 
     // idle timeout (sliding window)
     const last = session.lastActiveAt ?? session.createdAt;
-    const now = new Date();
     const idleMs = sessionConfig.idleTtlMinutes * 60 * 1000;
     if (now.getTime() - last.getTime() > idleMs) {
       // timeout
       try {
         await prisma.session.delete({ where: { sessionTokenHash: tokenHash } });
       } catch (error) {
-        console.error('Error deleting idle session:', error);
+        console.error("Error deleting idle session:", error);
       }
       cookieStore.delete(sessionConfig.cookieName);
       return null;
@@ -140,19 +171,19 @@ export async function getCurrentSession(): Promise<Session | null> {
     try {
       await prisma.session.update({
         where: { sessionTokenHash: tokenHash },
-        data: { 
-          lastActiveAt: now, 
-          ip: await getClientIp(), 
-          userAgent: await getUserAgent() 
+        data: {
+          lastActiveAt: now,
+          ip: await getClientIp(),
+          userAgent: await getUserAgent(),
         },
       });
     } catch (error) {
-      console.error('Error updating session activity:', error);
+      console.error("Error updating session activity:", error);
     }
 
     return session as Session;
   } catch (error) {
-    console.error('Error getting current session:', error);
+    console.error("❌ getCurrentSession error:", error);
     return null;
   }
 }
@@ -166,17 +197,17 @@ export async function revokeCurrentSession(): Promise<void> {
   const cookie = cookieStore.get(sessionConfig.cookieName);
   if (!cookie?.value) return;
 
-  const tokenHash = sha256(cookie.value);
-  
+  const tokenHash = await sha256(cookie.value);
+
   try {
     await prisma.session.updateMany({
       where: { sessionTokenHash: tokenHash, terminatedAt: null },
       data: { terminatedAt: new Date() },
     });
   } catch (error) {
-    console.error('Error revoking session:', error);
+    console.error("Error revoking session:", error);
   }
-  
+
   cookieStore.delete(sessionConfig.cookieName);
 }
 
@@ -186,9 +217,9 @@ export async function revokeCurrentSession(): Promise<void> {
  */
 async function getClientIp(): Promise<string | undefined> {
   const h = await headers();
-  const xff = h.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0].trim();
-  return h.get('x-real-ip') ?? undefined;
+  const xff = h.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0].trim();
+  return h.get("x-real-ip") ?? undefined;
 }
 
 /**
@@ -197,5 +228,5 @@ async function getClientIp(): Promise<string | undefined> {
  */
 async function getUserAgent(): Promise<string | undefined> {
   const h = await headers();
-  return h.get('user-agent') ?? undefined;
+  return h.get("user-agent") ?? undefined;
 }

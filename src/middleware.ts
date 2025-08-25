@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentSession } from '@/libs/auth/session';
 import { securityHeadersMiddleware } from '@/libs/middleware/securityMiddleware';
+import { rateLimitMiddleware } from '@/libs/middleware/rateLimitMiddleware';
 
 // Public routes ที่ไม่ต้อง login
 const publicRoutes = [
@@ -30,7 +30,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Debug log
- /*  console.log('🔧 Middleware running for path:', pathname); */
+  console.log('🔧 Middleware running for path:', pathname);
+  
+  // Apply rate limiting first (before any other checks)
+  const rateLimitResponse = rateLimitMiddleware(request);
+  if (rateLimitResponse.status === 429) {
+    console.log('🚫 Rate limit exceeded for:', pathname);
+    return securityHeadersMiddleware(rateLimitResponse);
+  }
   
   // Skip middleware for static files และ Next.js internals
   if (
@@ -54,26 +61,24 @@ export async function middleware(request: NextRequest) {
   
   const isPublicApiRoute = publicApiRoutes.some(route => pathname.startsWith(route));
 
-  /* console.log('🔍 Path analysis:', { pathname, isPublicRoute, isPublicApiRoute, publicRoutes }); */
+  console.log('🔍 Path analysis:', { pathname, isPublicRoute, isPublicApiRoute, publicRoutes });
 
   // Allow public routes
   if (isPublicRoute || isPublicApiRoute) {
-    /* console.log('✅ Public route allowed:', pathname); */
+    console.log('✅ Public route allowed:', pathname);
     const response = NextResponse.next();
     return securityHeadersMiddleware(response);
   }
 
   try {
-    /* console.log('🔐 Checking authentication for protected route:', pathname); */
+    console.log('🔐 Checking authentication for protected route:', pathname);
     
-    // Get current session
-    const session = await getCurrentSession();
+    // ตรวจสอบ session จาก cookie (Edge Runtime compatible)
+    const sessionCookie = request.cookies.get('midori-session');
+    console.log('� Session cookie:', sessionCookie ? 'Found' : 'Not found');
     
-    /* console.log('👤 Session status:', session ? 'Authenticated' : 'Not authenticated'); */
-    
-    // No session - redirect to login
-    if (!session) {
-      /* console.log('❌ No session - redirecting to login'); */
+    if (!sessionCookie?.value) {
+      console.log('❌ No session cookie - redirecting to login');
       
       if (pathname.startsWith('/api/')) {
         const response = NextResponse.json(
@@ -85,30 +90,25 @@ export async function middleware(request: NextRequest) {
       
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
-      /* console.log('🔄 Redirecting to:', loginUrl.toString()); */
+      console.log('🔄 Redirecting to:', loginUrl.toString());
       const response = NextResponse.redirect(loginUrl);
       return securityHeadersMiddleware(response);
     }
 
+    console.log('✅ Session cookie found, allowing access');
+    
     // Check admin routes
     const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
     if (isAdminRoute) {
-      // TODO: Add admin role check
-      // const isAdmin = session.user.role === 'admin';
-      // if (!isAdmin) {
-      //   const response = NextResponse.json(
-      //     { success: false, error: 'Admin access required' },
-      //     { status: 403 }
-      //   );
-      //   return securityHeadersMiddleware(response);
-      // }
+      // TODO: Add admin role check - ต้องตรวจสอบผ่าน API call
+      // เนื่องจาก middleware ไม่สามารถเข้าถึง database ได้โดยตรง
     }
 
     // Add user info to headers for API routes
     if (pathname.startsWith('/api/')) {
       const requestHeaders = new Headers(request.headers);
-      requestHeaders.set('x-user-id', session.userId);
-      requestHeaders.set('x-session-id', session.id);
+      // เพิ่ม session token ใน header สำหรับ API routes
+      requestHeaders.set('x-session-token', sessionCookie.value);
       
       const response = NextResponse.next({
         request: {

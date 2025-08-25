@@ -1,9 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/Button/Button';
 import { useAuth } from '@/contexts/AuthContext';
-import { LoginSchema, type LoginInput } from '@/schemas/auth/login';
+import { LoginSchema} from '@/schemas/auth/login';
 import { getValidationErrors, isAuthError } from '@/libs/auth/authService';
 
 interface LoginFormData {
