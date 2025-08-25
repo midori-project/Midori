@@ -5,6 +5,7 @@ export interface QuestionStrategy {
   questionTypes: string[];
   adaptiveQuestions: boolean;
   priorityQuestions: string[];
+  focusOnBackground?: boolean;
 }
 
 export interface EnhancedAnalysis {
@@ -17,6 +18,7 @@ export interface EnhancedAnalysis {
     designStyle?: string;
   };
   missingElements: string[];
+  isComplete?: boolean;
   questionStrategy: QuestionStrategy;
 }
 

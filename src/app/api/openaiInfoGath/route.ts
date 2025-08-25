@@ -56,22 +56,39 @@ class EnhancedAnalysisEngine {
         "designStyle": "สไตล์การออกแบบ (modern-minimalist, classic-elegant, colorful-playful, professional-corporate, creative-artistic, luxury-premium, casual-friendly)"
       },
       "missingElements": ["ข้อมูลที่ขาดหายไป - ระบุรายละเอียดที่จำเป็นต้องถามเพิ่มเติม"],
-      "questionStrategy": {
-        "totalQuestions": จำนวนคำถามที่ควรถาม,
-        "questionTypes": ["ประเภทคำถาม"],
-        "adaptiveQuestions": true/false,
-        "priorityQuestions": ["คำถามสำคัญที่ต้องถามก่อน"]
-      }
+      "isComplete": true/false (true ถ้าข้อมูลครบถ้วน, false ถ้าขาดข้อมูล),
+             "questionStrategy": {
+         "totalQuestions": จำนวนคำถามที่ควรถาม (1-5 ข้อ),
+         "questionTypes": ["ประเภทคำถาม"],
+         "adaptiveQuestions": true,
+         "priorityQuestions": ["คำถามสำคัญที่ต้องถามก่อน"],
+         "focusOnBackground": true/false (true ถ้าข้อมูลครบถ้วน ให้ถามเกี่ยวกับ background แทน)
+       }
     }
 
-         หมายเหตุสำคัญ:
-     - ให้ตั้งค่า projectName, designPreferences.designStyle, coreFeatures, และ targetAudience เป็น null เสมอ
-     - เพิ่ม "ชื่อโปรเจ็คและธีมการออกแบบ", "ฟีเจอร์หลัก", "กลุ่มเป้าหมาย", และ "ฟีเจอร์เสริม" เข้าไปใน missingElements เสมอ
-     - คำถามชื่อโปรเจ็คและธีมการออกแบบต้องเป็นคำถามแรกเสมอ
-     - คำถามฟีเจอร์หลักต้องเป็นคำถามที่ 2 เสมอ
-     - คำถามกลุ่มเป้าหมายต้องเป็นคำถามที่ 3 เสมอ
-     - คำถามฟีเจอร์เสริมต้องเป็นคำถามที่ 4 เสมอ
-     - ไม่ต้องใช้ completeness score อีกต่อไป
+                                     หมายเหตุสำคัญ:
+      - ตรวจสอบข้อมูลที่มีอยู่ในพรอมท์และเก็บข้อมูลที่ชัดเจนไว้:
+        * ถ้าพรอมท์ระบุชื่อโปรเจ็ค → เก็บไว้ใน projectName
+        * ถ้าพรอมท์ระบุสไตล์การออกแบบ → เก็บไว้ใน designPreferences.designStyle
+        * ถ้าพรอมท์ระบุฟีเจอร์หลัก → เก็บไว้ใน coreFeatures
+        * ถ้าพรอมท์ระบุกลุ่มเป้าหมาย → เก็บไว้ใน targetAudience
+        * ถ้าพรอมท์ระบุประเภทโปรเจ็ค → เก็บไว้ใน projectType
+      
+     - ตรวจสอบความครบถ้วนของข้อมูล:
+       * ถ้ามีข้อมูลครบถ้วน → isComplete = true
+       * ถ้าขาดข้อมูลใดๆ → isComplete = false
+      
+     - missingElements:
+       * ระบุเฉพาะข้อมูลที่ขาดหายไปจริงๆ
+       * ไม่ต้องเพิ่มข้อมูลที่พรอมท์มีอยู่แล้ว
+      
+     - คำนวณจำนวนคำถาม (totalQuestions):
+       * นับจำนวนข้อมูลที่ขาดหายไปจาก missingElements
+       * ถ้าข้อมูลพื้นฐานครบแล้ว (isComplete = true) และ missingElements น้อยกว่า 2 → totalQuestions = 5 (รวมคำถามเสริม)
+       * ถ้าข้อมูลพื้นฐานไม่ครบ → totalQuestions = จำนวน missingElements (สูงสุด 5)
+      
+     - ไม่ต้องตั้งค่า projectName, designPreferences.designStyle, coreFeatures, targetAudience เป็น null เสมอ
+     - ให้เก็บข้อมูลที่ชัดเจนจากพรอมท์ไว้
 
    `;
 
@@ -124,20 +141,45 @@ class EnhancedAnalysisEngine {
     ]
 
                   หลักการสร้างคำถาม:
-     1. คำถามแรกต้องเป็นคำถามชื่อโปรเจ็คและธีมการออกแบบเสมอ (รวมเป็นคำถามเดียว)
-     2. คำถามที่ 2 ต้องเป็นคำถามเกี่ยวกับ core features (ฟีเจอร์หลักที่ต้องการ) เสมอ
-     3. คำถามที่ 3 ต้องเป็นคำถามเกี่ยวกับกลุ่มเป้าหมายเสมอ
-     4. คำถามที่ 4 ต้องเป็นคำถามเกี่ยวกับฟีเจอร์เสริม โดยให้สร้าง options ที่เหมาะสมกับประเภทโปรเจ็ค
-     5. คำถามต่อๆ ไปต้องไม่เกี่ยวกับชื่อโปรเจ็ค, ธีมการออกแบบ, ฟีเจอร์หลัก, กลุ่มเป้าหมาย, หรือฟีเจอร์เสริม เพราะถามไปแล้ว
-     6. ดูจาก missingElements และสร้างคำถามที่ตรงกับข้อมูลที่ขาดหายไป
-     7. สร้างคำถามที่เฉพาะเจาะจงกับข้อมูลที่ต้องการ ไม่ใช่คำถามทั่วไป
-     8. ให้ความสำคัญกับ priorityQuestions ที่ระบุไว้
-     9. คำถาม 4 ข้อแรกต้องมี priority เป็น "high" และ required เป็น true
-     10. จำนวนคำถามทั้งหมดต้องสอดคล้องกับระดับความซับซ้อน (complexity):
-         - simple: 4-6 คำถาม
-         - medium: 6-8 คำถาม  
-         - complex: 8-10 คำถาม
-         - enterprise: 10-12 คำถาม`;
+     
+     หลักการ Dynamic Questions:
+     1. ตรวจสอบข้อมูลที่มีอยู่ใน analysis และไม่ถามซ้ำ
+     2. ถ้า projectName มีข้อมูลแล้ว → ไม่ถามชื่อโปรเจ็ค
+     3. ถ้า designPreferences.designStyle มีข้อมูลแล้ว → ไม่ถามสไตล์การออกแบบ
+     4. ถ้า coreFeatures มีข้อมูลแล้ว → ไม่ถามฟีเจอร์หลัก
+     5. ถ้า targetAudience มีข้อมูลแล้ว → ไม่ถามกลุ่มเป้าหมาย
+     6. ถ้า projectType มีข้อมูลแล้ว → ไม่ถามประเภทโปรเจ็ค
+     
+     หมวดหมู่คำถามหลัก (เลือกตามข้อมูลที่ขาดหายไป):
+     
+     ข้อมูลพื้นฐาน:
+     - project_name: ชื่อโปรเจ็ค (ถ้าไม่มีใน analysis)
+     - design_style: สไตล์การออกแบบ (ถ้าไม่มีใน analysis)
+     - project_type: ประเภทโปรเจ็ค (ถ้าไม่มีใน analysis)
+     - core_features: ฟีเจอร์หลัก (ถ้าไม่มีใน analysis)
+     - target_audience: กลุ่มเป้าหมาย (ถ้าไม่มีใน analysis)
+     
+     ข้อมูลเพิ่มเติม:
+     - timeline: เวลาและ deadline
+     - budget: งบประมาณ
+     - team: ทีมงานและผู้เกี่ยวข้อง
+     - technical_requirements: ความต้องการทางเทคนิค
+     - integrations: การเชื่อมต่อกับระบบอื่น
+     - content_pages: หน้าเว็บที่ต้องการ
+     - user_experience: ประสบการณ์ผู้ใช้
+     
+     คำถามเสริม (ใช้เมื่อคำถามหลักน้อยกว่า 2 ข้อ):
+     1. background_project: ข้อมูล background ของโปรเจ็ค (ประวัติ, วัตถุประสงค์, ความต้องการพิเศษ)
+     2. color_preferences: สีหลักและสีรองที่ต้องการ
+     3. additional_features: ฟีเจอร์เสริมที่ต้องการ
+     
+     หลักการเลือกคำถาม:
+     1. เลือกคำถามหลักที่ข้อมูลยังไม่มีใน analysis ก่อน
+     2. ถ้าข้อมูลพื้นฐานครบแล้ว ให้เลือกคำถามเพิ่มเติม
+     3. ถ้าคำถามหลักน้อยกว่า 2 ข้อ ให้เพิ่มคำถามเสริม 3 ข้อ
+     4. ให้ความสำคัญกับ missingElements ที่ระบุไว้
+     5. สร้างคำถามที่เฉพาะเจาะจงและไม่ซ้ำซ้อน
+     6. ทุกคำถามต้องมี priority เป็น "high" และ required เป็น true`;
 
     try {
       const completion = await openai.chat.completions.create({
