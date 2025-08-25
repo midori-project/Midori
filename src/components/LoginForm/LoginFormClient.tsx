@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginSchema} from '@/schemas/auth/login';
 import { getValidationErrors, isAuthError } from '@/libs/auth/authService';
+import { set } from 'zod';
 
 interface LoginFormData {
   email: string;
@@ -89,10 +90,15 @@ export function LoginFormClient() {
       // Redirect หลังจาก login สำเร็จ
       router.push('/');
     } catch (error) {
+      setFormData(prev => ({
+          ...prev,
+          password: ""
+        }));
       // Handle validation errors from API
       if (isAuthError(error) && error.details) {
         const apiErrors = getValidationErrors(error);
         setValidationErrors(apiErrors as ValidationErrors);
+        
       }
       // General error จะแสดงผ่าน AuthContext
     }
