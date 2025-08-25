@@ -5,7 +5,6 @@ import {
   OpenAIResponse,
   EnhancedAnalysis,
   Question,
-  QualityAssessment,
   FinalOutput,
   ConversationContext,
   UserAnswers,
@@ -171,73 +170,38 @@ class EnhancedAnalysisEngine {
     }
   }
 
-  async assessQuality(answers: UserAnswers, context: ConversationContext): Promise<QualityAssessment> {
-    const systemPrompt = `ประเมินคุณภาพของคำตอบที่ได้รับ 
-    ให้ผลลัพธ์ในรูปแบบ JSON:
 
-    {
-      "completeness": 0-100,
-      "clarity": 0-100,
-      "consistency": 0-100,
-      "confidence": 0-100,
-      "overallScore": 0-100,
-      "recommendations": ["ข้อเสนอแนะ"],
-      "requiredFollowUps": ["คำถามเพิ่มเติมที่จำเป็น"]
-    }`;
-
-    try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: JSON.stringify({ answers, context }) },
-        ],
-        temperature: 0.3,
-        max_tokens: 1500,
-      });
-
-      const response = completion.choices[0]?.message?.content;
-      
-      if (!response) {
-        throw new Error("No response from OpenAI");
-      }
-      
-      try {
-        // Clean the response before parsing
-        const cleanedResponse = this.cleanOpenAIResponse(response);
-        
-        const parsedResponse = JSON.parse(cleanedResponse);
-        return parsedResponse;
-      } catch (parseError) {
-        throw new Error("Invalid JSON response from OpenAI");
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
 
   async generateFinalOutput(
     analysis: EnhancedAnalysis,
-    answers: UserAnswers,
-    quality: QualityAssessment
+    answers: UserAnswers
   ): Promise<FinalOutput> {
-    const systemPrompt = `สร้างผลลัพธ์สุดท้ายจากข้อมูลทั้งหมด 
+    const systemPrompt = `คุณเป็น AI ที่เชี่ยวชาญในการวิเคราะห์และสรุปวัตถุประสงค์ของเว็บไซต์
+    กรุณาสร้างผลลัพธ์สุดท้ายที่เน้นการสรุปวัตถุประสงค์และเป้าหมายหลักของผู้ใช้
     ให้ผลลัพธ์ในรูปแบบ JSON:
 
-         {
-       "json": {
-         "name": "ชื่อเว็บไซต์ (วิเคราะห์จากคำตอบของผู้ใช้เกี่ยวกับชื่อโปรเจ็ค)",
-         "type": "ประเภทเว็บไซต์",
-         "features": ["ฟีเจอร์ (วิเคราะห์จากคำตอบของผู้ใช้เกี่ยวกับ core features)"],
-                  "design": {
-            "designStyle": "สไตล์การออกแบบ (วิเคราะห์จากคำตอบของผู้ใช้เกี่ยวกับธีมการออกแบบ)",
-            "primaryColors": ["สีหลัก"],
-            "secondaryColors": ["สีรอง"],
-            "typography": "ฟอนต์ที่แนะนำ",
-          },
+    {
+      "json": {
+        "projectObjective": {
+          "primaryGoal": "วัตถุประสงค์หลักของเว็บไซต์ (เช่น ขายสินค้า, แสดงผลงาน, ให้ข้อมูล, สร้างชุมชน)",
+          "secondaryGoals": ["วัตถุประสงค์รอง"],
+          "businessValue": "คุณค่าทางธุรกิจที่คาดหวัง",
+          "successMetrics": ["ตัวชี้วัดความสำเร็จ"]
+        },
+        "name": "ชื่อเว็บไซต์ (วิเคราะห์จากคำตอบของผู้ใช้เกี่ยวกับชื่อโปรเจ็ค)",
+        "type": "ประเภทเว็บไซต์",
+        "features": ["ฟีเจอร์ (วิเคราะห์จากคำตอบของผู้ใช้เกี่ยวกับ core features)"],
+        "design": {
+          "designStyle": "สไตล์การออกแบบ (วิเคราะห์จากคำตอบของผู้ใช้เกี่ยวกับธีมการออกแบบ)",
+          "primaryColors": ["สีหลัก"],
+          "secondaryColors": ["สีรอง"],
+          "typography": "ฟอนต์ที่แนะนำ",
+          "designRationale": "เหตุผลในการเลือกสไตล์การออกแบบนี้"
+        },
         "content": {
           "pages": ["หน้าเว็บ"],
-          "sections": ["ส่วนประกอบ"]
+          "sections": ["ส่วนประกอบ"],
+          "contentStrategy": "กลยุทธ์การจัดการเนื้อหา"
         },
         "functionality": {
           "userManagement": true/false,
@@ -245,25 +209,59 @@ class EnhancedAnalysisEngine {
           "analytics": true/false,
           "seo": true/false
         },
-        "targetAudience": "กลุ่มเป้าหมาย",
-        "complexity": "ระดับความซับซ้อน"
+        "targetAudience": {
+          "primaryAudience": "กลุ่มเป้าหมายหลัก",
+          "secondaryAudience": ["กลุ่มเป้าหมายรอง"],
+          "userNeeds": ["ความต้องการของกลุ่มเป้าหมาย"],
+          "userJourney": "เส้นทางผู้ใช้ที่คาดหวัง"
+        },
+        "complexity": "ระดับความซับซ้อน",
+        "implementationPriority": {
+          "phase1": ["ฟีเจอร์ที่ต้องทำในเฟสแรก"],
+          "phase2": ["ฟีเจอร์ที่ทำในเฟสถัดไป"],
+          "futureEnhancements": ["ฟีเจอร์ที่อาจเพิ่มในอนาคต"]
+        }
+      },
+      "summary": {
+        "requirements": ["ความต้องการหลักที่ต้องพัฒนา"],
+        "recommendations": ["ข้อเสนอแนะสำหรับการพัฒนา"],
+        "estimatedTime": "เวลาที่คาดว่าจะใช้ในการพัฒนา",
+        "estimatedCost": "ค่าใช้จ่ายที่คาดการณ์",
+        "risks": ["ความเสี่ยงที่อาจเกิดขึ้น"]
       }
     }
 
-         หมายเหตุสำคัญ:
-     - วิเคราะห์ชื่อเว็บไซต์จากคำตอบของผู้ใช้เกี่ยวกับชื่อโปรเจ็ค (project_name_and_theme)
-     - วิเคราะห์ฟีเจอร์หลักจากคำตอบของผู้ใช้เกี่ยวกับ core features
-     - วิเคราะห์ฟีเจอร์เสริมจากคำตอบของผู้ใช้เกี่ยวกับ additional_features (อาจเป็น array)
-     - วิเคราะห์กลุ่มเป้าหมายจากคำตอบของผู้ใช้เกี่ยวกับ target_audience
-     - วิเคราะห์สไตล์การออกแบบจากคำตอบของผู้ใช้เกี่ยวกับธีมการออกแบบ (project_name_and_theme)
-     - ใช้ข้อมูลจาก analysis และ answers เพื่อสร้างผลลัพธ์ที่สมบูรณ์`;
+    หลักการวิเคราะห์วัตถุประสงค์:
+    1. วิเคราะห์จากชื่อโปรเจ็คและธีมการออกแบบเพื่อเข้าใจเป้าหมายหลัก
+    2. ดูจากฟีเจอร์หลักเพื่อเข้าใจวัตถุประสงค์ทางธุรกิจ
+    3. วิเคราะห์กลุ่มเป้าหมายเพื่อเข้าใจความต้องการของผู้ใช้
+    4. ดูจากฟีเจอร์เสริมเพื่อเข้าใจวัตถุประสงค์รอง
+    5. สรุปวัตถุประสงค์ให้ชัดเจนและวัดผลได้
+    6. ระบุตัวชี้วัดความสำเร็จที่เหมาะสม
+    7. จัดลำดับความสำคัญของฟีเจอร์ตามวัตถุประสงค์
+
+    การประเมินและข้อเสนอแนะ:
+    1. วิเคราะห์ความสมบูรณ์ของข้อมูลที่ได้รับ
+    2. ให้ข้อเสนอแนะที่ actionable และเฉพาะเจาะจง
+    3. ประเมินความเสี่ยงและความท้าทาย
+    4. ให้คำแนะนำเกี่ยวกับ timeline และ budget
+    5. ระบุความต้องการเพิ่มเติมที่อาจจำเป็น
+
+    หมายเหตุสำคัญ:
+    - เน้นการสรุปวัตถุประสงค์ให้ชัดเจนและเข้าใจง่าย
+    - ระบุคุณค่าทางธุรกิจที่คาดหวัง
+    - วิเคราะห์ความต้องการของกลุ่มเป้าหมายอย่างละเอียด
+    - จัดลำดับความสำคัญของฟีเจอร์ตามวัตถุประสงค์
+    - ให้เหตุผลในการเลือกสไตล์การออกแบบ
+    - วางแผนการพัฒนาที่สอดคล้องกับวัตถุประสงค์
+    - ให้ข้อเสนอแนะที่เป็นประโยชน์และนำไปใช้ได้จริง`;
 
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: JSON.stringify({ analysis, answers, quality }) },
+          { role: "user", content: JSON.stringify({ analysis, answers }) },
         ],
         temperature: 0.3,
         max_tokens: 3000,
@@ -333,24 +331,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<OpenAIRes
           success: true,
           data: generatedQuestions,
           phase: 'questions',
-          nextAction: 'quality',
-        };
-        break;
-
-      case 'quality':
-        if (!context || !answers) {
-          return NextResponse.json({
-            success: false,
-            error: "Context and answers are required for quality assessment",
-          }, { status: 400 });
-        }
-
-        const quality = await engine.assessQuality(answers, context);
-        
-        response = {
-          success: true,
-          data: quality,
-          phase: 'quality',
           nextAction: 'final',
         };
         break;
@@ -365,16 +345,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<OpenAIRes
 
         const finalOutput = await engine.generateFinalOutput(
           context.analysis,
-          answers,
-          {
-            completeness: 80,
-            clarity: 80,
-            consistency: 80,
-            confidence: 80,
-            overallScore: 80,
-            recommendations: [],
-            requiredFollowUps: [],
-          }
+          answers
         );
         
         response = {

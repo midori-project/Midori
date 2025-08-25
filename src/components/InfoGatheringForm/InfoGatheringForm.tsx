@@ -18,15 +18,12 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
   const {
     currentPhase,
     analysis,
-    quality,
     finalOutput,
     isAnalyzing,
-    isAssessingQuality,
     isGeneratingFinal,
     isLoading,
     error,
     startAnalysis,
-    assessQuality,
     generateFinalOutput,
     reset,
     clearError,
@@ -40,13 +37,7 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
     }
   }, [currentPhase, finalOutput, onComplete]);
 
-  // เพิ่ม useEffect เพื่อเรียก generateFinalOutput อัตโนมัติเมื่อคะแนนคุณภาพ >= 70
-  useEffect(() => {
-    if (currentPhase === "final" && quality && quality.overallScore >= 70 && !finalOutput && !hasGeneratedFinal.current) {
-      hasGeneratedFinal.current = true;
-      generateFinalOutput();
-    }
-  }, [currentPhase, quality, finalOutput]);
+
 
   // Reset flag when phase changes
   useEffect(() => {
@@ -78,8 +69,8 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
     ) {
       questionnaire.nextQuestion();
     } else {
-      // All questions answered, assess quality
-      assessQuality();
+      // All questions answered, generate final output
+      generateFinalOutput();
     }
   };
 
@@ -151,63 +142,7 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
     );
   };
 
-  const renderQualityPhase = () => (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">ประเมินคุณภาพข้อมูล</h2>
 
-      {quality && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-blue-800">ความครบถ้วน</h3>
-              <p className="text-2xl font-bold text-blue-600">
-                {quality.completeness}%
-              </p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-green-800">ความชัดเจน</h3>
-              <p className="text-2xl font-bold text-green-600">
-                {quality.clarity}%
-              </p>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-yellow-800">ความสอดคล้อง</h3>
-              <p className="text-2xl font-bold text-yellow-600">
-                {quality.consistency}%
-              </p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-purple-800">คะแนนรวม</h3>
-              <p className="text-2xl font-bold text-purple-600">
-                {quality.overallScore}%
-              </p>
-            </div>
-          </div>
-
-          {quality.recommendations.length > 0 && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">ข้อเสนอแนะ:</h3>
-              <ul className="list-disc list-inside space-y-1">
-                {quality.recommendations.map((rec, index) => (
-                  <li key={index} className="text-gray-700">
-                    {rec}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <Button
-            onClick={handleGenerateFinal}
-            disabled={isGeneratingFinal || isLoading}
-            className="w-full"
-          >
-            {isGeneratingFinal ? "กำลังสร้างผลลัพธ์..." : "สร้างผลลัพธ์สุดท้าย"}
-          </Button>
-        </div>
-      )}
-    </div>
-  );
 
   const renderCompletePhase = () => (
     <div className="space-y-4">
@@ -224,28 +159,104 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
 
           {finalOutput.json && (
             <div className="space-y-4">
-              {/* ข้อมูลพื้นฐาน */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">ข้อมูลพื้นฐาน:</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="font-medium">ชื่อเว็บไซต์:</span>
-                    <p className="text-gray-700">{finalOutput.json.name}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">ประเภท:</span>
-                    <p className="text-gray-700">{finalOutput.json.type}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">กลุ่มเป้าหมาย:</span>
-                    <p className="text-gray-700">{finalOutput.json.targetAudience}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">ระดับความซับซ้อน:</span>
-                    <p className="text-gray-700">{finalOutput.json.complexity}</p>
-                  </div>
-                </div>
-              </div>
+                             {/* ข้อมูลพื้นฐาน */}
+               <div className="bg-gray-50 p-4 rounded-lg">
+                 <h3 className="font-semibold mb-2">ข้อมูลพื้นฐาน:</h3>
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <span className="font-medium">ชื่อเว็บไซต์:</span>
+                     <p className="text-gray-700">{finalOutput.json.name}</p>
+                   </div>
+                   <div>
+                     <span className="font-medium">ประเภท:</span>
+                     <p className="text-gray-700">{finalOutput.json.type}</p>
+                   </div>
+                   <div>
+                     <span className="font-medium">ระดับความซับซ้อน:</span>
+                     <p className="text-gray-700">{finalOutput.json.complexity}</p>
+                   </div>
+                 </div>
+               </div>
+
+               {/* วัตถุประสงค์ของโปรเจ็ค */}
+               {finalOutput.json.projectObjective && (
+                 <div className="bg-indigo-50 p-4 rounded-lg">
+                   <h3 className="font-semibold mb-2 text-indigo-800">วัตถุประสงค์ของโปรเจ็ค:</h3>
+                   <div className="space-y-2">
+                     <div>
+                       <span className="font-medium">วัตถุประสงค์หลัก:</span>
+                       <p className="text-indigo-700">{finalOutput.json.projectObjective.primaryGoal}</p>
+                     </div>
+                     {finalOutput.json.projectObjective.secondaryGoals && finalOutput.json.projectObjective.secondaryGoals.length > 0 && (
+                       <div>
+                         <span className="font-medium">วัตถุประสงค์รอง:</span>
+                         <ul className="list-disc list-inside">
+                           {finalOutput.json.projectObjective.secondaryGoals.map((goal: string, index: number) => (
+                             <li key={index} className="text-indigo-700 text-sm">{goal}</li>
+                           ))}
+                         </ul>
+                       </div>
+                     )}
+                     <div>
+                       <span className="font-medium">คุณค่าทางธุรกิจ:</span>
+                       <p className="text-indigo-700">{finalOutput.json.projectObjective.businessValue}</p>
+                     </div>
+                     {finalOutput.json.projectObjective.successMetrics && finalOutput.json.projectObjective.successMetrics.length > 0 && (
+                       <div>
+                         <span className="font-medium">ตัวชี้วัดความสำเร็จ:</span>
+                         <ul className="list-disc list-inside">
+                           {finalOutput.json.projectObjective.successMetrics.map((metric: string, index: number) => (
+                             <li key={index} className="text-indigo-700 text-sm">{metric}</li>
+                           ))}
+                         </ul>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               )}
+
+               {/* กลุ่มเป้าหมาย */}
+               {finalOutput.json.targetAudience && (
+                 <div className="bg-blue-50 p-4 rounded-lg">
+                   <h3 className="font-semibold mb-2 text-blue-800">กลุ่มเป้าหมาย:</h3>
+                   {typeof finalOutput.json.targetAudience === 'string' ? (
+                     <p className="text-blue-700">{finalOutput.json.targetAudience}</p>
+                   ) : (
+                     <div className="space-y-2">
+                       <div>
+                         <span className="font-medium">กลุ่มเป้าหมายหลัก:</span>
+                         <p className="text-blue-700">{finalOutput.json.targetAudience.primaryAudience}</p>
+                       </div>
+                       {finalOutput.json.targetAudience.secondaryAudience && finalOutput.json.targetAudience.secondaryAudience.length > 0 && (
+                         <div>
+                           <span className="font-medium">กลุ่มเป้าหมายรอง:</span>
+                           <ul className="list-disc list-inside">
+                             {finalOutput.json.targetAudience.secondaryAudience.map((audience: string, index: number) => (
+                               <li key={index} className="text-blue-700 text-sm">{audience}</li>
+                             ))}
+                           </ul>
+                         </div>
+                       )}
+                       {finalOutput.json.targetAudience.userNeeds && finalOutput.json.targetAudience.userNeeds.length > 0 && (
+                         <div>
+                           <span className="font-medium">ความต้องการของผู้ใช้:</span>
+                           <ul className="list-disc list-inside">
+                             {finalOutput.json.targetAudience.userNeeds.map((need: string, index: number) => (
+                               <li key={index} className="text-blue-700 text-sm">{need}</li>
+                             ))}
+                           </ul>
+                         </div>
+                       )}
+                       {finalOutput.json.targetAudience.userJourney && (
+                         <div>
+                           <span className="font-medium">เส้นทางผู้ใช้:</span>
+                           <p className="text-blue-700 text-sm">{finalOutput.json.targetAudience.userJourney}</p>
+                         </div>
+                       )}
+                     </div>
+                   )}
+                 </div>
+               )}
 
               {/* การออกแบบ */}
               {finalOutput.json.design && (
@@ -443,7 +454,7 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
   );
 
   // Loading state
-  if (isLoading && !isAnalyzing && !isAssessingQuality && !isGeneratingFinal) {
+        if (isLoading && !isAnalyzing && !isGeneratingFinal) {
     return (
       <div className="space-y-4">
         <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
@@ -478,8 +489,7 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
       return renderInitialPhase();
     case "questions":
       return renderQuestionsPhase();
-    case "quality":
-      return renderQualityPhase();
+    
     case "complete":
       return renderCompletePhase();
     default:

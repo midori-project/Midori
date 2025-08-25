@@ -6,7 +6,6 @@ import {
   OpenAIResponse,
   EnhancedAnalysis,
   Question,
-  QualityAssessment,
   FinalOutput,
   ConversationContext,
   UserAnswers,
@@ -16,7 +15,7 @@ interface UseOpenAIInfoGatheringState {
   loading: boolean;
   error: string | null;
   data: OpenAIResponse['data'] | null;
-  phase: 'initial' | 'quality' | 'final' | 'complete';
+  phase: 'initial' | 'questions' | 'final' | 'complete';
 }
 
 export interface UseOpenAIInfoGatheringReturn extends UseOpenAIInfoGatheringState {
@@ -26,14 +25,10 @@ export interface UseOpenAIInfoGatheringReturn extends UseOpenAIInfoGatheringStat
   // Question Generation
   generateQuestions: (analysis: EnhancedAnalysis) => Promise<Question[] | null>;
   
-  // Quality Assessment
-  assessQuality: (answers: UserAnswers, context: ConversationContext) => Promise<QualityAssessment | null>;
-  
   // Final Generation
   generateFinalOutput: (
     analysis: EnhancedAnalysis,
-    answers: UserAnswers,
-    quality: QualityAssessment
+    answers: UserAnswers
   ) => Promise<FinalOutput | null>;
   
   // Utility functions
@@ -67,8 +62,8 @@ export const useOpenAIInfoGathering = (): UseOpenAIInfoGatheringReturn => {
       return 'กรุณากรอกข้อมูลความต้องการ';
     }
     
-    if (requestData.phase === 'quality' && (!requestData.answers || Object.keys(requestData.answers).length === 0)) {
-      return 'ไม่พบข้อมูลคำตอบ';
+    if (requestData.phase === 'questions' && !requestData.context) {
+      return 'ไม่พบข้อมูลการวิเคราะห์';
     }
     
     if (requestData.phase === 'final' && (!requestData.context || !requestData.answers)) {
@@ -98,48 +93,25 @@ export const useOpenAIInfoGathering = (): UseOpenAIInfoGatheringReturn => {
           'Content-Type': 'application/json',
         },
       });
-      console.log('🚀 [useOpenAIInfoGathering] Response received:', response.data);
+
       if (response.data.success) {
         setState(prev => ({
           ...prev,
           loading: false,
           data: response.data.data,
-          phase: response.data.phase as 'initial' | 'quality' | 'final' | 'complete' || prev.phase,
+          phase: (response.data.phase as 'initial' | 'questions' | 'final' | 'complete') || prev.phase,
         }));
         return response.data.data as T;
       } else {
-        throw new Error(response.data.error || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ');
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: response.data.error || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ',
+        }));
+        return null;
       }
     } catch (error) {
-      let errorMessage = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
-      
-      if (axios.isAxiosError(error)) {
-        if (error.code === 'ECONNABORTED') {
-          errorMessage = 'การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง';
-        } else if (error.response) {
-          // Server responded with error status
-          const status = error.response.status;
-          if (status === 400) {
-            errorMessage = 'ข้อมูลที่ส่งไม่ถูกต้อง';
-          } else if (status === 401) {
-            errorMessage = 'ไม่ได้รับอนุญาตให้เข้าถึง';
-          } else if (status === 403) {
-            errorMessage = 'ไม่มีสิทธิ์เข้าถึง';
-          } else if (status === 404) {
-            errorMessage = 'ไม่พบ API endpoint';
-          } else if (status === 500) {
-            errorMessage = 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์';
-          } else {
-            errorMessage = `เกิดข้อผิดพลาด (${status})`;
-          }
-        } else if (error.request) {
-          // Request was made but no response received
-          errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้';
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
+      const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
       setState(prev => ({
         ...prev,
         loading: false,
@@ -150,84 +122,40 @@ export const useOpenAIInfoGathering = (): UseOpenAIInfoGatheringReturn => {
   }, [validateRequest]);
 
   const analyzeInitialPrompt = useCallback(async (prompt: string): Promise<EnhancedAnalysis | null> => {
-    if (!prompt.trim()) {
-      setState(prev => ({ ...prev, error: 'กรุณากรอกข้อมูลความต้องการ' }));
-      return null;
-    }
-
     return makeRequest<EnhancedAnalysis>('/api/openaiInfoGath', {
-      prompt: prompt.trim(),
+      prompt,
       phase: 'initial',
     });
   }, [makeRequest]);
 
-  const assessQuality = useCallback(async (
-    answers: UserAnswers,
-    context: ConversationContext
-  ): Promise<QualityAssessment | null> => {
-    if (!answers || Object.keys(answers).length === 0) {
-      setState(prev => ({ ...prev, error: 'ไม่พบข้อมูลคำตอบ' }));
-      return null;
-    }
-
-    if (!context || !context.analysis) {
-      setState(prev => ({ ...prev, error: 'ไม่พบข้อมูลการวิเคราะห์' }));
-      return null;
-    }
-
-    return makeRequest<QualityAssessment>('/api/openaiInfoGath', {
-      prompt: '', // Not needed for quality assessment
-      phase: 'quality',
-      context,
-      answers,
-    });
-  }, [makeRequest]);
-
   const generateQuestions = useCallback(async (analysis: EnhancedAnalysis): Promise<Question[] | null> => {
-    if (!analysis) {
-      setState(prev => ({ ...prev, error: 'ไม่พบข้อมูลการวิเคราะห์' }));
-      return null;
-    }
+    const context: ConversationContext = {
+      previousAnswers: {},
+      analysis,
+      currentPhase: 'questions',
+    };
 
     return makeRequest<Question[]>('/api/openaiInfoGath', {
-      prompt: '', // Not needed for question generation
+      prompt: 'Generate questions',
       phase: 'questions',
-      context: { 
-        analysis,
-        previousAnswers: {},
-        currentPhase: 'questions'
-      },
+      context,
     });
   }, [makeRequest]);
 
   const generateFinalOutput = useCallback(async (
     analysis: EnhancedAnalysis,
-    answers: UserAnswers,
-    quality: QualityAssessment
+    answers: UserAnswers
   ): Promise<FinalOutput | null> => {
-    if (!analysis) {
-      setState(prev => ({ ...prev, error: 'ไม่พบข้อมูลการวิเคราะห์' }));
-      return null;
-    }
-
-    if (!answers || Object.keys(answers).length === 0) {
-      setState(prev => ({ ...prev, error: 'ไม่พบข้อมูลคำตอบ' }));
-      return null;
-    }
-
-    if (!quality) {
-      setState(prev => ({ ...prev, error: 'ไม่พบข้อมูลการประเมินคุณภาพ' }));
-      return null;
-    }
+    const context: ConversationContext = {
+      previousAnswers: answers,
+      analysis,
+      currentPhase: 'final',
+    };
 
     return makeRequest<FinalOutput>('/api/openaiInfoGath', {
-      prompt: '', // Not needed for final generation
+      prompt: 'Generate final output',
       phase: 'final',
-      context: { 
-        analysis,
-        previousAnswers: answers,
-        currentPhase: 'final'
-      },
+      context,
       answers,
     });
   }, [makeRequest]);
@@ -236,7 +164,6 @@ export const useOpenAIInfoGathering = (): UseOpenAIInfoGatheringReturn => {
     ...state,
     analyzeInitialPrompt,
     generateQuestions,
-    assessQuality,
     generateFinalOutput,
     reset,
     clearError,
