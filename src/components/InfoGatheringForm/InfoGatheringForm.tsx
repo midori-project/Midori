@@ -377,63 +377,7 @@ export const InfoGatheringForm: React.FC<InfoGatheringFormProps> = ({
                 </div>
               )}
 
-              {/* สรุปและข้อเสนอแนะ */}
-              {finalOutput.summary && (
-                <div className="space-y-4">
-                  <div className="bg-yellow-50 p-4 rounded-lg">
-                    <h3 className="font-semibold mb-2 text-yellow-800">ความต้องการ:</h3>
-                    <ul className="list-disc list-inside space-y-1">
-                      {finalOutput.summary.requirements.map((req, index) => (
-                        <li key={index} className="text-yellow-700">
-                          {req}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="bg-indigo-50 p-4 rounded-lg">
-                    <h3 className="font-semibold mb-2 text-indigo-800">ข้อเสนอแนะ:</h3>
-                    <ul className="list-disc list-inside space-y-1">
-                      {finalOutput.summary.recommendations.map((rec, index) => (
-                        <li key={index} className="text-indigo-700">
-                          {rec}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <h3 className="font-semibold text-green-800">
-                        เวลาที่ประมาณการ
-                      </h3>
-                      <p className="text-green-700">
-                        {finalOutput.summary.estimatedTime}
-                      </p>
-                    </div>
-                    <div className="bg-red-50 p-4 rounded-lg">
-                      <h3 className="font-semibold text-red-800">
-                        ต้นทุนที่ประมาณการ
-                      </h3>
-                      <p className="text-red-700">
-                        {finalOutput.summary.estimatedCost}
-                      </p>
-                    </div>
-                    <div className="bg-pink-50 p-4 rounded-lg">
-                      <h3 className="font-semibold text-pink-800">
-                        ความเสี่ยง
-                      </h3>
-                      <ul className="list-disc list-inside space-y-1">
-                        {finalOutput.summary.risks.map((risk, index) => (
-                          <li key={index} className="text-pink-700 text-sm">
-                            {risk}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
+              
             </div>
           )}
 

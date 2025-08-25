@@ -92,7 +92,6 @@ export interface WebsiteConfig {
   };
   targetAudience: TargetAudience;
   complexity: string;
-  implementationPriority: ImplementationPriority;
   technical?: {
     frontend: string;
     backend: string;
@@ -103,13 +102,6 @@ export interface WebsiteConfig {
 
 export interface FinalOutput {
   json: WebsiteConfig;
-  summary: {
-    requirements: string[];
-    recommendations: string[];
-    estimatedTime: string;
-    estimatedCost: string;
-    risks: string[];
-  };
 }
 
 // API Request/Response Types
