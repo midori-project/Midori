@@ -6,8 +6,8 @@ import { rateLimitMiddleware } from '@/libs/middleware/rateLimitMiddleware';
 const publicRoutes = [
   '/',
   '/login',
-  '/register',
-  '/about',
+  '/signup',
+  '/projects/featured',
 ];
 
 // API routes ที่ไม่ต้อง auth

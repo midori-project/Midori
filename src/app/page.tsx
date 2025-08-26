@@ -1,51 +1,58 @@
-'use client';
-import { useAuth } from '@/contexts/AuthContext';
-import Link from 'next/link';
-import { Button } from '@/components/Button/Button';
-import Image from 'next/image';
+import Image from "next/image";
+import Input from "./home/input";
 
 export default function Home() {
-  const { user, isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[url('/img/home_background.png')] bg-cover bg-center">
-        <div className="flex items-center space-x-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="text-gray-600">กำลังโหลด...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen relative">
+    <>
+    <div>
+    <div className="relative min-h-screen overflow-hidden isolate">
       {/* Background image */}
-      <div className="absolute inset-0 -z-10 w-full h-full bg-[url('/img/home_background.png')] bg-cover bg-center" />
-      
-      {/* Hero Section */}
-      <div className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
-            สร้างเว็บไซต์ด้วย
-            <span className="text-green-600"> AI</span>
-          </h1>
-          <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-            Midori ใช้ AI ที่ทรงพลังช่วยให้คุณสร้างเว็บไซต์ที่สวยงามและใช้งานได้จริง
-          </p>
-          
+      <Image
+        src="/img/background_home.png"
+        alt="background"
+        fill
+        priority
+        quality={90}
+        sizes="100vw"
+        className="object-cover object-center z-0"
+        style={{ objectPosition: 'center' }}
+        aria-hidden="true"
+      />
 
+      {/* Gradient overlay for tone adjustment (stronger green) */}
+      <div
+        className="absolute inset-0 z-10 bg-gradient-to-b from-[#e6fff2]/70 via-[#d4ffe6]/60 to-[#bff6e0]/70 mix-blend-overlay opacity-70 pointer-events-none"
+        aria-hidden="true"
+      />
+
+      {/* Frame overlay */}
+      <div
+        className="absolute inset-0 z-20 bg-[url('/img/frame.png')] bg-cover bg-center opacity-50 mix-blend-multiply pointer-events-none"
+        aria-hidden="true"
+      />
+
+      {/* Hero Section */}
+      <main className="relative z-30 pt-30 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-4xl font-bold text-[#0B4421] sm:text-5xl md:text-6xl">
+            Grow your site with
+            <span className="text-green-600"> Midori</span>
+          </h1>
+          <p className="mt-6 text-lg text-[#0B4421] max-w-3xl mx-auto">
+            Midori is an assistant to create, manage, and grow your website.
+          </p>
         </div>
-      </div>
+      </main>
 
       {/* Features Section */}
-      <div className="py-20 px-4 sm:px-6 lg:px-8">
-       
-          
+      <section className="relative z-30 pt-10 px-4 sm:px-6 lg:px-8">
+        <Input />
+      </section>
+    </div>
+    </div>
+    <div>
 
-        </div>
-      </div>
-
+    </div>
+</>
   );
 }
-
