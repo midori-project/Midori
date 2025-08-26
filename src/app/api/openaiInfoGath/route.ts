@@ -67,28 +67,15 @@ class EnhancedAnalysisEngine {
     }
 
                                      หมายเหตุสำคัญ:
-      - ตรวจสอบข้อมูลที่มีอยู่ในพรอมท์และเก็บข้อมูลที่ชัดเจนไว้:
-        * ถ้าพรอมท์ระบุชื่อโปรเจ็ค → เก็บไว้ใน projectName
-        * ถ้าพรอมท์ระบุสไตล์การออกแบบ → เก็บไว้ใน designPreferences.designStyle
-        * ถ้าพรอมท์ระบุฟีเจอร์หลัก → เก็บไว้ใน coreFeatures
-        * ถ้าพรอมท์ระบุกลุ่มเป้าหมาย → เก็บไว้ใน targetAudience
-        * ถ้าพรอมท์ระบุประเภทโปรเจ็ค → เก็บไว้ใน projectType
-      
-     - ตรวจสอบความครบถ้วนของข้อมูล:
-       * ถ้ามีข้อมูลครบถ้วน → isComplete = true
-       * ถ้าขาดข้อมูลใดๆ → isComplete = false
-      
-     - missingElements:
-       * ระบุเฉพาะข้อมูลที่ขาดหายไปจริงๆ
-       * ไม่ต้องเพิ่มข้อมูลที่พรอมท์มีอยู่แล้ว
-      
-     - คำนวณจำนวนคำถาม (totalQuestions):
-       * นับจำนวนข้อมูลที่ขาดหายไปจาก missingElements
-       * ถ้าข้อมูลพื้นฐานครบแล้ว (isComplete = true) และ missingElements น้อยกว่า 2 → totalQuestions = 5 (รวมคำถามเสริม)
-       * ถ้าข้อมูลพื้นฐานไม่ครบ → totalQuestions = จำนวน missingElements (สูงสุด 5)
-      
-     - ไม่ต้องตั้งค่า projectName, designPreferences.designStyle, coreFeatures, targetAudience เป็น null เสมอ
-     - ให้เก็บข้อมูลที่ชัดเจนจากพรอมท์ไว้
+      - ให้ตั้งค่า projectName, designPreferences.designStyle, coreFeatures, และ targetAudience เป็น null เสมอ
+      - ไม่ต้องวิเคราะห์หรือเดาข้อมูลการออกแบบจากพรอมท์
+      - ให้ผู้ใช้เป็นคนตอบเรื่องการออกแบบเองเสมอ
+      - เพิ่ม "ชื่อโปรเจ็คและธีมการออกแบบ", "ฟีเจอร์หลัก", "กลุ่มเป้าหมาย", และ "ฟีเจอร์เสริม" เข้าไปใน missingElements เสมอ
+      - คำถามชื่อโปรเจ็คและธีมการออกแบบต้องเป็นคำถามแรกเสมอ
+      - คำถามฟีเจอร์หลักต้องเป็นคำถามที่ 2 เสมอ
+      - คำถามกลุ่มเป้าหมายต้องเป็นคำถามที่ 3 เสมอ
+      - คำถามฟีเจอร์เสริมต้องเป็นคำถามที่ 4 เสมอ
+      - ไม่ต้องใช้ completeness score อีกต่อไป
 
    `;
 
@@ -114,6 +101,26 @@ class EnhancedAnalysisEngine {
         const cleanedResponse = this.cleanOpenAIResponse(response);
         
         const parsedResponse = JSON.parse(cleanedResponse);
+        
+        // บังคับให้มี missingElements ที่จำเป็นเสมอ
+        const requiredMissingElements = [
+          "ชื่อโปรเจ็คและธีมการออกแบบ",
+          "ฟีเจอร์หลัก", 
+          "กลุ่มเป้าหมาย",
+          "ฟีเจอร์เสริม"
+        ];
+        
+        // เพิ่ม missingElements ที่จำเป็นถ้ายังไม่มี
+        if (!parsedResponse.missingElements) {
+          parsedResponse.missingElements = [];
+        }
+        
+        requiredMissingElements.forEach(element => {
+          if (!parsedResponse.missingElements.includes(element)) {
+            parsedResponse.missingElements.push(element);
+          }
+        });
+        
         return parsedResponse;
       } catch (parseError) {
         throw new Error("Invalid JSON response from OpenAI");
@@ -142,22 +149,21 @@ class EnhancedAnalysisEngine {
 
                   หลักการสร้างคำถาม:
      
-     หลักการ Dynamic Questions:
-     1. ตรวจสอบข้อมูลที่มีอยู่ใน analysis และไม่ถามซ้ำ
-     2. ถ้า projectName มีข้อมูลแล้ว → ไม่ถามชื่อโปรเจ็ค
-     3. ถ้า designPreferences.designStyle มีข้อมูลแล้ว → ไม่ถามสไตล์การออกแบบ
-     4. ถ้า coreFeatures มีข้อมูลแล้ว → ไม่ถามฟีเจอร์หลัก
-     5. ถ้า targetAudience มีข้อมูลแล้ว → ไม่ถามกลุ่มเป้าหมาย
-     6. ถ้า projectType มีข้อมูลแล้ว → ไม่ถามประเภทโปรเจ็ค
+     หลักการสร้างคำถาม:
+     1. ต้องถามข้อมูลพื้นฐานเสมอ ไม่ว่าข้อมูลจะมีใน analysis หรือไม่
+     2. คำถามแรก: ชื่อโปรเจ็คและธีมการออกแบบ (รวมเป็นคำถามเดียว)
+     3. คำถามที่ 2: ฟีเจอร์หลักที่ต้องการ
+     4. คำถามที่ 3: กลุ่มเป้าหมาย
+     5. คำถามที่ 4: ฟีเจอร์เสริม
+     6. คำถามต่อๆ ไป: ข้อมูลเพิ่มเติมตาม missingElements
      
-     หมวดหมู่คำถามหลัก (เลือกตามข้อมูลที่ขาดหายไป):
+     หมวดหมู่คำถามหลัก (ต้องถามเสมอ):
      
-     ข้อมูลพื้นฐาน:
-     - project_name: ชื่อโปรเจ็ค (ถ้าไม่มีใน analysis)
-     - design_style: สไตล์การออกแบบ (ถ้าไม่มีใน analysis)
-     - project_type: ประเภทโปรเจ็ค (ถ้าไม่มีใน analysis)
-     - core_features: ฟีเจอร์หลัก (ถ้าไม่มีใน analysis)
-     - target_audience: กลุ่มเป้าหมาย (ถ้าไม่มีใน analysis)
+     ข้อมูลพื้นฐาน (4 ข้อแรก):
+     - project_name_and_theme: ชื่อโปรเจ็คและธีมการออกแบบ (รวมเป็นคำถามเดียว)
+     - core_features: ฟีเจอร์หลักที่ต้องการ
+     - target_audience: กลุ่มเป้าหมาย
+     - additional_features: ฟีเจอร์เสริมที่ต้องการ
      
      ข้อมูลเพิ่มเติม:
      - timeline: เวลาและ deadline
@@ -174,12 +180,12 @@ class EnhancedAnalysisEngine {
      3. additional_features: ฟีเจอร์เสริมที่ต้องการ
      
      หลักการเลือกคำถาม:
-     1. เลือกคำถามหลักที่ข้อมูลยังไม่มีใน analysis ก่อน
-     2. ถ้าข้อมูลพื้นฐานครบแล้ว ให้เลือกคำถามเพิ่มเติม
-     3. ถ้าคำถามหลักน้อยกว่า 2 ข้อ ให้เพิ่มคำถามเสริม 3 ข้อ
-     4. ให้ความสำคัญกับ missingElements ที่ระบุไว้
-     5. สร้างคำถามที่เฉพาะเจาะจงและไม่ซ้ำซ้อน
-     6. ทุกคำถามต้องมี priority เป็น "high" และ required เป็น true`;
+     1. ต้องสร้างคำถาม 4 ข้อแรกเสมอ (ข้อมูลพื้นฐาน)
+     2. คำถามที่ 5 เป็นต้นไป: เลือกจากข้อมูลเพิ่มเติมตาม missingElements
+     3. ให้ความสำคัญกับ missingElements ที่ระบุไว้
+     4. สร้างคำถามที่เฉพาะเจาะจงและไม่ซ้ำซ้อน
+     5. ทุกคำถามต้องมี priority เป็น "high" และ required เป็น true
+     6. จำนวนคำถามทั้งหมด: 4-6 ข้อ (ขึ้นอยู่กับความซับซ้อน)`;
 
     try {
       const completion = await openai.chat.completions.create({
