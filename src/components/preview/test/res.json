@@ -1,0 +1,125 @@
+{
+  "projectStructure": null,
+  "files": [
+    {
+      "path": "package.json",
+      "content": "{\n  \"name\": \"modern-restaurant-experience\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"build\": \"vite build\",\n    \"serve\": \"vite preview\"\n  },\n  \"dependencies\": {\n    \"react\": \"^18.0.0\",\n    \"react-dom\": \"^18.0.0\",\n    \"react-router-dom\": \"^6.0.0\"\n  },\n  \"devDependencies\": {\n    \"vite\": \"^4.0.0\",\n    \"typescript\": \"^4.0.0\",\n    \"vite-plugin-react\": \"^3.0.0\",\n    \"tailwindcss\": \"^3.0.0\",\n    \"postcss\": \"^8.0.0\",\n    \"autoprefixer\": \"^10.0.0\"\n  },\n  \"eslintConfig\": {\n    \"extends\": [\n      \"plugin:react/recommended\",\n      \"plugin:@typescript-eslint/recommended\"\n    ],\n    \"parser\": \"@typescript-eslint/parser\",\n    \"plugins\": [\n      \"react\",\n      \"@typescript-eslint\"\n    ],\n    \"rules\": {\n      \"react/react-in-jsx-scope\": \"off\"\n    }\n  },\n  \"browserslist\": [\n    \">0.2%\",\n    \"not dead\",\n    \"not op_mini all\"\n  ]\n}",
+      "type": "config",
+      "language": "json"
+    },
+    {
+      "path": "index.html",
+      "content": "{\n  \"html\": {\n    \"head\": {\n      \"title\": \"Modern Restaurant Experience\",\n      \"meta\": [\n        {\n          \"charset\": \"UTF-8\"\n        },\n        {\n          \"name\": \"viewport\",\n          \"content\": \"width=device-width, initial-scale=1.0\"\n        },\n        {\n          \"name\": \"description\",\n          \"content\": \"A modern restaurant experience built with React and Vite.\"\n        }\n      ],\n      \"link\": [\n        {\n          \"rel\": \"icon\",\n          \"href\": \"/favicon.ico\"\n        },\n        {\n          \"rel\": \"stylesheet\",\n          \"href\": \"https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap\"\n        },\n        {\n          \"rel\": \"stylesheet\",\n          \"href\": \"https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css\"\n        }\n      ]\n    },\n    \"body\": {\n      \"div\": {\n        \"id\": \"app\"\n      },\n      \"script\": {\n        \"type\": \"module\",\n        \"src\": \"/src/main.tsx\"\n      }\n    }\n  }\n}",
+      "type": "config",
+      "language": "html"
+    },
+    {
+      "path": "src/main.tsx",
+      "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App';\nimport './index.css';\n\nconst rootElement = document.getElementById('root');\nif (!rootElement) throw new Error('Failed to find the root element');\n\nconst root = ReactDOM.createRoot(rootElement);\n\nroot.render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>\n);",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/App.tsx",
+      "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Header from './components/Header';\nimport Footer from './components/Footer';\nimport Home from './pages/Home';\nimport About from './pages/About';\nimport Contact from './pages/Contact';\nimport Products from './pages/Products';\nimport Services from './pages/Services';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"min-h-screen flex flex-col bg-blue-50 text-gray-800\">\n      <Header />\n      <main className=\"flex-1\">\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/about\" element={<About />} />\n          <Route path=\"/contact\" element={<Contact />} />\n          <Route path=\"/products\" element={<Products />} />\n          <Route path=\"/services\" element={<Services />} />\n        </Routes>\n      </main>\n      <Footer />\n    </div>\n  );\n};\n\nexport default App;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/index.css",
+      "content": "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\nbody {\n  @apply bg-gray-100 text-gray-800 font-sans leading-relaxed;\n}\n\nh1, h2, h3, h4, h5, h6 {\n  @apply text-blue-800 font-semibold;\n}\n\np {\n  @apply mb-4;\n}\n\na {\n  @apply text-blue-600 hover:text-blue-500;\n}\n\n.container {\n  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;\n}\n\n.button {\n  @apply inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;\n}\n\n.card {\n  @apply bg-white shadow-md rounded-lg p-6 mb-4;\n}\n\n.card-header {\n  @apply border-b border-gray-200 pb-2 mb-4;\n}\n\n.card-body {\n  @apply text-gray-700;\n}\n\n.flex-center {\n  @apply flex items-center justify-center;\n}\n\n.grid {\n  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;\n}\n\n.responsive-image {\n  @apply w-full h-auto rounded-lg;\n}\n\n.footer {\n  @apply bg-gray-800 text-white py-4 text-center;\n}\n\n@media (max-width: 640px) {\n  .container {\n    @apply px-2;\n  }\n}\n\n@media (min-width: 640px) {\n  .container {\n    @apply px-4;\n  }\n}",
+      "type": "style",
+      "language": "css"
+    },
+    {
+      "path": "vite.config.ts",
+      "content": "{\n  \"root\": \"./\",\n  \"base\": \"./\",\n  \"plugins\": [\n    {\n      \"name\": \"vite-plugin-react\",\n      \"options\": {\n        \"jsx\": \"automatic\"\n      }\n    }\n  ],\n  \"resolve\": {\n    \"alias\": {\n      \"@\": \"/src\"\n    }\n  },\n  \"server\": {\n    \"port\": 3000,\n    \"open\": true,\n    \"cors\": true\n  },\n  \"build\": {\n    \"outDir\": \"dist\",\n    \"minify\": \"esbuild\",\n    \"target\": \"esnext\"\n  },\n  \"css\": {\n    \"preprocessorOptions\": {\n      \"scss\": {\n        \"additionalData\": \"@import './src/styles/variables.scss';\"\n      }\n    }\n  }\n}",
+      "type": "config",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Home.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface HomeProps {}\n\nconst Home: React.FC<HomeProps> = () => {\n  return (\n    <div className=\"min-h-screen flex items-center justify-center bg-blue-50 p-8\">\n      <div className=\"max-w-3xl text-center\">\n        <h1 className=\"text-5xl font-extrabold text-gray-800 mb-4\">Welcome to Our Platform</h1>\n        <p className=\"text-lg text-gray-600 mb-6\">\n          Discover a world of possibilities with our modern solutions tailored for you.\n        </p>\n        <Link to=\"/about\" className=\"inline-block bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition\">\n          Learn More\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Home;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/About.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface AboutProps {}\n\nconst About: React.FC<AboutProps> = () => {\n  return (\n    <div className=\"min-h-screen flex items-center justify-center bg-blue-gray-100 p-8\">\n      <div className=\"max-w-3xl mx-auto text-center\">\n        <h1 className=\"text-5xl font-bold text-blue-gray-800 mb-6\">About Us</h1>\n        <p className=\"text-lg text-blue-gray-600 mb-4\">\n          We are dedicated to providing the best service to our users. Our mission is to create a platform that is user-friendly and accessible to everyone.\n        </p>\n        <p className=\"text-lg text-blue-gray-600 mb-8\">\n          Join us on our journey to make a positive impact in the community.\n        </p>\n        <Link to=\"/\" className=\"text-blue-600 hover:underline text-lg\">\n          Back to Home\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default About;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Contact.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface ContactProps {}\n\nconst Contact: React.FC<ContactProps> = () => {\n  return (\n    <div className=\"min-h-screen flex items-center justify-center bg-blue-gray-100 p-8\">\n      <div className=\"max-w-3xl mx-auto text-center\">\n        <h1 className=\"text-5xl font-bold text-gray-800 mb-6\">Get in Touch</h1>\n        <p className=\"text-lg text-gray-600 mb-8\">\n          We would love to hear from you! Please reach out with any questions or feedback.\n        </p>\n        <Link to=\"/\" className=\"inline-block bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition\">\n          Back to Home\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Contact;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Products.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface ProductsProps {}\n\nconst Products: React.FC<ProductsProps> = () => {\n  return (\n    <div className=\"min-h-screen bg-gray-100 p-8\">\n      <div className=\"max-w-5xl mx-auto text-center\">\n        <h1 className=\"text-5xl font-bold text-blue-800 mb-6\">Our Products</h1>\n        <p className=\"text-gray-700 mb-4\">\n          Discover a range of products designed to meet your needs with quality and care.\n        </p>\n        <Link to=\"/\" className=\"text-blue-500 hover:underline text-lg\">\n          Back to Home\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Products;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Services.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface ServicesProps {}\n\nconst Services: React.FC<ServicesProps> = () => {\n  return (\n    <div className=\"min-h-screen bg-blue-gray-100 flex items-center justify-center p-8\">\n      <div className=\"max-w-4xl mx-auto text-center\">\n        <h1 className=\"text-5xl font-bold text-gray-800 mb-6\">Our Services</h1>\n        <p className=\"text-lg text-gray-600 mb-8\">\n          We offer a range of professional services tailored to meet your needs. Our team is dedicated to providing high-quality solutions with a friendly touch.\n        </p>\n        <Link to=\"/\" className=\"text-blue-600 hover:underline text-lg\">\n          Back to Home\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Services;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "content": "import React from 'react';\n\ninterface HeaderProps {\n  title: string;\n  subtitle?: string;\n}\n\nconst Header: React.FC<HeaderProps> = ({ title, subtitle }) => {\n  return (\n    <header className=\"bg-blue-gray-800 p-6\">\n      <h1 className=\"text-3xl text-white font-bold\">{title}</h1>\n      {subtitle && <h2 className=\"text-lg text-blue-gray-300\">{subtitle}</h2>}\n    </header>\n  );\n};\n\nexport default Header;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "content": "import React from 'react';\n\ninterface FooterProps {\n  year: number;\n  companyName: string;\n}\n\nconst Footer: React.FC<FooterProps> = ({ year, companyName }) => {\n  return (\n    <footer className=\"bg-blue-gray-800 text-white py-4\">\n      <div className=\"container mx-auto text-center\">\n        <p className=\"text-sm\">\n          &copy; {year} {companyName}. All rights reserved.\n        </p>\n        <p className=\"text-xs\">\n          Designed with care for our users.\n        </p>\n      </div>\n    </footer>\n  );\n};\n\nexport default Footer;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Navigation.tsx",
+      "content": "import React from 'react';\n\ninterface NavigationProps {\n  links: { name: string; url: string }[];\n}\n\nconst Navigation: React.FC<NavigationProps> = ({ links }) => {\n  return (\n    <nav className=\"bg-blue-gray-800 p-4\">\n      <ul className=\"flex space-x-4\">\n        {links.map((link, index) => (\n          <li key={index}>\n            <a \n              href={link.url} \n              className=\"text-white hover:text-blue-300 transition-colors\"\n            >\n              {link.name}\n            </a>\n          </li>\n        ))}\n      </ul>\n    </nav>\n  );\n};\n\nexport default Navigation;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Hero.tsx",
+      "content": "import React from 'react';\n\ninterface HeroProps {\n  title: string;\n  subtitle?: string;\n  backgroundImage?: string;\n}\n\nconst Hero: React.FC<HeroProps> = ({ \n  title, \n  subtitle, \n  backgroundImage \n}) => {\n  return (\n    <div \n      className=\"flex items-center justify-center h-screen bg-blue-gray-100\" \n      style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover' }}\n    >\n      <div className=\"bg-white bg-opacity-80 p-8 rounded-lg shadow-lg text-center\">\n        <h1 className=\"text-4xl font-bold text-blue-gray-800 mb-4\">{title}</h1>\n        {subtitle && <p className=\"text-lg text-blue-gray-600\">{subtitle}</p>}\n      </div>\n    </div>\n  );\n};\n\nexport default Hero;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/ProductCard.tsx",
+      "content": "import React from 'react';\n\ninterface ProductCardProps {\n  title: string;\n  description?: string;\n  price: number;\n  imageUrl: string;\n  onAddToCart?: () => void;\n}\n\nconst ProductCard: React.FC<ProductCardProps> = ({ \n  title, \n  description, \n  price, \n  imageUrl, \n  onAddToCart \n}) => {\n  return (\n    <div className=\"p-4 bg-blue-gray-100 rounded-lg shadow-lg\">\n      <img src={imageUrl} alt={title} className=\"w-full h-48 object-cover rounded-t-lg\" />\n      <h2 className=\"text-lg font-semibold mt-2\">{title}</h2>\n      {description && <p className=\"text-gray-700 mt-1\">{description}</p>}\n      <p className=\"text-blue-600 font-bold mt-2\">${price.toFixed(2)}</p>\n      {onAddToCart && (\n        <button \n          onClick={onAddToCart}\n          className=\"mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600\"\n        >\n          Add to Cart\n        </button>\n      )}\n    </div>\n  );\n};\n\nexport default ProductCard;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/ContactForm.tsx",
+      "content": "import React, { useState } from 'react';\n\ninterface ContactFormProps {\n  onSubmit: (formData: { name: string; email: string; message: string }) => void;\n}\n\nconst ContactForm: React.FC<ContactFormProps> = ({ onSubmit }) => {\n  const [name, setName] = useState('');\n  const [email, setEmail] = useState('');\n  const [message, setMessage] = useState('');\n\n  const handleSubmit = (e: React.FormEvent) => {\n    e.preventDefault();\n    onSubmit({ name, email, message });\n    setName('');\n    setEmail('');\n    setMessage('');\n  };\n\n  return (\n    <div className=\"p-6 bg-blue-gray-100 rounded-lg shadow-md\">\n      <h2 className=\"text-2xl font-semibold mb-4\">Contact Us</h2>\n      <form onSubmit={handleSubmit}>\n        <div className=\"mb-4\">\n          <label htmlFor=\"name\" className=\"block text-gray-700\">Name</label>\n          <input\n            type=\"text\"\n            id=\"name\"\n            value={name}\n            onChange={(e) => setName(e.target.value)}\n            className=\"mt-1 p-2 w-full border border-gray-300 rounded\"\n            required\n          />\n        </div>\n        <div className=\"mb-4\">\n          <label htmlFor=\"email\" className=\"block text-gray-700\">Email</label>\n          <input\n            type=\"email\"\n            id=\"email\"\n            value={email}\n            onChange={(e) => setEmail(e.target.value)}\n            className=\"mt-1 p-2 w-full border border-gray-300 rounded\"\n            required\n          />\n        </div>\n        <div className=\"mb-4\">\n          <label htmlFor=\"message\" className=\"block text-gray-700\">Message</label>\n          <textarea\n            id=\"message\"\n            value={message}\n            onChange={(e) => setMessage(e.target.value)}\n            className=\"mt-1 p-2 w-full border border-gray-300 rounded\"\n            rows={4}\n            required\n          />\n        </div>\n        <button\n          type=\"submit\"\n          className=\"mt-4 bg-blue-500 text-white px-4 py-2 rounded\"\n        >\n          Send Message\n        </button>\n      </form>\n    </div>\n  );\n};\n\nexport default ContactForm;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "tailwind.config.js",
+      "content": "{\n  \"content\": [\n    \"./index.html\",\n    \"./src/**/*.{js,jsx,ts,tsx}\"\n  ],\n  \"theme\": {\n    \"extend\": {\n      \"colors\": {\n        \"primary\": \"#ff6363\",\n        \"secondary\": \"#6b5b95\",\n        \"accent\": \"#88b04b\",\n        \"neutral\": \"#f7f7f7\",\n        \"base\": \"#ffffff\",\n        \"dark\": \"#333333\"\n      },\n      \"fontFamily\": {\n        \"sans\": [\"Helvetica\", \"Arial\", \"sans-serif\"],\n        \"serif\": [\"Georgia\", \"serif\"],\n        \"mono\": [\"Menlo\", \"Monaco\", \"monospace\"]\n      },\n      \"spacing\": {\n        \"72\": \"18rem\",\n        \"84\": \"21rem\",\n        \"96\": \"24rem\"\n      }\n    }\n  },\n  \"plugins\": [],\n  \"corePlugins\": {\n    \"preflight\": true\n  }\n}",
+      "type": "config",
+      "language": "javascript"
+    },
+    {
+      "path": "src/types/index.ts",
+      "content": "export interface User {\n  id: number;\n  name: string;\n  email: string;\n}\n\nexport interface Post {\n  id: number;\n  title: string;\n  content: string;\n  authorId: number;\n}\n\nexport interface Comment {\n  id: number;\n  postId: number;\n  content: string;\n  authorId: number;\n}\n\nexport type ApiResponse<T> = {\n  data: T;\n  message?: string;\n  error?: boolean;\n};\n\nexport type FetchOptions = {\n  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';\n  headers?: Record<string, string>;\n  body?: string;\n};\n\nexport const fetchJson = async <T>(url: string, options?: FetchOptions): Promise<ApiResponse<T>> => {\n  const response = await fetch(url, {\n    ...options,\n    headers: {\n      'Content-Type': 'application/json',\n      ...options?.headers,\n    },\n  });\n\n  const data = await response.json();\n\n  return {\n    data,\n    message: response.ok ? undefined : data.message,\n    error: !response.ok,\n  };\n};",
+      "type": "util",
+      "language": "typescript"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "content": "export interface User {\n  id: number;\n  name: string;\n  email: string;\n}\n\nexport interface ApiResponse<T> {\n  data: T;\n  status: number;\n  message: string;\n}\n\nexport type Nullable<T> = T | null;\n\nexport const isNull = <T>(value: T): value is Nullable<T> => {\n  return value === null;\n};\n\nexport const fetchJson = async <T>(url: string): Promise<ApiResponse<T>> => {\n  const response = await fetch(url);\n  const data = await response.json();\n  return {\n    data,\n    status: response.status,\n    message: response.statusText,\n  };\n};\n\nexport const debounce = <T extends (...args: any[]) => void>(func: T, delay: number) => {\n  let timeoutId: NodeJS.Timeout | null = null;\n  return (...args: Parameters<T>) => {\n    if (timeoutId) {\n      clearTimeout(timeoutId);\n    }\n    timeoutId = setTimeout(() => {\n      func(...args);\n    }, delay);\n  };\n};",
+      "type": "util",
+      "language": "typescript"
+    }
+  ]
+}

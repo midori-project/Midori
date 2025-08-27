@@ -1,0 +1,48 @@
+"use client";
+
+import { Sandpack } from "@codesandbox/sandpack-react";
+import {
+  createReactSandpackProps
+} from "../../../utils/sandPackConverter";
+import testCafe from "@/components/preview/test/test-cafe.json";
+export default function TestPage() {
+  const react3SandpackProps = createReactSandpackProps(testCafe, { 
+    template: "react",
+    theme: "dark",
+    showNavigator: true,
+    showTabs: true,
+    showLineNumbers: true,
+    showInlineErrors: true,
+    wrapContent: true,
+    autorun: true,
+  });
+
+  return (
+    <div className="h-screen flex flex-col">
+      {/* Header */}
+      <div className="bg-gray-800 text-white p-4">
+        <h1 className="text-2xl font-bold">🐱 Cat Gallery Sandpack Preview</h1>
+        <p className="text-sm text-gray-300 mt-2">
+          ✅ React Router ทำงานแล้ว! ลิงก์จะนำทางได้ใน Sandpack environment
+        </p>
+      </div>
+
+      {/* Sandpack */}
+      <div className="flex-1">
+        {/* <Sandpack {...sandpackProps} /> */}
+        <Sandpack
+          {...react3SandpackProps}
+          options={{
+            externalResources: ["https://cdn.tailwindcss.com"],
+          }}
+          customSetup={{
+            dependencies: {
+              react: "^18.2.0",
+              "react-dom": "^18.2.0"
+            }
+          }}
+        />
+      </div>
+    </div>
+  );
+}
