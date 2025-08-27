@@ -178,7 +178,12 @@ export class OpenAIQuestionService {
         totalQuestions: data.questionStrategy?.totalQuestions || 0,
         questionTypes: data.questionStrategy?.questionTypes || [],
         adaptiveQuestions: data.questionStrategy?.adaptiveQuestions || false,
+  priorityQuestions: data.questionStrategy?.priorityQuestions || [],
       },
+      designPreferences: {
+        designStyle: data.designPreferences?.designStyle || ''
+      },
+      missingElements: data.missingElements || [],
     };
   }
 

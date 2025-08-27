@@ -2,17 +2,17 @@
 
 import { usePathname } from 'next/navigation';
 import { Navbar } from '@/components/Navbar/Navbar';
+import { authPages } from '@/components/Layout/authPages';
 
 export function ConditionalNavbar() {
   const pathname = usePathname();
-  
-  // หน้าที่ไม่ต้องการแสดง Navbar
-  const authPages = ['/login', '/register', '/forgot-password'];
+
+  // ใช้ shared authPages
   const hideNavbar = authPages.includes(pathname);
-  
+
   if (hideNavbar) {
     return null;
   }
-  
+
   return <Navbar />;
 }

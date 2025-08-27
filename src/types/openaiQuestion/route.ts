@@ -23,6 +23,8 @@ export interface EnhancedAnalysis {
   designPreferences: {
     designStyle?: string;
   };
+  // Detailed completeness information (score, missing elements, suggestions)
+  completeness?: Completeness;
   missingElements: string[];
   questionStrategy: QuestionStrategy;
 }

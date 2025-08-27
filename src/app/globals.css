@@ -135,3 +135,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom breakpoint: >=1640px show 4 columns in grids using this utility */
+@media (min-width: 1640px) {
+  .grid-cols-over-1640 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

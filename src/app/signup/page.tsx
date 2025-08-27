@@ -1,43 +1,71 @@
 import { Metadata } from 'next';
+import Image from 'next/image';
 import RegisterFormClient from '@/components/RegisterForm/RegisterFormClient';
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
-  title: 'สมัครสมาชิก - Midori',
-  description: 'สร้างบัญชีใหม่เพื่อเริ่มใช้งาน Midori - AI-powered website generator',
-  keywords: 'สมัครสมาชิก, ลงทะเบียน, Midori, AI website generator',
+  title: 'Sign up - Midori',
+  description: 'Create your Midori account - AI-powered website generator',
+  keywords: 'signup, register, Midori, AI website generator',
 };
 
 function RegisterContent() {
   return (
-    <div className="h-screen flex overflow-hidden">
-      {/* Left side - Gradient Background */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
+    <div className="h-screen flex overflow-hidden relative">
+      {/* full-page decorative background image */}
+      <Image
+        src="/img/background_login.png"
+        alt="background"
+        aria-hidden="true"
+        priority
+        quality={90}
+        /* sizes="100vw" */
+        fill
+        className="object-cover object-center"
+        style={{ filter: "saturate(1.35) contrast(1.08) brightness(1.03)" }}
+      />
+
+      {/* left-frame tint overlay to match frame tone (decorative) */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-y-0 left-0 w-full lg:w-1/2 pointer-events-none"
+        style={{
+          // opaque overlay (solid gradient) to match requested "ทึบ" appearance
+          background:
+            "linear-gradient(180deg, rgba(240,255,250,0.5) 0%, rgba(196,245,233,0.3) 40%, rgba(160,236,214,0.5) 100%)",
+          borderTopRightRadius: "1rem",
+          borderBottomRightRadius: "1rem",
+          zIndex: 10,
+        }}
+      />
+
+      {/* Left side - content area (sits above background) */}
+      <div className="hidden lg:flex lg:w-1/2 relative z-20">
+        <div className="relative z-20 flex flex-col justify-center items-center text-white p-12">
           <div className="mb-8">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
-            </div>
             <h1 className="text-4xl font-bold mb-4">Midori</h1>
-            <p className="text-xl text-white/90 mb-8">AI-powered Website Generator</p>
+            <p className="text-xl text-white/90">
+              AI-powered Website Generator
+            </p>
             <p className="text-lg text-white/80 max-w-md">
-              เริ่มต้นสร้างเว็บไซต์ที่สวยงามด้วยพลัง AI วันนี้ เพียงแค่สมัครสมาชิก
+              Create beautiful websites with AI — just tell us what you need.
             </p>
           </div>
-          
-          {/* Decorative elements */}
-          <div className="absolute top-20 right-20 w-32 h-32 bg-white/10 rounded-full blur-xl" />
-          <div className="absolute bottom-20 left-20 w-24 h-24 bg-white/10 rounded-full blur-lg" />
-          <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-white/10 rounded-full blur-md" />
         </div>
       </div>
 
-      {/* Right side - Register Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 bg-gray-50 overflow-y-auto">
-        <div className="w-full max-w-md">
+      {/* Right side - Register Form overlay (white/semi-opaque panel on top of bg) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 relative z-20">
+        <div
+          aria-hidden="true"
+          className="absolute inset-y-0 right-0 w-full rounded-l-2xl shadow-lg"
+          style={{
+            background: 'linear-gradient(180deg, #F5FFF9 0%, #DCFDEB 40%, #BBF7DC 100%)',
+            backdropFilter: 'blur(8px) saturate(1.05)'
+          }}
+        />
+
+        <div className="w-full max-w-md relative">
           <RegisterFormClient />
         </div>
       </div>
@@ -47,7 +75,7 @@ function RegisterContent() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div>กำลังโหลด...</div>}>
+    <Suspense fallback={<div>Loading...</div>}>
       <RegisterContent />
     </Suspense>
   );

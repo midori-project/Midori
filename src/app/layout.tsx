@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ConditionalNavbar } from "@/components/Layout/ConditionalNavbar";
 import { ConditionalLayout } from "@/components/Layout/ConditionalLayout";
+import { ConditionalFooter } from "@/components/Layout/ConditionalFooter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
             <ConditionalLayout>
               {children}
             </ConditionalLayout>
+            <ConditionalFooter />
           </div>
         </AuthProvider>
       </body>

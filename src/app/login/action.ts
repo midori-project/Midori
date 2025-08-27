@@ -7,6 +7,9 @@ import { authBusinessService } from '@/libs/auth/authBusinessService';
 
 type State = { ok: boolean; error?: string | null };
 
+
+
+// สำหรับ Client Component - ไม่ redirect และคืนค่า result
 export async function loginAction(prevState: State, formData: FormData): Promise<State> {
   // 1) Coerce form values to string
   const raw = {
@@ -27,8 +30,8 @@ export async function loginAction(prevState: State, formData: FormData): Promise
     // 3) Call authBusinessService directly (Internal Flow)
     await authBusinessService.login({ email, password, remember });
     
-    // 4) Redirect to home page on success
-    redirect('/');
+    // 4) Return success result (ไม่ redirect)
+    return { ok: true };
   } catch (error: unknown) {
     // Handle business logic errors directly
     if (error instanceof Error) {

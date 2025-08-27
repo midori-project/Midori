@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { RegisterSchema } from "@/schemas/auth/register";
 import { authBusinessService } from "@/libs/auth/authBusinessService";
 
@@ -32,8 +31,8 @@ export async function registerAction(
     // 3) Call authBusinessService directly (Internal Flow)
     await authBusinessService.register({ name, email, password });
 
-    // 4) Redirect to login page (user needs to verify email)
-    redirect("/login?message=กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชี");
+    // 4) Return success result (ไม่ redirect)
+    return { ok: true };
   } catch (error: unknown) {
     // Handle business logic errors directly
     if (error instanceof Error) {

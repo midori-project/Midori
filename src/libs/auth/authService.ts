@@ -123,11 +123,35 @@ export class AuthService {
    */
   async getCurrentUser(): Promise<MeResponse> {
     try {
-      const response = await axios.get<MeResponse>(`${this.baseURL}/api/auth/me`, {
+      // ใช้ validate endpoint แทน me endpoint เพราะไม่มี me route
+      const response = await axios.get(`${this.baseURL}/api/auth/validate`, {
         withCredentials: true,
       });
       
-      return response.data;
+      const data = response.data;
+      
+      if (!data.valid || !data.user) {
+        throw new Error('Invalid session');
+      }
+      
+      // แปลง response ให้ตรงกับ MeResponse format
+      return {
+        success: true,
+        user: {
+          id: data.user.id,
+          email: data.user.email || '',
+          displayName: data.user.displayName || null,
+          avatarUrl: data.user.avatarUrl || null,
+          createdAt: data.user.createdAt,
+          lastLoginAt: data.user.lastLoginAt
+        },
+        session: {
+          id: '', // ไม่มีข้อมูล session id ใน validate response
+          createdAt: '',
+          lastActiveAt: null,
+          expiresAt: '',
+        }
+      };
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data) {
         throw error.response.data as AuthError;

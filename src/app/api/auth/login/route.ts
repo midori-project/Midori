@@ -18,7 +18,8 @@ interface LoginSuccessResponse {
 interface LoginErrorResponse {
   success: false;
   error: string;
-  details?: Record<string, string>;
+  // validation.flatten().fieldErrors returns Record<string, string[] | undefined>
+  details?: Record<string, string[] | undefined>;
 }
 
 type LoginResponse = LoginSuccessResponse | LoginErrorResponse;

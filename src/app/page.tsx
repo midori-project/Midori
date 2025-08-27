@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Input from "./home/input";
+import Gallery from "./home/gallery";
+
 
 export default function Home() {
   return (
@@ -32,7 +34,7 @@ export default function Home() {
       />
 
       {/* Hero Section */}
-      <main className="relative z-30 pt-30 px-4 sm:px-6 lg:px-8">
+      <main className="relative z-30 pt-60 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl font-bold text-[#0B4421] sm:text-5xl md:text-6xl">
             Grow your site with
@@ -48,11 +50,14 @@ export default function Home() {
       <section className="relative z-30 pt-10 px-4 sm:px-6 lg:px-8">
         <Input />
       </section>
+      
     </div>
     </div>
-    <div>
-
+    {/* Gallery Section */}
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen">
+      <Gallery />
     </div>
+    
 </>
   );
 }
