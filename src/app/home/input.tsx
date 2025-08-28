@@ -1,5 +1,5 @@
 "use client"
-import { PromptBox } from "@/components/PromptBox/chatgpt-prompt-input";
+import { PromptBox } from "@/components/PromptInput/chatgpt-prompt-input";
 
 export default function Input() {
   return (

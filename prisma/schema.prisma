@@ -177,6 +177,7 @@ model Generation {
   projectId    String
   userId       String
   prompt       String
+  promptJson   Json?
   options      Json             @default("{}")
   model        String
   tokensInput  Int              @default(0)

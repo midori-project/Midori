@@ -34,9 +34,9 @@ export default function Home() {
       />
 
       {/* Hero Section */}
-      <main className="relative z-30 pt-60 px-4 sm:px-6 lg:px-8">
+      <main className="relative z-30 pt-64 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl font-bold text-[#0B4421] sm:text-5xl md:text-6xl">
+          <h1 className="text-4xl font-bold text-[#0B4421] sm:text-5xl md:text-8xl">
             Grow your site with
             <span className="text-green-600"> Midori</span>
           </h1>
@@ -47,7 +47,7 @@ export default function Home() {
       </main>
 
       {/* Features Section */}
-      <section className="relative z-30 pt-10 px-4 sm:px-6 lg:px-8">
+      <section className="relative z-30 pt-20 px-4 sm:px-6 lg:px-8">
         <Input />
       </section>
       

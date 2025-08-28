@@ -1,9 +1,15 @@
 // Shared list of auth-related routes used by layout components
-export const authPages = [
+export type AuthPageEntry =
+  | string
+  | { base: string; allowScroll?: boolean };
+
+export const authPages: AuthPageEntry[] = [
   '/login',
   '/signup',
   '/register',
   '/forgot-password',
+  '/info'
+  // info pages: allow scroll in some cases; default not set (false)
 ];
 
-export type AuthPage = (typeof authPages)[number];
+export type AuthPage = AuthPageEntry;

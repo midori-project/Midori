@@ -7,12 +7,23 @@ import { authPages } from '@/components/Layout/authPages';
 export function ConditionalFooter() {
   const pathname = usePathname();
 
-  // ใช้ shared authPages
-  const hideFooter = authPages.includes(pathname);
-
-  if (hideFooter) {
-    return null;
+  // รองรับ entry เป็น string หรือ { base, allowScroll? }
+  let matched = false;
+  for (const entry of authPages) {
+    if (typeof entry === 'string') {
+      if (pathname === entry || pathname.startsWith(entry + '/')) {
+        matched = true;
+        break;
+      }
+    } else {
+      if (pathname === entry.base || pathname.startsWith(entry.base + '/')) {
+        matched = true;
+        break;
+      }
+    }
   }
+
+  if (matched) return null;
 
   return <Footer />;
 }
