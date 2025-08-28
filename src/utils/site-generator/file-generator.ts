@@ -82,6 +82,12 @@ export class FileGenerator {
       { path: 'src/App.tsx', type: 'app' as const },
       { path: 'src/index.css', type: 'style' as const },
       { path: 'vite.config.ts', type: 'config' as const },
+      // Ensure core pages always exist for App.tsx imports
+      { path: 'src/pages/Home.tsx', type: 'page' as const },
+      { path: 'src/pages/About.tsx', type: 'page' as const },
+      { path: 'src/pages/Contact.tsx', type: 'page' as const },
+      { path: 'src/pages/Products.tsx', type: 'page' as const },
+      { path: 'src/pages/Services.tsx', type: 'page' as const },
     ];
 
     const businessSpecificFiles = this.getBusinessSpecificFiles(businessContext);
@@ -501,20 +507,7 @@ export class FileGenerator {
     // เพิ่ม User Intent Analysis
     const userIntent = await UserIntentAnalyzer.analyzeUserIntent(projectStructure as any);
     
-    // ใช้เทมเพลตสำหรับไฟล์หลักเพื่อความเสถียร ไม่เรียกโมเดล
-    const coreTemplateFiles = new Set([
-      'index.html',
-      'src/main.tsx',
-      'src/App.tsx',
-      'src/index.css',
-      'vite.config.ts',
-      'tailwind.config.js',
-      'package.json'
-    ]);
-
-    if (coreTemplateFiles.has(path)) {
-      return this.createTemplateFile(fileConfig, projectStructure);
-    }
+    // ทุกไฟล์จะถูกสร้างด้วย AI ตาม User Intent (ไม่มีการบังคับใช้เทมเพลตล่วงหน้า)
 
     // Create detailed prompts for proper React components with specific types
     const prompts = {
@@ -873,7 +866,8 @@ Return only CSS code, no markdown headers or explanations.`,
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(`❌ Failed to generate ${path}:`, message);
-      throw new Error(`[FileGenerator] Generation error for ${path}: ${message}`);
+      console.log('🔄 Falling back to template for', path);
+      return this.createTemplateFile(fileConfig, projectStructure);
     }
   }
 
