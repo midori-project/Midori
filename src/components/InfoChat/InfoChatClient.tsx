@@ -12,9 +12,10 @@ interface Message {
 interface InfoChatClientProps {
   projectId: string;
   initialPrompt?: string;
+  sessionId?: string;
 }
 
-export default function InfoChatClient({ projectId, initialPrompt }: InfoChatClientProps) {
+export default function InfoChatClient({ projectId, initialPrompt, sessionId: initialSessionId }: InfoChatClientProps) {
   const router = useRouter();
   const chatRef = React.useRef<HTMLDivElement | null>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
@@ -29,6 +30,8 @@ export default function InfoChatClient({ projectId, initialPrompt }: InfoChatCli
   const [isComplete, setIsComplete] = React.useState<boolean>(false);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
+  const initializedRef = React.useRef<boolean>(false);
 
   const [messages, setMessages] = React.useState<Message[]>([
     {
@@ -38,11 +41,47 @@ export default function InfoChatClient({ projectId, initialPrompt }: InfoChatCli
     },
   ]);
 
-  // Initialize chat with initial prompt
+  // Initialize chat
   React.useEffect(() => {
+    console.log('=== useEffect ทำงาน ===');
+    console.log('initialPrompt:', initialPrompt);
+    console.log('initialSessionId:', initialSessionId);
+    console.log('initializedRef.current:', initializedRef.current);
+    console.log('======================');
+    
+    // ถ้าได้ initialize แล้ว ให้ไม่ทำอะไร
+    if (initializedRef.current) {
+      console.log('ได้ initialize แล้ว - ไม่ทำอะไร');
+      return;
+    }
+    
     const initializeChat = async () => {
-      if (!initialPrompt || sessionId) return;
+      if (!initialPrompt || initializedRef.current) return;
       
+      // ป้องกันการเรียกซ้ำ
+      initializedRef.current = true;
+      
+      // ถ้ามี sessionId จากหน้าแรก ให้ใช้เลย
+      if (initialSessionId) {
+        console.log('ใช้ sessionId จากหน้าแรก:', initialSessionId);
+        setSessionId(initialSessionId);
+        initializedRef.current = true;
+        setIsInitialized(true);
+        
+        // เพิ่มข้อความเริ่มต้น
+        setMessages(prev => [
+          ...prev,
+          { 
+            id: `assistant-${Date.now()}-${Math.random()}`, 
+            role: "assistant", 
+            text: "ชื่อโปรเจ็คที่คุณต้องการสร้างคืออะไร?" 
+          }
+        ]);
+        return;
+      }
+      
+      // ถ้าไม่มี sessionId ให้เรียก API เอง
+      console.log('ไม่มี sessionId จากหน้าแรก - เรียก API เอง');
       setIsAssistantTyping(true);
       setLoading(true);
       
@@ -71,6 +110,23 @@ export default function InfoChatClient({ projectId, initialPrompt }: InfoChatCli
           setTotalQuestions(data.totalQuestions || 0);
           setCurrentQuestionNumber(data.currentQuestion || 0);
           setIsComplete(data.isComplete);
+          setIsInitialized(true);
+          initializedRef.current = true;
+          
+          // Debug: แสดงคำถามทั้งหมด
+          console.log('=== คำถามทั้งหมด ===');
+          console.log('Session ID:', data.sessionId);
+          console.log('คำถามปัจจุบัน:', data.currentquestion);
+          console.log('จำนวนคำถามทั้งหมด:', data.totalQuestions);
+          console.log('คำถามที่:', data.currentQuestion);
+          console.log('Analysis:', data.analysis);
+          if (data.analysis?.refinementQuestions) {
+            console.log('คำถามทั้งหมด:');
+            data.analysis.refinementQuestions.forEach((question, index) => {
+              console.log(`${index + 1}. ${question}`);
+            });
+          }
+          console.log('========================');
           
           // Add assistant message
           setMessages(prev => [
@@ -94,7 +150,7 @@ export default function InfoChatClient({ projectId, initialPrompt }: InfoChatCli
     };
 
     initializeChat();
-  }, [initialPrompt, sessionId]);
+  }, [initialPrompt]);
 
   React.useLayoutEffect(() => {
     const el = textareaRef.current;
@@ -149,11 +205,19 @@ export default function InfoChatClient({ projectId, initialPrompt }: InfoChatCli
 
       const data: ChatResponse = await response.json();
       
-      if (data.success) {
-        setCurrentQuestion(data.currentquestion || "");
-        setTotalQuestions(data.totalQuestions || 0);
-        setCurrentQuestionNumber(data.currentQuestion || 0);
-        setIsComplete(data.isComplete);
+             if (data.success) {
+         setCurrentQuestion(data.currentquestion || "");
+         setTotalQuestions(data.totalQuestions || 0);
+         setCurrentQuestionNumber(data.currentQuestion || 0);
+         setIsComplete(data.isComplete);
+         
+         // Debug: แสดงคำถามที่เปลี่ยนไป
+         console.log('=== คำถามที่เปลี่ยนไป ===');
+         console.log('คำถามใหม่:', data.currentquestion);
+         console.log('คำถามที่:', data.currentQuestion);
+         console.log('จำนวนคำถามทั้งหมด:', data.totalQuestions);
+         console.log('เสร็จสิ้น:', data.isComplete);
+         console.log('========================');
         
         // Add assistant message
         const reply: Message = {

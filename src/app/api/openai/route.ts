@@ -185,7 +185,7 @@ async function handleAnalysisStep(session: ChatSession, userMessage: string): Pr
   console.log('Session Step:', session.currentStep);
   console.log('================================');
 
-  // Check if user is asking about the current question
+  // บันทึกคำตอบของผู้ใช้ก่อน (ถ้าไม่ใช่การถามเกี่ยวกับคำถาม)
   const isAskingAboutQuestion = userMessage.toLowerCase().includes('คำถาม') || 
                                userMessage.toLowerCase().includes('อธิบาย') ||
                                userMessage.toLowerCase().includes('หมายถึง') ||
@@ -195,7 +195,6 @@ async function handleAnalysisStep(session: ChatSession, userMessage: string): Pr
                                userMessage.toLowerCase().includes('แนะนำ')||
                                userMessage.toLowerCase().includes('ทำไม')||
                                userMessage.toLowerCase().includes('อะไร');
-                              
 
   // ตรวจสอบว่าผู้ใช้กำลังถามเกี่ยวกับคำถามปัจจุบันหรือไม่
   if (isAskingAboutQuestion && currentQuestionNumber <= totalQuestions) {
@@ -255,11 +254,13 @@ async function handleAnalysisStep(session: ChatSession, userMessage: string): Pr
     }
   }
 
-  // บันทึกคำตอบของผู้ใช้
-  session.userResponses[`question${currentQuestionNumber}`] = userMessage;
-  session.messages.push(
-    { role: "user", content: userMessage, timestamp: new Date() }
-  );
+  // บันทึกคำตอบของผู้ใช้ (ถ้าไม่ใช่การถามเกี่ยวกับคำถาม)
+  if (!isAskingAboutQuestion) {
+    session.userResponses[`question${currentQuestionNumber}`] = userMessage;
+    session.messages.push(
+      { role: "user", content: userMessage, timestamp: new Date() }
+    );
+  }
 
   // ตรวจสอบว่าตอบคำถามครบแล้วหรือยัง
   if (currentQuestionNumber >= totalQuestions) {
