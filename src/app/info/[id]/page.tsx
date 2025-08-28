@@ -3,12 +3,12 @@ import Link from "next/link";
 import InfoChatClient from "@/components/InfoChat/InfoChatClient";
 import Image from "next/image";
 
-type Props = { params: { id: string } };
+type Props = { 
+  params: { id: string };
+  searchParams: { prompt?: string };
+};
 
-export default async function InfoPage({ params }: Props) {
-  // Await params as required by Next.js 15
-  const resolvedParams = await params;
-  
+export default async function InfoPage({ params, searchParams }: Props) {
   // Fetch base project data (avoid including relations that may not be available in runtime client)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const project = await (prisma as any).project.findUnique({
@@ -61,7 +61,10 @@ export default async function InfoPage({ params }: Props) {
       </div>
       <div className="absolute inset-0 bg-green-300/50" aria-hidden="true" />
       <div className="relative z-10 p-4">
-        <InfoChatClient projectId={project.id} />
+        <InfoChatClient 
+          projectId={project.id} 
+          initialPrompt={searchParams.prompt || project.description || ""}
+        />
       </div>
     </div>
   );

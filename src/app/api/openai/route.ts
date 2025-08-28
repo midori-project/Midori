@@ -150,26 +150,7 @@ async function handleInitialStep(session: ChatSession, userMessage: string): Pro
           return {
         success: true,
         sessionId: session.id,
-        message: `🔍 **การวิเคราะห์ Prompt แรกของคุณ**
-
-**ประเภทโปรเจกต์:** ${parsedResponse.projectType}
-**กลุ่มเป้าหมาย:** ${parsedResponse.targetAudience}
-**ความซับซ้อน:** ${parsedResponse.complexity}
-**คะแนนความสมบูรณ์:** ${parsedResponse.completeness.score}/100
-
-**สิ่งที่ขาดหายไป:**
-${parsedResponse.completeness.missingElements.map((item: string) => `• ${item}`).join('\n')}
-
-**ข้อเสนอแนะ:**
-${parsedResponse.completeness.suggestions.map((item: string) => `• ${item}`).join('\n')}
-
----
-
-ตอนนี้ฉันจะถามคำถาม 5 ข้อเพื่อปรับปรุง prompt ของคุณให้สมบูรณ์ยิ่งขึ้น
-
-**คำถามที่ 1:** ${parsedResponse.refinementQuestions[0]}
-
-กรุณาตอบคำถามนี้ หรือถามกลับหากต้องการรายละเอียดเพิ่มเติมเกี่ยวกับคำถาม`,
+        message: `${parsedResponse.refinementQuestions[0]}`,
         currentStep: session.currentStep,
         analysis: session.analysis,
         isComplete: false,
@@ -248,13 +229,7 @@ async function handleAnalysisStep(session: ChatSession, userMessage: string): Pr
       return {
         success: true,
         sessionId: session.id,
-        message: `${explanation}
-
----
-
-**คำถามที่ ${currentQuestionNumber}:** ${currentQuestion}
-
-กรุณาตอบคำถามนี้ หรือถามกลับหากต้องการรายละเอียดเพิ่มเติม`,
+        message: `${explanation}`,
         currentStep: session.currentStep,
         analysis: session.analysis,
         isComplete: false,
@@ -268,9 +243,7 @@ async function handleAnalysisStep(session: ChatSession, userMessage: string): Pr
       return {
         success: true,
         sessionId: session.id,
-        message: `**คำถามที่ ${currentQuestionNumber}:** ${currentQuestion}
-
-กรุณาตอบคำถามนี้ หรือถามกลับหากต้องการรายละเอียดเพิ่มเติม`,
+        message: `${currentQuestion}`,
         currentStep: session.currentStep,
         analysis: session.analysis,
         isComplete: false,
@@ -325,11 +298,7 @@ async function handleAnalysisStep(session: ChatSession, userMessage: string): Pr
     return {
       success: true,
       sessionId: session.id,
-      message: `✅ ขอบคุณสำหรับคำตอบ!
-
-**คำถามที่ ${currentQuestionNumber + 1}:** ${nextQuestion}
-
-กรุณาตอบคำถามนี้ หรือถามกลับหากต้องการรายละเอียดเพิ่มเติม (เหลืออีก ${totalQuestions - currentQuestionNumber - 1} คำถาม)`,
+      message: `${nextQuestion}`,
       currentStep: session.currentStep,
       analysis: session.analysis,
       isComplete: false,
