@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { GeneratedFile } from '@/types/sitegen';
 import EnhancedPreview from './EnhancedPreview';
 import QualityReport from './QualityReport';
-import { CodeValidator } from '../../../utils/code-validator';
+import { CodeValidator } from '@/utils/code-validator';
 
 interface AdvancedPreviewProps {
   files: GeneratedFile[];

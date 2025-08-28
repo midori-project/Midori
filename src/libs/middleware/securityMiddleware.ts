@@ -8,11 +8,12 @@ export function securityHeadersMiddleware(response: NextResponse) {
   // Content Security Policy
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js needs unsafe-inline/eval
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https:",
-    "font-src 'self' data:",
-    "connect-src 'self' https:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.codesandbox.io https://codesandbox.io", // Next.js needs unsafe-inline/eval + Sandpack
+    "style-src 'self' 'unsafe-inline' https://*.codesandbox.io",
+    "img-src 'self' data: https: https://*.codesandbox.io",
+    "font-src 'self' data: https://*.codesandbox.io",
+    "connect-src 'self' https: https://*.codesandbox.io wss://*.codesandbox.io",
+    "frame-src 'self' https://*.codesandbox.io https://codesandbox.io https://*.sandpack.codesandbox.io",
     "frame-ancestors 'none'",
   ].join('; ');
 
@@ -21,7 +22,7 @@ export function securityHeadersMiddleware(response: NextResponse) {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  response.headers.set('Permissions-Policy', 'camera=*, microphone=*, geolocation=*');
   
   // HTTPS Only (ใน production)
   if (process.env.NODE_ENV === 'production') {

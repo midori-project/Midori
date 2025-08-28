@@ -3,8 +3,9 @@
 import { Sandpack } from "@codesandbox/sandpack-react";
 import {
   createReactSandpackProps
-} from "../../../utils/sandPackConverter";
+} from "@/utils/sandPackConverter";
 import testCafe from "@/components/preview/test/test-cafe.json";
+
 export default function TestPage() {
   const react3SandpackProps = createReactSandpackProps(testCafe, { 
     template: "react",
@@ -35,14 +36,9 @@ export default function TestPage() {
           options={{
             externalResources: ["https://cdn.tailwindcss.com"],
           }}
-          customSetup={{
-            dependencies: {
-              react: "^18.2.0",
-              "react-dom": "^18.2.0"
-            }
-          }}
         />
       </div>
     </div>
   );
 }
+

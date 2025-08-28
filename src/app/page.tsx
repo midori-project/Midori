@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Input from "./home/input";
 import Gallery from "./home/gallery";
-
+import PromptBox from "@/components/PromptBox/PromptBoxMi";
 
 export default function Home() {
   return (

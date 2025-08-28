@@ -42,72 +42,13 @@ export function convertReactJsonToSandpackFiles(
   enableTailwind: boolean = true
 ): { files: SandpackFile } {
   const files: SandpackFile = {};
-
-  // วนลูปผ่านไฟล์ทั้งหมดและบันทึกด้วย path ที่ขึ้นต้นด้วย '/'
+  
+  // วนลูปผ่านไฟล์ทั้งหมดใน files array
   jsonData.files.forEach((file) => {
-    const normalizedPath = file.path.startsWith('/') ? file.path : `/${file.path}`;
-    files[normalizedPath] = file.content;
+    // เพิ่มไฟล์ลงใน files object โดยใช้ path เป็น key และ content เป็น value
+    files[file.path] = file.content;
   });
 
-  // เติมไฟล์พื้นฐานตามโครงสร้าง CRA ถ้ายังไม่มี
-  if (!files['/package.json']) {
-    files['/package.json'] = JSON.stringify({
-      name: 'sandpack-react-ts',
-      version: '1.0.0',
-      dependencies: {
-        react: '^18.0.0',
-        'react-dom': '^18.0.0'
-      }
-    }, null, 2);
-  }
-
-  if (!files['/public/index.html']) {
-    files['/public/index.html'] = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${jsonData.projectStructure?.name || 'App'}</title>
-    <link rel="stylesheet" href="/src/index.css" />
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>`;
-  }
-
-  const indexExt = Object.prototype.hasOwnProperty.call(files, '/src/index.tsx') ? 'tsx' : 'tsx';
-
-  if (!files[`/src/index.${indexExt}`]) {
-    files[`/src/index.${indexExt}`] = `import React from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App';
-import './index.css';
-
-const root = createRoot(document.getElementById('root')!);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);`;
-  }
-
-  const appExt = Object.prototype.hasOwnProperty.call(files, '/src/App.tsx') ? 'tsx' : 'tsx';
-  if (!files[`/src/App.${appExt}`]) {
-    files[`/src/App.${appExt}`] = `import React from 'react';
-
-export default function App() {
-  return (
-    <div className="App">
-      <h1>${jsonData.projectStructure?.name || 'Hello Sandpack'}</h1>
-    </div>
-  );
-}`;
-  }
-
-  if (!files['/src/index.css']) {
-    files['/src/index.css'] = `${enableTailwind ? '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n' : ''}body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif; }\n.App { padding: 2rem; }`;
-  }
 
   return { files };
 }
@@ -126,67 +67,12 @@ export function convertJsonToSandpackFiles(
   
   // วนลูปผ่านไฟล์ทั้งหมดใน projectStructure
   Object.entries(jsonData.projectStructure.files).forEach(([filePath, fileData]) => {
-    const normalizedPath = filePath.startsWith('/') ? filePath : `/${filePath}`;
-    files[normalizedPath] = fileData.code;
+    // เพิ่มไฟล์ลงใน files object โดยใช้ filePath เป็น key และ code เป็น value
+    files[filePath] = fileData.code;
   });
 
-  // เติมไฟล์พื้นฐานตามโครงสร้าง CRA ถ้ายังไม่มี
-  if (!files['/package.json']) {
-    files['/package.json'] = JSON.stringify({
-      name: 'sandpack-react-ts',
-      version: '1.0.0',
-      dependencies: {
-        react: '^18.0.0',
-        'react-dom': '^18.0.0'
-      }
-    }, null, 2);
-  }
 
-  if (!files['/public/index.html']) {
-    files['/public/index.html'] = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${jsonData.projectStructure.name || 'App'}</title>
-    <link rel="stylesheet" href="/src/index.css" />
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>`;
-  }
-
-  if (!files['/src/index.tsx']) {
-    files['/src/index.tsx'] = `import React from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App';
-import './index.css';
-
-const root = createRoot(document.getElementById('root')!);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);`;
-  }
-
-  if (!files['/src/App.tsx']) {
-    files['/src/App.tsx'] = `import React from 'react';
-
-export default function App() {
-  return (
-    <div className="App">
-      <h1>${jsonData.projectStructure.name || 'Hello Sandpack'}</h1>
-    </div>
-  );
-}`;
-  }
-
-  if (!files['/src/index.css']) {
-    files['/src/index.css'] = `${enableTailwind ? '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n' : ''}body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif; }\n.App { padding: 2rem; }`;
-  }
-
+  
   return { files };
 }
 

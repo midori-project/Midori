@@ -19,6 +19,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Midori - AI-Powered Website Generator",
   description: "สร้างเว็บไซต์ได้ง่ายๆ ด้วย AI ที่ทรงพลัง",
+  other: {
+    "Content-Security-Policy": [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.codesandbox.io",
+      "style-src 'self' 'unsafe-inline' https://*.codesandbox.io",
+      "frame-src 'self' https://*.codesandbox.io",
+      "worker-src 'self' blob:",
+      "connect-src 'self' https://*.codesandbox.io",
+      "img-src 'self' data: blob: https://*.codesandbox.io",
+      "font-src 'self' data: https://*.codesandbox.io",
+      "media-src 'self' blob: https://*.codesandbox.io"
+    ].join("; ")
+  }
 };
 
 export default function RootLayout({
