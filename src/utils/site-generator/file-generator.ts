@@ -4,11 +4,117 @@ import { UserIntentAnalyzer } from './user-intent-analyzer';
 import { OpenAIService } from './openai-service';
 // import { CodeFormatter } from '../code-formatter';
 
+// เพิ่ม interfaces สำหรับ type safety
+interface BusinessContext {
+  industry: string;
+  specificNiche: string;
+  targetAudience: string;
+  businessModel: string;
+}
+
+interface UserIntent {
+  visualStyle: string;
+  colorScheme: string;
+  layoutPreference: string;
+  tone: string;
+  targetAudience: string;
+}
+
+interface CodeValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
 /**
  * File Generator
  * Handles generation of individual files for the website
  */
 export class FileGenerator {
+
+  /**
+   * Validate generated code for common issues
+   */
+  private static validateGeneratedCode(content: string, filePath: string): CodeValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    
+    // Basic syntax checks
+    if (!content || content.trim().length === 0) {
+      errors.push('Empty content generated');
+      return { isValid: false, errors, warnings };
+    }
+    
+    // React component validation
+    if (filePath.endsWith('.tsx')) {
+      // Check for proper React imports
+      if (!content.includes('import React') && !content.includes('from "react"') && !content.includes("from 'react'")) {
+        errors.push('Missing React import');
+      }
+      
+      // Check for export default
+      if (!content.includes('export default')) {
+        errors.push('Missing export default statement');
+      }
+      
+      // Check for proper component function
+      const componentName = filePath.split('/').pop()?.replace('.tsx', '') || '';
+      if (componentName && !content.includes(`const ${componentName}`) && !content.includes(`function ${componentName}`)) {
+        warnings.push(`Component name "${componentName}" not found in function declaration`);
+      }
+      
+      // Check for JSX return
+      if (!content.includes('return (') && !content.includes('return <')) {
+        errors.push('No JSX return statement found');
+      }
+      
+      // Check for unclosed JSX tags
+      const openTags = (content.match(/<[^/][^>]*>/g) || []).length;
+      const closeTags = (content.match(/<\/[^>]*>/g) || []).length;
+      const selfClosingTags = (content.match(/<[^>]*\/>/g) || []).length;
+      
+      if (openTags !== closeTags + selfClosingTags) {
+        errors.push('Potential unclosed JSX tags detected');
+      }
+    }
+    
+    // JSON validation
+    if (filePath.endsWith('.json')) {
+      try {
+        JSON.parse(content);
+      } catch (e) {
+        errors.push('Invalid JSON syntax');
+      }
+    }
+    
+    // Check for common issues
+    if (content.includes('undefined') && !content.includes('typeof undefined')) {
+      warnings.push('Potential undefined value usage');
+    }
+    
+    if (content.includes('console.log') || content.includes('console.error')) {
+      warnings.push('Console statements found (consider removing for production)');
+    }
+    
+    // Import path validation
+    const importRegex = /import.*from\s+['"`]([^'"`]+)['"`]/g;
+    let match;
+    while ((match = importRegex.exec(content)) !== null) {
+      const importPath = match[1];
+      if (importPath.startsWith('./') || importPath.startsWith('../')) {
+        // Check for proper relative path structure
+        if (importPath.includes('//') || importPath.endsWith('/')) {
+          warnings.push(`Suspicious import path: ${importPath}`);
+        }
+      }
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
   
   /**
    * Generate ESSENTIAL files only (10-15 files max) - OPTIMIZED VERSION
@@ -71,7 +177,7 @@ export class FileGenerator {
    * Get essential files based on business context
    */
   private static getEssentialFilesByBusinessContext(
-    businessContext: any, 
+    businessContext: BusinessContext, 
     projectStructure: ProjectStructure
   ): FileConfig[] {
     const baseFiles: FileConfig[] = [
@@ -82,12 +188,7 @@ export class FileGenerator {
       { path: 'src/App.tsx', type: 'app' as const },
       { path: 'src/index.css', type: 'style' as const },
       { path: 'vite.config.ts', type: 'config' as const },
-      // Ensure core pages always exist for App.tsx imports
-      { path: 'src/pages/Home.tsx', type: 'page' as const },
-      { path: 'src/pages/About.tsx', type: 'page' as const },
-      { path: 'src/pages/Contact.tsx', type: 'page' as const },
-      { path: 'src/pages/Products.tsx', type: 'page' as const },
-      { path: 'src/pages/Services.tsx', type: 'page' as const },
+
     ];
 
     const businessSpecificFiles = this.getBusinessSpecificFiles(businessContext);
@@ -393,7 +494,7 @@ export class FileGenerator {
   /**
    * Get business-specific files based on industry
    */
-  private static getBusinessSpecificFiles(businessContext: any): FileConfig[] {
+  private static getBusinessSpecificFiles(businessContext: BusinessContext): FileConfig[] {
     const { industry, specificNiche, targetAudience } = businessContext;
     
     switch (industry) {
@@ -498,22 +599,42 @@ export class FileGenerator {
   private static async generateEssentialFile(
     fileConfig: FileConfig,
     projectStructure: ProjectStructure,
-    businessContext: any
+    businessContext: BusinessContext
   ): Promise<GeneratedFile> {
     const { path, type } = fileConfig;
     const businessType = projectStructure.type || 'website';
     const projectName = projectStructure.name || 'Generated Project';
     
     // เพิ่ม User Intent Analysis
-    const userIntent = await UserIntentAnalyzer.analyzeUserIntent(projectStructure as any);
+    const userIntent = await UserIntentAnalyzer.analyzeUserIntent(projectStructure as any) as UserIntent;
     
     // ทุกไฟล์จะถูกสร้างด้วย AI ตาม User Intent (ไม่มีการบังคับใช้เทมเพลตล่วงหน้า)
 
     // Create detailed prompts for proper React components with specific types
     const prompts = {
-      // สำหรับไฟล์ config แยกเป็น JSON และ โค้ด JS/TS
-      configJson: `Create a proper ${path} file for ${projectName} Vite React project. Include all essential dependencies and correct configuration. Return only valid JSON code, no markdown headers or explanations.`,
-      configCode: `Create a proper ${path} for a Vite + React + TypeScript project. Return JavaScript/TypeScript code (not JSON), no markdown headers or explanations.`,
+      // สำหรับไฟล์ config แยกเป็น JSON และ โค้ด JS/TS - SandPack Compatible
+      configJson: `Create a proper ${path} file for ${projectName} Vite React project for SandPack environment. 
+
+**SANDPACK COMPATIBILITY REQUIREMENTS:**
+- Use exact dependency versions (no ^ or ~ prefixes)
+- Include only SandPack-supported dependencies:
+  - react: "18.2.0"
+  - react-dom: "18.2.0" 
+  - react-router-dom: "6.8.1"
+- Use "type": "module" for ES modules
+- Include essential scripts: dev, build, preview
+
+Return only valid JSON code, no markdown headers or explanations.`,
+      
+      configCode: `Create a proper ${path} for a Vite + React + TypeScript project optimized for SandPack environment.
+
+**SANDPACK COMPATIBILITY:**
+- Simple configuration that works in browser environment
+- No complex build optimizations
+- Include essential plugins only
+- Use ES module syntax
+
+Return JavaScript/TypeScript code (not JSON), no markdown headers or explanations.`,
       
       // เพิ่ม prompt เฉพาะสำหรับ entry point
       entry: `Create a proper React entry point for ${path}. 
@@ -769,13 +890,14 @@ Return only CSS code, no markdown headers or explanations.`,
       prompt = prompts.configJson;
     } else if (type === 'config') {
       prompt = prompts.configCode;
-    } else if (type in prompts) {
-      // map type keys to prompt keys safely
-      const key = type as keyof typeof prompts;
-      // @ts-ignore safe due to guard above
-      prompt = prompts[key];
     } else {
-      prompt = `Create a proper ${path} file with correct structure and syntax.`;
+      // Type-safe mapping without @ts-ignore
+      const promptKey = type as keyof typeof prompts;
+      if (promptKey in prompts) {
+        prompt = prompts[promptKey];
+      } else {
+        prompt = `Create a proper ${path} file with correct structure and syntax.`;
+      }
     }
     
     try {
@@ -857,6 +979,18 @@ Return only CSS code, no markdown headers or explanations.`,
       const cleanedContent = OpenAIService.cleanCodeResponse(content);
       const validatedContent = this.validateImportPaths(cleanedContent, path);
       
+      // Validate generated code
+      const validation = this.validateGeneratedCode(validatedContent, path);
+      
+      if (!validation.isValid) {
+        console.warn(`⚠️ Validation issues for ${path}:`, validation.errors);
+        // Continue with generation but log issues
+      }
+      
+      if (validation.warnings.length > 0) {
+        console.log(`💡 Validation warnings for ${path}:`, validation.warnings);
+      }
+      
       return {
         path,
         content: validatedContent,
@@ -867,8 +1001,381 @@ Return only CSS code, no markdown headers or explanations.`,
       const message = error instanceof Error ? error.message : String(error);
       console.error(`❌ Failed to generate ${path}:`, message);
       console.log('🔄 Falling back to template for', path);
-      return this.createTemplateFile(fileConfig, projectStructure);
+      
+      // Enhanced fallback with business context
+      return this.createEnhancedTemplateFile(fileConfig, projectStructure, businessContext);
     }
+  }
+
+  /**
+   * Create enhanced template-based file for fallback with business context
+   */
+  private static createEnhancedTemplateFile(
+    fileConfig: FileConfig,
+    projectStructure: ProjectStructure,
+    businessContext: BusinessContext
+  ): GeneratedFile {
+    const { path } = fileConfig;
+    const projectName = projectStructure.name || 'Generated Project';
+    const businessType = businessContext.industry || 'business';
+    
+    // Try to create business-specific template first
+    const businessTemplate = this.createBusinessSpecificTemplate(path, projectName, businessContext);
+    if (businessTemplate) {
+      return {
+        path,
+        content: businessTemplate,
+        type: this.mapFileType(fileConfig.type),
+        language: this.getLanguage(path)
+      };
+    }
+    
+    // Fall back to generic template
+    return this.createTemplateFile(fileConfig, projectStructure);
+  }
+
+  /**
+   * Create business-specific template content
+   */
+  private static createBusinessSpecificTemplate(
+    path: string, 
+    projectName: string, 
+    businessContext: BusinessContext
+  ): string | null {
+    const { industry } = businessContext;
+    
+    // Business-specific page templates
+    if (path.endsWith('/Home.tsx')) {
+      return this.createBusinessHomePage(projectName, businessContext);
+    }
+    
+    if (path.endsWith('/About.tsx')) {
+      return this.createBusinessAboutPage(projectName, businessContext);
+    }
+    
+    if (path.endsWith('/Header.tsx')) {
+      return this.createBusinessHeader(projectName, businessContext);
+    }
+    
+    return null; // Use generic template
+  }
+
+  /**
+   * Create business-specific home page
+   */
+  private static createBusinessHomePage(projectName: string, businessContext: BusinessContext): string {
+    const { industry, specificNiche } = businessContext;
+    
+    const businessMessages = {
+      restaurant: {
+        title: 'ยินดีต้อนรับสู่ร้านอาหารของเรา',
+        subtitle: 'อิ่มอร่อยกับอาหารรสเลิศที่ปรุงด้วยใจ',
+        cta: 'ดูเมนู'
+      },
+      cafe: {
+        title: 'ต้อนรับสู่คาเฟ่ของเรา',
+        subtitle: 'เริ่มต้นวันใหม่ด้วยกาแฟหอมกรุ่น',
+        cta: 'ดูเมนูกาแฟ'
+      },
+      fashion: {
+        title: 'แฟชั่นล้ำสมัย',
+        subtitle: 'สร้างสไตล์ของคุณด้วยแฟชั่นคุณภาพ',
+        cta: 'ดูคอลเลกชัน'
+      },
+      technology: {
+        title: 'นวัตกรรมเทคโนโลยี',
+        subtitle: 'สร้างอนาคตด้วยเทคโนโลยีที่ทันสมัย',
+        cta: 'ดูโปรเจกต์'
+      }
+    };
+    
+    const message = businessMessages[industry as keyof typeof businessMessages] || businessMessages.technology;
+    
+    return `import React from 'react';
+import { Link } from 'react-router-dom';
+
+interface HomeProps {}
+
+const Home: React.FC<HomeProps> = () => {
+  return (
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-blue-600 to-purple-700 text-white py-20">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h1 className="text-5xl font-bold mb-6">
+            ${message.title}
+          </h1>
+          <p className="text-xl mb-8 opacity-90">
+            ${message.subtitle}
+          </p>
+          <div className="space-x-4">
+            <Link 
+              to="/${industry === 'restaurant' ? 'menu' : industry === 'cafe' ? 'coffee-menu' : industry === 'fashion' ? 'collection' : 'projects'}" 
+              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
+              ${message.cta}
+            </Link>
+            <Link 
+              to="/about" 
+              className="border-2 border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"
+            >
+              เรียนรู้เพิ่มเติม
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">ทำไมต้องเลือกเรา</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            ${this.getBusinessFeatures(industry)}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;`;
+  }
+
+  /**
+   * Get business-specific features
+   */
+  private static getBusinessFeatures(industry: string): string {
+    const features = {
+      restaurant: `
+            <div className="text-center">
+              <div className="text-4xl mb-4">🍽️</div>
+              <h3 className="text-xl font-semibold mb-2">อาหารคุณภาพ</h3>
+              <p className="text-gray-600">วัตถุดิบสดใหม่ทุกวัน</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">👨‍🍳</div>
+              <h3 className="text-xl font-semibold mb-2">เชฟมืออาชีพ</h3>
+              <p className="text-gray-600">ประสบการณ์กว่า 10 ปี</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">🏪</div>
+              <h3 className="text-xl font-semibold mb-2">บรรยากาศอบอุ่น</h3>
+              <p className="text-gray-600">สถานที่สำหรับครอบครัว</p>
+            </div>`,
+      cafe: `
+            <div className="text-center">
+              <div className="text-4xl mb-4">☕</div>
+              <h3 className="text-xl font-semibold mb-2">กาแฟคุณภาพ</h3>
+              <p className="text-gray-600">เมล็ดกาแฟพรีเมี่ยม</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">🎨</div>
+              <h3 className="text-xl font-semibold mb-2">ลาเต้อาร์ต</h3>
+              <p className="text-gray-600">ฝีมือบาริสต้ามืออาชีพ</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">📚</div>
+              <h3 className="text-xl font-semibold mb-2">พื้นที่แนะ</h3>
+              <p className="text-gray-600">เหมาะสำหรับทำงาน</p>
+            </div>`,
+      fashion: `
+            <div className="text-center">
+              <div className="text-4xl mb-4">👗</div>
+              <h3 className="text-xl font-semibold mb-2">แฟชั่นล่าสุด</h3>
+              <p className="text-gray-600">ทันเทรนด์สไตล์โลก</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">✨</div>
+              <h3 className="text-xl font-semibold mb-2">คุณภาพพรีเมี่ยม</h3>
+              <p className="text-gray-600">วัสดุคัดสรรพิเศษ</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">🎯</div>
+              <h3 className="text-xl font-semibold mb-2">สไตล์เฉพาะตัว</h3>
+              <p className="text-gray-600">ออกแบบเพื่อคุณ</p>
+            </div>`,
+      technology: `
+            <div className="text-center">
+              <div className="text-4xl mb-4">🚀</div>
+              <h3 className="text-xl font-semibold mb-2">เทคโนโลยีล่าสุด</h3>
+              <p className="text-gray-600">ทันสมัยและมีประสิทธิภาพ</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">🎯</div>
+              <h3 className="text-xl font-semibold mb-2">โซลูชั่นครบวงจร</h3>
+              <p className="text-gray-600">ตอบโจทย์ทุกความต้องการ</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">🤝</div>
+              <h3 className="text-xl font-semibold mb-2">สนับสนุน 24/7</h3>
+              <p className="text-gray-600">ทีมผู้เชี่ยวชาญพร้อมช่วย</p>
+            </div>`
+    };
+    
+    return features[industry as keyof typeof features] || features.technology;
+  }
+
+  /**
+   * Create business-specific about page
+   */
+  private static createBusinessAboutPage(projectName: string, businessContext: BusinessContext): string {
+    const { industry } = businessContext;
+    
+    return `import React from 'react';
+import { Link } from 'react-router-dom';
+
+interface AboutProps {}
+
+const About: React.FC<AboutProps> = () => {
+  return (
+    <div className="min-h-screen py-12">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-6">เกี่ยวกับเรา</h1>
+          <p className="text-xl text-gray-600">
+            ${this.getBusinessMission(industry)}
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-16">
+          <div>
+            <h2 className="text-2xl font-bold mb-4">พันธกิจของเรา</h2>
+            <p className="text-gray-600 mb-6">
+              ${this.getBusinessDescription(industry)}
+            </p>
+            <Link 
+              to="/contact" 
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              ติดต่อเรา
+            </Link>
+          </div>
+          <div className="bg-gray-200 h-64 rounded-lg flex items-center justify-center">
+            <span className="text-gray-500">รูปภาพ ${industry}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default About;`;
+  }
+
+  /**
+   * Get business mission statement
+   */
+  private static getBusinessMission(industry: string): string {
+    const missions = {
+      restaurant: 'มุ่งมั่นนำเสนออาหารรสเลิศที่สร้างความสุขให้ทุกครอบครัว',
+      cafe: 'สร้างพื้นที่แห่งความสุขผ่านกาแฟและบรรยากาศที่อบอุ่น',
+      fashion: 'นำเสนอแฟชั่นที่สะท้อนบุคลิกและสร้างความมั่นใจ',
+      technology: 'พัฒนาเทคโนโลยีที่ช่วยยกระดับคุณภาพชีวิตของทุกคน'
+    };
+    
+    return missions[industry as keyof typeof missions] || missions.technology;
+  }
+
+  /**
+   * Get business description
+   */
+  private static getBusinessDescription(industry: string): string {
+    const descriptions = {
+      restaurant: 'ด้วยประสบการณ์กว่า 10 ปีในวงการอาหาร เราคัดสรรวัตถุดิบคุณภาพและปรุงแต่งด้วยความใส่ใจในทุกรายละเอียด เพื่อมอบประสบการณ์การรับประทานอาหารที่ดีที่สุดแก่ลูกค้า',
+      cafe: 'เราเชื่อว่ากาแฟไม่ใช่เพียงเครื่องดื่ม แต่เป็นสื่อกลางที่เชื่อมโยงผู้คนเข้าด้วยกัน ด้วยเมล็ดกาแฟคุณภาพและฝีมือบาริสต้ามืออาชีพ เราสร้างพื้นที่ที่เอื้อต่อการพักผ่อนและทำงาน',
+      fashion: 'แฟชั่นเป็นการแสดงออกถึงตัวตน เราออกแบบและคัดสรรเสื้อผ้าที่ไม่เพียงสวยงาม แต่ยังสะดวกสบายและสะท้อนบุคลิกของผู้สวมใส่ ด้วยวัสดุคุณภาพและการออกแบบที่ใส่ใจในรายละเอียด',
+      technology: 'เทคโนโลยีมีพลังในการเปลี่ยนแปลงโลก เราพัฒนาโซลูชั่นที่ไม่เพียงทันสมัย แต่ยังใช้งานง่ายและตอบโจทย์ความต้องการของผู้ใช้งาน พร้อมการสนับสนุนที่ครบวงจร'
+    };
+    
+    return descriptions[industry as keyof typeof descriptions] || descriptions.technology;
+  }
+
+  /**
+   * Create business-specific header
+   */
+  private static createBusinessHeader(projectName: string, businessContext: BusinessContext): string {
+    const { industry } = businessContext;
+    
+    const navItems = this.getBusinessNavItems(industry);
+    
+    return `import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+
+interface HeaderProps {}
+
+const Header: React.FC<HeaderProps> = () => {
+  const location = useLocation();
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  return (
+    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          <div className="flex items-center">
+            <Link to="/" className="text-xl font-bold text-gray-900 hover:text-gray-700">
+              ${projectName}
+            </Link>
+          </div>
+          
+          <nav className="hidden md:flex space-x-8">
+            ${navItems}
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;`;
+  }
+
+  /**
+   * Get business-specific navigation items
+   */
+  private static getBusinessNavItems(industry: string): string {
+    const navMaps = {
+      restaurant: [
+        { path: '/', label: 'หน้าแรก' },
+        { path: '/menu', label: 'เมนู' },
+        { path: '/reservation', label: 'จองโต๊ะ' },
+        { path: '/about', label: 'เกี่ยวกับเรา' },
+        { path: '/contact', label: 'ติดต่อ' }
+      ],
+      cafe: [
+        { path: '/', label: 'หน้าแรก' },
+        { path: '/coffee-menu', label: 'เมนูกาแฟ' },
+        { path: '/barista-profile', label: 'บาริสต้า' },
+        { path: '/about', label: 'เกี่ยวกับเรา' },
+        { path: '/contact', label: 'ติดต่อ' }
+      ],
+      fashion: [
+        { path: '/', label: 'หน้าแรก' },
+        { path: '/collection', label: 'คอลเลกชัน' },
+        { path: '/style-guide', label: 'ไกด์สไตล์' },
+        { path: '/about', label: 'เกี่ยวกับเรา' },
+        { path: '/contact', label: 'ติดต่อ' }
+      ],
+      technology: [
+        { path: '/', label: 'หน้าแรก' },
+        { path: '/projects', label: 'โปรเจกต์' },
+        { path: '/services', label: 'บริการ' },
+        { path: '/about', label: 'เกี่ยวกับเรา' },
+        { path: '/contact', label: 'ติดต่อ' }
+      ]
+    };
+    
+    const navItems = navMaps[industry as keyof typeof navMaps] || navMaps.technology;
+    
+    return navItems.map(item => `
+            <Link 
+              to="${item.path}" 
+              className={\`text-gray-600 hover:text-gray-900 transition-colors \${isActive('${item.path}') ? 'text-blue-600 font-medium' : ''}\`}
+            >
+              ${item.label}
+            </Link>`).join('');
   }
 
   /**
@@ -893,19 +1400,19 @@ Return only CSS code, no markdown headers or explanations.`,
           "preview": "vite preview"
         },
         "dependencies": {
-          "react": "^18.2.0",
-          "react-dom": "^18.2.0",
-          "react-router-dom": "^6.8.0"
+          "react": "18.2.0",
+          "react-dom": "18.2.0",
+          "react-router-dom": "6.8.1"
         },
         "devDependencies": {
-          "@types/react": "^18.2.0",
-          "@types/react-dom": "^18.2.0",
-          "@vitejs/plugin-react": "^4.0.0",
-          "autoprefixer": "^10.4.0",
-          "postcss": "^8.4.0",
-          "tailwindcss": "^3.3.0",
-          "typescript": "^5.0.0",
-          "vite": "^4.4.0"
+          "@types/react": "18.2.15",
+          "@types/react-dom": "18.2.7",
+          "@vitejs/plugin-react": "4.0.3",
+          "autoprefixer": "10.4.14",
+          "postcss": "8.4.27",
+          "tailwindcss": "3.3.3",
+          "typescript": "5.1.6",
+          "vite": "4.4.9"
         }
       }, null, 2),
       
@@ -1357,7 +1864,39 @@ const Services: React.FC<ServicesProps> = () => {
   );
 };
 
-export default Services;`
+export default Services;`,
+
+      'vite.config.ts': `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  define: {
+    'process.env': {}
+  },
+  server: {
+    port: 3000
+  }
+});`,
+
+      'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};`,
+
+      'postcss.config.js': `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};`
     };
     
     return {
@@ -1398,236 +1937,167 @@ export default Services;`
   }
 
   /**
-   * Validate and fix import paths in generated content
+   * Validate and fix import paths in generated content - Simplified version
    */
   private static validateImportPaths(content: string, filePath: string): string {
-    let validatedContent = content;
+    // Remove duplicate imports first
+    let validatedContent = this.removeDuplicateImports(content);
     
-    // ตรวจสอบและแก้ไข import paths ให้ถูกต้อง
+    // Apply specific validation based on file type
     if (filePath === 'src/main.tsx') {
-      // ลบ import ที่ซ้ำกันออกก่อน
-      validatedContent = this.removeDuplicateImports(validatedContent);
-      
-      // สำหรับ main.tsx ต้อง import App component และ ReactDOM
-      validatedContent = validatedContent.replace(
-        /import.*from ['"]\.\/components\/[^'"]+['"]/g,
-        '// Removed invalid component imports'
-      );
-      
-      // ตรวจสอบว่ามี import ReactDOM หรือไม่
-      if (!validatedContent.includes("import ReactDOM")) {
-        validatedContent = validatedContent.replace(
-          /import React from ['"]react['"];?/,
-          `import React from 'react';
-import ReactDOM from 'react-dom/client';`
-        );
-      }
-      
-      // ตรวจสอบว่ามี import App หรือไม่
-      if (!validatedContent.includes("import App")) {
-        validatedContent = validatedContent.replace(
-          /import ReactDOM from ['"]react-dom\/client['"];?/,
-          `import ReactDOM from 'react-dom/client';
-import App from './App';`
-        );
-      }
-      
-      // ตรวจสอบว่ามี import BrowserRouter หรือไม่
-      if (!validatedContent.includes("import { BrowserRouter }")) {
-        validatedContent = validatedContent.replace(
-          /import App from ['"]\.\/App['"];?/,
-          `import App from './App';
-import { BrowserRouter } from 'react-router-dom';`
-        );
-      }
-      
-      // ตรวจสอบว่ามี import CSS หรือไม่
-      if (!validatedContent.includes("import './index.css'")) {
-        validatedContent = validatedContent.replace(
-          /import \{ BrowserRouter \} from ['"]react-router-dom['"];?/,
-          `import { BrowserRouter } from 'react-router-dom';
-import './index.css';`
-        );
-      }
-    }
-    
-    if (filePath === 'src/App.tsx') {
-      // สำหรับ App.tsx ต้อง import pages และ components ที่มีอยู่จริง
-      const validPages = ['Home', 'About', 'Contact', 'Products', 'Services'];
-      const validComponents = ['Header', 'Footer', 'Navigation'];
-      
-      // ลบ import ที่ซ้ำกันออกก่อน
-      validatedContent = this.removeDuplicateImports(validatedContent);
-      
-      // แก้ไขปัญหา nested Router - ลบ BrowserRouter/Router ออกจาก App.tsx
-      validatedContent = validatedContent.replace(
-        /import\s*{\s*[^}]*BrowserRouter[^}]*}\s*from\s*['"]react-router-dom['"];?\s*/g,
-        ''
-      );
-      
-      // ลบ Router wrapper ออกจาก JSX
-      validatedContent = validatedContent.replace(
-        /<Router[^>]*>\s*([\s\S]*?)\s*<\/Router>/g,
-        '$1'
-      );
-      
-      // ลบ BrowserRouter wrapper ออกจาก JSX
-      validatedContent = validatedContent.replace(
-        /<BrowserRouter[^>]*>\s*([\s\S]*?)\s*<\/BrowserRouter>/g,
-        '$1'
-      );
-      
-      // แก้ไข import pages
-      validatedContent = validatedContent.replace(
-        /import.*from ['"]\.\/pages\/([^'"]+)['"]/g,
-        (match, pageName) => {
-          if (validPages.includes(pageName)) {
-            return match;
-          }
-          return `// TODO: Import ${pageName} page`;
-        }
-      );
-      
-      // แก้ไข import components
-      validatedContent = validatedContent.replace(
-        /import.*from ['"]\.\/components\/([^'"]+)['"]/g,
-        (match, componentName) => {
-          if (validComponents.includes(componentName)) {
-            return match;
-          }
-          return `// TODO: Import ${componentName} component`;
-        }
-      );
-      
-      // ตรวจสอบว่ามี import Routes และ Route หรือไม่ (ป้องกันการซ้ำ)
-      if (!validatedContent.includes("import { Routes, Route }") && 
-          !validatedContent.includes("Routes") && 
-          !validatedContent.includes("Route")) {
-        validatedContent = validatedContent.replace(
-          /import React from ['"]react['"];?/,
-          `import React from 'react';
-import { Routes, Route } from 'react-router-dom';`
-        );
-      }
-      
-      // ตรวจสอบว่ามี export default หรือไม่
-      if (!validatedContent.includes("export default App")) {
-        validatedContent += `\n\nexport default App;`;
-      }
-    }
-    
-    if (filePath.includes('/pages/') || filePath.includes('/components/')) {
-      // ลบ import ที่ซ้ำกันออกก่อน
-      validatedContent = this.removeDuplicateImports(validatedContent);
-      
-      // ตรวจสอบว่ามี import React หรือไม่
-      if (!validatedContent.includes("import React")) {
-        validatedContent = `import React from 'react';\n${validatedContent}`;
-      }
-      
-      // สำหรับ pages ต้อง import components ที่มีอยู่จริง
-      if (filePath.includes('/pages/')) {
-        const validComponents = ['Header', 'Footer', 'Navigation', 'Hero', 'ProductCard', 'ContactForm'];
-        
-        validatedContent = validatedContent.replace(
-          /import.*from ['"]\.\.\/components\/([^'"]+)['"]/g,
-          (match, componentName) => {
-            if (validComponents.includes(componentName)) {
-              return match;
-            }
-            return `// TODO: Import ${componentName} component`;
-          }
-        );
-        
-        // ตรวจสอบว่ามี import Link หรือไม่
-        if (!validatedContent.includes("import { Link }") && validatedContent.includes("Link")) {
-          validatedContent = validatedContent.replace(
-            /import React from ['"]react['"];?/,
-            `import React from 'react';
-import { Link } from 'react-router-dom';`
-          );
-        }
-        
-        // ตรวจสอบว่ามี interface หรือไม่
-        const pageName = filePath.split('/').pop()?.replace('.tsx', '') || 'Page';
-        const interfaceName = `${pageName}Props`;
-        if (!validatedContent.includes(`interface ${interfaceName}`)) {
-          validatedContent = validatedContent.replace(
-            /import React from ['"]react['"];?/,
-            `import React from 'react';
-
-interface ${interfaceName} {}
-
-`
-          );
-        }
-        
-        // ตรวจสอบว่ามี export default หรือไม่
-        if (!validatedContent.includes(`export default ${pageName}`)) {
-          validatedContent += `\n\nexport default ${pageName};`;
-        }
-      }
-      
-      // สำหรับ components ต้อง import components อื่นๆ ที่มีอยู่จริง
-      if (filePath.includes('/components/')) {
-        const validComponents = ['Header', 'Footer', 'Navigation', 'Hero', 'ProductCard', 'ContactForm'];
-        
-        validatedContent = validatedContent.replace(
-          /import.*from ['"]\.\/([^'"]+)['"]/g,
-          (match, componentName) => {
-            if (validComponents.includes(componentName)) {
-              return match;
-            }
-            return `// TODO: Import ${componentName} component`;
-          }
-        );
-        
-        // ตรวจสอบว่ามี import Link หรือ useLocation หรือไม่
-        if (!validatedContent.includes("import { Link }") && validatedContent.includes("Link")) {
-          validatedContent = validatedContent.replace(
-            /import React from ['"]react['"];?/,
-            `import React from 'react';
-import { Link } from 'react-router-dom';`
-          );
-        }
-        
-        if (!validatedContent.includes("import { useLocation }") && validatedContent.includes("useLocation")) {
-          validatedContent = validatedContent.replace(
-            /import \{ Link \} from ['"]react-router-dom['"];?/,
-            `import { Link, useLocation } from 'react-router-dom';`
-          );
-        }
-        
-        // ตรวจสอบว่ามี interface หรือไม่
-        const componentName = filePath.split('/').pop()?.replace('.tsx', '') || 'Component';
-        const interfaceName = `${componentName}Props`;
-        if (!validatedContent.includes(`interface ${interfaceName}`)) {
-          validatedContent = validatedContent.replace(
-            /import React from ['"]react['"];?/,
-            `import React from 'react';
-
-interface ${interfaceName} {}
-
-`
-          );
-        }
-        
-        // ตรวจสอบว่ามี React.FC typing หรือไม่
-        if (!validatedContent.includes(`React.FC<${interfaceName}>`)) {
-          validatedContent = validatedContent.replace(
-            new RegExp(`const ${componentName}\\s*=\\s*\\([^)]*\\)\\s*=>`, 'g'),
-            `const ${componentName}: React.FC<${interfaceName}> = () =>`
-          );
-        }
-        
-        // ตรวจสอบว่ามี export default หรือไม่
-        if (!validatedContent.includes(`export default ${componentName}`)) {
-          validatedContent += `\n\nexport default ${componentName};`;
-        }
-      }
+      validatedContent = this.validateMainTsxImports(validatedContent);
+    } else if (filePath === 'src/App.tsx') {
+      validatedContent = this.validateAppTsxImports(validatedContent);
+    } else if (filePath.includes('/pages/')) {
+      validatedContent = this.validatePageImports(validatedContent, filePath);
+    } else if (filePath.includes('/components/')) {
+      validatedContent = this.validateComponentImports(validatedContent, filePath);
     }
     
     return validatedContent;
+  }
+
+  /**
+   * Validate main.tsx imports
+   */
+  private static validateMainTsxImports(content: string): string {
+    let result = content;
+    
+    // Ensure essential imports are present
+    const requiredImports = [
+      { check: 'import React', line: "import React from 'react';" },
+      { check: 'import ReactDOM', line: "import ReactDOM from 'react-dom/client';" },
+      { check: 'import { BrowserRouter }', line: "import { BrowserRouter } from 'react-router-dom';" },
+      { check: 'import App', line: "import App from './App';" },
+      { check: "import './index.css'", line: "import './index.css';" }
+    ];
+    
+    // Add missing imports
+    for (const { check, line } of requiredImports) {
+      if (!result.includes(check)) {
+        result = line + '\n' + result;
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Validate App.tsx imports
+   */
+  private static validateAppTsxImports(content: string): string {
+    let result = content;
+    
+    // Remove BrowserRouter from App.tsx (it should be in main.tsx)
+    result = result.replace(/import\s*{\s*[^}]*BrowserRouter[^}]*}\s*from\s*['"]react-router-dom['"];?\s*/g, '');
+    result = result.replace(/<BrowserRouter[^>]*>([\s\S]*?)<\/BrowserRouter>/g, '$1');
+    
+    // Ensure Routes and Route imports
+    if (!result.includes('import { Routes, Route }')) {
+      result = "import { Routes, Route } from 'react-router-dom';\n" + result;
+    }
+    
+    // Add missing page imports based on Route usage
+    const routeComponents = this.extractRouteComponents(result);
+    for (const component of routeComponents) {
+      if (!result.includes(`import ${component}`) && !['Routes', 'Route'].includes(component)) {
+        result = `import ${component} from './pages/${component}';\n` + result;
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Validate page component imports
+   */
+  private static validatePageImports(content: string, filePath: string): string {
+    let result = content;
+    const pageName = filePath.split('/').pop()?.replace('.tsx', '') || 'Page';
+    
+    // Ensure React import
+    if (!result.includes('import React')) {
+      result = "import React from 'react';\n" + result;
+    }
+    
+    // Add React Router imports if needed
+    if (result.includes('Link') && !result.includes('import { Link }')) {
+      result = "import { Link } from 'react-router-dom';\n" + result;
+    }
+    
+    // Ensure interface and export
+    if (!result.includes(`interface ${pageName}Props`)) {
+      result = result.replace(
+        /import React from ['"]react['"];?/,
+        `import React from 'react';\n\ninterface ${pageName}Props {}\n`
+      );
+    }
+    
+    if (!result.includes(`export default ${pageName}`)) {
+      result += `\n\nexport default ${pageName};`;
+    }
+    
+    return result;
+  }
+
+  /**
+   * Validate component imports
+   */
+  private static validateComponentImports(content: string, filePath: string): string {
+    let result = content;
+    const componentName = filePath.split('/').pop()?.replace('.tsx', '') || 'Component';
+    
+    // Ensure React import
+    if (!result.includes('import React')) {
+      result = "import React from 'react';\n" + result;
+    }
+    
+    // Add React Router imports if needed
+    if (result.includes('Link') && !result.includes('import { Link }')) {
+      result = "import { Link } from 'react-router-dom';\n" + result;
+    }
+    
+    if (result.includes('useLocation') && !result.includes('import { useLocation }')) {
+      result = result.replace(
+        /import \{ Link \}/,
+        'import { Link, useLocation }'
+      );
+    }
+    
+    // Ensure interface and export
+    const interfaceName = `${componentName}Props`;
+    if (!result.includes(`interface ${interfaceName}`)) {
+      result = result.replace(
+        /import React from ['"]react['"];?/,
+        `import React from 'react';\n\ninterface ${interfaceName} {}\n`
+      );
+    }
+    
+    if (!result.includes(`export default ${componentName}`)) {
+      result += `\n\nexport default ${componentName};`;
+    }
+    
+    // Footer-specific safety: guard against undefined links when mapping
+    if (filePath.endsWith('/Footer.tsx') || filePath === 'src/components/Footer.tsx') {
+      result = result.replace(/\{\s*links\.map\(/g, '{ (Array.isArray(links) ? links : []).map(');
+    }
+    
+    return result;
+  }
+
+  /**
+   * Extract component names from Route elements
+   */
+  private static extractRouteComponents(content: string): string[] {
+    const routeElementRegex = /element=\{<\s*([A-Z][A-Za-z0-9_]*)\b[^>]*>\s*\/?\s*\}/g;
+    const components: string[] = [];
+    let match;
+    
+    while ((match = routeElementRegex.exec(content)) !== null) {
+      components.push(match[1]);
+    }
+    
+    return [...new Set(components)]; // Remove duplicates
   }
 
   /**
@@ -1651,5 +2121,30 @@ interface ${interfaceName} {}
     }
     
     return uniqueImports.join('\n');
+  }
+
+  /**
+   * Enhanced User Intent Analysis
+   */
+  private static async analyzeUserIntentEnhanced(finalJson: Record<string, unknown>): Promise<UserIntent> {
+    const json = finalJson as any;
+    
+    // วิเคราะห์จาก design preferences
+    const designStyle = this.mapDesignStyle(json.design?.designStyle);
+    const colorScheme = this.mapColorScheme(json.design?.primaryColors);
+    const layoutPreference = this.mapLayoutPreference(json.content?.pages);
+    
+    // วิเคราะห์จาก target audience
+    const targetAudience = json.targetAudience?.primaryAudience || 'general-public';
+    const tone = this.mapTone(targetAudience, json.projectObjective?.primaryGoal);
+    
+    return {
+      visualStyle: designStyle,
+      colorScheme,
+      layoutPreference,
+      pages: json.content?.pages || ['home', 'about', 'contact'],
+      targetAudience,
+      tone
+    };
   }
 }
