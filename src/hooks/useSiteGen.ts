@@ -95,7 +95,7 @@ export function useSiteGen(): UseSiteGenReturn {
       if (data.success && data.generationId) {
         setGenerationId(data.generationId);
         setCurrentTask('Site generation started...');
-        setProgress(10);
+    
 
         // Start polling for status updates
         console.log('🎯 Starting status polling for ID:', data.generationId);
