@@ -8,7 +8,7 @@ import {
   GenerationStatus,
   DEFAULT_GENERATION_OPTIONS 
 } from '@/types/sitegen';
-import { SiteGeneratorService } from '../../../../utils/site-generator';
+import { SiteGeneratorService } from '@/utils/site-generator';
 
 // In-memory storage for generation sessions (should be replaced with database in production)
 const generationSessions = new Map<string, SiteGenSession>();
