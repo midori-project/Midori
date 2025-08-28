@@ -198,6 +198,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       await authService.logout();
+      // Notify other tabs/windows that logout happened
+      try {
+        localStorage.setItem('midori-auth-change', JSON.stringify({ type: 'logout', t: Date.now() }));
+      } catch (e) {
+        /* ignore */
+      }
+
       dispatch({ type: 'LOGOUT' });
     } catch (error) {
       // Even if logout fails, clear local state
@@ -221,6 +228,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
       throw error;
     }
   };
+
+  // Listen for cross-tab auth changes (login/logout) via localStorage events
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== 'midori-auth-change') return;
+      if (!e.newValue) return;
+      try {
+        const payload = JSON.parse(e.newValue as string);
+        if (payload?.type === 'login') {
+          // another tab logged in - refresh current auth state
+          refetchUser().catch(() => {});
+        }
+        if (payload?.type === 'logout') {
+          // another tab logged out
+          dispatch({ type: 'LOGOUT' });
+        }
+      } catch (err) {
+        // ignore malformed payload
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const value: AuthContextType = {
     ...state,

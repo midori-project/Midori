@@ -18,6 +18,8 @@ export interface Session {
     email?: string | null;
     displayName?: string | null;
     avatarUrl?: string | null;
+    createdAt: Date;
+    lastLoginAt?: Date | null;
   } | null;
 }
 

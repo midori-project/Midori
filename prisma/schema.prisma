@@ -26,6 +26,11 @@ model User {
   projects           Project[]
   sessions           Session[]
 
+  // back-relations ใหม่สำหรับเลเยอร์แชท/เอเจนต์
+  agents             Agent[]
+  conversations      Conversation[]
+  messages           Message[]
+
   @@index([email])
 }
 
@@ -141,6 +146,10 @@ model Project {
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   snapshots   Snapshot[]
 
+  // back-relations ใหม่สำหรับเลเยอร์แชท/เอเจนต์
+  agents        Agent[]
+  conversations Conversation[]
+
   @@index([userId])
 }
 
@@ -155,6 +164,9 @@ model File {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // back-relation for message attachments that reference this file
+  messageAttachments MessageAttachment[]
 
   @@unique([projectId, path])
   @@index([projectId])
@@ -216,6 +228,135 @@ model Deployment {
 
   @@index([projectId])
 }
+
+/* ============================
+   NEW: Chat/Agent Layer
+   ============================ */
+
+enum ChatRole {
+  user
+  assistant
+  system
+  tool
+}
+
+model Agent {
+  id           String      @id @default(uuid())
+  projectId    String?
+  userId       String?
+  name         String
+  description  String?
+  model        String
+  temperature  Float?     @default(0.7)
+  topP         Float?     @default(1)
+  tools        Json?
+  systemPrompt String?
+  config       Json?
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  project      Project?    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user         User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+
+  // back-relation for ChatRun.agent
+  runs           ChatRun[]
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Conversation {
+  id         String      @id @default(uuid())
+  projectId  String?
+  userId     String?
+  agentId    String?
+  title      String?
+  visibility Visibility  @default(private)
+  context    Json?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  archivedAt DateTime?
+
+  project     Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  agent       Agent?     @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  messages    Message[]
+  runs        ChatRun[]
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([agentId])
+}
+
+model Message {
+  id             String     @id @default(uuid())
+  conversationId String
+  userId         String?
+  role           ChatRole
+  content        String?
+  contentJson    Json?
+  runId          String?
+  toolName       String?
+  toolInput      Json?
+  toolOutput     Json?
+  messageIndex   Int
+  createdAt      DateTime   @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  run            ChatRun?     @relation(fields: [runId], references: [id], onDelete: SetNull)
+  attachments    MessageAttachment[]
+
+  @@index([conversationId, messageIndex])
+  @@index([userId])
+  @@index([runId])
+}
+
+model MessageAttachment {
+  id        String   @id @default(uuid())
+  messageId String
+  fileId    String?
+  url       String?
+  kind      String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  file      File?    @relation(fields: [fileId], references: [id], onDelete: SetNull)
+
+  @@index([messageId])
+  @@index([fileId])
+}
+
+model ChatRun {
+  id             String     @id @default(uuid())
+  conversationId String
+  agentId        String?
+  model          String
+  tokensInput    Int        @default(0)
+  tokensOutput   Int        @default(0)
+  costUsd        Decimal    @default(0)
+  latencyMs      Int?
+  status         String?    // success/failed/cancelled
+  error          String?
+  rawRequest     Json?
+  rawResponse    Json?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  agent          Agent?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  messages       Message[]
+
+  @@index([conversationId])
+  @@index([agentId])
+}
+
+/* ============================
+   Existing Enums
+   ============================ */
 
 enum Visibility {
   private

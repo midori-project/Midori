@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
         id: session.userId,
         email: session.user?.email,
         displayName: session.user?.displayName,
-        avatarUrl: session.user?.avatarUrl
+        avatarUrl: session.user?.avatarUrl,
+        createdAt: session.user?.createdAt?.toISOString(),
+        lastLoginAt: session.user?.lastLoginAt?.toISOString() || null
       }
     });
   } catch (error) {

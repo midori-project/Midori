@@ -4,6 +4,9 @@
 
 // example test. To run these tests, uncomment this file along with the
 // example resource in lib/midori-infastructure-stack.ts
+// Provide a minimal test declaration for environments that don't load jest types
+declare const test: (name: string, fn: () => void) => void;
+
 test('SQS Queue Created', () => {
 //   const app = new cdk.App();
 //     // WHEN
