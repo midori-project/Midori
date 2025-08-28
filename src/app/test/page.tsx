@@ -4,10 +4,10 @@ import { Sandpack } from "@codesandbox/sandpack-react";
 import {
   createReactSandpackProps
 } from "@/utils/sandPackConverter";
-import testCafe from "@/components/preview/test/test-cafe.json";
+import t1 from "@/components/preview/test/t1.json";
 
 export default function TestPage() {
-  const react3SandpackProps = createReactSandpackProps(testCafe, { 
+  const react3SandpackProps = createReactSandpackProps(t1, { 
     template: "react",
     theme: "dark",
     showNavigator: true,

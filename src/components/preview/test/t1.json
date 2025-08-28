@@ -1,0 +1,125 @@
+{
+  "projectStructure": null,
+  "files": [
+    {
+      "path": "package.json",
+      "content": "{\n  \"name\": \"blogthai\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"build\": \"tsc && vite build\",\n    \"preview\": \"vite preview\"\n  },\n  \"dependencies\": {\n    \"react\": \"^18.2.0\",\n    \"react-dom\": \"^18.2.0\",\n    \"react-router-dom\": \"^6.8.0\"\n  },\n  \"devDependencies\": {\n    \"@types/react\": \"^18.2.0\",\n    \"@types/react-dom\": \"^18.2.0\",\n    \"@vitejs/plugin-react\": \"^4.0.0\",\n    \"autoprefixer\": \"^10.4.0\",\n    \"postcss\": \"^8.4.0\",\n    \"tailwindcss\": \"^3.3.0\",\n    \"typescript\": \"^5.0.0\",\n    \"vite\": \"^4.4.0\"\n  }\n}",
+      "type": "config",
+      "language": "json"
+    },
+    {
+      "path": "index.html",
+      "content": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <title>BlogThai</title>\n  </head>\n  <body>\n    <div id=\"root\"></div>\n    <script type=\"module\" src=\"/src/main.tsx\"></script>\n  </body>\n</html>",
+      "type": "config",
+      "language": "html"
+    },
+    {
+      "path": "src/main.tsx",
+      "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App';\nimport './index.css';\n\nconst rootElement = document.getElementById('root');\n\nif (!rootElement) {\n  throw new Error('Failed to find the root element');\n}\n\nconst root = ReactDOM.createRoot(rootElement);\n\nroot.render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>\n);",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/App.tsx",
+      "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Header from './components/Header';\nimport Footer from './components/Footer';\nimport Home from './pages/Home';\nimport About from './pages/About';\nimport Contact from './pages/Contact';\nimport Products from './pages/Products';\nimport Services from './pages/Services';\nimport './index.css';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"min-h-screen flex flex-col\">\n      <Header />\n      <main className=\"flex-1\">\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/about\" element={<About />} />\n          <Route path=\"/contact\" element={<Contact />} />\n          <Route path=\"/products\" element={<Products />} />\n          <Route path=\"/services\" element={<Services />} />\n        </Routes>\n      </main>\n      <Footer />\n    </div>\n  );\n};\n\nexport default App;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/index.css",
+      "content": "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\nbody {\n  @apply bg-gray-50 text-gray-900;\n}\n\nh1, h2, h3, h4, h5, h6 {\n  @apply font-bold;\n}\n\na {\n  @apply text-blue-500 hover:text-blue-700;\n}\n\nbutton {\n  @apply bg-blue-500 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700;",
+      "type": "style",
+      "language": "css"
+    },
+    {
+      "path": "vite.config.ts",
+      "content": "// vite.config.ts - Template file with proper React structure",
+      "type": "config",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Home.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface HomeProps {}\n\nconst Home: React.FC<HomeProps> = () => {\n  return (\n    <div className=\"min-h-screen p-8 bg-blue-50\">\n      <div className=\"max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6\">\n        <h1 className=\"text-4xl font-bold text-blue-800 mb-4\">Welcome to Our Business Education Platform</h1>\n        <p className=\"text-gray-700 mb-6\">\n          Discover a range of resources and courses designed to enhance your business skills and knowledge. Our platform offers\n          professional development opportunities for individuals looking to thrive in the business world.\n        </p>\n        <h2 className=\"text-2xl font-semibold text-blue-600 mb-2\">Our Services</h2>\n        <ul className=\"list-disc list-inside mb-6\">\n          <li className=\"text-gray-600\">Comprehensive online courses</li>\n          <li className=\"text-gray-600\">Expert-led webinars</li>\n          <li className=\"text-gray-600\">Personalized coaching sessions</li>\n        </ul>\n        <Link to=\"/courses\" className=\"inline-block bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700\">\n          Explore Courses\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Home;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/About.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface AboutProps {}\n\nconst About: React.FC<AboutProps> = () => {\n  return (\n    <div className=\"min-h-screen bg-beige p-8\">\n      <div className=\"max-w-4xl mx-auto\">\n        <h1 className=\"text-4xl font-bold mb-6 text-brown\">About Us</h1>\n        <p className=\"text-gray-700 mb-4\">\n          Welcome to our educational platform dedicated to empowering individuals with essential business skills. Our mission is to provide accessible and high-quality learning resources that cater to the needs of the general public.\n        </p>\n        <p className=\"text-gray-700 mb-4\">\n          We offer a variety of courses designed to enhance your understanding of general business concepts, from marketing strategies to financial literacy. Our expert instructors are here to guide you through each step of your learning journey.\n        </p>\n        <p className=\"text-gray-700 mb-4\">\n          Join us today and unlock your potential in the world of business. Together, we can achieve your educational goals and prepare you for success in your career.\n        </p>\n        <Link to=\"/\" className=\"text-blue-500 hover:underline\">\n          Back to Home\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default About;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Contact.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface ContactProps {}\n\nconst Contact: React.FC<ContactProps> = () => {\n  return (\n    <div className=\"min-h-screen p-8 bg-beige\">\n      <div className=\"max-w-4xl mx-auto\">\n        <h1 className=\"text-4xl font-bold mb-6 text-brown\">Contact Us</h1>\n        <p className=\"text-gray-700 mb-4\">\n          We are here to assist you with any inquiries you may have regarding our educational services. \n          Our team is dedicated to providing you with the best support possible.\n        </p>\n        <h2 className=\"text-2xl font-semibold mb-4\">Get in Touch</h2>\n        <p className=\"text-gray-600 mb-4\">\n          You can reach us via email or phone. We look forward to hearing from you!\n        </p>\n        <p className=\"text-gray-600 mb-4\">\n          <strong>Email:</strong> support@educationbusiness.com\n        </p>\n        <p className=\"text-gray-600 mb-4\">\n          <strong>Phone:</strong> (123) 456-7890\n        </p>\n        <Link to=\"/\" className=\"text-blue-500 hover:underline\">\n          Back to Home\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Contact;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Products.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface ProductsProps {}\n\nconst Products: React.FC<ProductsProps> = () => {\n  return (\n    <div className=\"min-h-screen p-8 bg-gray-100\">\n      <div className=\"max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6\">\n        <h1 className=\"text-4xl font-bold text-blue-800 mb-6\">Our Products</h1>\n        <p className=\"text-gray-600 mb-4\">\n          Explore our range of educational products designed to enhance your business skills and knowledge. \n          Our offerings cater to various aspects of general business, ensuring you have the tools you need to succeed.\n        </p>\n        <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6\">\n          <div className=\"border rounded-lg p-4 shadow-sm\">\n            <h2 className=\"text-xl font-semibold text-blue-600\">Business Strategy Course</h2>\n            <p className=\"text-gray-500\">Learn effective strategies to drive your business forward.</p>\n            <Link to=\"/products/business-strategy\" className=\"text-blue-500 hover:underline mt-2 inline-block\">\n              Learn More\n            </Link>\n          </div>\n          <div className=\"border rounded-lg p-4 shadow-sm\">\n            <h2 className=\"text-xl font-semibold text-blue-600\">Marketing Fundamentals</h2>\n            <p className=\"text-gray-500\">Understand the core principles of marketing to grow your audience.</p>\n            <Link to=\"/products/marketing-fundamentals\" className=\"text-blue-500 hover:underline mt-2 inline-block\">\n              Learn More\n            </Link>\n          </div>\n          <div className=\"border rounded-lg p-4 shadow-sm\">\n            <h2 className=\"text-xl font-semibold text-blue-600\">Financial Management</h2>\n            <p className=\"text-gray-500\">Master the essentials of financial management for your business.</p>\n            <Link to=\"/products/financial-management\" className=\"text-blue-500 hover:underline mt-2 inline-block\">\n              Learn More\n            </Link>\n          </div>\n        </div>\n        <Link to=\"/\" className=\"text-blue-500 hover:underline mt-6 block\">\n          Back to Home\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Products;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Services.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface ServicesProps {}\n\nconst Services: React.FC<ServicesProps> = () => {\n  return (\n    <div className=\"min-h-screen p-8 bg-gray-50\">\n      <div className=\"max-w-4xl mx-auto\">\n        <h1 className=\"text-4xl font-bold text-blue-800 mb-6\">Our Services</h1>\n        <p className=\"text-gray-700 mb-4\">\n          We offer a range of educational services designed to empower individuals and businesses. Our focus is on providing practical knowledge and skills that can be applied in real-world scenarios.\n        </p>\n        <h2 className=\"text-2xl font-semibold text-blue-600 mb-4\">What We Offer</h2>\n        <ul className=\"list-disc list-inside mb-4\">\n          <li className=\"text-gray-600\">Business Strategy Development</li>\n          <li className=\"text-gray-600\">Workshops and Training Sessions</li>\n          <li className=\"text-gray-600\">Consulting Services</li>\n          <li className=\"text-gray-600\">Online Courses</li>\n        </ul>\n        <p className=\"text-gray-700 mb-4\">\n          Our services are tailored to meet the needs of both individuals and organizations, ensuring that everyone has access to high-quality education.\n        </p>\n        <Link to=\"/\" className=\"text-blue-500 hover:underline\">\n          Back to Home\n        </Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Services;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "content": "import React from 'react';\n\ninterface HeaderProps {\n  title: string;\n  tagline?: string;\n}\n\nconst Header: React.FC<HeaderProps> = ({ \n  title, \n  tagline \n}) => {\n  return (\n    <header className=\"bg-gradient-to-r from-blue-400 to-green-400 p-6 rounded-b-lg shadow-md\">\n      <h1 className=\"text-3xl font-bold text-white\">{title}</h1>\n      {tagline && <p className=\"text-lg text-white mt-2\">{tagline}</p>}\n    </header>\n  );\n};\n\nexport default Header;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "content": "import React from 'react';\n\ninterface FooterProps {\n  year: number;\n  companyName: string;\n}\n\nconst Footer: React.FC<FooterProps> = ({ year, companyName }) => {\n  return (\n    <footer className=\"bg-blue-200 text-gray-800 py-4\">\n      <div className=\"container mx-auto text-center\">\n        <p className=\"text-sm\">\n          &copy; {year} {companyName}. All rights reserved.\n        </p>\n        <nav className=\"mt-2\">\n          <a href=\"/about\" className=\"text-blue-600 hover:underline mx-2\">About Us</a>\n          <a href=\"/contact\" className=\"text-blue-600 hover:underline mx-2\">Contact</a>\n          <a href=\"/privacy\" className=\"text-blue-600 hover:underline mx-2\">Privacy Policy</a>\n        </nav>\n      </div>\n    </footer>\n  );\n};\n\nexport default Footer;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Navigation.tsx",
+      "content": "import React from 'react';\n\ninterface NavigationProps {\n  links: { name: string; url: string }[];\n}\n\nconst Navigation: React.FC<NavigationProps> = ({ links }) => {\n  return (\n    <nav className=\"bg-beige-200 p-4 shadow-md\">\n      <ul className=\"flex space-x-4\">\n        {links.map((link, index) => (\n          <li key={index}>\n            <a \n              href={link.url} \n              className=\"text-brown-600 hover:text-brown-800 font-medium\"\n            >\n              {link.name}\n            </a>\n          </li>\n        ))}\n      </ul>\n    </nav>\n  );\n};\n\nexport default Navigation;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Hero.tsx",
+      "content": "import React from 'react';\n\ninterface HeroProps {\n  title: string;\n  subtitle?: string;\n  buttonText?: string;\n  onButtonClick?: () => void;\n}\n\nconst Hero: React.FC<HeroProps> = ({ \n  title, \n  subtitle, \n  buttonText, \n  onButtonClick \n}) => {\n  return (\n    <div className=\"flex flex-col items-center justify-center p-8 bg-beige-100 rounded-lg shadow-lg\">\n      <h1 className=\"text-3xl font-bold text-brown-800 mb-4\">{title}</h1>\n      {subtitle && <h2 className=\"text-lg text-gray-700 mb-6\">{subtitle}</h2>}\n      {buttonText && (\n        <button \n          onClick={onButtonClick}\n          className=\"bg-brown-600 text-white px-6 py-2 rounded hover:bg-brown-700 transition\"\n        >\n          {buttonText}\n        </button>\n      )}\n    </div>\n  );\n};\n\nexport default Hero;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/ProductCard.tsx",
+      "content": "import React from 'react';\n\ninterface ProductCardProps {\n  title: string;\n  description?: string;\n  price: number;\n  onClick?: () => void;\n}\n\nconst ProductCard: React.FC<ProductCardProps> = ({ \n  title, \n  description, \n  price, \n  onClick \n}) => {\n  return (\n    <div className=\"p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300\">\n      <h2 className=\"text-xl font-semibold mb-2 text-teal-600\">{title}</h2>\n      {description && <p className=\"text-gray-600 mb-4\">{description}</p>}\n      <p className=\"text-lg font-bold text-gray-800\">${price.toFixed(2)}</p>\n      {onClick && (\n        <button \n          onClick={onClick}\n          className=\"mt-4 bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 transition-colors duration-300\"\n        >\n          Buy Now\n        </button>\n      )}\n    </div>\n  );\n};\n\nexport default ProductCard;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/ContactForm.tsx",
+      "content": "import React, { useState } from 'react';\n\ninterface ContactFormProps {\n  onSubmit: (formData: { name: string; email: string; message: string }) => void;\n}\n\nconst ContactForm: React.FC<ContactFormProps> = ({ onSubmit }) => {\n  const [name, setName] = useState<string>('');\n  const [email, setEmail] = useState<string>('');\n  const [message, setMessage] = useState<string>('');\n\n  const handleSubmit = (event: React.FormEvent) => {\n    event.preventDefault();\n    onSubmit({ name, email, message });\n    setName('');\n    setEmail('');\n    setMessage('');\n  };\n\n  return (\n    <div className=\"p-6 bg-neutral-100 rounded-lg shadow-md\">\n      <h2 className=\"text-2xl font-semibold mb-4\">Contact Us</h2>\n      <form onSubmit={handleSubmit} className=\"flex flex-col\">\n        <label className=\"mb-2\">\n          <span className=\"block text-gray-700\">Name</span>\n          <input\n            type=\"text\"\n            value={name}\n            onChange={(e) => setName(e.target.value)}\n            required\n            className=\"mt-1 p-2 border border-gray-300 rounded\"\n          />\n        </label>\n        <label className=\"mb-2\">\n          <span className=\"block text-gray-700\">Email</span>\n          <input\n            type=\"email\"\n            value={email}\n            onChange={(e) => setEmail(e.target.value)}\n            required\n            className=\"mt-1 p-2 border border-gray-300 rounded\"\n          />\n        </label>\n        <label className=\"mb-2\">\n          <span className=\"block text-gray-700\">Message</span>\n          <textarea\n            value={message}\n            onChange={(e) => setMessage(e.target.value)}\n            required\n            className=\"mt-1 p-2 border border-gray-300 rounded\"\n          />\n        </label>\n        <button\n          type=\"submit\"\n          className=\"mt-4 bg-brown-500 text-white px-4 py-2 rounded hover:bg-brown-600\"\n        >\n          Send Message\n        </button>\n      </form>\n    </div>\n  );\n};\n\nexport default ContactForm;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "tailwind.config.js",
+      "content": "// tailwind.config.js - Template file with proper React structure",
+      "type": "config",
+      "language": "javascript"
+    },
+    {
+      "path": "src/types/index.ts",
+      "content": "export interface User {\n    id: number;\n    name: string;\n    email: string;\n    createdAt: Date;\n}\n\nexport interface Post {\n    id: number;\n    title: string;\n    content: string;\n    authorId: number;\n    createdAt: Date;\n}\n\nexport interface Comment {\n    id: number;\n    postId: number;\n    authorId: number;\n    content: string;\n    createdAt: Date;\n}\n\nexport type ApiResponse<T> = {\n    data: T;\n    error?: string;\n};\n\nexport type Nullable<T> = T | null;\n\nexport function isNull<T>(value: T): value is Nullable<T> {\n    return value === null;\n}\n\nexport function isDefined<T>(value: T): value is Exclude<T, null | undefined> {\n    return value !== null && value !== undefined;\n}",
+      "type": "util",
+      "language": "typescript"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "content": "export interface User {\n    id: number;\n    name: string;\n    email: string;\n}\n\nexport interface ApiResponse<T> {\n    data: T;\n    error?: string;\n}\n\nexport type FetchOptions = {\n    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';\n    headers?: Record<string, string>;\n    body?: string;\n};\n\nexport const fetchData = async <T>(url: string, options?: FetchOptions): Promise<ApiResponse<T>> => {\n    try {\n        const response = await fetch(url, {\n            method: options?.method || 'GET',\n            headers: {\n                'Content-Type': 'application/json',\n                ...options?.headers,\n            },\n            body: options?.body,\n        });\n\n        if (!response.ok) {\n            throw new Error('Network response was not ok');\n        }\n\n        const data: T = await response.json();\n        return { data };\n    } catch (error) {\n        return { data: null as unknown as T, error: error instanceof Error ? error.message : 'Unknown error' };\n    }\n};\n\nexport const formatDate = (date: Date, format: string): string => {\n    const options: Intl.DateTimeFormatOptions = {};\n    if (format.includes('year')) options.year = 'numeric';\n    if (format.includes('month')) options.month = 'long';\n    if (format.includes('day')) options.day = 'numeric';\n\n    return new Intl.DateTimeFormat('en-US', options).format(date);\n};",
+      "type": "util",
+      "language": "typescript"
+    }
+  ]
+}

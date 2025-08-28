@@ -2,7 +2,7 @@ import { SITE_GEN_CONFIG } from './config';
 import { GeneratedFile, ProjectStructure, GenerationOptions, FileConfig } from './types';
 import { UserIntentAnalyzer } from './user-intent-analyzer';
 import { OpenAIService } from './openai-service';
-import { CodeFormatter } from '../code-formatter';
+// import { CodeFormatter } from '../code-formatter';
 
 /**
  * File Generator
@@ -63,12 +63,8 @@ export class FileGenerator {
     const duration = Date.now() - startTime;
     console.log(`🎯 Essential files generation completed in ${duration}ms - ${files.length} files`);
     
-    // Format all generated files
-    console.log('🎨 Starting code formatting...');
-    const formattedFiles = await CodeFormatter.formatAllFiles(files);
-    console.log('✅ Code formatting completed');
-    
-    return formattedFiles;
+    // Disabled code formatting to prevent malformed output
+    return files;
   }
 
   /**
@@ -505,9 +501,26 @@ export class FileGenerator {
     // เพิ่ม User Intent Analysis
     const userIntent = await UserIntentAnalyzer.analyzeUserIntent(projectStructure as any);
     
+    // ใช้เทมเพลตสำหรับไฟล์หลักเพื่อความเสถียร ไม่เรียกโมเดล
+    const coreTemplateFiles = new Set([
+      'index.html',
+      'src/main.tsx',
+      'src/App.tsx',
+      'src/index.css',
+      'vite.config.ts',
+      'tailwind.config.js',
+      'package.json'
+    ]);
+
+    if (coreTemplateFiles.has(path)) {
+      return this.createTemplateFile(fileConfig, projectStructure);
+    }
+
     // Create detailed prompts for proper React components with specific types
     const prompts = {
-      config: `Create a proper ${path} file for ${projectName} Vite React project. Include all essential dependencies and correct configuration. Return only valid JSON code, no markdown headers or explanations.`,
+      // สำหรับไฟล์ config แยกเป็น JSON และ โค้ด JS/TS
+      configJson: `Create a proper ${path} file for ${projectName} Vite React project. Include all essential dependencies and correct configuration. Return only valid JSON code, no markdown headers or explanations.`,
+      configCode: `Create a proper ${path} for a Vite + React + TypeScript project. Return JavaScript/TypeScript code (not JSON), no markdown headers or explanations.`,
       
       // เพิ่ม prompt เฉพาะสำหรับ entry point
       entry: `Create a proper React entry point for ${path}. 
@@ -609,6 +622,9 @@ const App: React.FC = () => {
 - Nest Router components
 
 Return only React code, no markdown headers or explanations.`,
+      
+      // เพิ่ม prompt สำหรับไฟล์ HTML
+      html: `Create valid ${path} for a Vite + React app. Use <!doctype html>, include a <div id="root"></div> and <script type="module" src="/src/main.tsx"></script>. Return pure HTML only, no markdown, no explanations.`,
       
       page: `Create a proper React page component for ${path}. 
 
@@ -752,7 +768,22 @@ Return only CSS code, no markdown headers or explanations.`,
       util: `Create proper TypeScript utilities and types for ${path}. Include interfaces, type definitions, and utility functions with proper typing. Return only TypeScript code, no markdown headers or explanations.`
     };
     
-    const prompt = prompts[type] || `Create a proper ${path} file with correct structure and syntax.`;
+    // เลือกพรอมป์ตตาม path/ชนิดไฟล์ให้เหมาะสม
+    let prompt: string;
+    if (path.endsWith('.html')) {
+      prompt = prompts.html;
+    } else if (path.endsWith('package.json') || path.endsWith('.json')) {
+      prompt = prompts.configJson;
+    } else if (type === 'config') {
+      prompt = prompts.configCode;
+    } else if (type in prompts) {
+      // map type keys to prompt keys safely
+      const key = type as keyof typeof prompts;
+      // @ts-ignore safe due to guard above
+      prompt = prompts[key];
+    } else {
+      prompt = `Create a proper ${path} file with correct structure and syntax.`;
+    }
     
     try {
       const completion = await OpenAIService.makeOpenAIRequestWithRetry({
@@ -1298,7 +1329,41 @@ const Contact: React.FC<ContactProps> = () => {
   );
 };
 
-export default Contact;`
+export default Contact;`,
+      
+      'src/pages/Products.tsx': `import React from 'react';
+
+interface ProductsProps {}
+
+const Products: React.FC<ProductsProps> = () => {
+  return (
+    <div className="min-h-screen p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold mb-6">Products</h1>
+        <p className="text-gray-600">Our product list will appear here.</p>
+      </div>
+    </div>
+  );
+};
+
+export default Products;`,
+
+      'src/pages/Services.tsx': `import React from 'react';
+
+interface ServicesProps {}
+
+const Services: React.FC<ServicesProps> = () => {
+  return (
+    <div className="min-h-screen p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold mb-6">Services</h1>
+        <p className="text-gray-600">Our service offerings will appear here.</p>
+      </div>
+    </div>
+  );
+};
+
+export default Services;`
     };
     
     return {
