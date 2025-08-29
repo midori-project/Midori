@@ -17,19 +17,17 @@ model User {
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
   lastLoginAt        DateTime?
+  agents             Agent[]
   authCredentials    AuthCredential[]
   emailVerifications AuthEmailVerification[]
   passwordResets     AuthPasswordReset[]
+  conversations      Conversation[]
   generations        Generation[]
   loginLogs          LoginAttempt[]
+  messages           Message[]
   oauths             OAuthConnection[]
   projects           Project[]
   sessions           Session[]
-
-  // back-relations ใหม่สำหรับเลเยอร์แชท/เอเจนต์
-  agents        Agent[]
-  conversations Conversation[]
-  messages      Message[]
 
   @@index([email])
 }
@@ -137,50 +135,40 @@ model Project {
   description       String?
   options           Json              @default("{}")
   visibility        Visibility        @default(private)
-  // categories relation (many-to-many) via explicit join model
-  projectCategories ProjectCategory[]
-  // optional preview image for UI (points to a File)
-  previewFileId     String?           @unique
-  // named relation to avoid ambiguity with Project.files <-> File.project
-  previewFile       File?             @relation("ProjectPreviewFile", fields: [previewFileId], references: [id], onDelete: SetNull)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   deletedAt         DateTime?
+  agents            Agent[]
+  conversations     Conversation[]
   deployments       Deployment[]
   files             File[]
   generations       Generation[]
   user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectCategories ProjectCategory[]
   snapshots         Snapshot[]
-
-  // back-relations ใหม่สำหรับเลเยอร์แชท/เอเจนต์
-  agents        Agent[]
-  conversations Conversation[]
 
   @@index([userId])
 }
 
-// Category model to classify projects. Use many-to-many relation so a project can have multiple categories/tags.
 model Category {
   id                String            @id @default(uuid())
   key               String            @unique
   label             String
   meta              Json?
-  projectCategories ProjectCategory[]
   createdAt         DateTime          @default(now())
+  projectCategories ProjectCategory[]
 
   @@index([key])
 }
 
-// Explicit join table for Project <-> Category to allow metadata per assignment (order, createdAt)
 model ProjectCategory {
   id         String   @id @default(uuid())
   projectId  String
   categoryId String
   order      Int?
   createdAt  DateTime @default(now())
-
-  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, categoryId])
   @@index([projectId])
@@ -188,22 +176,17 @@ model ProjectCategory {
 }
 
 model File {
-  id        String   @id @default(uuid())
-  projectId String
-  path      String
-  type      FileType @default(code)
-  isBinary  Boolean  @default(false)
-  content   String?
-  blob      Bytes?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  // back-relation for message attachments that reference this file
+  id                 String              @id @default(uuid())
+  projectId          String
+  path               String
+  type               FileType            @default(code)
+  isBinary           Boolean             @default(false)
+  content            String?
+  blob               Bytes?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   messageAttachments MessageAttachment[]
-
-  // optional back-relation: if this file is used as a project's preview image
-  previewForProject Project? @relation("ProjectPreviewFile")
 
   @@unique([projectId, path])
   @@index([projectId])
@@ -213,14 +196,14 @@ model Generation {
   id           String           @id @default(uuid())
   projectId    String
   userId       String
-  prompt       json?
-  promptJson   Json?
   options      Json             @default("{}")
   model        String
   tokensInput  Int              @default(0)
   tokensOutput Int              @default(0)
   costUsd      Decimal          @default(0)
   createdAt    DateTime         @default(now())
+  promptJson   Json?
+  prompt       Json?
   project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   changes      GenerationFile[]
@@ -267,39 +250,25 @@ model Deployment {
   @@index([projectId])
 }
 
-// ============================
-// NEW: Chat/Agent Layer
-// ============================
-
-enum ChatRole {
-  user
-  assistant
-  system
-  tool
-}
-
 model Agent {
-  id           String   @id @default(uuid())
-  projectId    String?
-  userId       String?
-  name         String
-  description  String?
-  model        String
-  temperature  Float?   @default(0.7)
-  topP         Float?   @default(1)
-  tools        Json?
-  systemPrompt String?
-  config       Json?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
+  id            String         @id @default(uuid())
+  projectId     String?
+  userId        String?
+  name          String
+  description   String?
+  model         String
+  temperature   Float?         @default(0.7)
+  topP          Float?         @default(1)
+  tools         Json?
+  systemPrompt  String?
+  config        Json?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   project       Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs          ChatRun[]
   conversations Conversation[]
-
-  // back-relation for ChatRun.agent
-  runs ChatRun[]
 
   @@index([projectId])
   @@index([userId])
@@ -316,12 +285,11 @@ model Conversation {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   archivedAt DateTime?
-
-  project  Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  agent    Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  messages Message[]
-  runs     ChatRun[]
+  runs       ChatRun[]
+  agent      Agent?     @relation(fields: [agentId], references: [id])
+  project    Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User?      @relation(fields: [userId], references: [id])
+  messages   Message[]
 
   @@index([projectId])
   @@index([userId])
@@ -329,7 +297,7 @@ model Conversation {
 }
 
 model Message {
-  id             String   @id @default(uuid())
+  id             String              @id @default(uuid())
   conversationId String
   userId         String?
   role           ChatRole
@@ -340,12 +308,11 @@ model Message {
   toolInput      Json?
   toolOutput     Json?
   messageIndex   Int
-  createdAt      DateTime @default(now())
-
-  conversation Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user         User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
-  run          ChatRun?            @relation(fields: [runId], references: [id], onDelete: SetNull)
-  attachments  MessageAttachment[]
+  createdAt      DateTime            @default(now())
+  conversation   Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  run            ChatRun?            @relation(fields: [runId], references: [id])
+  user           User?               @relation(fields: [userId], references: [id])
+  attachments    MessageAttachment[]
 
   @@index([conversationId, messageIndex])
   @@index([userId])
@@ -360,41 +327,42 @@ model MessageAttachment {
   kind      String?
   meta      Json?
   createdAt DateTime @default(now())
-
-  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  file    File?   @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  file      File?    @relation(fields: [fileId], references: [id])
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
   @@index([fileId])
 }
 
 model ChatRun {
-  id             String   @id @default(uuid())
+  id             String       @id @default(uuid())
   conversationId String
   agentId        String?
   model          String
-  tokensInput    Int      @default(0)
-  tokensOutput   Int      @default(0)
-  costUsd        Decimal  @default(0)
+  tokensInput    Int          @default(0)
+  tokensOutput   Int          @default(0)
+  costUsd        Decimal      @default(0)
   latencyMs      Int?
-  status         String? // success/failed/cancelled
+  status         String?
   error          String?
   rawRequest     Json?
   rawResponse    Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  agent        Agent?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  messages     Message[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  agent          Agent?       @relation(fields: [agentId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  messages       Message[]
 
   @@index([conversationId])
   @@index([agentId])
 }
 
-// ============================
-// Existing Enums
-// ============================
+enum ChatRole {
+  user
+  assistant
+  system
+  tool
+}
 
 enum Visibility {
   private

@@ -1,18 +1,117 @@
-"use client";
-
 import React from 'react';
 import { HoverDetailCard, HoverDetailCardData } from './hover-detail-card';
-import { hoverDetailCardMocks } from './hover-detail-card.mock';
 
 export interface HoverDetailCardGridProps {
-  items?: HoverDetailCardData[];
   columns?: number;
 }
 
-export const CardCommunity: React.FC<HoverDetailCardGridProps> = ({
-  items = hoverDetailCardMocks,
+// Helper function to generate mock likes count
+function generateMockLikes(): string {
+  const likes = Math.floor(Math.random() * 5000) + 100;
+  if (likes >= 1000) {
+    return `${(likes / 1000).toFixed(1)}k likes`;
+  }
+  return `${likes} likes`;
+}
+
+// Server action to fetch projects from database
+async function getProjectsFromDatabase() {
+  "use server";
+  
+  try {
+    // Import the Prisma client from the correct path
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
+    });
+
+    const projects = await prisma.project.findMany({
+      where: {
+        visibility: 'public',
+        NOT: {
+          previewFileId: null,
+        },
+      },
+      include: {
+        previewFile: true,
+        projectCategories: {
+          include: {
+            category: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 12,
+    });
+
+    await prisma.$disconnect();
+    return projects;
+  } catch (error) {
+    console.error('Error fetching projects from database:', error);
+    return [];
+  }
+}
+
+export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
   columns = 4,
 }) => {
+  // Fetch real data from database
+  const projects = await getProjectsFromDatabase();
+  
+  // Transform database projects to HoverDetailCardData format
+  const items: HoverDetailCardData[] = projects.map((project: any) => ({
+    title: project.name,
+    subtitle: generateMockLikes(),
+    images: project.previewFile?.content ? [project.previewFile.content] : ['https://via.placeholder.com/300.png'],
+    primaryButton: {
+      text: "View Details",
+      color: "bg-white/90",
+      hoverColor: "hover:bg-white",
+      textColor: "text-gray-900"
+    },
+    secondaryButton: {
+      text: "Preview",
+      color: "bg-blue-600",
+      hoverColor: "hover:bg-blue-700",
+      textColor: "text-white"
+    },
+    pills: {
+      left: { 
+        text: project.projectCategories?.[0]?.category?.label || "General", 
+        color: "bg-blue-100", 
+        textColor: "text-blue-800" 
+      },
+      sparkle: { show: true, color: "bg-purple-100 text-purple-800" },
+      right: { 
+        text: "Published", 
+        color: "bg-green-100", 
+        textColor: "text-green-800" 
+      }
+    },
+    enableAnimations: true,
+  }));
+
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">ไม่พบโปรเจคที่มีรูป preview</p>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">ไม่พบโปรเจคที่มีรูป preview</p>
+      </div>
+    );
+  }
   const safeCols = Math.max(1, Math.min(columns, 6));
 
   // Map columns -> sensible width classes for each card so they align in a column layout.
