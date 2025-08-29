@@ -2,11 +2,11 @@
 import Image from "next/image";
 import Input from "./home/input";
 import Gallery from "./home/gallery";
-import PromptBox from "@/components/PromptBox/PromptBoxMi";
+// import PromptBox from "@/components/PromptBox/PromptBoxMi";
 import ChatInput from "@/components/PromptBox/ChatInput";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { PromptBox } from "@/components/PromptInput/chatgpt-prompt-input";
 export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -91,13 +91,14 @@ export default function Home() {
 
       {/* Features Section */}
       <section className="relative z-30 pt-20 px-4 sm:px-6 lg:px-8">
-        <ChatInput 
+        {/* <ChatInput 
           isLoading={isLoading}
           isComplete={isComplete}
           currentStep={currentStep}
           onSendMessage={handleSendMessage}
           shouldShowGenerateButton={shouldShowGenerateButton}
-        />
+        /> */}
+        <PromptBox />
       </section>
       
     </div>

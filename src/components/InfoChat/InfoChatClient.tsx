@@ -2,6 +2,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ChatRequest, ChatResponse } from "@/types/chat";
+import { getProjectName, saveFinalJsonToGeneration, getUserIdFromSession } from "./getInitialPromt";
 
 interface Message {
   id: string;
@@ -15,14 +16,14 @@ interface InfoChatClientProps {
   sessionId?: string;
 }
 
-export default function InfoChatClient({ projectId, initialPrompt, sessionId: initialSessionId }: InfoChatClientProps) {
+export default function InfoChatClient({ projectId,sessionId: initialSessionId }: InfoChatClientProps) {
   const router = useRouter();
   const chatRef = React.useRef<HTMLDivElement | null>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const [value, setValue] = React.useState("");
   const [isSending, setIsSending] = React.useState(false);
   const [isAssistantTyping, setIsAssistantTyping] = React.useState(false);
-
+  const [initialPrompt, setInitialPrompt] = React.useState<string>("");
   const [sessionId, setSessionId] = React.useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = React.useState<string>("");
   const [totalQuestions, setTotalQuestions] = React.useState<number>(0);
@@ -32,7 +33,7 @@ export default function InfoChatClient({ projectId, initialPrompt, sessionId: in
   const [error, setError] = React.useState<string | null>(null);
   const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
   const initializedRef = React.useRef<boolean>(false);
-
+  const [finalJson, setFinalJson] = React.useState<Record<string, unknown> | null>(null);
   const [messages, setMessages] = React.useState<Message[]>([
     {
       id: `system-${Date.now()}`,
@@ -41,10 +42,11 @@ export default function InfoChatClient({ projectId, initialPrompt, sessionId: in
     },
   ]);
 
+
   // Initialize chat
   React.useEffect(() => {
     console.log('=== useEffect ทำงาน ===');
-    console.log('initialPrompt:', initialPrompt);
+    
     console.log('initialSessionId:', initialSessionId);
     console.log('initializedRef.current:', initializedRef.current);
     console.log('======================');
@@ -56,6 +58,9 @@ export default function InfoChatClient({ projectId, initialPrompt, sessionId: in
     }
     
     const initializeChat = async () => {
+      const projectName = await getProjectName(projectId);
+      setInitialPrompt(projectName || "");
+      
       if (!initialPrompt || initializedRef.current) return;
       
       // ป้องกันการเรียกซ้ำ
@@ -211,12 +216,18 @@ export default function InfoChatClient({ projectId, initialPrompt, sessionId: in
          setCurrentQuestionNumber(data.currentQuestion || 0);
          setIsComplete(data.isComplete);
          
+         // เก็บ finalJson ถ้ามี
+         if (data.finalJson) {
+           setFinalJson(data.finalJson);
+         }
+         
          // Debug: แสดงคำถามที่เปลี่ยนไป
          console.log('=== คำถามที่เปลี่ยนไป ===');
          console.log('คำถามใหม่:', data.currentquestion);
          console.log('คำถามที่:', data.currentQuestion);
          console.log('จำนวนคำถามทั้งหมด:', data.totalQuestions);
          console.log('เสร็จสิ้น:', data.isComplete);
+         console.log('finalJson exists:', !!data.finalJson);
          console.log('========================');
         
         // Add assistant message
@@ -226,6 +237,61 @@ export default function InfoChatClient({ projectId, initialPrompt, sessionId: in
           text: data.message,
         };
         setMessages((s) => [...s, reply]);
+        
+        // ถ้าตอบคำถามครบ 5 ข้อแล้ว ให้ redirect ไปหน้า [id]/ อัตโนมัติ
+        if (data.isComplete && (data.currentQuestion || 0) >= 5) {
+          console.log('ตอบคำถามครบ 5 ข้อแล้ว - redirect ไปหน้า project');
+          
+          // บันทึก finalJson ลงในตาราง generation
+          if (data.finalJson && sessionId) {
+            try {
+              // สร้าง finalPrompt จากข้อความทั้งหมดในแชท
+              const allMessages = [...messages, {
+                id: `user-${Date.now()}`,
+                role: "user" as const,
+                text: userMessage
+              }, {
+                id: `assistant-${Date.now()}`,
+                role: "assistant" as const,
+                text: data.message
+              }];
+              
+              const finalPrompt = allMessages
+                .filter(msg => msg.role === "user" || msg.role === "assistant")
+                .map(msg => `${msg.role === "user" ? "ผู้ใช้" : "AI"}: ${msg.text}`)
+                .join("\n");
+              
+              // บันทึกข้อมูล
+              await saveFinalJsonToGeneration(
+                projectId,
+                await getUserIdFromSession(sessionId) || "unknown",
+                data.finalJson,
+                finalPrompt,
+                sessionId
+              );
+              
+              console.log("บันทึก finalJson สำเร็จ");
+            } catch (error) {
+              console.error("Error saving finalJson:", error);
+            }
+          }
+          
+          // แสดงข้อความแจ้งเตือน
+          setTimeout(() => {
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `system-redirect-${Date.now()}`,
+                role: "system",
+                text: "✅ ตอบคำถามครบแล้ว! กำลังนำคุณไปยังหน้าโปรเจคในอีก 2 วินาที..."
+              }
+            ]);
+          }, 1000);
+          
+          setTimeout(() => {
+            router.push(`/projects/${projectId}`);
+          }, 3000); // รอ 3 วินาทีให้ผู้ใช้เห็นข้อความแจ้งเตือน
+        }
       } else {
         setError(data.error || 'เกิดข้อผิดพลาดในการส่งข้อความ');
       }
@@ -235,6 +301,45 @@ export default function InfoChatClient({ projectId, initialPrompt, sessionId: in
     } finally {
       setIsAssistantTyping(false);
       setIsSending(false);
+    }
+  };
+
+  const handleGenerateSite = async () => {
+    if (!finalJson) {
+      setError('ไม่มีข้อมูลสำหรับสร้างเว็บไซต์');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/gensite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          finalJson,
+          sessionId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate site');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // ไปหน้า preview พร้อม generationId
+        router.push(`/preview/${projectId}?generationId=${data.generationId}`);
+      } else {
+        setError(data.message || 'เกิดข้อผิดพลาดในการสร้างเว็บไซต์');
+      }
+    } catch (error) {
+      console.error('Error generating site:', error);
+      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -307,6 +412,13 @@ export default function InfoChatClient({ projectId, initialPrompt, sessionId: in
           </div>
         )}
 
+        {/* Redirect notification */}
+        {isComplete && (currentQuestionNumber >= 5) && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded animate-pulse">
+            ✅ ตอบคำถามครบแล้ว! กำลังนำคุณไปยังหน้าโปรเจค...
+          </div>
+        )}
+
         {/* Progress indicator */}
         {totalQuestions > 0 && !isComplete && (
           <div className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow">
@@ -325,6 +437,27 @@ export default function InfoChatClient({ projectId, initialPrompt, sessionId: in
         {/* input */}
         <div className="fixed left-1/2 bottom-12 transform -translate-x-1/2 w-full px-4 flex flex-col items-center gap-3">
           <div className="w-full max-w-2xl">
+
+            {isComplete && finalJson && (
+              <div className="mb-4 flex justify-center">
+                <button
+                  onClick={handleGenerateSite}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-full shadow-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      กำลังสร้างเว็บไซต์...
+                    </>
+                  ) : (
+                    <>
+                      🚀 สร้างเว็บไซต์และดูพรีวิว
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
             <div className="flex items-center gap-3 bg-white/80 backdrop-blur rounded-full px-4 py-2 shadow-lg">
               <textarea
                 ref={textareaRef}

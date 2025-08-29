@@ -59,7 +59,7 @@ export default function ChatInput({
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm border-t border-emerald-200 p-6 shadow-sm">
+    <div >
       <form onSubmit={handleSubmit} className="flex space-x-3">
         <textarea
           ref={inputRef}

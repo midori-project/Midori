@@ -4,11 +4,14 @@ import InfoChatClient from "@/components/InfoChat/InfoChatClient";
 import Image from "next/image";
 
 type Props = { 
-  params: { id: string };
-  searchParams: { prompt?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ prompt?: string }>;
 };
 
 export default async function InfoPage({ params, searchParams }: Props) {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  
   // Fetch base project data (avoid including relations that may not be available in runtime client)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const project = await (prisma as any).project.findUnique({
@@ -63,7 +66,7 @@ export default async function InfoPage({ params, searchParams }: Props) {
       <div className="relative z-10 p-4">
         <InfoChatClient 
           projectId={project.id} 
-          initialPrompt={searchParams.prompt || project.description || ""}
+          initialPrompt={resolvedSearchParams.prompt || project.description || ""}
         />
       </div>
     </div>

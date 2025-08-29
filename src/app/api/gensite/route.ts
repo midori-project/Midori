@@ -34,8 +34,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     console.log('🚀 Site Generator API called');
 
-
-
     // 3. Parse and validate request body
     const body = await request.json();
     console.log('📝 Request body received:', JSON.stringify(body, null, 2));
@@ -93,7 +91,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         updatedAt: new Date(),
       },
       files: [],
-
+      projectStructure: undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -102,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     console.log('🏗️ Starting site generation...');
     console.log('Generation ID:', generationId);
-   
+    console.log('Available sessions:', Array.from(generationSessions.keys()));
     console.log('Options:', generationOptions);
 
     // 6. Start background generation (non-blocking)
@@ -176,6 +174,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const url = new URL(request.url);
     const generationId = url.searchParams.get('id');
 
+    console.log('=== GET /api/gensite ===');
+    console.log('Generation ID:', generationId);
+    console.log('Available sessions:', Array.from(generationSessions.keys()));
+    console.log('========================');
+
     if (!generationId) {
       return NextResponse.json(
         { 
@@ -193,6 +196,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Get generation session
     const session = generationSessions.get(generationId);
     if (!session) {
+      console.log('Session not found for ID:', generationId);
       return NextResponse.json(
         { 
           success: false,
@@ -205,7 +209,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         }
       );
     }
-
 
     // Return session status and files
     const response: SiteGenResponse = {

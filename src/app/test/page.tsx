@@ -6,7 +6,7 @@ import {
 } from "@/utils/sandPackConverter";
 import t2_fixed from "@/components/preview/test/t2_fixed.json";
 
-export default function TestPage() {
+export default function previewPage() {
   const react3SandpackProps = createReactSandpackProps(t2_fixed, { 
     template: "react",
     theme: "dark",
@@ -22,10 +22,7 @@ export default function TestPage() {
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="bg-gray-800 text-white p-4">
-        <h1 className="text-2xl font-bold">🐱 Cat Gallery Sandpack Preview</h1>
-        <p className="text-sm text-gray-300 mt-2">
-          ✅ React Router ทำงานแล้ว! ลิงก์จะนำทางได้ใน Sandpack environment
-        </p>
+    
       </div>
 
       {/* Sandpack */}
