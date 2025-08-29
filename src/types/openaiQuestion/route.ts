@@ -18,7 +18,7 @@ export interface EnhancedAnalysis {
     designStyle?: string;
   };
   // Detailed completeness information (score, missing elements, suggestions)
-  completeness?: Completeness;
+    completeness?: Completeness;
   missingElements: string[];
   isComplete?: boolean;
   questionStrategy: QuestionStrategy;
@@ -65,6 +65,8 @@ export interface DesignConfig {
   secondaryColors: string[];
   typography: string;
   designRationale: string;
+    // optional visualStyle used in UI components
+    visualStyle?: string;
 }
 
 export interface ContentConfig {
@@ -104,7 +106,33 @@ export interface WebsiteConfig {
 
 export interface FinalOutput {
   json: WebsiteConfig;
+    // optional human-readable summary produced by the OpenAI final stage
+    summary?: Summary;
+    // optional quality assessment produced by the OpenAI final stage
+    quality?: Quality;
 }
+  // Additional types used by consumers in the app
+  export interface Summary {
+    requirements?: string[];
+    recommendations?: string[];
+    estimatedTime?: string;
+    estimatedCost?: string;
+    risks?: string[];
+  }
+
+  export interface Quality {
+    completeness: number; // percentage 0-100
+    clarity: number; // percentage
+    consistency: number; // percentage
+    overallScore: number; // percentage
+  }
+
+  // The 'Completeness' type referenced in EnhancedAnalysis
+  export interface Completeness {
+    score: number; // percentage 0-100
+    missingItems?: string[];
+    suggestions?: string[];
+  }
 
 // API Request/Response Types
 export interface OpenAIRequest {

@@ -9,7 +9,7 @@ export interface HoverDetailCardGridProps {
   columns?: number;
 }
 
-export const HoverDetailCardGrid: React.FC<HoverDetailCardGridProps> = ({
+export const CardCommunity: React.FC<HoverDetailCardGridProps> = ({
   items = hoverDetailCardMocks,
   columns = 4,
 }) => {
@@ -49,4 +49,3 @@ export const HoverDetailCardGrid: React.FC<HoverDetailCardGridProps> = ({
   );
 };
 
-export default HoverDetailCardGrid;

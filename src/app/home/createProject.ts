@@ -8,7 +8,8 @@ const CreateProjectSchema = z.object({
   name: z.string().min(1, 'Name is required').max(256),
   description: z.string().optional(),
   visibility: z.enum(['private', 'unlisted', 'public']).optional(),
-  // note: userId is resolved server-side from the session
+  // optional list of category keys/labels
+  categories: z.array(z.string()).optional(),
 });
 
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
@@ -44,6 +45,10 @@ export async function createProjectAction(data: FormData | CreateProjectInput) {
   }
 
   try {
+    // Use validated categories from parse result
+    const categoriesInput = parseResult.data.categories ?? [];
+
+    // 1) create project
     const project = await prisma.project.create({
       data: {
         name,
@@ -53,6 +58,24 @@ export async function createProjectAction(data: FormData | CreateProjectInput) {
       },
       select: { id: true },
     });
+
+    // 2) if categories provided, upsert them and create join rows
+    if (categoriesInput.length > 0) {
+      const upserted = await Promise.all(
+        categoriesInput.map(async (cat: string) => {
+          const key = cat.trim().toLowerCase().replace(/\s+/g, '-');
+          return (prisma as any).category.upsert({
+            where: { key },
+            create: { key, label: cat },
+            update: { label: cat },
+          });
+        })
+      );
+
+      // create join rows (ignore duplicates by using createMany with skipDuplicates)
+  const joinData = upserted.map((c: any) => ({ projectId: project.id, categoryId: c.id }));
+  await (prisma as any).projectCategory.createMany({ data: joinData, skipDuplicates: true });
+    }
 
     return { ok: true, projectId: project.id };
   } catch (error) {
