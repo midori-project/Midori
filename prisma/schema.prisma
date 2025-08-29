@@ -137,6 +137,8 @@ model Project {
   description String?
   options     Json         @default("{}")
   visibility  Visibility   @default(private)
+  // categories relation (many-to-many) via explicit join model
+  projectCategories ProjectCategory[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
@@ -151,6 +153,34 @@ model Project {
   conversations Conversation[]
 
   @@index([userId])
+}
+
+// Category model to classify projects. Use many-to-many relation so a project can have multiple categories/tags.
+model Category {
+  id               String              @id @default(uuid())
+  key              String              @unique
+  label            String
+  meta             Json?
+  projectCategories ProjectCategory[]
+  createdAt        DateTime            @default(now())
+
+  @@index([key])
+}
+
+// Explicit join table for Project <-> Category to allow metadata per assignment (order, createdAt)
+model ProjectCategory {
+  id         String   @id @default(uuid())
+  projectId  String
+  categoryId String
+  order      Int?     
+  createdAt  DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  category  Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, categoryId])
+  @@index([projectId])
+  @@index([categoryId])
 }
 
 model File {
@@ -230,9 +260,9 @@ model Deployment {
   @@index([projectId])
 }
 
-/* ============================
-   NEW: Chat/Agent Layer
-   ============================ */
+// ============================
+// NEW: Chat/Agent Layer
+// ============================
 
 enum ChatRole {
   user
@@ -355,9 +385,9 @@ model ChatRun {
   @@index([agentId])
 }
 
-/* ============================
-   Existing Enums
-   ============================ */
+// ============================
+// Existing Enums
+// ============================
 
 enum Visibility {
   private
