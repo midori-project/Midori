@@ -18,6 +18,7 @@ interface UserIntent {
   layoutPreference: string;
   tone: string;
   targetAudience: string;
+  pages?: string[]; // เพิ่ม pages property เป็น optional
 }
 
 interface CodeValidationResult {
@@ -188,7 +189,16 @@ export class FileGenerator {
       { path: 'src/App.tsx', type: 'app' as const },
       { path: 'src/index.css', type: 'style' as const },
       { path: 'vite.config.ts', type: 'config' as const },
+    ];
 
+    // Common pages that every website needs
+    const commonFiles: FileConfig[] = [
+      { path: 'src/pages/About.tsx', type: 'page' as const },
+      { path: 'src/pages/Contact.tsx', type: 'page' as const },
+      { path: 'src/components/Header.tsx', type: 'component' as const },
+      { path: 'src/components/Footer.tsx', type: 'component' as const },
+      { path: 'src/components/HeroSection.tsx', type: 'component' as const },
+      { path: 'src/components/ContactForm.tsx', type: 'component' as const },
     ];
 
     const businessSpecificFiles = this.getBusinessSpecificFiles(businessContext);
@@ -198,7 +208,7 @@ export class FileGenerator {
       { path: 'src/lib/utils.ts', type: 'util' as const }
     ];
     
-    return [...baseFiles, ...businessSpecificFiles, ...utilityFiles];
+    return [...baseFiles, ...commonFiles, ...businessSpecificFiles, ...utilityFiles];
   }
 
   /**
@@ -404,6 +414,15 @@ export class FileGenerator {
 - Display dish name, ingredients, and price
 - Include dietary information and allergens
 - Add social sharing buttons`;
+          case 'HeroSection':
+            return `- Create stunning hero section for restaurant homepage
+- Include background image of delicious food or restaurant interior
+- Display restaurant name with elegant typography
+- Add compelling tagline about authentic cuisine and dining experience
+- Include primary CTA button for viewing menu
+- Add secondary CTA for making reservations
+- Use warm color scheme (oranges, reds, browns)
+- Ensure mobile-responsive design`;
           default:
             return `- Create component appropriate for restaurant functionality
 - Use warm, food-themed styling
@@ -432,6 +451,15 @@ export class FileGenerator {
 - Display roasting profile and flavor characteristics
 - Include sustainability information
 - Add "Learn More" link`;
+          case 'HeroSection':
+            return `- Create inviting hero section for cafe homepage
+- Include background image of coffee beans, latte art, or cozy cafe interior
+- Display cafe name with modern, friendly typography
+- Add welcoming tagline about quality coffee and community
+- Include primary CTA button for viewing coffee menu
+- Add secondary CTA for learning about coffee origins
+- Use warm brown and cream color palette
+- Show coffee cup steam animation or subtle parallax effect`;
           default:
             return `- Create component appropriate for cafe functionality
 - Use warm, coffee-themed styling
@@ -455,6 +483,15 @@ export class FileGenerator {
 - Show collection name, season, and theme
 - Include "View Collection" and "Shop Now" buttons
 - Add filtering by category and price`;
+          case 'HeroSection':
+            return `- Create elegant hero section for fashion brand homepage
+- Include high-quality fashion photography or model showcase
+- Display brand name with sophisticated, stylish typography
+- Add compelling tagline about style, quality, and fashion-forward design
+- Include primary CTA button for viewing latest collection
+- Add secondary CTA for style guide or lookbook
+- Use chic color palette (blacks, whites, with accent colors)
+- Include subtle animations for luxury feel`;
           default:
             return `- Create component appropriate for fashion functionality
 - Use elegant, fashion-forward styling
@@ -478,6 +515,15 @@ export class FileGenerator {
 - Show skills, experience, and specializations
 - Include social media links and contact info
 - Add "View Profile" and "Contact" buttons`;
+          case 'HeroSection':
+            return `- Create cutting-edge hero section for technology company homepage
+- Include futuristic background with code snippets, circuit patterns, or tech imagery
+- Display company name with modern, tech-style typography
+- Add powerful tagline about innovation, solutions, and technological advancement
+- Include primary CTA button for viewing projects or services
+- Add secondary CTA for getting consultation or demo
+- Use tech color scheme (blues, grays, with electric accent colors)
+- Include dynamic elements like particle effects or code animations`;
           default:
             return `- Create component appropriate for technology functionality
 - Use modern, tech-focused styling
@@ -485,9 +531,21 @@ export class FileGenerator {
         }
         
       default:
-        return `- Create general business component
+        switch (fileName) {
+          case 'HeroSection':
+            return `- Create professional hero section for business homepage
+- Include clean, modern background with business-related imagery
+- Display company name with professional typography
+- Add clear tagline about business value and services
+- Include primary CTA button for main service or product
+- Add secondary CTA for learning more or contact
+- Use professional color scheme (blues, grays, whites)
+- Ensure clean, trustworthy design that builds credibility`;
+          default:
+            return `- Create general business component
 - Use professional styling and colors
 - Focus on business functionality and user experience`;
+        }
     }
   }
 
@@ -500,95 +558,70 @@ export class FileGenerator {
     switch (industry) {
       case 'restaurant':
         return [
-          // Restaurant-specific pages
+          // Restaurant-specific pages (ลบ About, Contact ที่ซ้ำ)
           { path: 'src/pages/Menu.tsx', type: 'page' as const },
           { path: 'src/pages/Reservation.tsx', type: 'page' as const },
           { path: 'src/pages/ChefProfile.tsx', type: 'page' as const },
           { path: 'src/pages/DishGallery.tsx', type: 'page' as const },
-          { path: 'src/pages/About.tsx', type: 'page' as const },
-          { path: 'src/pages/Contact.tsx', type: 'page' as const },
           
-          // Restaurant-specific components
-          { path: 'src/components/Header.tsx', type: 'component' as const },
-          { path: 'src/components/Footer.tsx', type: 'component' as const },
+          // Restaurant-specific components (ลบ Header, Footer, ContactForm ที่ซ้ำ)
           { path: 'src/components/MenuCard.tsx', type: 'component' as const },
           { path: 'src/components/ReservationForm.tsx', type: 'component' as const },
           { path: 'src/components/ChefCard.tsx', type: 'component' as const },
           { path: 'src/components/DishCard.tsx', type: 'component' as const },
-          { path: 'src/components/ContactForm.tsx', type: 'component' as const },
         ];
         
       case 'cafe':
         return [
-          // Cafe-specific pages
+          // Cafe-specific pages (ลบ About, Contact ที่ซ้ำ)
           { path: 'src/pages/CoffeeMenu.tsx', type: 'page' as const },
           { path: 'src/pages/BaristaProfile.tsx', type: 'page' as const },
           { path: 'src/pages/OrderTracking.tsx', type: 'page' as const },
           { path: 'src/pages/BeanOrigin.tsx', type: 'page' as const },
-          { path: 'src/pages/About.tsx', type: 'page' as const },
-          { path: 'src/pages/Contact.tsx', type: 'page' as const },
           
-          // Cafe-specific components
-          { path: 'src/components/Header.tsx', type: 'component' as const },
-          { path: 'src/components/Footer.tsx', type: 'component' as const },
+          // Cafe-specific components (ลบ Header, Footer, ContactForm ที่ซ้ำ)
           { path: 'src/components/CoffeeCard.tsx', type: 'component' as const },
           { path: 'src/components/OrderStatus.tsx', type: 'component' as const },
           { path: 'src/components/BaristaCard.tsx', type: 'component' as const },
           { path: 'src/components/BeanOriginCard.tsx', type: 'component' as const },
-          { path: 'src/components/ContactForm.tsx', type: 'component' as const },
         ];
         
       case 'fashion':
         return [
-          // Fashion-specific pages
+          // Fashion-specific pages (ลบ About, Contact ที่ซ้ำ)
           { path: 'src/pages/Collection.tsx', type: 'page' as const },
           { path: 'src/pages/ProductDetail.tsx', type: 'page' as const },
           { path: 'src/pages/StyleGuide.tsx', type: 'page' as const },
-          { path: 'src/pages/About.tsx', type: 'page' as const },
-          { path: 'src/pages/Contact.tsx', type: 'page' as const },
           
-          // Fashion-specific components
-          { path: 'src/components/Header.tsx', type: 'component' as const },
-          { path: 'src/components/Footer.tsx', type: 'component' as const },
+          // Fashion-specific components (ลบ Header, Footer, ContactForm ที่ซ้ำ)
           { path: 'src/components/ProductCard.tsx', type: 'component' as const },
           { path: 'src/components/SizeGuide.tsx', type: 'component' as const },
           { path: 'src/components/CollectionGrid.tsx', type: 'component' as const },
-          { path: 'src/components/ContactForm.tsx', type: 'component' as const },
         ];
         
       case 'technology':
         return [
-          // Technology-specific pages
+          // Technology-specific pages (ลบ About, Contact ที่ซ้ำ)
           { path: 'src/pages/Projects.tsx', type: 'page' as const },
           { path: 'src/pages/Services.tsx', type: 'page' as const },
           { path: 'src/pages/Team.tsx', type: 'page' as const },
-          { path: 'src/pages/About.tsx', type: 'page' as const },
-          { path: 'src/pages/Contact.tsx', type: 'page' as const },
           
-          // Technology-specific components
-          { path: 'src/components/Header.tsx', type: 'component' as const },
-          { path: 'src/components/Footer.tsx', type: 'component' as const },
+          // Technology-specific components (ลบ Header, Footer, ContactForm ที่ซ้ำ)
           { path: 'src/components/ProjectCard.tsx', type: 'component' as const },
           { path: 'src/components/ServiceCard.tsx', type: 'component' as const },
           { path: 'src/components/TeamCard.tsx', type: 'component' as const },
-          { path: 'src/components/ContactForm.tsx', type: 'component' as const },
         ];
         
       default:
-        // Generic business files
+        // Generic business files (ลบ About, Contact, Header, Footer, ContactForm ที่ซ้ำ)
         return [
           { path: 'src/pages/Home.tsx', type: 'page' as const },
-          { path: 'src/pages/About.tsx', type: 'page' as const },
-          { path: 'src/pages/Contact.tsx', type: 'page' as const },
           { path: 'src/pages/Products.tsx', type: 'page' as const },
           { path: 'src/pages/Services.tsx', type: 'page' as const },
           
-          { path: 'src/components/Header.tsx', type: 'component' as const },
-          { path: 'src/components/Footer.tsx', type: 'component' as const },
           { path: 'src/components/Navigation.tsx', type: 'component' as const },
           { path: 'src/components/Hero.tsx', type: 'component' as const },
           { path: 'src/components/ProductCard.tsx', type: 'component' as const },
-          { path: 'src/components/ContactForm.tsx', type: 'component' as const },
         ];
     }
   }
@@ -1092,38 +1125,29 @@ Return only CSS code, no markdown headers or explanations.`,
     const message = businessMessages[industry as keyof typeof businessMessages] || businessMessages.technology;
     
     return `import React from 'react';
-import { Link } from 'react-router-dom';
+import HeroSection from '../components/HeroSection';
 
 interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
+  const heroData = {
+    title: "${message.title}",
+    subtitle: "${message.subtitle}",
+    primaryButton: {
+      text: "${message.cta}",
+      link: "/${industry === 'restaurant' ? 'menu' : industry === 'cafe' ? 'coffee-menu' : industry === 'fashion' ? 'collection' : 'projects'}"
+    },
+    secondaryButton: {
+      text: "เรียนรู้เพิ่มเติม",
+      link: "/about"
+    },
+    backgroundStyle: "gradient-${industry === 'restaurant' ? 'orange' : industry === 'cafe' ? 'brown' : industry === 'fashion' ? 'purple' : 'blue'}"
+  };
+
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 to-purple-700 text-white py-20">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">
-            ${message.title}
-          </h1>
-          <p className="text-xl mb-8 opacity-90">
-            ${message.subtitle}
-          </p>
-          <div className="space-x-4">
-            <Link 
-              to="/${industry === 'restaurant' ? 'menu' : industry === 'cafe' ? 'coffee-menu' : industry === 'fashion' ? 'collection' : 'projects'}" 
-              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              ${message.cta}
-            </Link>
-            <Link 
-              to="/about" 
-              className="border-2 border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"
-            >
-              เรียนรู้เพิ่มเติม
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Hero Section Component */}
+      <HeroSection {...heroData} />
 
       {/* Features Section */}
       <section className="py-16 bg-gray-50">
@@ -2146,5 +2170,114 @@ export default {
       targetAudience,
       tone
     };
+  }
+
+  /**
+   * Map design style from finalJson
+   */
+  private static mapDesignStyle(designStyle: string): string {
+    const styleMap: Record<string, string> = {
+      'modern-minimalist': 'modern-minimal',
+      'classic-elegant': 'vintage-retro',
+      'colorful-playful': 'playful-creative',
+      'professional-corporate': 'professional-corporate',
+      'creative-artistic': 'artistic-creative',
+      'luxury-premium': 'luxury-elegant'
+    };
+    return styleMap[designStyle] || 'modern-minimal';
+  }
+
+  /**
+   * Map color scheme from primary colors
+   */
+  private static mapColorScheme(primaryColors: string[]): string {
+    if (!primaryColors || primaryColors.length === 0) return 'blue-gray';
+    
+    const colorString = primaryColors.join(' ').toLowerCase();
+    
+    if (colorString.includes('blue') || colorString.includes('gray')) return 'blue-gray';
+    if (colorString.includes('orange') || colorString.includes('red')) return 'warm-orange-red';
+    if (colorString.includes('green') || colorString.includes('teal')) return 'cool-blue-green';
+    if (colorString.includes('brown') || colorString.includes('beige')) return 'neutral-beige-brown';
+    if (colorString.includes('black') || colorString.includes('white')) return 'monochrome-black-white';
+    
+    return 'bold-vibrant';
+  }
+
+  /**
+   * Map layout preference from pages
+   */
+  private static mapLayoutPreference(pages: string[]): string {
+    if (!pages || pages.length === 0) return 'responsive-grid';
+    
+    if (pages.length > 5) return 'sidebar-navigation';
+    if (pages.some(p => p.includes('hero') || p.includes('landing'))) return 'fullscreen-hero';
+    if (pages.some(p => p.includes('gallery') || p.includes('portfolio'))) return 'card-masonry';
+    if (pages.some(p => p.includes('dashboard') || p.includes('admin'))) return 'dashboard-panel';
+    
+    return 'responsive-grid';
+  }
+
+  /**
+   * Map tone from target audience and goal
+   */
+  private static mapTone(targetAudience: string, primaryGoal: string): string {
+    const audience = targetAudience.toLowerCase();
+    const goal = (primaryGoal || '').toLowerCase();
+    
+    if (audience.includes('professional') || goal.includes('business')) return 'professional';
+    if (audience.includes('young') || audience.includes('teen')) return 'casual';
+    if (audience.includes('luxury') || goal.includes('premium')) return 'elegant';
+    if (audience.includes('family') || audience.includes('children')) return 'friendly';
+    if (audience.includes('creative') || goal.includes('art')) return 'creative';
+    
+    return 'professional';
+  }
+}
+
+// API Route Handler
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { finalJson, projectId, options } = body;
+    
+    if (!finalJson) {
+      return Response.json(
+        { error: 'finalJson is required' },
+        { status: 400 }
+      );
+    }
+    
+    console.log('🚀 Starting site generation for project:', projectId);
+    console.log('📋 Final JSON:', finalJson);
+    
+    // เรียกใช้ SiteGeneratorService
+    const { SiteGeneratorService } = await import('../../../utils/site-generator');
+    const result = await SiteGeneratorService.generateSite(finalJson, options);
+    
+    console.log('✅ Site generation completed');
+    console.log('📁 Generated files:', result.files.length);
+    
+    return Response.json({
+      success: true,
+      message: 'Site generated successfully',
+      data: {
+        files: result.files,
+        projectStructure: result.projectStructure,
+        fileCount: result.files.length
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Site generation failed:', error);
+    
+    return Response.json(
+      { 
+        success: false,
+        error: 'Site generation failed',
+        details: error instanceof Error ? error.message : String(error)
+      },
+      { status: 500 }
+    );
   }
 }

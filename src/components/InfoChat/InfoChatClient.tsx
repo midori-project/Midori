@@ -308,44 +308,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
     }
   };
 
-  const handleGenerateSite = async () => {
-    if (!finalJson) {
-      setError('ไม่มีข้อมูลสำหรับสร้างเว็บไซต์');
-      return;
-    }
 
-    setLoading(true);
-    try {
-      const response = await fetch('/api/gensite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          finalJson,
-          sessionId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate site');
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        // ไปหน้า preview พร้อม generationId
-        router.push(`/preview/${projectId}?generationId=${data.generationId}`);
-      } else {
-        setError(data.message || 'เกิดข้อผิดพลาดในการสร้างเว็บไซต์');
-      }
-    } catch (error) {
-      console.error('Error generating site:', error);
-      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="relative rounded-xl">
