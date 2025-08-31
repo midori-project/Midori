@@ -41,7 +41,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
       text: "เริ่มการตั้งค่า Midori — ตอบคำถามทีละข้อ",
     },
   ]);
-
+  console.log('finalJson:', finalJson);
 
   // Initialize chat
   React.useEffect(() => {
@@ -106,7 +106,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         if (!response.ok) {
           throw new Error('Failed to initialize chat');
         }
-
+        console.log('response:', response);
         const data: ChatResponse = await response.json();
         
         if (data.success) {
@@ -203,13 +203,13 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         },
         body: JSON.stringify(request),
       });
-
+      console.log('response:', response);
       if (!response.ok) {
         throw new Error('Failed to send message');
       }
-
-      const data: ChatResponse = await response.json();
       
+      const data: ChatResponse = await response.json();
+      console.log('data:', data);
              if (data.success) {
          setCurrentQuestion(data.currentquestion || "");
          setTotalQuestions(data.totalQuestions || 0);
@@ -261,13 +261,17 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
                 .map(msg => `${msg.role === "user" ? "ผู้ใช้" : "AI"}: ${msg.text}`)
                 .join("\n");
               
-              // บันทึกข้อมูล
+              // บันทึกข้อมูล แปลงtype data.analysis เป็น string
+              const promptPayload =
+                typeof (data as any).analysis === "string"
+                  ? (data as any).analysis
+                  : JSON.stringify((data as any).analysis ?? {});
+
               await saveFinalJsonToGeneration(
                 projectId,
-                await getUserIdFromSession(sessionId) || "unknown",
-                data.finalJson,
-                finalPrompt,
-                sessionId
+                { finalJson: data.finalJson,
+                  prompt : promptPayload
+                }
               );
               
               console.log("บันทึก finalJson สำเร็จ");
@@ -290,7 +294,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
           
           setTimeout(() => {
             router.push(`/projects/${projectId}`);
-          }, 3000); // รอ 3 วินาทีให้ผู้ใช้เห็นข้อความแจ้งเตือน
+          }, 3000 ); // รอ 3 วินาทีให้ผู้ใช้เห็นข้อความแจ้งเตือน
         }
       } else {
         setError(data.error || 'เกิดข้อผิดพลาดในการส่งข้อความ');

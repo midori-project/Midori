@@ -32,3 +32,6 @@ foreach ($sg in $sgIds) {
 
 
 <!-- ทดสอบด้วย Test-NetConnection midoriinfastructurestack-midoridatabase56104fa3-dod3pasvmfqy.cbeguaagse61.ap-southeast-1.rds.amazonaws.com -port 5432 -->
+
+<!-- รัน prisma -->
+npx prisma studio --schema=midori-infastructure/lambda/api/prisma/schema.prisma
