@@ -1,61 +1,9 @@
 import React from 'react';
 import { HoverDetailCard, HoverDetailCardData } from './hover-detail-card';
+import { getProjectsFromDatabase } from '../../app/home/getProjects';
 
 export interface HoverDetailCardGridProps {
   columns?: number;
-}
-
-// Helper function to generate mock likes count
-function generateMockLikes(): string {
-  const likes = Math.floor(Math.random() * 5000) + 100;
-  if (likes >= 1000) {
-    return `${(likes / 1000).toFixed(1)}k likes`;
-  }
-  return `${likes} likes`;
-}
-
-// Server action to fetch projects from database
-async function getProjectsFromDatabase() {
-  "use server";
-  
-  try {
-    // Import the Prisma client from the correct path
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-    });
-
-    const projects = await prisma.project.findMany({
-      where: {
-        visibility: 'public',
-        NOT: {
-          previewFileId: null,
-        },
-      },
-      include: {
-        previewFile: true,
-        projectCategories: {
-          include: {
-            category: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 12,
-    });
-
-    await prisma.$disconnect();
-    return projects;
-  } catch (error) {
-    console.error('Error fetching projects from database:', error);
-    return [];
-  }
 }
 
 export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
@@ -65,37 +13,51 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
   const projects = await getProjectsFromDatabase();
   
   // Transform database projects to HoverDetailCardData format
-  const items: HoverDetailCardData[] = projects.map((project: any) => ({
-    title: project.name,
-    subtitle: generateMockLikes(),
-    images: project.previewFile?.content ? [project.previewFile.content] : ['https://via.placeholder.com/300.png'],
-    primaryButton: {
-      text: "View Details",
-      color: "bg-white/90",
-      hoverColor: "hover:bg-white",
-      textColor: "text-gray-900"
-    },
-    secondaryButton: {
-      text: "Preview",
-      color: "bg-blue-600",
-      hoverColor: "hover:bg-blue-700",
-      textColor: "text-white"
-    },
-    pills: {
-      left: { 
-        text: project.projectCategories?.[0]?.category?.label || "General", 
-        color: "bg-blue-100", 
-        textColor: "text-blue-800" 
+  const items: HoverDetailCardData[] = projects.map((project: any) => {
+    // ✅ ปรับปรุง logic ให้รองรับกรณีต่างๆ
+    const hasValidPreviewContent = project.previewFile?.content && 
+                                   project.previewFile.content.trim().length > 0 &&
+                                   (project.previewFile.content.startsWith('http') || 
+                                    project.previewFile.content.startsWith('data:'));
+    
+    const fallbackImage = 'https://coolbackgrounds.imgix.net/219VUMa1SOxASKqCE2OgT4/be1c810344587bd7f6f203337d23602a/ranger-4df6c1b6.png?w=3840&q=60&auto=format,compress';
+    
+    // ✅ ใช้ยอดไลค์จริงจากฐานข้อมูล
+    const likeCount = project.likeCount || 0;
+    const likesText = likeCount >= 1000 
+      ? `${(likeCount / 1000).toFixed(1)}k likes`
+      : `${likeCount} likes`;
+    
+    return {
+      title: project.name.length > 15 ? `${project.name.substring(0, 15)}...` : project.name,
+      subtitle: likesText,
+      images: hasValidPreviewContent ? [project.previewFile.content] : [fallbackImage],
+      variant: 'home' as const,
+      primaryButton: {
+        text: "View Details",
+        color: "bg-white/90",
+        hoverColor: "hover:bg-white",
+        textColor: "text-gray-900"
       },
-      sparkle: { show: true, color: "bg-purple-100 text-purple-800" },
-      right: { 
-        text: "Published", 
-        color: "bg-green-100", 
-        textColor: "text-green-800" 
-      }
-    },
-    enableAnimations: true,
-  }));
+      secondaryButton: {
+        text: "Preview",
+        color: "bg-blue-600",
+        hoverColor: "hover:bg-blue-700",
+        textColor: "text-white"
+      },
+      pills: {
+        category: { 
+          // ✅ แสดง category หลัก หรือข้อความพิเศษถ้ามีหลาย categories
+          text: project.projectCategories?.length > 1 
+            ? `${project.projectCategories[0]?.category?.label} +${project.projectCategories.length - 1}`
+            : project.projectCategories?.[0]?.category?.label || "General", 
+          color: "bg-blue-100", 
+          textColor: "text-blue-800" 
+        }
+      },
+      enableAnimations: true,
+    };
+  });
 
   if (items.length === 0) {
     return (
@@ -105,13 +67,6 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
     );
   }
 
-  if (items.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">ไม่พบโปรเจคที่มีรูป preview</p>
-      </div>
-    );
-  }
   const safeCols = Math.max(1, Math.min(columns, 6));
 
   // Map columns -> sensible width classes for each card so they align in a column layout.
@@ -130,7 +85,7 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
     // mobile: 1, md: 2, >1640px: 4 (via custom .grid-cols-over-1640 rule)
     <div className={`grid grid-cols-1 md:grid-cols-2 grid-cols-over-1640 gap-6`}>
       {items.map((item, idx) => (
-        <div key={idx} className="">
+        <div key={idx} className="w-full">
           <HoverDetailCard
             title={item.title}
             subtitle={item.subtitle}
@@ -141,6 +96,7 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
             enableAnimations={item.enableAnimations}
             widthClass={item.widthClass ?? widthClass}
             orientation={item.orientation ?? 'horizontal'}
+            variant={item.variant ?? 'home'}
           />
         </div>
       ))}

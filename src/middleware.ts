@@ -7,7 +7,7 @@ const publicRoutes = [
   '/',
   '/login',
   '/signup',
-  '/projects/featured',
+  '/projects/community',
 ];
 
 // API routes ที่ไม่ต้อง auth

@@ -30,6 +30,7 @@ model User {
   agents        Agent[]
   conversations Conversation[]
   messages      Message[]
+  projectLikes  ProjectLike[]
 
   @@index([email])
 }
@@ -135,6 +136,7 @@ model Project {
   userId            String
   name              String
   description       String?
+  likeCount         Int               @default(0)
   options           Json              @default("{}")
   visibility        Visibility        @default(private)
   // categories relation (many-to-many) via explicit join model
@@ -155,6 +157,7 @@ model Project {
   // back-relations ใหม่สำหรับเลเยอร์แชท/เอเจนต์
   agents        Agent[]
   conversations Conversation[]
+  likes         ProjectLike[]
 
   @@index([userId])
 }
@@ -187,6 +190,22 @@ model ProjectCategory {
   @@index([categoryId])
 }
 
+// ProjectLike table for tracking project likes/favorites
+model ProjectLike {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])  // Prevent duplicate likes from same user
+  @@index([projectId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
 model File {
   id        String   @id @default(uuid())
   projectId String
@@ -213,7 +232,7 @@ model Generation {
   id           String           @id @default(uuid())
   projectId    String
   userId       String
-  prompt       json?
+  prompt       Json?
   promptJson   Json?
   options      Json             @default("{}")
   model        String

@@ -71,8 +71,7 @@ export function HoverDetailCard({
     category: { text: "General", color: "bg-blue-100", textColor: "text-blue-800" }
   },
   enableAnimations = true,
-  // default to full width so parent grid controls card sizing
-  widthClass = "w-full flex flex-col",
+  widthClass = "w-full sm:w-64 md:w-72 lg:w-80 xl:w-96 flex flex-col",
   orientation = 'horizontal',
   variant = 'default'
 }: HoverDetailCardProps) {
@@ -84,10 +83,9 @@ export function HoverDetailCard({
   const getImageStyles = () => {
     switch (variant) {
       case 'home':
-        // Use full width so image fills the card container and keeps layout consistent
-        return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full h-[200px]";
+        return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full max-w-[350px] h-[200px] mx-auto";
       case 'workspace':
-        return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full h-[160px]";
+        return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full max-w-[280px] h-[160px] mx-auto";
       default:
         return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full aspect-[4/3]";
     }
@@ -98,8 +96,7 @@ export function HoverDetailCard({
       case 'home':
         return "bg-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col";
       case 'workspace':
-        // Use transparent border so we don't show a thin white outline on dark backgrounds
-        return "bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col border border-transparent";
+        return "bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col border border-gray-100";
       default:
         return "bg-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col";
     }

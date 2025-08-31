@@ -109,7 +109,7 @@ export function Navbar() {
           >
             Workspace
           </Link>
-          <Link href="/co" className="text-base text-[#252424] font-medium">
+          <Link href="/projects/community" className="text-base text-[#252424] font-medium">
             Community
           </Link>
         </div>

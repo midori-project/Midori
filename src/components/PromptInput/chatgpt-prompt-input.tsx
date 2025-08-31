@@ -394,6 +394,21 @@ export const PromptBox = React.forwardRef<
       } catch {}
     }
   };
+
+  // ✅ เพิ่ม Enter key support
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      if (e.shiftKey) {
+        // Shift + Enter = new line (default behavior)
+        return;
+      } else {
+        // Enter only = send message
+        e.preventDefault();
+        handleSend();
+      }
+    }
+  };
+
   const [isSending, setIsSending] = React.useState(false);
   const router = useRouter();
 
@@ -509,6 +524,7 @@ export const PromptBox = React.forwardRef<
         rows={1}
         value={value}
         onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
         placeholder="Message..."
         className="custom-scrollbar w-full resize-none border-0 bg-transparent p-2 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-300 focus:ring-0 focus-visible:outline-none min-h-28 max-h-[14vh] overflow-auto"
         maxLength={maxChars}

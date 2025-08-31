@@ -6,10 +6,13 @@ import Image from "next/image";
 type Props = { params: { id: string } };
 
 export default async function InfoPage({ params }: Props) {
+  // Await params as required by Next.js 15
+  const resolvedParams = await params;
+  
   // Fetch base project data (avoid including relations that may not be available in runtime client)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const project = await (prisma as any).project.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     select: {
       id: true,
       name: true,
