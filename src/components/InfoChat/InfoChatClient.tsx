@@ -405,52 +405,59 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         <div className="fixed left-1/2 bottom-12 transform -translate-x-1/2 w-full px-4 flex flex-col items-center gap-3">
           <div className="w-full max-w-2xl">
 
-            {isComplete && finalJson && (
+            {isComplete ? (
               <div className="mb-4 flex justify-center">
+                <div className="relative flex items-center justify-center w-80 h-20 bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 rounded-full shadow-lg border-4 border-white/50 overflow-hidden">
+                  {/* Background flowers */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-60">
+                    <div className="flex space-x-2 animate-pulse">
+                      <span className="text-2xl">🌸</span>
+                      <span className="text-3xl">🌺</span>
+                      <span className="text-2xl">🌷</span>
+                      <span className="text-3xl">🌹</span>
+                      <span className="text-2xl">🌻</span>
+                    </div>
+                  </div>
+                  {/* Completion message */}
+                  <div className="relative z-10 text-center">
+                    <div className="text-lg font-semibold text-gray-700 mb-1">
+                      การสนทนาเสร็จสมบูรณ์แล้ว ✨
+                    </div>
+                    <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                      <span>ขอบคุณที่ใช้ Midori</span>
+                      <span className="animate-bounce">🌺</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 bg-white/80 backdrop-blur rounded-full px-4 py-2 shadow-lg">
+                <textarea
+                  ref={textareaRef}
+                  className="flex-1 bg-transparent outline-none text-sm px-2 py-2 resize-none max-h-40 overflow-auto"
+                  placeholder="Write Your Answer"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  rows={1}
+                  wrap="soft"
+                  disabled={loading || !sessionId}
+                />
                 <button
-                  onClick={handleGenerateSite}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-full shadow-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleSend}
+                  disabled={isSending || !value.trim() || loading || !sessionId}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-50"
+                  aria-label="Send"
                 >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      กำลังสร้างเว็บไซต์...
-                    </>
-                  ) : (
-                    <>
-                      🚀 สร้างเว็บไซต์และดูพรีวิว
-                    </>
-                  )}
+                  ⤴
                 </button>
               </div>
             )}
-            <div className="flex items-center gap-3 bg-white/80 backdrop-blur rounded-full px-4 py-2 shadow-lg">
-              <textarea
-                ref={textareaRef}
-                className="flex-1 bg-transparent outline-none text-sm px-2 py-2 resize-none max-h-40 overflow-auto"
-                placeholder={isComplete ? "การสนทนาสิ้นสุดแล้ว" : "Write Your Answer"}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                rows={1}
-                wrap="soft"
-                disabled={loading || !sessionId || isComplete}
-              />
-              <button
-                onClick={handleSend}
-                disabled={isSending || !value.trim() || loading || !sessionId || isComplete}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-50"
-                aria-label="Send"
-              >
-                ⤴
-              </button>
-            </div>
           </div>
         </div>
       </div>
