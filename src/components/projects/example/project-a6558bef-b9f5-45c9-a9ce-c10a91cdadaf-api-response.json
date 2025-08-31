@@ -1,0 +1,216 @@
+{
+  "files": [
+    {
+      "path": "package.json",
+      "content": "{\n  \"name\": \"sandpack-vite-react-tailwind\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"build\": \"tsc && vite build\",\n    \"preview\": \"vite preview\"\n  },\n  \"dependencies\": {\n    \"react\": \"18.2.0\",\n    \"react-dom\": \"18.2.0\",\n    \"react-router-dom\": \"6.8.1\",\n    \"tailwindcss\": \"3.3.3\",\n    \"autoprefixer\": \"10.4.14\",\n    \"postcss\": \"8.4.27\"\n  },\n  \"devDependencies\": {\n    \"@types/react\": \"18.2.15\",\n    \"@types/react-dom\": \"18.2.7\",\n    \"typescript\": \"5.1.6\",\n    \"@vitejs/plugin-react\": \"4.0.3\",\n    \"vite\": \"4.4.9\"\n  }\n}",
+      "type": "config",
+      "language": "json"
+    },
+    {
+      "path": "index.html",
+      "content": "<!doctype html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Vite + React App</title>\n</head>\n<body>\n    <div id=\"root\"></div>\n    <script type=\"module\" src=\"/src/main.tsx\"></script>\n</body>\n</html>",
+      "type": "config",
+      "language": "html"
+    },
+    {
+      "path": "src/main.tsx",
+      "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App.tsx';\n\nconst root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);\n\nroot.render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>\n);",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/App.tsx",
+      "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Header from './components/Header.tsx';\nimport Footer from './components/Footer.tsx';\nimport About from './pages/About.tsx';\nimport Contact from './pages/Contact.tsx';\nimport Home from './pages/Home.tsx';\nimport Menu from './pages/Menu.tsx';\nimport Reservation from './pages/Reservation.tsx';\nimport ChefProfile from './pages/ChefProfile.tsx';\nimport DishGallery from './pages/DishGallery.tsx';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"min-h-screen flex flex-col\">\n      <Header />\n      <main className=\"flex-1\">\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/about\" element={<About />} />\n          <Route path=\"/contact\" element={<Contact />} />\n          <Route path=\"/home\" element={<Home />} />\n          <Route path=\"/menu\" element={<Menu />} />\n          <Route path=\"/reservation\" element={<Reservation />} />\n          <Route path=\"/chefprofile\" element={<ChefProfile />} />\n          <Route path=\"/dishgallery\" element={<DishGallery />} />\n        </Routes>\n      </main>\n      <Footer />\n    </div>\n  );\n};\n\nexport default App;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/index.css",
+      "content": "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\nbody {\n  @apply bg-orange-50 text-red-800 font-sans;\n}\n\nh1, h2, h3, h4, h5, h6 {\n  @apply font-bold text-red-600;\n}\n\np {\n  @apply text-red-700;\n}\n\na {\n  @apply text-red-500 hover:text-red-600;\n}\n\nbutton {\n  @apply bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600;\n}\n\n.container {\n  @apply max-w-7xl mx-auto px-4;\n}\n\n.card {\n  @apply bg-white shadow-lg rounded-lg p-6;\n}\n\n.header {\n  @apply bg-red-500 text-white p-4;\n}\n\n.footer {\n  @apply bg-red-100 text-red-600 p-4 text-center;\n}",
+      "type": "style",
+      "language": "css"
+    },
+    {
+      "path": "vite.config.ts",
+      "content": "import { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react';\n\nexport default defineConfig({\n  plugins: [react()],\n  server: {\n    open: true,\n    port: 3000,\n  },\n  build: {\n    target: 'esnext',\n  },\n});",
+      "type": "config",
+      "language": "typescript"
+    },
+    {
+      "path": "postcss.config.js",
+      "content": "export default {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {},\n  },\n};",
+      "type": "config",
+      "language": "javascript"
+    },
+    {
+      "path": "src/pages/About.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst About: React.FC = () => {\n    return (\n        <div>\n            <h1>About Our Restaurant</h1>\n            <p>Welcome to our restaurant! We are dedicated to providing the best dining experience with fresh ingredients and a cozy atmosphere.</p>\n            <p>Our team of chefs crafts delicious meals inspired by various cuisines from around the world.</p>\n            <p>We believe in excellent service and creating memorable moments for our guests.</p>\n            <Link to=\"/\">Back to Home</Link>\n        </div>\n    );\n};\n\nexport default About;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Contact.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Contact: React.FC = () => {\n    return (\n        <div>\n            <h1>Contact Us</h1>\n            <p>We would love to hear from you! Please reach out with any questions or feedback.</p>\n            <p>Email: contact@restaurant.com</p>\n            <p>Phone: (123) 456-7890</p>\n            <Link to=\"/\">Back to Home</Link>\n        </div>\n    );\n};\n\nexport default Contact;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "content": "import React from 'react';\n\nconst Header: React.FC = () => {\n    return (\n        <div className=\"header\">\n            <h1>Welcome to Our Restaurant</h1>\n            <nav>\n                <ul>\n                    <li><a href=\"#menu\">Menu</a></li>\n                    <li><a href=\"#about\">About Us</a></li>\n                    <li><a href=\"#contact\">Contact</a></li>\n                </ul>\n            </nav>\n        </div>\n    );\n};\n\nexport default Header;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "content": "import React from 'react';\n\nconst Footer: React.FC = () => {\n    return (\n        <div className=\"footer\">\n            <p>&copy; 2023 Delicious Eats. All rights reserved.</p>\n            <p>Follow us on social media:</p>\n            <ul>\n                <li><a href=\"https://facebook.com\" target=\"_blank\" rel=\"noopener noreferrer\">Facebook</a></li>\n                <li><a href=\"https://instagram.com\" target=\"_blank\" rel=\"noopener noreferrer\">Instagram</a></li>\n                <li><a href=\"https://twitter.com\" target=\"_blank\" rel=\"noopener noreferrer\">Twitter</a></li>\n            </ul>\n        </div>\n    );\n};\n\nexport default Footer;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/HeroSection.tsx",
+      "content": "import React from 'react';\n\nconst HeroSection: React.FC = () => {\n    return (\n        <div className=\"hero-section\">\n            <h1>Welcome to Our Restaurant</h1>\n            <p>Experience the best dining with us. Delicious food, great atmosphere, and unforgettable memories await you!</p>\n            <button className=\"reserve-button\">Reserve a Table</button>\n        </div>\n    );\n};\n\nexport default HeroSection;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/ContactForm.tsx",
+      "content": "import React, { useState } from 'react';\n\nconst ContactForm: React.FC = () => {\n  const [name, setName] = useState('');\n  const [email, setEmail] = useState('');\n  const [message, setMessage] = useState('');\n\n  const handleSubmit = (e: React.FormEvent) => {\n    e.preventDefault();\n    alert(`Thank you for your message, ${name}!`);\n    setName('');\n    setEmail('');\n    setMessage('');\n  };\n\n  return (\n    <div>\n      <h2>Contact Us</h2>\n      <form onSubmit={handleSubmit}>\n        <div>\n          <label htmlFor=\"name\">Name:</label>\n          <input\n            type=\"text\"\n            id=\"name\"\n            value={name}\n            onChange={(e) => setName(e.target.value)}\n            required\n          />\n        </div>\n        <div>\n          <label htmlFor=\"email\">Email:</label>\n          <input\n            type=\"email\"\n            id=\"email\"\n            value={email}\n            onChange={(e) => setEmail(e.target.value)}\n            required\n          />\n        </div>\n        <div>\n          <label htmlFor=\"message\">Message:</label>\n          <textarea\n            id=\"message\"\n            value={message}\n            onChange={(e) => setMessage(e.target.value)}\n            required\n          ></textarea>\n        </div>\n        <button type=\"submit\">Send Message</button>\n      </form>\n    </div>\n  );\n};\n\nexport default ContactForm;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Home.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Home: React.FC = () => {\n  return (\n    <div>\n      <h1>Welcome to Our Restaurant</h1>\n      <p>Experience the best dining with us!</p>\n      <nav>\n        <ul>\n          <li>\n            <Link to=\"/menu\">View Menu</Link>\n          </li>\n          <li>\n            <Link to=\"/about\">About Us</Link>\n          </li>\n          <li>\n            <Link to=\"/contact\">Contact Us</Link>\n          </li>\n        </ul>\n      </nav>\n    </div>\n  );\n};\n\nexport default Home;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Menu.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Menu: React.FC = () => {\n    return (\n        <div>\n            <h1>Our Menu</h1>\n            <ul>\n                <li>\n                    <Link to=\"/menu/appetizers\">Appetizers</Link>\n                </li>\n                <li>\n                    <Link to=\"/menu/main-courses\">Main Courses</Link>\n                </li>\n                <li>\n                    <Link to=\"/menu/desserts\">Desserts</Link>\n                </li>\n                <li>\n                    <Link to=\"/menu/drinks\">Drinks</Link>\n                </li>\n            </ul>\n        </div>\n    );\n};\n\nexport default Menu;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Reservation.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Reservation: React.FC = () => {\n    return (\n        <div>\n            <h1>Reservation Page</h1>\n            <p>Welcome to our restaurant! Please make a reservation to enjoy a delightful dining experience.</p>\n            <Link to=\"/\">Back to Home</Link>\n        </div>\n    );\n};\n\nexport default Reservation;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/ChefProfile.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst ChefProfile: React.FC = () => {\n    return (\n        <div>\n            <h1>Chef Profile</h1>\n            <p>Welcome to the Chef Profile page! Here you can learn more about our talented chefs.</p>\n            <h2>Featured Chef: John Doe</h2>\n            <p>John Doe is a renowned chef known for his innovative culinary techniques and passion for farm-to-table dining.</p>\n            <h3>Specialties:</h3>\n            <ul>\n                <li>Italian Cuisine</li>\n                <li>Seafood Dishes</li>\n                <li>Vegetarian Options</li>\n            </ul>\n            <Link to=\"/\">Back to Home</Link>\n        </div>\n    );\n};\n\nexport default ChefProfile;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/DishGallery.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst DishGallery: React.FC = () => {\n    return (\n        <div>\n            <h1>Dish Gallery</h1>\n            <p>Explore our delicious dishes!</p>\n            <ul>\n                <li>\n                    <Link to=\"/dishes/pasta\">Pasta</Link>\n                </li>\n                <li>\n                    <Link to=\"/dishes/salad\">Salad</Link>\n                </li>\n                <li>\n                    <Link to=\"/dishes/dessert\">Dessert</Link>\n                </li>\n            </ul>\n        </div>\n    );\n};\n\nexport default DishGallery;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/MenuCard.tsx",
+      "content": "import React from 'react';\n\nconst MenuCard: React.FC = () => {\n    const menuItem = {\n        title: 'Spaghetti Carbonara',\n        description: 'Classic Italian pasta dish with creamy sauce, pancetta, and parmesan cheese.',\n        price: '$12.99',\n    };\n\n    return (\n        <div className=\"menu-card\">\n            <h3>{menuItem.title}</h3>\n            <p>{menuItem.description}</p>\n            <span>{menuItem.price}</span>\n        </div>\n    );\n};\n\nexport default MenuCard;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/ReservationForm.tsx",
+      "content": "import React, { useState } from 'react';\n\nconst ReservationForm: React.FC = () => {\n    const [name, setName] = useState('');\n    const [date, setDate] = useState('');\n    const [time, setTime] = useState('');\n    const [guests, setGuests] = useState(1);\n\n    const handleSubmit = (e: React.FormEvent) => {\n        e.preventDefault();\n        alert(`Reservation made for ${guests} guests on ${date} at ${time} under the name ${name}.`);\n    };\n\n    return (\n        <div>\n            <h2>Make a Reservation</h2>\n            <form onSubmit={handleSubmit}>\n                <div>\n                    <label>Name:</label>\n                    <input \n                        type=\"text\" \n                        value={name} \n                        onChange={(e) => setName(e.target.value)} \n                        required \n                    />\n                </div>\n                <div>\n                    <label>Date:</label>\n                    <input \n                        type=\"date\" \n                        value={date} \n                        onChange={(e) => setDate(e.target.value)} \n                        required \n                    />\n                </div>\n                <div>\n                    <label>Time:</label>\n                    <input \n                        type=\"time\" \n                        value={time} \n                        onChange={(e) => setTime(e.target.value)} \n                        required \n                    />\n                </div>\n                <div>\n                    <label>Number of Guests:</label>\n                    <input \n                        type=\"number\" \n                        value={guests} \n                        onChange={(e) => setGuests(Number(e.target.value))} \n                        min=\"1\" \n                        required \n                    />\n                </div>\n                <button type=\"submit\">Reserve</button>\n            </form>\n        </div>\n    );\n};\n\nexport default ReservationForm;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "tailwind.config.js",
+      "content": "import { defineConfig } from 'tailwindcss';\n\nexport default defineConfig({\n  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n});",
+      "type": "config",
+      "language": "javascript"
+    },
+    {
+      "path": "src/types/index.ts",
+      "content": "export interface User {\n  id: number;\n  name: string;\n  email: string;\n}\n\nexport interface Post {\n  id: number;\n  title: string;\n  content: string;\n  authorId: number;\n}\n\nexport type ApiResponse<T> = {\n  data: T;\n  error?: string;\n};\n\nexport function isUser(obj: any): obj is User {\n  return (\n    typeof obj === 'object' &&\n    obj !== null &&\n    'id' in obj &&\n    'name' in obj &&\n    'email' in obj\n  );\n}\n\nexport function isPost(obj: any): obj is Post {\n  return (\n    typeof obj === 'object' &&\n    obj !== null &&\n    'id' in obj &&\n    'title' in obj &&\n    'content' in obj &&\n    'authorId' in obj\n  );\n}\n\nexport type Nullable<T> = T | null;",
+      "type": "util",
+      "language": "typescript"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "content": "export interface User {\n  id: number;\n  name: string;\n  email: string;\n}\n\nexport interface Product {\n  id: number;\n  name: string;\n  price: number;\n}\n\nexport type ApiResponse<T> = {\n  data: T;\n  error?: string;\n};\n\nexport function fetchUser(userId: number): Promise<ApiResponse<User>> {\n  return fetch(`/api/users/${userId}`)\n    .then(response => response.json())\n    .then(data => ({ data }))\n    .catch(error => ({ data: null, error: error.message }));\n}\n\nexport function fetchProducts(): Promise<ApiResponse<Product[]>> {\n  return fetch('/api/products')\n    .then(response => response.json())\n    .then(data => ({ data }))\n    .catch(error => ({ data: [], error: error.message }));\n}\n\nexport function isValidEmail(email: string): boolean {\n  const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  return emailRegex.test(email);\n}",
+      "type": "util",
+      "language": "typescript"
+    }
+  ],
+  "projectStructure": {
+    "name": "ส้มตำ",
+    "description": "เว็บไซต์ร้านอาหารไทยแท้ที่ให้บริการจองโต๊ะและสั่งอาหารออนไลน์",
+    "framework": "next-react",
+    "type": "Thai Restaurant Website",
+    "pages": [
+      "Home",
+      "About",
+      "Menu",
+      "Reservations",
+      "Online Ordering",
+      "Gallery",
+      "Reviews",
+      "Contact",
+      "Promotions"
+    ],
+    "components": [
+      "MenuDisplay.tsx",
+      "ReservationForm.tsx",
+      "ChefIntroduction.tsx",
+      "DishGallery.tsx",
+      "AboutRestaurant.tsx",
+      "ContactInformation.tsx",
+      "PromotionBanner.tsx"
+    ],
+    "features": [
+      "Home",
+      "About",
+      "Menu",
+      "Reservations",
+      "Online Ordering",
+      "Gallery",
+      "Reviews",
+      "Contact & Map",
+      "Promotions"
+    ],
+    "dependencies": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "next": "^13.0.0",
+      "react-router-dom": "^6.8.0"
+    },
+    "devDependencies": {
+      "@types/react": "^18.2.0",
+      "@types/react-dom": "^18.2.0",
+      "tailwindcss": "^3.3.0",
+      "typescript": "^5.0.0"
+    },
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start"
+    },
+    "fileStructure": [
+      "pages/index.tsx",
+      "pages/about.tsx",
+      "pages/menu.tsx",
+      "pages/reservations.tsx",
+      "pages/order.tsx",
+      "pages/gallery.tsx",
+      "pages/reviews.tsx",
+      "pages/contact.tsx",
+      "pages/promotions.tsx",
+      "components/MenuDisplay.tsx",
+      "components/ReservationForm.tsx",
+      "components/ChefIntroduction.tsx",
+      "components/DishGallery.tsx",
+      "components/AboutRestaurant.tsx",
+      "components/ContactInformation.tsx",
+      "components/PromotionBanner.tsx"
+    ]
+  },
+  "fileCount": 23,
+  "generatedAt": "2025-08-31T12:52:48.193Z"
+}

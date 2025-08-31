@@ -148,7 +148,7 @@ export class FileGenerator {
     projectStructure: ProjectStructure
   ): FileConfig[] {
     const baseFiles: FileConfig[] = [
-      // Core structure (6 files)
+      // Core structure (6 files) - ใช้ Tailwind inline ไม่ต้องใช้ PostCSS
       { path: 'package.json', type: 'config' as const },
       { path: 'index.html', type: 'config' as const },
       { path: 'src/main.tsx', type: 'entry' as const },
@@ -301,16 +301,17 @@ export default App;
 
 Return only React code, no markdown headers or explanations.`;
     } else if (path.endsWith('.json')) {
-      prompt = `Create a proper ${path} file for SandPack Vite React project. 
+      prompt = `Create a proper ${path} file for SandPack Vite React project with Tailwind CSS support.
 
 **SANDPACK COMPATIBILITY REQUIREMENTS:**
 - Use exact dependency versions (no ^ or ~ prefixes)
-- Include only SandPack-supported dependencies:
-  - react: "18.2.0"
-  - react-dom: "18.2.0" 
-  - react-router-dom: "6.8.1"
+- Put in dependencies section: react, react-dom, react-router-dom
+- Put in devDependencies section: tailwindcss, @types/react, @types/react-dom, typescript, @vitejs/plugin-react, vite
+- Exact versions to use:
+  Dependencies: react: "18.2.0", react-dom: "18.2.0", react-router-dom: "6.8.1"
+  DevDependencies: @types/react: "18.2.15", @types/react-dom: "18.2.7", typescript: "5.1.6", tailwindcss: "3.3.3", @vitejs/plugin-react: "4.0.3", vite: "4.4.9"
 - Use "type": "module" for ES modules
-- Include essential scripts: dev, build, preview
+- Include scripts: dev, build (with tsc), preview
 
 Return only valid JSON code, no markdown headers or explanations.`;
     } else if (path.endsWith('.html')) {
@@ -322,6 +323,7 @@ Return only valid JSON code, no markdown headers or explanations.`;
 - Import ReactDOM from 'react-dom/client'
 - Import BrowserRouter from 'react-router-dom'
 - Import App component from './App.tsx'
+- Import CSS: import './index.css'
 - Use ReactDOM.createRoot for React 18
 - Wrap App in React.StrictMode and BrowserRouter
 
@@ -335,9 +337,13 @@ Return only React code, no markdown headers or explanations.`;
 
 **SANDPACK REQUIREMENTS:**
 - Use .tsx extensions in imports
-- TypeScript interfaces for props
+- Create self-contained components WITHOUT required props
+- Use default values, constants, or hard-coded content when needed
 - Return SINGLE root JSX element
-- Include proper prop validation
+- Component should work without receiving props from parent
+- Do NOT include h1 tags if this is Header component (avoid duplicate welcome messages)
+
+**IMPORTANT: DO NOT use required props - make components standalone**
 
 Return only React code, no markdown headers or explanations.`;
     } else if (type === 'page') {
@@ -349,25 +355,34 @@ Return only React code, no markdown headers or explanations.`;
 
 **REQUIREMENTS:**
 - Use functional components with TypeScript
+- Create self-contained pages WITHOUT required props
+- Use default values or hard-coded content when needed
 - Return SINGLE root JSX element
-- Include proper TypeScript interfaces
 - Use React Router Link for navigation
+- Page should work without receiving props from parent
+
+**IMPORTANT: DO NOT use required props - make pages standalone**
 
 Return only React code, no markdown headers or explanations.`;
     } else if (type === 'style') {
-      prompt = `Create proper ${path} with Tailwind CSS directives and custom styles.
+      prompt = `Create proper ${path} for Tailwind CSS inline mode (no @tailwind directives needed).
 
 **USER PREFERENCES:**
 - Visual Style: ${userIntent.visualStyle}
 - Color Scheme: ${userIntent.colorScheme}
 
+**REQUIREMENTS:**
+- Use regular CSS, no @tailwind directives
+- Include basic reset and typography styles
+- Keep it minimal for SandPack compatibility
+
 Return only CSS code, no markdown headers or explanations.`;
     } else if (type === 'config') {
-      prompt = `Create a proper ${path} for a Vite + React + TypeScript project optimized for SandPack environment.
+      prompt = `Create a proper ${path} for a Vite + React + TypeScript project with Tailwind CSS inline support.
 
 **SANDPACK COMPATIBILITY:**
 - Simple configuration that works in browser environment
-- No complex build optimizations
+- No PostCSS configuration needed (Tailwind inline mode)
 - Include essential plugins only
 - Use ES module syntax
 
@@ -466,8 +481,6 @@ Return ONLY code, no explanations, no markdown blocks.`
           "@types/react": "18.2.15",
           "@types/react-dom": "18.2.7",
           "@vitejs/plugin-react": "4.0.3",
-          "autoprefixer": "10.4.14",
-          "postcss": "8.4.27",
           "tailwindcss": "3.3.3",
           "typescript": "5.1.6",
           "vite": "4.4.9"
@@ -544,28 +557,33 @@ ${pageImports.filter(p => p.name !== 'Home').map(p => {
 export default App;`;
       })(),
       
-      'src/index.css': `@tailwind base;
-@tailwind components;
-@tailwind utilities;
+      'src/index.css': `/* Tailwind CSS Inline Mode - ไม่ต้องใช้ @tailwind directives */
 
+/* Base styles */
 body {
-  @apply bg-gray-50 text-gray-900;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f9fafb;
+  color: #111827;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  @apply font-bold;
+* {
+  box-sizing: border-box;
 }
 
-a {
-  @apply text-blue-500 hover:text-blue-700;
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }`,
       
       'src/components/Header.tsx': `import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-interface HeaderProps {}
-
-const Header: React.FC<HeaderProps> = () => {
+const Header: React.FC = () => {
   const location = useLocation();
 
   const isActive = (path: string) => {
@@ -613,9 +631,7 @@ export default Header;`,
       'src/components/Footer.tsx': `import React from 'react';
 import { Link } from 'react-router-dom';
 
-interface FooterProps {}
-
-const Footer: React.FC<FooterProps> = () => {
+const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -711,9 +727,7 @@ export default Footer;`,
           return `import React from 'react';
 import { Link } from 'react-router-dom';
 
-interface HomeProps {}
-
-const Home: React.FC<HomeProps> = () => {
+const Home: React.FC = () => {
   return (
     <div className="min-h-screen ${data.bgColor}">
       {/* Hero Section */}
@@ -803,7 +817,9 @@ export default {
     extend: {},
   },
   plugins: [],
-};`
+};`,
+
+
     };
     
     return {
