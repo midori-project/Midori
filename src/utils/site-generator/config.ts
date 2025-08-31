@@ -7,27 +7,28 @@ export const openai = new OpenAI({
 
 // Site Generation Configuration
 export const SITE_GEN_CONFIG = {
-  // Model options for different use cases
+  // Model options for different use cases - แก้ไขให้ใช้ model ที่มีจริง
   models: {
-    high_quality: "gpt-5-mini",              // สำหรับคุณภาพสูงสุด (แพง)
-    balanced: "gpt-5-mini",                  // สมดุลระหว่างคุณภาพและราคา (แนะนำ)
-    budget: "gpt-5-nano",                    // ราคาถูกที่สุด (เร็ว)
+    high_quality: "gpt-4o",                      // สำหรับคุณภาพสูงสุด
+    balanced: "gpt-4o-mini",                     // สมดุลระหว่างคุณภาพและราคา
+    budget: "gpt-3.5-turbo",                     // ราคาถูกที่สุด (เร็ว)
   },
   
-  // Current model selection - ใช้ model ที่เสถียร
-  currentModel: "gpt-4o-mini", // เปลี่ยนเป็น model ที่เสถียรกว่า
+  // Current model selection - ใช้ GPT-3.5 เพื่อความเร็วและประหยัด
+  currentModel: "gpt-3.5-turbo", // เปลี่ยนเป็น GPT-3.5 ตามที่ร้องขอ
   
   // Temperature settings - เพิ่มความหลากหลาย
   temperatures: {
-    structure: 0.7,  // เพิ่มขึ้นเพื่อความหลากหลายในโครงสร้าง
-    code: 0.5,       // เพิ่มขึ้นเพื่อความหลากหลายในโค้ด
+    structure: 0.8,  // เพิ่มความหลากหลายในโครงสร้าง
+    code: 0.7,       // เพิ่มความหลากหลายในโค้ด
+    creative: 0.9,   // สำหรับ creative components
   },
   
   // Advanced settings
   creativity: {
-    high: 0.8,      // สำหรับ creative components
-    medium: 0.6,    // สำหรับ standard components  
-    low: 0.3        // สำหรับ configuration files
+    high: 0.9,      // สำหรับ creative components
+    medium: 0.7,    // สำหรับ standard components  
+    low: 0.4        // สำหรับ configuration files
   }
 };
 

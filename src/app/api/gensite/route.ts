@@ -9,6 +9,7 @@ interface BusinessContext {
   specificNiche: string;
   targetAudience: string;
   businessModel: string;
+  keyDifferentiators: string[];
 }
 
 interface UserIntent {
@@ -113,7 +114,7 @@ export class FileGenerator {
       const batch = essentialFiles.slice(i, i + batchSize);
 
       const batchPromises = batch.map((fileConfig) =>
-        this.generateEssentialFile(fileConfig, projectStructure, businessContext, essentialFiles).catch((error: unknown) => {
+        this.generateEssentialFile(fileConfig, projectStructure, businessContext, essentialFiles, finalJson).catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
           throw new Error(`[FileGenerator] Failed to generate ${fileConfig.path}: ${message}`);
         })
@@ -184,6 +185,19 @@ export class FileGenerator {
     const { industry } = businessContext;
     
     switch (industry) {
+      case 'blog':
+        return [
+          { path: 'src/pages/Home.tsx', type: 'page' as const },
+          { path: 'src/pages/Articles.tsx', type: 'page' as const },
+          { path: 'src/pages/Article.tsx', type: 'page' as const },
+          { path: 'src/pages/Categories.tsx', type: 'page' as const },
+          { path: 'src/pages/AdminDashboard.tsx', type: 'page' as const },
+          { path: 'src/components/ArticleList.tsx', type: 'component' as const },
+          { path: 'src/components/ArticleCard.tsx', type: 'component' as const },
+          { path: 'src/components/CommentSection.tsx', type: 'component' as const },
+          { path: 'src/components/CategoryList.tsx', type: 'component' as const },
+        ];
+        
       case 'restaurant':
         return [
           { path: 'src/pages/Home.tsx', type: 'page' as const },
@@ -241,10 +255,24 @@ export class FileGenerator {
     fileConfig: FileConfig,
     projectStructure: ProjectStructure,
     businessContext: BusinessContext,
-    allFiles: FileConfig[]
+    allFiles: FileConfig[],
+    finalJson: Record<string, unknown>
   ): Promise<GeneratedFile> {
     const { path, type } = fileConfig;
     const projectName = projectStructure.name || 'Generated Project';
+    
+    // เพิ่มข้อมูลจาก finalJson
+    const projectInfo = finalJson.project as any;
+    const features = finalJson.features as any[];
+    const targetAudience = finalJson.targetAudience as string[];
+    const dataModel = finalJson.dataModel as any;
+    
+    console.log('📋 Generating file with finalJson data:', {
+      file: path,
+      projectType: projectInfo?.type,
+      projectGoal: projectInfo?.goal,
+      featuresCount: features?.length || 0
+    });
     
     // เพิ่ม User Intent Analysis
     const userIntent = await UserIntentAnalyzer.analyzeUserIntent(projectStructure as any) as UserIntent;
@@ -329,7 +357,20 @@ Return only valid JSON code, no markdown headers or explanations.`;
 
 Return only React code, no markdown headers or explanations.`;
     } else if (type === 'component') {
+      const componentRequirements = this.getComponentSpecificRequirements(path, projectInfo, features, dataModel);
+      
       prompt = `Create a proper React functional component for ${path}. 
+
+**PROJECT CONTEXT:**
+- Project: ${projectInfo?.name || projectName} (${projectInfo?.type || 'Website'})
+- Goal: ${projectInfo?.goal || 'Create a functional website'}
+- Features: ${features?.map(f => f.name || f.id).join(', ') || 'Basic features'}
+
+**TARGET AUDIENCE:**
+${targetAudience?.join(', ') || businessContext.targetAudience}
+
+**COMPONENT-SPECIFIC REQUIREMENTS:**
+${componentRequirements}
 
 **BUSINESS CONTEXT:**
 - Industry: ${businessContext.industry}
@@ -363,7 +404,20 @@ Return only React code, no markdown headers or explanations.`;
 
 Return only React code with Tailwind classes applied to ALL elements, no markdown headers or explanations.`;
     } else if (type === 'page') {
+      const pageRequirements = this.getPageSpecificRequirements(path, projectInfo, features, dataModel);
+      
       prompt = `Create a proper React page component for ${path}. 
+
+**PROJECT CONTEXT:**
+- Project: ${projectInfo?.name || projectName} (${projectInfo?.type || 'Website'})
+- Goal: ${projectInfo?.goal || 'Create a functional website'}
+- Features: ${features?.map(f => f.name || f.id).join(', ') || 'Basic features'}
+
+**TARGET AUDIENCE:**
+${targetAudience?.join(', ') || businessContext.targetAudience}
+
+**PAGE-SPECIFIC REQUIREMENTS:**
+${pageRequirements}
 
 **BUSINESS CONTEXT:**
 - Industry: ${businessContext.industry}
@@ -442,6 +496,13 @@ Return JavaScript/TypeScript code (not JSON), no markdown headers or explanation
 - Use <div> or React.Fragment as wrapper if needed
 - No server-side code, only React/TypeScript
 
+**🚨 CRITICAL REACT REQUIREMENTS:**
+- ALWAYS import React: import React from 'react';
+- Use React.FC type for functional components
+- Ensure all JSX uses proper React syntax
+- Include all necessary imports at the top of the file
+- For ReactDOM operations, include proper null checks
+
 **🎨 TAILWIND CSS REQUIREMENTS:**
 - EVERY single HTML element MUST have Tailwind CSS classes
 - NO inline styles, NO external CSS, ONLY Tailwind classes
@@ -449,6 +510,11 @@ Return JavaScript/TypeScript code (not JSON), no markdown headers or explanation
 - Apply responsive design (sm:, md:, lg:, xl:)
 - Include hover:, focus:, and transition effects
 - Use proper spacing (p-, m-, gap-), typography (text-, font-), colors (bg-, text-), and layout (flex, grid)
+
+**✅ CORRECT REACT EXAMPLES:**
+- import React from 'react';
+- const Component: React.FC = () => { return <div>...</div>; };
+- const root = ReactDOM.createRoot(rootElement!);
 
 **✅ CORRECT STYLING EXAMPLES:**
 - <div className="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition-shadow">
@@ -458,16 +524,31 @@ Return JavaScript/TypeScript code (not JSON), no markdown headers or explanation
 - <input className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
 
 **✅ CORRECT IMPORT EXAMPLES:**
+- import React from 'react';
+- import ReactDOM from 'react-dom/client';
 - import Header from './components/Header.tsx';
 - import { Routes, Route } from 'react-router-dom';
-- import React from 'react';
+
+**📝 CONFIG FILE REQUIREMENTS:**
+For vite.config.ts:
+- Use import { defineConfig } from 'vite';
+- Use import react from '@vitejs/plugin-react';
+- NO require() statements in ES modules
+
+For tailwind.config.js:
+- Must be proper Tailwind configuration
+- Use export default with content, theme, plugins
 
 **❌ WRONG EXAMPLES:**
+- Missing import React from 'react'
+- <React.StrictMode> without importing React
+- require('@vitejs/plugin-react-refresh') in ES modules
+- Wrong config content in tailwind.config.js
 - <div style={{background: 'white'}}> (NO inline styles)
 - <div> (NO unstyled elements)
 - import Header from './components/Header'; (missing .tsx)
 
-Return ONLY code with complete Tailwind styling, no explanations, no markdown blocks.` 
+Return ONLY code with complete imports and Tailwind styling, no explanations, no markdown blocks.` 
           },
           { role: 'user', content: prompt }
         ],
@@ -878,6 +959,177 @@ export default {
       type: this.mapFileType(fileConfig.type),
       language: this.getLanguage(path)
     };
+  }
+
+  /**
+   * Get component-specific requirements based on project info and finalJson
+   */
+  private static getComponentSpecificRequirements(
+    path: string, 
+    projectInfo: any, 
+    features: any[], 
+    dataModel: any
+  ): string {
+    const fileName = path.split('/').pop()?.replace('.tsx', '') || '';
+    const projectType = projectInfo?.type?.toLowerCase() || '';
+    const projectGoal = projectInfo?.goal || '';
+    
+    // Blog-specific components
+    if (projectType.includes('blog') || projectGoal.includes('บทความ')) {
+      if (fileName.includes('Article') && fileName.includes('List')) {
+        return `
+- Create article listing component with title, excerpt, author, date, category
+- Include pagination and filtering capabilities
+- Add read more buttons and category tags
+- Use responsive grid layout for article cards
+- Include search functionality if search feature exists`;
+      }
+      
+      if (fileName.includes('Article') && !fileName.includes('List')) {
+        return `
+- Create single article display with title, full content, author info, publication date
+- Include category and tag display
+- Add social sharing buttons
+- Include related articles section
+- Support markdown rendering if editor feature exists`;
+      }
+      
+      if (fileName.includes('Comment')) {
+        return `
+- Create comment section with comment display, reply functionality
+- Include user avatars, timestamps, nested replies
+- Add comment submission form with validation
+- Include moderation features for admin users
+- Support real-time updates if applicable`;
+      }
+      
+      if (fileName.includes('Category')) {
+        return `
+- Create category listing and management component
+- Include category descriptions and article counts
+- Add category creation/editing forms for admin
+- Include hierarchical category support
+- Show related categories and tags`;
+      }
+      
+      if (fileName.includes('Admin') || fileName.includes('Dashboard')) {
+        return `
+- Create admin dashboard with statistics (total articles, comments, users)
+- Include CRUD operations for articles, categories, tags
+- Add user management interface with role assignments
+- Include content moderation tools
+- Add analytics and reporting features`;
+      }
+      
+      if (fileName.includes('Header') || fileName.includes('Nav')) {
+        return `
+- Include navigation for blog pages: Home, Articles, Categories, About, Contact
+- Add search bar for article search
+- Include user authentication status (Login/Logout)
+- Add admin link for authorized users
+- Make responsive with mobile hamburger menu`;
+      }
+    }
+    
+    // Default for other project types
+    if (fileName.includes('Header')) {
+      return `- Create navigation header appropriate for ${projectType} with main menu items and branding`;
+    }
+    
+    if (fileName.includes('Footer')) {
+      return `- Create footer with links, contact info, and branding appropriate for ${projectType}`;
+    }
+    
+    return `- Create ${fileName} component that supports the project goal: "${projectGoal}"`;
+  }
+
+  /**
+   * Get page-specific requirements based on project info and finalJson
+   */
+  private static getPageSpecificRequirements(
+    path: string, 
+    projectInfo: any, 
+    features: any[], 
+    dataModel: any
+  ): string {
+    const fileName = path.split('/').pop()?.replace('.tsx', '') || '';
+    const projectType = projectInfo?.type?.toLowerCase() || '';
+    const projectGoal = projectInfo?.goal || '';
+    
+    // Blog-specific pages
+    if (projectType.includes('blog') || projectGoal.includes('บทความ')) {
+      if (fileName.toLowerCase().includes('home')) {
+        return `
+- Create blog homepage with hero section featuring site name and description
+- Include featured/recent articles grid with excerpts and thumbnails
+- Add categories navigation and popular tags
+- Include newsletter subscription form if RSS/newsletter feature exists
+- Add search functionality for articles
+- Display author highlights and site statistics`;
+      }
+      
+      if (fileName.toLowerCase().includes('article') && fileName.toLowerCase().includes('s')) {
+        return `
+- Create article listing page with comprehensive article grid/list
+- Include advanced search and filtering (by category, tag, author, date)
+- Add pagination with page numbers and load more options
+- Include sorting options (newest, popular, most commented)
+- Show article preview cards with title, excerpt, author, date, category
+- Add breadcrumb navigation`;
+      }
+      
+      if (fileName.toLowerCase().includes('article') && !fileName.toLowerCase().includes('s')) {
+        return `
+- Create single article page with full article content display
+- Include article metadata (author, date, category, tags, reading time)
+- Add social sharing buttons and bookmark functionality
+- Include comment section with submission form
+- Show related articles and category navigation
+- Add print-friendly formatting`;
+      }
+      
+      if (fileName.toLowerCase().includes('categor')) {
+        return `
+- Create category listing and browsing page
+- Display all categories with descriptions and article counts
+- Include articles filtered by selected category
+- Add subcategory navigation if hierarchical categories exist
+- Include category-specific search and filtering
+- Show related tags for each category`;
+      }
+      
+      if (fileName.toLowerCase().includes('admin') || fileName.toLowerCase().includes('dashboard')) {
+        return `
+- Create comprehensive admin dashboard with overview statistics
+- Include article management (create, edit, delete, publish/unpublish)
+- Add user management with role assignments (Reader, Writer, Editor, Admin)
+- Include category and tag management interfaces
+- Add comment moderation tools and spam detection
+- Include site settings and theme customization options
+- Add analytics dashboard with visitor stats and popular content`;
+      }
+      
+      if (fileName.toLowerCase().includes('contact')) {
+        return `
+- Create contact page with contact form (name, email, subject, message)
+- Include site admin contact information
+- Add social media links and newsletter subscription
+- Include FAQ section for common blogging questions
+- Add submission success/error handling`;
+      }
+      
+      if (fileName.toLowerCase().includes('about')) {
+        return `
+- Create about page describing the blog's purpose and mission
+- Include information about the blogging platform and its features
+- Add author/team information and bios
+- Include blog statistics and achievements
+- Add contact information and social media links`;
+      }
+    }
+    
+    // Default for other project types
+    return `- Create ${fileName} page that fulfills the project goal: "${projectGoal}" for ${projectType}`;
   }
 
   /**

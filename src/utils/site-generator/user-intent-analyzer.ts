@@ -240,17 +240,59 @@ ${conversationText}
    * Analyze business context from conversation data using AI
    */
   static async analyzeBusinessContext(finalJson: Record<string, unknown>): Promise<BusinessContext> {
-    const conversationText = JSON.stringify(finalJson).toLowerCase();
+    // ใช้ข้อมูลโดยตรงจาก finalJson แทน string analysis
+    const projectInfo = finalJson.project as any;
+    const targetAudience = finalJson.targetAudience as string[];
+    const features = finalJson.features as any[];
     
-    try {
-      const aiAnalysis = await this.performAIBusinessAnalysis(conversationText);
-      const keywordAnalysis = this.performKeywordBusinessAnalysis(conversationText);
-      
-      return this.mergeBusinessAnalysis(aiAnalysis, keywordAnalysis);
-    } catch (error) {
-      console.warn('AI business analysis failed, falling back to keyword analysis:', error);
-      return this.performKeywordBusinessAnalysis(conversationText);
+    console.log('🎯 Direct finalJson analysis:', {
+      projectType: projectInfo?.type,
+      projectGoal: projectInfo?.goal,
+      targetAudience: targetAudience
+    });
+    
+    // Direct mapping จาก project type และ goal
+    let industry = 'general';
+    const projectType = projectInfo?.type?.toLowerCase() || '';
+    const projectGoal = projectInfo?.goal?.toLowerCase() || '';
+    
+    if (projectType.includes('blog') || projectGoal.includes('บทความ') || projectGoal.includes('เขียน') || projectGoal.includes('แชร์')) {
+      industry = 'blog';
+    } else if (projectType.includes('restaurant') || projectGoal.includes('ร้านอาหาร') || projectGoal.includes('อาหาร')) {
+      industry = 'restaurant';
+    } else if (projectType.includes('cafe') || projectGoal.includes('คาเฟ่') || projectGoal.includes('กาแฟ')) {
+      industry = 'cafe';
+    } else if (projectType.includes('fashion') || projectGoal.includes('แฟชั่น') || projectGoal.includes('เสื้อผ้า')) {
+      industry = 'fashion';
+    } else if (projectType.includes('technology') || projectGoal.includes('เทคโนโลยี') || projectGoal.includes('software')) {
+      industry = 'technology';
     }
+    
+    // ใช้ targetAudience โดยตรง
+    const audienceText = targetAudience?.join(', ') || 'general-public';
+    
+    // กำหนด specificNiche ตาม industry และ features
+    let specificNiche = 'general-business';
+    if (industry === 'blog') {
+      if (features?.some(f => f.name?.includes('CMS') || f.name?.includes('Admin'))) {
+        specificNiche = 'cms-blog';
+      } else if (features?.some(f => f.name?.includes('Comment') || f.name?.includes('Social'))) {
+        specificNiche = 'social-blog';
+      } else {
+        specificNiche = 'content-blog';
+      }
+    }
+    
+    const result = {
+      industry,
+      specificNiche,
+      targetAudience: audienceText,
+      businessModel: 'b2c' as const,
+      keyDifferentiators: [] // เพิ่ม keyDifferentiators เป็น array ว่าง
+    };
+    
+    console.log('✅ Business Context Result:', result);
+    return result;
   }
 
   /**
