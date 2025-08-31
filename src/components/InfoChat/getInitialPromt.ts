@@ -24,18 +24,61 @@ export async function getProjectName(projectId: string): Promise<string | null> 
   }
 }
 
-export async function getPromptJson(projectId: string): Promise<string | null> {
+export async function getProjectDetails(projectId: string) {
   try {
     const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      include: {
-        generations: true
+      where: {
+        id: projectId
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        options: true,
+        visibility: true,
+        createdAt: true,
+        updatedAt: true
       }
     });
-    return project?.generations[0]?.promptJson as string | null;
+
+    return project;
   } catch (error) {
-    console.error("Error fetching project description:", error);
+    console.error("Error fetching project details:", error);
     return null;
+  }
+}
+
+export async function saveFinalJsonToGeneration(
+  projectId: string,
+  data: {
+    finalJson: Prisma.InputJsonValue,
+    prompt: string
+  },
+  model: string = "gpt-5-nano"
+): Promise<{ id: string } | { ok: false; error: string }> {
+  try {
+    const session = await getCurrentSession();
+  if (!session || !session.user || !session.user.id) {
+    return { ok: false, error: 'Unauthenticated' };
+  }
+    // สร้าง generation ใหม่
+    const generation = await prisma.generation.create({
+      data: {
+        projectId: projectId,
+        userId: session.user.id,
+        // Prisma ต้องการ prompt เป็น String เสมอ
+        prompt: typeof data.finalJson === "string" ? data.finalJson : JSON.stringify(data.finalJson),
+        model: model,
+        promptJson: data.finalJson
+      }
+    });
+
+    console.log("บันทึก finalJson ลงในตาราง generation สำเร็จ:", generation.id);
+    // ส่งคืนเฉพาะข้อมูล primitive ที่ serialize ได้
+    return { id: generation.id };
+  } catch (error) {
+    console.error("Error saving finalJson to generation:", error);
+    throw error;
   }
 }
 
