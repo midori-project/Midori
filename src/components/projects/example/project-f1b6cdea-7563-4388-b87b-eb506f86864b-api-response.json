@@ -1,0 +1,200 @@
+{
+  "files": [
+    {
+      "path": "package.json",
+      "content": "{\n  \"name\": \"sandpack-vite-react-tailwind\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"build\": \"tsc && vite build\",\n    \"preview\": \"vite preview\"\n  },\n  \"dependencies\": {\n    \"react\": \"18.2.0\",\n    \"react-dom\": \"18.2.0\",\n    \"react-router-dom\": \"6.8.1\"\n  },\n  \"devDependencies\": {\n    \"tailwindcss\": \"3.3.3\",\n    \"@types/react\": \"18.2.15\",\n    \"@types/react-dom\": \"18.2.7\",\n    \"typescript\": \"5.1.6\",\n    \"@vitejs/plugin-react\": \"4.0.3\",\n    \"vite\": \"4.4.9\"\n  }\n}",
+      "type": "config",
+      "language": "json"
+    },
+    {
+      "path": "index.html",
+      "content": "<!doctype html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Vite + React App</title>\n</head>\n<body>\n    <div id=\"root\"></div>\n    <script type=\"module\" src=\"/src/main.tsx\"></script>\n</body>\n</html>",
+      "type": "config",
+      "language": "html"
+    },
+    {
+      "path": "src/main.tsx",
+      "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App.tsx';\nimport './index.css';\n\nconst root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);\n\nroot.render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>\n);",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/App.tsx",
+      "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Header from './components/Header.tsx';\nimport Footer from './components/Footer.tsx';\nimport About from './pages/About.tsx';\nimport Contact from './pages/Contact.tsx';\nimport Home from './pages/Home.tsx';\nimport Projects from './pages/Projects.tsx';\nimport Services from './pages/Services.tsx';\nimport Team from './pages/Team.tsx';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"min-h-screen flex flex-col\">\n      <Header />\n      <main className=\"flex-1\">\n        <Routes>\n          <Route path=\"/\" element={<About />} />\n          <Route path=\"/about\" element={<About />} />\n          <Route path=\"/contact\" element={<Contact />} />\n          <Route path=\"/home\" element={<Home />} />\n          <Route path=\"/projects\" element={<Projects />} />\n          <Route path=\"/services\" element={<Services />} />\n          <Route path=\"/team\" element={<Team />} />\n        </Routes>\n      </main>\n      <Footer />\n    </div>\n  );\n};\n\nexport default App;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/index.css",
+      "content": "* {\n  margin: 0;\n  padding: 0;\n  box-sizing: border-box;\n}\n\nbody {\n  font-family: 'Arial', sans-serif;\n  line-height: 1.6;\n  background-color: #f0f9ff;\n  color: #1e3a8a;\n}\n\nh1, h2, h3, h4, h5, h6 {\n  margin: 0;\n  font-weight: bold;\n}\n\nh1 {\n  font-size: 2rem;\n  color: #0f172a;\n}\n\nh2 {\n  font-size: 1.5rem;\n  color: #0f172a;\n}\n\np {\n  margin: 0.5rem 0;\n  color: #1e3a8a;\n}\n\na {\n  color: #3b82f6;\n  text-decoration: none;\n}\n\na:hover {\n  text-decoration: underline;\n}\n\nbutton {\n  background-color: #3b82f6;\n  color: white;\n  border: none;\n  padding: 0.5rem 1rem;\n  border-radius: 0.25rem;\n  cursor: pointer;\n}\n\nbutton:hover {\n  background-color: #2563eb;\n}",
+      "type": "style",
+      "language": "css"
+    },
+    {
+      "path": "vite.config.ts",
+      "content": "import { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react';\n\nexport default defineConfig({\n  plugins: [react()],\n  css: {\n    preprocessorOptions: {\n      css: {\n        additionalData: '@tailwind base; @tailwind components; @tailwind utilities;',\n      },\n    },\n  },\n});",
+      "type": "config",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/About.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst About: React.FC = () => {\n    return (\n        <div>\n            <h1>About Us</h1>\n            <p>Welcome to our technology blog! We aim to provide the latest insights and trends in the tech industry.</p>\n            <p>Our target audience includes writers, bloggers, and website administrators looking for valuable information.</p>\n            <p>Stay tuned for more updates and feel free to <Link to=\"/\">return to the homepage</Link>.</p>\n        </div>\n    );\n};\n\nexport default About;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Contact.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Contact: React.FC = () => {\n  return (\n    <div>\n      <h1>Contact Us</h1>\n      <p>If you have any questions or inquiries, feel free to reach out to us!</p>\n      <p>Email: support@technologycompany.com</p>\n      <p>Phone: (123) 456-7890</p>\n      <Link to=\"/\">Go back to Home</Link>\n    </div>\n  );\n};\n\nexport default Contact;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "content": "import React from 'react';\n\nconst Header: React.FC = () => {\n  const title = \"Welcome to Tech Insights\";\n  const subtitle = \"Your go-to source for the latest in technology.\";\n\n  return (\n    <div className=\"header\">\n      <h2>{title}</h2>\n      <p>{subtitle}</p>\n    </div>\n  );\n};\n\nexport default Header;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "content": "import React from 'react';\n\nconst Footer: React.FC = () => {\n    return (\n        <div className=\"footer\">\n            <p>&copy; 2023 Tech Blog. All rights reserved.</p>\n            <p>Follow us on social media:</p>\n            <ul>\n                <li><a href=\"https://twitter.com\" target=\"_blank\" rel=\"noopener noreferrer\">Twitter</a></li>\n                <li><a href=\"https://facebook.com\" target=\"_blank\" rel=\"noopener noreferrer\">Facebook</a></li>\n                <li><a href=\"https://instagram.com\" target=\"_blank\" rel=\"noopener noreferrer\">Instagram</a></li>\n            </ul>\n        </div>\n    );\n};\n\nexport default Footer;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/HeroSection.tsx",
+      "content": "import React from 'react';\n\nconst HeroSection: React.FC = () => {\n    return (\n        <div className=\"hero-section\">\n            <h2>Welcome to Our Technology Hub</h2>\n            <p>Your go-to source for the latest in tech trends, tips, and insights.</p>\n            <button className=\"cta-button\">Get Started</button>\n        </div>\n    );\n};\n\nexport default HeroSection;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/ContactForm.tsx",
+      "content": "import React, { useState } from 'react';\n\nconst ContactForm = () => {\n  const [name, setName] = useState('');\n  const [email, setEmail] = useState('');\n  const [message, setMessage] = useState('');\n\n  const handleSubmit = (e: React.FormEvent) => {\n    e.preventDefault();\n    // Handle form submission logic here\n    console.log('Form submitted:', { name, email, message });\n    // Reset form fields\n    setName('');\n    setEmail('');\n    setMessage('');\n  };\n\n  return (\n    <div>\n      <form onSubmit={handleSubmit}>\n        <div>\n          <label htmlFor=\"name\">Name:</label>\n          <input\n            type=\"text\"\n            id=\"name\"\n            value={name}\n            onChange={(e) => setName(e.target.value)}\n            required\n          />\n        </div>\n        <div>\n          <label htmlFor=\"email\">Email:</label>\n          <input\n            type=\"email\"\n            id=\"email\"\n            value={email}\n            onChange={(e) => setEmail(e.target.value)}\n            required\n          />\n        </div>\n        <div>\n          <label htmlFor=\"message\">Message:</label>\n          <textarea\n            id=\"message\"\n            value={message}\n            onChange={(e) => setMessage(e.target.value)}\n            required\n          />\n        </div>\n        <button type=\"submit\">Send Message</button>\n      </form>\n    </div>\n  );\n};\n\nexport default ContactForm;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Home.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Home: React.FC = () => {\n  return (\n    <div>\n      <h1>Welcome to Our Technology Hub</h1>\n      <p>Your go-to source for the latest in technology, writing tips, and website management.</p>\n      <nav>\n        <ul>\n          <li>\n            <Link to=\"/about\">About Us</Link>\n          </li>\n          <li>\n            <Link to=\"/blog\">Blog</Link>\n          </li>\n          <li>\n            <Link to=\"/contact\">Contact</Link>\n          </li>\n        </ul>\n      </nav>\n    </div>\n  );\n};\n\nexport default Home;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Projects.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Projects: React.FC = () => {\n  return (\n    <div>\n      <h1>Our Projects</h1>\n      <p>Welcome to our projects page! Here are some of the amazing projects we have worked on:</p>\n      <ul>\n        <li>\n          <Link to=\"/projects/project1\">Project 1</Link>\n        </li>\n        <li>\n          <Link to=\"/projects/project2\">Project 2</Link>\n        </li>\n        <li>\n          <Link to=\"/projects/project3\">Project 3</Link>\n        </li>\n      </ul>\n      <p>Feel free to explore and learn more about each project!</p>\n    </div>\n  );\n};\n\nexport default Projects;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Services.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Services: React.FC = () => {\n  return (\n    <div>\n      <h1>Our Services</h1>\n      <p>We offer a range of technology services to cater to your needs:</p>\n      <ul>\n        <li>\n          <Link to=\"/web-development\">Web Development</Link>\n        </li>\n        <li>\n          <Link to=\"/content-creation\">Content Creation</Link>\n        </li>\n        <li>\n          <Link to=\"/seo-optimization\">SEO Optimization</Link>\n        </li>\n        <li>\n          <Link to=\"/digital-marketing\">Digital Marketing</Link>\n        </li>\n      </ul>\n      <p>Contact us for more information on how we can help you!</p>\n    </div>\n  );\n};\n\nexport default Services;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Team.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Team: React.FC = () => {\n    return (\n        <div>\n            <h1>Meet Our Team</h1>\n            <p>We are a group of passionate individuals dedicated to technology and innovation.</p>\n            <ul>\n                <li>John Doe - CEO</li>\n                <li>Jane Smith - CTO</li>\n                <li>Emily Johnson - Lead Developer</li>\n                <li>Michael Brown - UX Designer</li>\n            </ul>\n            <Link to=\"/\">Back to Home</Link>\n        </div>\n    );\n};\n\nexport default Team;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/ProjectCard.tsx",
+      "content": "import React from 'react';\n\nconst ProjectCard: React.FC = () => {\n    const projectTitle = \"Innovative Tech Solutions\";\n    const projectDescription = \"We provide cutting-edge technology solutions to enhance your digital presence.\";\n    const projectLink = \"https://www.example.com\";\n\n    return (\n        <div className=\"project-card\">\n            <h2>{projectTitle}</h2>\n            <p>{projectDescription}</p>\n            <a href={projectLink} target=\"_blank\" rel=\"noopener noreferrer\">Learn More</a>\n        </div>\n    );\n};\n\nexport default ProjectCard;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "tailwind.config.js",
+      "content": "import { defineConfig } from 'tailwindcss';\n\nexport default defineConfig({\n  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n});",
+      "type": "config",
+      "language": "javascript"
+    },
+    {
+      "path": "src/types/index.ts",
+      "content": "export interface User {\n  id: string;\n  name: string;\n  email: string;\n}\n\nexport interface Post {\n  id: string;\n  title: string;\n  content: string;\n  authorId: string;\n}\n\nexport type Maybe<T> = T | null | undefined;\n\nexport type ApiResponse<T> = {\n  data: T;\n  error?: string;\n};\n\nexport function isUser(obj: any): obj is User {\n  return obj && typeof obj.id === 'string' && typeof obj.name === 'string' && typeof obj.email === 'string';\n}\n\nexport function isPost(obj: any): obj is Post {\n  return obj && typeof obj.id === 'string' && typeof obj.title === 'string' && typeof obj.content === 'string' && typeof obj.authorId === 'string';\n}",
+      "type": "util",
+      "language": "typescript"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "content": "export interface User {\n  id: number;\n  name: string;\n  email: string;\n}\n\nexport interface ApiResponse<T> {\n  data: T;\n  error?: string;\n}\n\nexport type FetchOptions = {\n  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';\n  headers?: Record<string, string>;\n  body?: string;\n};\n\nexport async function fetchData<T>(url: string, options?: FetchOptions): Promise<ApiResponse<T>> {\n  try {\n    const response = await fetch(url, options);\n    const data: T = await response.json();\n    return { data };\n  } catch (error) {\n    return { data: null as unknown as T, error: error instanceof Error ? error.message : 'Unknown error' };\n  }\n}\n\nexport function isUser(obj: any): obj is User {\n  return obj && typeof obj.id === 'number' && typeof obj.name === 'string' && typeof obj.email === 'string';\n}",
+      "type": "util",
+      "language": "typescript"
+    }
+  ],
+  "projectStructure": {
+    "name": "BlogEase",
+    "description": "แพลตฟอร์มสำหรับการเขียนและแชร์บทความที่ใช้งานง่าย พร้อม CMS สำหรับผู้ดูแล",
+    "framework": "vite-react",
+    "type": "technology-b2c",
+    "pages": [
+      "Home",
+      "ArticleDetail",
+      "CategoryPage",
+      "TagPage",
+      "AdminDashboard"
+    ],
+    "components": [
+      "ArticleList",
+      "ArticleCard",
+      "WYSIWYGEditor",
+      "CommentSection",
+      "SearchBar",
+      "CategoryFilter",
+      "TagFilter",
+      "UserRoleManagement",
+      "SEOSettings",
+      "ThemeCustomizer",
+      "NewsletterSubscription"
+    ],
+    "features": [
+      "WYSIWYG editor with Markdown support",
+      "Categories & Tagging",
+      "Search articles",
+      "Comment system",
+      "User roles & permissions",
+      "SEO-friendly metadata & canonical URL",
+      "Responsive design",
+      "Admin dashboard for CRUD",
+      "Theme customization via UI",
+      "RSS feed & newsletter subscription"
+    ],
+    "dependencies": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "react-router-dom": "^6.8.0"
+    },
+    "devDependencies": {
+      "@types/react": "^18.2.0",
+      "@types/react-dom": "^18.2.0",
+      "@vitejs/plugin-react": "^4.0.0",
+      "tailwindcss": "^3.3.0",
+      "typescript": "^5.0.0",
+      "vite": "^4.4.0"
+    },
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "preview": "vite preview"
+    },
+    "fileStructure": [
+      "src/pages/Home.tsx",
+      "src/pages/ArticleDetail.tsx",
+      "src/pages/CategoryPage.tsx",
+      "src/pages/TagPage.tsx",
+      "src/pages/AdminDashboard.tsx",
+      "src/components/ArticleList.tsx",
+      "src/components/ArticleCard.tsx",
+      "src/components/WYSIWYGEditor.tsx",
+      "src/components/CommentSection.tsx",
+      "src/components/SearchBar.tsx",
+      "src/components/CategoryFilter.tsx",
+      "src/components/TagFilter.tsx",
+      "src/components/UserRoleManagement.tsx",
+      "src/components/SEOSettings.tsx",
+      "src/components/ThemeCustomizer.tsx",
+      "src/components/NewsletterSubscription.tsx"
+    ]
+  },
+  "fileCount": 20,
+  "generatedAt": "2025-08-31T17:31:10.456Z"
+}

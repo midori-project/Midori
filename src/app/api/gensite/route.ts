@@ -335,6 +335,22 @@ Return only React code, no markdown headers or explanations.`;
 - Industry: ${businessContext.industry}
 - Target Audience: ${businessContext.targetAudience}
 
+**🎨 TAILWIND CSS STYLING REQUIREMENTS:**
+- EVERY element MUST have Tailwind CSS classes defined inline
+- NO external CSS files or stylesheets
+- Use comprehensive Tailwind classes for: padding, margin, colors, typography, layout, effects
+- Apply responsive design classes (sm:, md:, lg:, xl:)
+- Use hover: and focus: states where appropriate
+- Include proper spacing, colors, and visual hierarchy
+
+**STYLING EXAMPLES:**
+- Header: className="bg-white shadow-lg px-6 py-4 border-b"
+- Navigation: className="flex space-x-6 text-gray-700 hover:text-blue-600 transition-colors"
+- Buttons: className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+- Cards: className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+- Text: className="text-2xl font-bold text-gray-900 mb-4"
+- Forms: className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+
 **SANDPACK REQUIREMENTS:**
 - Use .tsx extensions in imports
 - Create self-contained components WITHOUT required props
@@ -345,7 +361,7 @@ Return only React code, no markdown headers or explanations.`;
 
 **IMPORTANT: DO NOT use required props - make components standalone**
 
-Return only React code, no markdown headers or explanations.`;
+Return only React code with Tailwind classes applied to ALL elements, no markdown headers or explanations.`;
     } else if (type === 'page') {
       prompt = `Create a proper React page component for ${path}. 
 
@@ -353,17 +369,36 @@ Return only React code, no markdown headers or explanations.`;
 - Industry: ${businessContext.industry}
 - Target Audience: ${businessContext.targetAudience}
 
+**🎨 TAILWIND CSS STYLING REQUIREMENTS:**
+- EVERY element MUST have Tailwind CSS classes defined inline
+- NO external CSS files or stylesheets  
+- Use comprehensive Tailwind classes for: layout, typography, colors, spacing, effects
+- Apply responsive design classes (sm:, md:, lg:, xl:)
+- Use hover: and focus: states for interactive elements
+- Create visually appealing layouts with proper spacing and hierarchy
+
+**STYLING GUIDELINES:**
+- Page containers: className="min-h-screen bg-gray-50 py-12"
+- Sections: className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8"
+- Headings: className="text-4xl font-bold text-gray-900 mb-6"
+- Subheadings: className="text-2xl font-semibold text-gray-800 mb-4"
+- Paragraphs: className="text-lg text-gray-600 mb-4 leading-relaxed"
+- Buttons/Links: className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+- Cards/Boxes: className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+- Grid layouts: className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+- Images: className="w-full h-64 object-cover rounded-lg"
+
 **REQUIREMENTS:**
 - Use functional components with TypeScript
 - Create self-contained pages WITHOUT required props
 - Use default values or hard-coded content when needed
 - Return SINGLE root JSX element
-- Use React Router Link for navigation
+- Use React Router Link for navigation with proper Tailwind styling
 - Page should work without receiving props from parent
 
 **IMPORTANT: DO NOT use required props - make pages standalone**
 
-Return only React code, no markdown headers or explanations.`;
+Return only React code with Tailwind classes applied to ALL elements, no markdown headers or explanations.`;
     } else if (type === 'style') {
       prompt = `Create proper ${path} for Tailwind CSS inline mode (no @tailwind directives needed).
 
@@ -397,7 +432,7 @@ Return JavaScript/TypeScript code (not JSON), no markdown headers or explanation
         messages: [
           { 
             role: 'system', 
-            content: `You are an expert React developer creating SandPack-compatible code. 
+            content: `You are an expert React developer creating SandPack-compatible code with comprehensive Tailwind CSS styling. 
 
 **🚨 CRITICAL SANDPACK RULES:**
 - ALL import paths MUST include .tsx/.ts/.js extensions
@@ -407,20 +442,35 @@ Return JavaScript/TypeScript code (not JSON), no markdown headers or explanation
 - Use <div> or React.Fragment as wrapper if needed
 - No server-side code, only React/TypeScript
 
+**🎨 TAILWIND CSS REQUIREMENTS:**
+- EVERY single HTML element MUST have Tailwind CSS classes
+- NO inline styles, NO external CSS, ONLY Tailwind classes
+- Use comprehensive class combinations for complete styling
+- Apply responsive design (sm:, md:, lg:, xl:)
+- Include hover:, focus:, and transition effects
+- Use proper spacing (p-, m-, gap-), typography (text-, font-), colors (bg-, text-), and layout (flex, grid)
+
+**✅ CORRECT STYLING EXAMPLES:**
+- <div className="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition-shadow">
+- <h1 className="text-4xl font-bold text-gray-900 mb-6">
+- <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+- <nav className="flex space-x-6 items-center">
+- <input className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
 **✅ CORRECT IMPORT EXAMPLES:**
 - import Header from './components/Header.tsx';
 - import { Routes, Route } from 'react-router-dom';
 - import React from 'react';
 
-**❌ WRONG IMPORT EXAMPLES:**
-- import Header from './components/Header';
-- import Header from '../components/Header';
+**❌ WRONG EXAMPLES:**
+- <div style={{background: 'white'}}> (NO inline styles)
+- <div> (NO unstyled elements)
+- import Header from './components/Header'; (missing .tsx)
 
-Return ONLY code, no explanations, no markdown blocks.` 
+Return ONLY code with complete Tailwind styling, no explanations, no markdown blocks.` 
           },
           { role: 'user', content: prompt }
         ],
-        max_completion_tokens: type === 'config' ? 600 : 1200,
         temperature: type === 'config' ? 0.2 : 0.4,
       });
       
