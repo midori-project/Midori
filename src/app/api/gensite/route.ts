@@ -67,6 +67,49 @@ export class FileGenerator {
       if (!content.includes('return (') && !content.includes('return <')) {
         errors.push('No JSX return statement found');
       }
+      
+      // Critical Navigation validation for Navbar components
+      if (componentName === 'Navbar' || filePath.includes('Navbar')) {
+        if (content.includes('<a href="#"') || content.includes("<a href='#'")) {
+          errors.push('Navbar must use React Router Link, not <a href="#">');
+        }
+        if (!content.includes('import { Link }') && !content.includes('from "react-router-dom"') && !content.includes("from 'react-router-dom'")) {
+          errors.push('Navbar missing React Router Link import');
+        }
+      }
+      
+      // Critical Link usage validation
+      if (content.includes('<Link to=') && (!content.includes('import { Link }') && !content.includes('from "react-router-dom"') && !content.includes("from 'react-router-dom'"))) {
+        errors.push('Missing React Router Link import when using <Link>');
+      }
+      
+      // Critical App.tsx routing validation
+      if (componentName === 'App' || filePath.includes('App.tsx')) {
+        if (content.includes('<Route path="/" element={<About') && content.includes('import Home from')) {
+          errors.push('App.tsx MUST use Home as root page, not About when Home exists');
+        }
+        if (content.includes('<Route path="/" element={<About') && !content.includes('import About from')) {
+          errors.push('App.tsx using About as root but About component not imported');
+        }
+      }
+      
+      // Critical Home page validation
+      if (componentName === 'Home' || filePath.includes('Home.tsx')) {
+        if (!content.includes('import HeroSection from') && !content.includes('from "../components/HeroSection')) {
+          errors.push('Home page MUST import HeroSection component');
+        }
+        if (!content.includes('<HeroSection')) {
+          errors.push('Home page MUST use <HeroSection /> component');
+        }
+      }
+      
+      // Critical Contact/About pages validation
+      if ((componentName === 'Contact' || filePath.includes('Contact.tsx')) || 
+          (componentName === 'About' || filePath.includes('About.tsx'))) {
+        if (!content.includes('import { Link }') && !content.includes('from "react-router-dom"') && !content.includes("from 'react-router-dom'")) {
+          errors.push(`${componentName} page MUST import Link from react-router-dom for navigation`);
+        }
+      }
     }
     
     // JSON validation
@@ -162,7 +205,7 @@ export class FileGenerator {
     const commonFiles: FileConfig[] = [
       { path: 'src/pages/About.tsx', type: 'page' as const },
       { path: 'src/pages/Contact.tsx', type: 'page' as const },
-      { path: 'src/components/Header.tsx', type: 'component' as const },
+      { path: 'src/components/Navbar.tsx', type: 'component' as const },
       { path: 'src/components/Footer.tsx', type: 'component' as const },
       { path: 'src/components/HeroSection.tsx', type: 'component' as const },
       { path: 'src/components/ContactForm.tsx', type: 'component' as const },
@@ -301,22 +344,31 @@ ${pageImports.map(p => `import ${p.name} from './${p.path.replace('src/', '').re
 - Industry: ${businessContext.industry}
 - Target Audience: ${businessContext.targetAudience}
 
+**🚨 CRITICAL ROUTING LOGIC:**
+- Available pages: ${pageImports.map(p => p.name).join(', ')}
+- Home page found: ${pageImports.find(p => p.name === 'Home') ? 'YES' : 'NO'}
+- Root page MUST be: ${pageImports.find(p => p.name === 'Home')?.name || pageImports[0]?.name || 'About'}
+- NEVER use About as root if Home exists!
+
 **REQUIRED STRUCTURE:**
 \`\`\`tsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Header from './components/Header.tsx';
+import Navbar from './components/Navbar.tsx';
 import Footer from './components/Footer.tsx';
 ${pageImports.map(p => `import ${p.name} from './${p.path.replace('src/', '').replace('.tsx', '')}.tsx';`).join('\n')}
 
 const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Navbar />
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<${pageImports[0]?.name || 'About'} />} />
-${pageImports.map(p => `          <Route path="/${p.name.toLowerCase()}" element={<${p.name} />} />`).join('\n')}
+          <Route path="/" element={<${pageImports.find(p => p.name === 'Home')?.name || pageImports[0]?.name || 'About'} />} />
+${pageImports.filter(p => p.name !== (pageImports.find(p => p.name === 'Home')?.name || pageImports[0]?.name)).map(p => {
+  const routePath = p.name.toLowerCase().replace('profile', '-profile').replace('gallery', '-gallery').replace('menu', 'menu').replace('tracking', '-tracking').replace('origin', '-origin');
+  return `          <Route path="/${routePath}" element={<${p.name} />} />`;
+}).join('\n')}
         </Routes>
       </main>
       <Footer />
@@ -385,7 +437,7 @@ ${componentRequirements}
 - Include proper spacing, colors, and visual hierarchy
 
 **STYLING EXAMPLES:**
-- Header: className="bg-white shadow-lg px-6 py-4 border-b"
+- Navbar: className="bg-white shadow-lg px-6 py-4 border-b sticky top-0 z-50"
 - Navigation: className="flex space-x-6 text-gray-700 hover:text-blue-600 transition-colors"
 - Buttons: className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
 - Cards: className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
@@ -398,7 +450,7 @@ ${componentRequirements}
 - Use default values, constants, or hard-coded content when needed
 - Return SINGLE root JSX element
 - Component should work without receiving props from parent
-- Do NOT include h1 tags if this is Header component (avoid duplicate welcome messages)
+- Do NOT include h1 tags if this is Navbar component (avoid duplicate welcome messages)
 
 **IMPORTANT: DO NOT use required props - make components standalone**
 
@@ -490,7 +542,7 @@ Return JavaScript/TypeScript code (not JSON), no markdown headers or explanation
 
 **🚨 CRITICAL SANDPACK RULES:**
 - ALL import paths MUST include .tsx/.ts/.js extensions
-- Use relative paths: './components/Header.tsx' not './components/Header'
+- Use relative paths: './components/Navbar.tsx' not './components/Navbar'
 - NEVER import duplicate modules
 - Every React component MUST return a SINGLE root JSX element
 - Use <div> or React.Fragment as wrapper if needed
@@ -526,8 +578,14 @@ Return JavaScript/TypeScript code (not JSON), no markdown headers or explanation
 **✅ CORRECT IMPORT EXAMPLES:**
 - import React from 'react';
 - import ReactDOM from 'react-dom/client';
-- import Header from './components/Header.tsx';
-- import { Routes, Route } from 'react-router-dom';
+- import Navbar from './components/Navbar.tsx';
+- import { Routes, Route, Link } from 'react-router-dom';
+
+**🚨 CRITICAL NAVIGATION REQUIREMENTS:**
+- ALWAYS use React Router Link for internal navigation: import { Link } from 'react-router-dom';
+- NEVER use <a href="#"> for internal links
+- Use <Link to="/path"> instead of <a href="/path">
+- For navigation components (Navbar), ALWAYS import and use Link
 
 **📝 CONFIG FILE REQUIREMENTS:**
 For vite.config.ts:
@@ -546,7 +604,10 @@ For tailwind.config.js:
 - Wrong config content in tailwind.config.js
 - <div style={{background: 'white'}}> (NO inline styles)
 - <div> (NO unstyled elements)
-- import Header from './components/Header'; (missing .tsx)
+- import Navbar from './components/Navbar'; (missing .tsx)
+- <a href="#"> for internal navigation (USE <Link to="/path">)
+- <a href="/page"> for React Router navigation (USE <Link to="/page">)
+- Missing Link import when using navigation
 
 Return ONLY code with complete imports and Tailwind styling, no explanations, no markdown blocks.` 
           },
@@ -562,7 +623,11 @@ Return ONLY code with complete imports and Tailwind styling, no explanations, no
       const validation = this.validateGeneratedCode(cleanedContent, path);
       
       if (!validation.isValid) {
-        console.warn(`⚠️ Validation issues for ${path}:`, validation.errors);
+        console.warn(`⚠️ Validation failed for ${path}:`, validation.errors);
+        console.log('🔄 Using template fallback due to validation failure');
+        
+        // Use template fallback when validation fails
+        return this.createTemplateFile(fileConfig, projectStructure, businessContext, allFiles);
       }
       
       return {
@@ -661,20 +726,24 @@ root.render(
           return { name: pageName, path: f.path };
         });
         
+        // Find Home page or use first page as fallback
+        const homePage = pageImports.find(p => p.name === 'Home');
+        const rootPage = homePage ? 'Home' : (pageImports[0]?.name || 'About');
+        
         return `import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Header from './components/Header.tsx';
+import Navbar from './components/Navbar.tsx';
 import Footer from './components/Footer.tsx';
 ${pageImports.map(p => `import ${p.name} from './${p.path.replace('src/', '').replace('.tsx', '')}.tsx';`).join('\n')}
 
 const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Navbar />
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<${pageImports.find(p => p.name === 'Home')?.name || pageImports[0]?.name || 'About'} />} />
-${pageImports.filter(p => p.name !== 'Home').map(p => {
+          <Route path="/" element={<${rootPage} />} />
+${pageImports.filter(p => p.name !== rootPage).map(p => {
   const routePath = p.name.toLowerCase().replace('profile', '-profile').replace('gallery', '-gallery').replace('menu', 'menu').replace('tracking', '-tracking').replace('origin', '-origin');
   return `          <Route path="/${routePath}" element={<${p.name} />} />`;
 }).join('\n')}
@@ -711,53 +780,71 @@ code {
     monospace;
 }`,
       
-      'src/components/Header.tsx': `import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
 
-const Header: React.FC = () => {
-  const location = useLocation();
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+      'src/components/Navbar.tsx': `import React from 'react';
+import { Link } from 'react-router-dom';
 
+const Navbar: React.FC = () => {
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <nav className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          <div className="flex items-center">
-            <Link to="/" className="text-xl font-bold text-gray-900 hover:text-gray-700">
+        <div className="flex justify-between items-center h-16">
+          {/* Brand/Logo */}
+          <div className="flex-shrink-0">
+            <Link to="/" className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors">
               ${projectName}
             </Link>
           </div>
           
-          <nav className="hidden md:flex space-x-8">
-            <Link 
-              to="/" 
-              className={\`text-gray-600 hover:text-gray-900 transition-colors \${isActive('/') ? 'text-blue-600 font-medium' : ''}\`}
-            >
-              หน้าแรก
-            </Link>
-            <Link 
-              to="/about" 
-              className={\`text-gray-600 hover:text-gray-900 transition-colors \${isActive('/about') ? 'text-blue-600 font-medium' : ''}\`}
-            >
-              เกี่ยวกับเรา
-            </Link>
-            <Link 
-              to="/contact" 
-              className={\`text-gray-600 hover:text-gray-900 transition-colors \${isActive('/contact') ? 'text-blue-600 font-medium' : ''}\`}
-            >
-              ติดต่อ
-            </Link>
-          </nav>
+          {/* Desktop Navigation */}
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-4">
+              <Link to="/" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                หน้าแรก
+              </Link>
+              <Link to="/articles" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                บทความ
+              </Link>
+              <Link to="/categories" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                หมวดหมู่
+              </Link>
+              <Link to="/about" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                เกี่ยวกับ
+              </Link>
+              <Link to="/contact" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                ติดต่อ
+              </Link>
+            </div>
+          </div>
+          
+          {/* Search and Actions */}
+          <div className="hidden md:flex items-center space-x-4">
+            <input 
+              type="text" 
+              placeholder="ค้นหา..." 
+              className="w-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+              ค้นหา
+            </button>
+          </div>
+          
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button className="text-gray-700 hover:text-gray-900 p-2">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
-    </header>
+    </nav>
   );
 };
 
-export default Header;`,
+export default Navbar;`,
       
       'src/components/Footer.tsx': `import React from 'react';
 import { Link } from 'react-router-dom';
@@ -808,122 +895,7 @@ const Footer: React.FC = () => {
 
 export default Footer;`,
 
-      'src/pages/Home.tsx': (() => {
-        // สร้าง Home page ตาม business context
-        const getBusinessHomeTemplate = (industry: string) => {
-          const businessData = {
-            restaurant: {
-              title: 'ยินดีต้อนรับสู่ร้านอาหารของเรา',
-              subtitle: 'อิ่มอร่อยกับอาหารรสเลิศที่ปรุงด้วยใจ',
-              mainAction: 'ดูเมนู',
-              mainPath: '/menu',
-              bgColor: 'bg-orange-100',
-              accentColor: 'bg-orange-600',
-              features: [
-                { icon: '🍽️', title: 'อาหารคุณภาพ', desc: 'วัตถุดิบสดใหม่ทุกวัน' },
-                { icon: '👨‍🍳', title: 'เชฟมืออาชีพ', desc: 'ประสบการณ์กว่า 10 ปี' },
-                { icon: '🏪', title: 'บรรยากาศอบอุ่น', desc: 'สถานที่สำหรับครอบครัว' }
-              ]
-            },
-            cafe: {
-              title: 'ต้อนรับสู่คาเฟ่ของเรา',
-              subtitle: 'เริ่มต้นวันใหม่ด้วยกาแฟหอมกรุ่น',
-              mainAction: 'ดูเมนูกาแฟ',
-              mainPath: '/coffeemenu',
-              bgColor: 'bg-amber-50',
-              accentColor: 'bg-amber-600',
-              features: [
-                { icon: '☕', title: 'กาแฟคุณภาพ', desc: 'เมล็ดกาแฟพรีเมี่ยม' },
-                { icon: '🎨', title: 'ลาเต้อาร์ต', desc: 'ฝีมือบาริสต้ามืออาชีพ' },
-                { icon: '📚', title: 'พื้นที่แห่งการเรียนรู้', desc: 'เหมาะสำหรับทำงาน' }
-              ]
-            },
-            fashion: {
-              title: 'แฟชั่นล้ำสมัย',
-              subtitle: 'สร้างสไตล์ของคุณด้วยแฟชั่นคุณภาพ',
-              mainAction: 'ดูคอลเลกชัน',
-              mainPath: '/collection',
-              bgColor: 'bg-purple-50',
-              accentColor: 'bg-purple-600',
-              features: [
-                { icon: '👗', title: 'แฟชั่นล่าสุด', desc: 'ทันเทรนด์สไตล์โลก' },
-                { icon: '✨', title: 'คุณภาพพรีเมี่ยม', desc: 'วัสดุคัดสรรพิเศษ' },
-                { icon: '🎯', title: 'สไตล์เฉพาะตัว', desc: 'ออกแบบเพื่อคุณ' }
-              ]
-            }
-          };
-          
-          const data = businessData[industry as keyof typeof businessData] || businessData.cafe;
-          
-          return `import React from 'react';
-import { Link } from 'react-router-dom';
 
-const Home: React.FC = () => {
-  return (
-    <div className="min-h-screen ${data.bgColor}">
-      {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            ${data.title}
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            ${data.subtitle}
-          </p>
-          <div className="flex justify-center space-x-4">
-            <Link 
-              to="${data.mainPath}" 
-              className="${data.accentColor} text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
-            >
-              ${data.mainAction}
-            </Link>
-            <Link 
-              to="/about" 
-              className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
-            >
-              เรียนรู้เพิ่มเติม
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">ทำไมต้องเลือกเรา</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            ${data.features.map(feature => `
-            <div className="text-center p-6">
-              <div className="text-4xl mb-4">${feature.icon}</div>
-              <h3 className="text-xl font-semibold mb-2">${feature.title}</h3>
-              <p className="text-gray-600">${feature.desc}</p>
-            </div>`).join('')}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 ${data.bgColor}">
-        <div className="max-w-4xl mx-auto text-center px-4">
-          <h2 className="text-3xl font-bold mb-4">พร้อมที่จะเริ่มต้นแล้วหรือยัง?</h2>
-          <p className="text-gray-600 mb-8">มาสัมผัสประสบการณ์ที่ดีที่สุดกับเรา</p>
-          <Link 
-            to="/contact" 
-            className="${data.accentColor} text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
-          >
-            ติดต่อเรา
-          </Link>
-        </div>
-      </section>
-    </div>
-  );
-};
-
-export default Home;`;
-        };
-        
-        return getBusinessHomeTemplate(businessContext.industry);
-      })(),
 
       'vite.config.ts': `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -1021,23 +993,67 @@ export default {
 - Add analytics and reporting features`;
       }
       
-      if (fileName.includes('Header') || fileName.includes('Nav')) {
-        return `
-- Include navigation for blog pages: Home, Articles, Categories, About, Contact
-- Add search bar for article search
-- Include user authentication status (Login/Logout)
-- Add admin link for authorized users
-- Make responsive with mobile hamburger menu`;
-      }
+      // Header removed - use Navbar instead
     }
     
-    // Default for other project types
-    if (fileName.includes('Header')) {
-      return `- Create navigation header appropriate for ${projectType} with main menu items and branding`;
-    }
+    // Default for other project types - REMOVED Header, use Navbar instead
     
     if (fileName.includes('Footer')) {
       return `- Create footer with links, contact info, and branding appropriate for ${projectType}`;
+    }
+    
+    if (fileName.includes('Navbar')) {
+      if (projectType.includes('blog') || projectGoal.includes('บทความ')) {
+        return `
+- CRITICAL: Import React Router Link: import { Link } from 'react-router-dom';
+- Create sticky responsive navigation bar for blog website with modern design
+- Include navigation items using Link components: หน้าแรก, บทความ, หมวดหมู่, เกี่ยวกับ, ติดต่อ
+- Use <Link to="/"> for Home, <Link to="/articles"> for Articles, etc.
+- NEVER use <a href="#"> - ALWAYS use <Link to="/path">
+- Add search functionality with search icon that opens search modal
+- Include user authentication menu (เข้าสู่ระบบ/ลงทะเบียน/โปรไฟล์)
+- Add admin dashboard link for authorized users using <Link to="/admin">
+- Implement mobile-responsive hamburger menu with smooth animations
+- Style with Tailwind: sticky top-0 z-50, white background, shadow-md
+- Include brand/logo section with project name: "${projectInfo?.name || 'BlogEase'}"
+- Add hover effects, active states, and smooth transitions for all menu items`;
+      }
+      
+      return `
+- CRITICAL: Import React Router Link: import { Link } from 'react-router-dom';
+- Create sticky responsive navigation bar for ${projectType} website
+- Include main navigation items using Link components appropriate for the business type
+- Use <Link to="/path"> for ALL internal navigation - NEVER <a href="#">
+- Add brand/logo section with project name: "${projectInfo?.name || 'Website'}"
+- Implement mobile-responsive hamburger menu with smooth animations
+- Style with Tailwind CSS: sticky top-0 z-50, proper spacing, modern design
+- Add hover effects, active states, and transitions
+- Include CTA button or search functionality if relevant to business`;
+    }
+    
+    if (fileName.includes('HeroSection')) {
+      if (projectType.includes('blog') || projectGoal.includes('บทความ')) {
+        return `
+- Create impressive hero section as the main focal point of the homepage
+- Include large compelling headline about the blog's purpose
+- Add descriptive subtitle explaining what visitors can expect
+- Include prominent CTA button (เริ่มอ่าน/สำรวจบทความ) linking to articles page
+- Add search bar for finding articles quickly
+- Use attractive background (gradient, image, or modern pattern)
+- Style with Tailwind: min-h-screen or min-h-[80vh], centered content, responsive
+- Include statistics if available (total articles, subscribers, etc.)
+- Add subtle animations or effects to make it engaging`;
+      }
+      
+      return `
+- Create impressive hero section as the main focal point of the homepage
+- Include large compelling headline related to the business goal: "${projectGoal}"
+- Add descriptive subtitle explaining the value proposition
+- Include prominent CTA button relevant to the business type
+- Use attractive modern design with background styling
+- Style with Tailwind: min-h-screen or min-h-[80vh], centered content, responsive
+- Add engaging visual elements appropriate for ${projectType}
+- Include key business highlights or features if applicable`;
     }
     
     return `- Create ${fileName} component that supports the project goal: "${projectGoal}"`;
@@ -1060,12 +1076,17 @@ export default {
     if (projectType.includes('blog') || projectGoal.includes('บทความ')) {
       if (fileName.toLowerCase().includes('home')) {
         return `
-- Create blog homepage with hero section featuring site name and description
-- Include featured/recent articles grid with excerpts and thumbnails
-- Add categories navigation and popular tags
-- Include newsletter subscription form if RSS/newsletter feature exists
-- Add search functionality for articles
-- Display author highlights and site statistics`;
+- CRITICAL: Import HeroSection: import HeroSection from '../components/HeroSection.tsx';
+- Create stunning blog homepage with Hero Section as the main attraction
+- Start with <HeroSection /> component as the FIRST element in the page
+- Include featured/recent articles section with beautiful card layouts
+- Add categories showcase with visual icons and descriptions
+- Include newsletter subscription section with attractive design
+- Add author spotlight or team introduction section
+- Include site statistics or achievements section
+- Use modern layout with proper spacing and visual hierarchy
+- Implement responsive design for all devices
+- Add smooth scrolling and subtle animations for engagement`;
       }
       
       if (fileName.toLowerCase().includes('article') && fileName.toLowerCase().includes('s')) {
@@ -1126,6 +1147,21 @@ export default {
 - Include blog statistics and achievements
 - Add contact information and social media links`;
       }
+    }
+    
+    // Default home page for other business types
+    if (fileName.toLowerCase().includes('home')) {
+      return `
+- CRITICAL: Import HeroSection: import HeroSection from '../components/HeroSection.tsx';
+- Create impressive homepage with Hero Section as the main focal point
+- Start with <HeroSection /> component as the FIRST element in the page
+- Include key business sections that highlight main services/products
+- Add testimonials or social proof section
+- Include call-to-action sections strategically placed
+- Add about us preview or team introduction
+- Include contact information or location if applicable
+- Use modern responsive design with excellent visual hierarchy
+- Implement smooth user experience with proper navigation flow`;
     }
     
     // Default for other project types
