@@ -85,9 +85,10 @@ export function HoverDetailCard({
     switch (variant) {
       case 'home':
         // Use full width so image fills the card container and keeps layout consistent
-        return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full h-[200px]";
+        return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full h-[180px]";
       case 'workspace':
-        return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full h-[160px]";
+        // ปรับให้เหมือนกับ home เพื่อขนาดที่เท่ากัน
+        return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full h-[180px]";
       default:
         return "relative overflow-hidden rounded-t-lg cursor-zoom-in w-full aspect-[4/3]";
     }
@@ -98,8 +99,8 @@ export function HoverDetailCard({
       case 'home':
         return "bg-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col";
       case 'workspace':
-        // Use transparent border so we don't show a thin white outline on dark backgrounds
-        return "bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col border border-transparent";
+        // ปรับให้เหมือนกับ home - ไม่มีเส้นกรอบ
+        return "bg-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col";
       default:
         return "bg-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col";
     }
@@ -108,7 +109,8 @@ export function HoverDetailCard({
   const getContentPadding = () => {
     switch (variant) {
       case 'workspace':
-        return "p-3";
+        // ปรับให้เหมือนกับ default เพื่อขนาดที่เท่ากัน
+        return "p-4";
       default:
         return "p-4";
     }
@@ -117,7 +119,8 @@ export function HoverDetailCard({
   const getTitleStyles = () => {
     switch (variant) {
       case 'workspace':
-        return "text-base font-bold text-gray-900 mb-1 line-clamp-2";
+        // ปรับให้เหมือนกับ default เพื่อขนาดที่เท่ากัน
+        return "text-lg font-bold text-gray-900 mb-2 line-clamp-2";
       default:
         return "text-lg font-bold text-gray-900 mb-2 line-clamp-2";
     }

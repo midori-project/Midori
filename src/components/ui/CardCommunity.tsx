@@ -34,13 +34,13 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
       images: hasValidPreviewContent ? [project.previewFile.content] : [fallbackImage],
       variant: 'home' as const,
       primaryButton: {
-        text: "View Details",
+        text: "ดูรายละเอียด",
         color: "bg-white/90",
         hoverColor: "hover:bg-white",
         textColor: "text-gray-900"
       },
       secondaryButton: {
-        text: "Preview",
+        text: "ดูตัวอย่าง",
         color: "bg-blue-600",
         hoverColor: "hover:bg-blue-700",
         textColor: "text-white"
@@ -56,6 +56,9 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
         }
       },
       enableAnimations: true,
+      // เพิ่ม widthClass และ orientation เพื่อความสม่ำเสมอ
+      widthClass: 'w-full',
+      orientation: 'horizontal' as const,
     };
   });
 

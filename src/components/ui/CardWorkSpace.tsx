@@ -2,7 +2,11 @@ import React from 'react';
 import { getUserProjects } from '@/app/projects/workspace/getUserProjects';
 import { CardWorkspaceClient } from './CardWorkspaceClient';
 
-export const CardWorkspace: React.FC = async () => {
+interface CardWorkspaceProps {
+  showLimited?: boolean;
+}
+
+export const CardWorkspace: React.FC<CardWorkspaceProps> = async ({ showLimited = false }) => {
   try {
     const result = await getUserProjects();
     
@@ -33,7 +37,7 @@ export const CardWorkspace: React.FC = async () => {
       );
     }
 
-    return <CardWorkspaceClient projects={projects} />;
+    return <CardWorkspaceClient projects={projects} showLimited={showLimited} />;
   } catch (error) {
     console.error('Error in CardWorkspace:', error);
     return (

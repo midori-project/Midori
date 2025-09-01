@@ -125,7 +125,7 @@ export function Navbar() {
               <div className="w-8 h-8 bg-[#B6E23A] rounded-full flex items-center justify-center text-white font-semibold">
                 {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
               </div>
-              <span className="text-white font-medium">
+              <span className="text-[#0B2604] font-medium">
                 {user.displayName || user.email.split('@')[0]}
               </span>
               <svg

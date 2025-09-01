@@ -21,9 +21,9 @@ export default function Home() {
         aria-hidden="true"
       />
 
-      {/* Gradient overlay for tone adjustment (stronger green) */}
+      {/* Gradient overlay for tone adjustment (matching Gallery green) */}
       <div
-        className="absolute inset-0 z-10 bg-gradient-to-b from-[#e6fff2]/70 via-[#d4ffe6]/60 to-[#bff6e0]/70 mix-blend-overlay opacity-70 pointer-events-none"
+        className="absolute inset-0 z-10 bg-[#68A36940] mix-blend-overlay opacity-80 pointer-events-none"
         aria-hidden="true"
       />
 
@@ -54,7 +54,7 @@ export default function Home() {
     </div>
     </div>
     {/* Gallery Section */}
-    <div className="flex flex-col justify-center items-center bg-black min-h-screen">
+    <div className="flex flex-col py-16 justify-center items-center bg-gradient-to-b from-[#e6fff2]/70 via-[#d4ffe6]/60 to-[#bff6e0]/70 min-h-screen">
       <Gallery />
     </div>
     
