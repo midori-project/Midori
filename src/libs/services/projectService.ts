@@ -128,8 +128,45 @@ export async function createProjectWithCategories(
   }
 }
 
-export async function getPublicProjectsWithPreview(): Promise<ProjectWithPreview[]> {
+// Pagination options interface
+export interface PaginationOptions {
+  page?: number;
+  limit?: number;
+}
+
+// Paginated response interface
+export interface PaginatedProjectsResponse {
+  projects: ProjectWithPreview[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+export async function getPublicProjectsWithPreview(
+  options: PaginationOptions = {}
+): Promise<PaginatedProjectsResponse> {
+  const { page = 1, limit = 12 } = options;
+  const skip = (page - 1) * limit;
+
   try {
+    // Count total items for pagination info
+    const totalItems = await (prisma as any).project.count({
+      where: {
+        visibility: 'public',
+      },
+    });
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    // Fetch projects with pagination
     const projects = await (prisma as any).project.findMany({
       where: {
         visibility: 'public',
@@ -163,24 +200,83 @@ export async function getPublicProjectsWithPreview(): Promise<ProjectWithPreview
       orderBy: {
         createdAt: 'desc',
       },
-      take: 12,
+      skip,
+      take: limit,
     });
     
-    return projects;
+    return {
+      projects,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+        hasNextPage,
+        hasPreviousPage,
+      },
+    };
   } catch (error) {
     console.error('Error fetching projects with preview:', error);
-    return [];
+    return {
+      projects: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 0,
+        totalItems: 0,
+        itemsPerPage: limit,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
   } finally {
     await prisma.$disconnect();
   }
 }
 
+// Legacy function for backward compatibility (no pagination)
+export async function getPublicProjectsWithPreviewLegacy(): Promise<ProjectWithPreview[]> {
+  const response = await getPublicProjectsWithPreview({ page: 1, limit: 50 });
+  return response.projects;
+}
+
+// User projects paginated response interface
+export interface PaginatedUserProjectsResponse {
+  projects: UserProject[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
 /**
- * Business Service: ดึง Projects ของผู้ใช้เฉพาะ พร้อม Preview และ Categories
+ * Business Service: ดึง Projects ของผู้ใช้เฉพาะ พร้อม Preview และ Categories (แบบ Pagination)
  * สำหรับแสดงใน Workspace
  */
-export async function getUserProjectsWithPreview(userId: string): Promise<UserProject[]> {
+export async function getUserProjectsWithPreview(
+  userId: string,
+  options: PaginationOptions = {}
+): Promise<PaginatedUserProjectsResponse> {
+  const { page = 1, limit = 12 } = options;
+  const skip = (page - 1) * limit;
+
   try {
+    // Count total items for pagination info
+    const totalItems = await (prisma as any).project.count({
+      where: {
+        userId: userId,
+      },
+    });
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    // Fetch projects with pagination
     const projects = await (prisma as any).project.findMany({
       where: {
         userId: userId,
@@ -216,9 +312,11 @@ export async function getUserProjectsWithPreview(userId: string): Promise<UserPr
       orderBy: {
         createdAt: 'desc',
       },
+      skip,
+      take: limit,
     });
 
-    return projects.map((project: any) => ({
+    const mappedProjects = projects.map((project: any) => ({
       id: project.id,
       name: project.name,
       description: project.description,
@@ -234,12 +332,40 @@ export async function getUserProjectsWithPreview(userId: string): Promise<UserPr
         },
       })),
     }));
+
+    return {
+      projects: mappedProjects,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+        hasNextPage,
+        hasPreviousPage,
+      },
+    };
   } catch (error) {
     console.error('Error fetching user projects with preview:', error);
-    return [];
+    return {
+      projects: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 0,
+        totalItems: 0,
+        itemsPerPage: limit,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
   } finally {
     await prisma.$disconnect();
   }
+}
+
+// Legacy function for backward compatibility (no pagination)
+export async function getUserProjectsWithPreviewLegacy(userId: string): Promise<UserProject[]> {
+  const response = await getUserProjectsWithPreview(userId, { page: 1, limit: 100 });
+  return response.projects;
 }
 
 // Export UserProject interface for use in server actions

@@ -9,11 +9,14 @@ export interface HoverDetailCardGridProps {
 export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
   columns = 4,
 }) => {
-  // Fetch real data from database
+  // Fetch real data from database - จำกัดที่ 12 cards สำหรับหน้าโฮม
   const projects = await getProjectsFromDatabase();
   
+  // ✅ จำกัดให้แสดงแค่ 12 cards ในหน้าโฮม
+  const limitedProjects = projects.slice(0, 12);
+  
   // Transform database projects to HoverDetailCardData format
-  const items: HoverDetailCardData[] = projects.map((project: any) => {
+  const items: HoverDetailCardData[] = limitedProjects.map((project: any) => {
     // ✅ ปรับปรุง logic ให้รองรับกรณีต่างๆ
     const hasValidPreviewContent = project.previewFile?.content && 
                                    project.previewFile.content.trim().length > 0 &&

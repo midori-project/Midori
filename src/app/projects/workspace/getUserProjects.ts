@@ -1,13 +1,21 @@
 'use server';
 
 import { getCurrentSession } from '@/libs/auth/session';
-import { getUserProjectsWithPreview, UserProject } from '@/libs/services/projectService';
+import { 
+  getUserProjectsWithPreview, 
+  PaginatedUserProjectsResponse,
+  PaginationOptions 
+} from '@/libs/services/projectService';
 
-export async function getUserProjects(): Promise<{
+export interface GetUserProjectsResult {
   success: boolean;
-  projects?: UserProject[];
+  data?: PaginatedUserProjectsResponse;
   error?: string;
-}> {
+}
+
+export async function getUserProjectsPaginated(
+  options: PaginationOptions = {}
+): Promise<GetUserProjectsResult> {
   try {
     // ตรวจสอบการเข้าสู่ระบบ
     const session = await getCurrentSession();
@@ -18,12 +26,12 @@ export async function getUserProjects(): Promise<{
       };
     }
 
-    // ดึงโปรเจคของผู้ใช้
-    const projects = await getUserProjectsWithPreview(session.userId);
+    // ดึงโปรเจคของผู้ใช้แบบ pagination
+    const result = await getUserProjectsWithPreview(session.userId, options);
 
     return {
       success: true,
-      projects,
+      data: result,
     };
   } catch (error) {
     console.error('Error fetching user projects:', error);
@@ -32,4 +40,25 @@ export async function getUserProjects(): Promise<{
       error: 'เกิดข้อผิดพลาดในการดึงข้อมูลโปรเจค',
     };
   }
+}
+
+// Legacy function for backward compatibility
+export async function getUserProjects(): Promise<{
+  success: boolean;
+  projects?: any[];
+  error?: string;
+}> {
+  const result = await getUserProjectsPaginated({ page: 1, limit: 100 });
+  
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error,
+    };
+  }
+
+  return {
+    success: true,
+    projects: result.data?.projects || [],
+  };
 }

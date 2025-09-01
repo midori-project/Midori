@@ -1,6 +1,6 @@
 "use server";
 
-import { getPublicProjectsWithPreview, ProjectWithPreview } from '@/libs/services/projectService';
+import { getPublicProjectsWithPreviewLegacy, ProjectWithPreview } from '@/libs/services/projectService';
 
 /**
  * ✅ Server Action ที่ถูกต้อง - เป็นแค่ wrapper
@@ -9,8 +9,8 @@ import { getPublicProjectsWithPreview, ProjectWithPreview } from '@/libs/service
  */
 export async function getProjectsFromDatabase(): Promise<ProjectWithPreview[]> {
   try {
-    // เรียก Business Service (business logic อยู่ที่นี่)
-    const projects = await getPublicProjectsWithPreview();
+    // ✅ ใช้ legacy function สำหรับ backward compatibility
+    const projects = await getPublicProjectsWithPreviewLegacy();
     
     return projects;
   } catch (error) {
