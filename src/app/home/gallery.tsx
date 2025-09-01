@@ -1,5 +1,5 @@
 import { CardCommunity } from "@/components/ui/CardCommunity";
-import { CardWorkspace } from "@/components/ui/CardWorkspace";
+import { CardWorkspace } from "@/components/ui/CardWorkSpace";
 import { getCurrentSession } from "@/libs/auth/session";
 
 export default async function Gallery() {

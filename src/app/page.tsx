@@ -1,52 +1,9 @@
-"use client";
 import Image from "next/image";
 import Input from "./home/input";
 import Gallery from "./home/gallery";
-// import PromptBox from "@/components/PromptBox/PromptBoxMi";
-import ChatInput from "@/components/PromptBox/ChatInput";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { PromptBox } from "@/components/PromptInput/chatgpt-prompt-input";
+
+
 export default function Home() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
-  const [currentStep, setCurrentStep] = useState("initial");
-  const [shouldShowGenerateButton, setShouldShowGenerateButton] = useState(false);
-
-  const handleSendMessage = async (message: string) => {
-    if (!message.trim()) return;
-    
-    setIsLoading(true);
-    
-    try {
-      // สร้าง project ใหม่ในฐานข้อมูล
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: 'New Project',
-          description: message,
-          visibility: 'private',
-        }),
-      });
-
-      if (response.ok) {
-        const project = await response.json();
-        // นำทางไปยังหน้า info พร้อมกับ project ID
-        router.push(`/info/${project.id}?prompt=${encodeURIComponent(message)}`);
-      } else {
-        console.error('Failed to create project');
-      }
-    } catch (error) {
-      console.error('Error creating project:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <>
     <div>
@@ -77,7 +34,7 @@ export default function Home() {
       />
 
       {/* Hero Section */}
-      <div className="relative z-30 pt-64 px-4 sm:px-6 lg:px-8">
+      <main className="relative z-30 pt-64 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl font-bold text-[#0B4421] sm:text-5xl md:text-8xl">
             Grow your site with
@@ -87,18 +44,11 @@ export default function Home() {
             Midori is an assistant to create, manage, and grow your website.
           </p>
         </div>
-      </div>
+      </main>
 
       {/* Features Section */}
       <section className="relative z-30 pt-20 px-4 sm:px-6 lg:px-8">
-        {/* <ChatInput 
-          isLoading={isLoading}
-          isComplete={isComplete}
-          currentStep={currentStep}
-          onSendMessage={handleSendMessage}
-          shouldShowGenerateButton={shouldShowGenerateButton}
-        /> */}
-        <PromptBox />
+        <Input />
       </section>
       
     </div>

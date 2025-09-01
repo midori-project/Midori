@@ -15,7 +15,7 @@ export const SITE_GEN_CONFIG = {
   },
   
   // Current model selection - ใช้ GPT-4o-mini เพื่อความสมดุล
-  currentModel: "gpt-4o-mini", 
+  currentModel: "gpt-5", 
   
   // Temperature settings - เพิ่มความหลากหลาย
   temperatures: {
