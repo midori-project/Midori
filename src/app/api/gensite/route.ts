@@ -613,7 +613,6 @@ Return ONLY code with complete imports and Tailwind styling, no explanations, no
           },
           { role: 'user', content: prompt }
         ],
-        temperature: type === 'config' ? 0.2 : 0.4,
       });
       
       const content = completion.choices[0]?.message?.content || '';

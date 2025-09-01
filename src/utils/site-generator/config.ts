@@ -14,21 +14,21 @@ export const SITE_GEN_CONFIG = {
     budget: "gpt-3.5-turbo",                     // ราคาถูกที่สุด (เร็ว)
   },
   
-  // Current model selection - ใช้ GPT-4o-mini เพื่อความสมดุล
-  currentModel: "gpt-5", 
+  // Current model selection - ใช้ GPT-5o-nano
+  currentModel: "gpt-5o-nano", 
   
-  // Temperature settings - เพิ่มความหลากหลาย
+  // Temperature settings - ใช้ค่า default (1) สำหรับ gpt-5
   temperatures: {
-    structure: 0.8,  // เพิ่มความหลากหลายในโครงสร้าง
-    code: 0.7,       // เพิ่มความหลากหลายในโค้ด
-    creative: 0.9,   // สำหรับ creative components
+    structure: 1,  // ใช้ค่า default (1) สำหรับ gpt-5
+    code: 1,       // ใช้ค่า default (1) สำหรับ gpt-5
+    creative: 1,   // ใช้ค่า default (1) สำหรับ gpt-5
   },
   
   // Advanced settings
   creativity: {
-    high: 0.9,      // สำหรับ creative components
-    medium: 0.7,    // สำหรับ standard components  
-    low: 0.4        // สำหรับ configuration files
+    high: 1,      // ใช้ค่า default (1) สำหรับ gpt-5
+    medium: 1,    // ใช้ค่า default (1) สำหรับ gpt-5
+    low: 1        // ใช้ค่า default (1) สำหรับ gpt-5
   }
 };
 

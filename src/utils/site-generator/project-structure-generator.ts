@@ -117,7 +117,7 @@ ${this.getRequiredPagesForIndustry(businessContext.industry)}
           { role: "system", content: systemPrompt },
           { role: "user", content: `ข้อมูลจาก conversation:\n${JSON.stringify(finalJson, null, 2)}\n\nกรุณาวิเคราะห์และสร้างโครงสร้างโปรเจกต์ที่เหมาะสมสำหรับ ${businessContext.industry} business` }
         ],
-        temperature: SITE_GEN_CONFIG.temperatures.structure,
+        // ลบ temperature ออกเพื่อใช้ค่า default
         max_completion_tokens: 1500, // ลดจาก 2000 สำหรับ project structure
       }, 2, 30000, userIntent); // 2 retries, 30 second timeout สำหรับ Frontend-only structure
 

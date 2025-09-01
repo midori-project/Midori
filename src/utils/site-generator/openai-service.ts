@@ -61,25 +61,8 @@ export class OpenAIService {
    * Get appropriate temperature for different file types
    */
   static getTemperatureForFile(filePath: string): number {
-    const fileName = filePath.toLowerCase();
-    
-    // Configuration files need lower temperature (more predictable)
-    if (fileName.includes('config') || fileName.includes('package.json') || fileName.includes('tsconfig')) {
-      return 0.3;
-    }
-    
-    // Component files need moderate temperature
-    if (fileName.includes('component') || fileName.includes('.tsx') || fileName.includes('.jsx')) {
-      return 0.7;
-    }
-    
-    // Page files can be more creative
-    if (fileName.includes('page') || fileName.includes('layout')) {
-      return 0.8;
-    }
-    
-    // Default temperature
-    return 0.7;
+    // ใช้ค่า default (1) สำหรับ gpt-5 model
+    return 1;
   }
 
   /**
@@ -115,19 +98,7 @@ export class OpenAIService {
    * Get temperature for user intent
    */
   private static getTemperatureForUserIntent(userIntent: any): number {
-    // ใช้ temperature ที่สูงขึ้นสำหรับ creative styles
-    switch (userIntent.visualStyle) {
-      case 'playful-creative':
-      case 'artistic-creative':
-        return 0.9; // สูงสุดสำหรับ creative content
-      case 'luxury-elegant':
-      case 'vintage-retro':
-        return 0.8; // สูงสำหรับ unique styles
-      case 'professional-corporate':
-        return 0.6; // ปานกลางสำหรับ professional
-      case 'modern-minimal':
-      default:
-        return 0.7; // ปกติ
-    }
+    // ใช้ค่า default (1) สำหรับ gpt-5 model
+    return 1;
   }
 }
