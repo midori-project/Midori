@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sandpack } from '@codesandbox/sandpack-react';
+import { 
+  SandpackProvider, 
+  SandpackLayout, 
+  SandpackCodeEditor, 
+  SandpackPreview 
+} from '@codesandbox/sandpack-react';
 
 interface GeneratedFile {
   path: string;
@@ -299,31 +304,47 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
           </div>
         </div>
         
-        <div className="h-96 md:h-[600px]">
-          <Sandpack
-            files={sandpackFiles}
-            template="react-ts"
-            theme="light"
-            options={{
-              showNavigator: true,
-              showTabs: true,
-              showLineNumbers: true,
-              showInlineErrors: true,
-              wrapContent: true,
-              editorHeight: '100%',
-              layout: 'preview',
-              autorun: true,
-              recompileMode: 'immediate',
-              externalResources: ["https://cdn.tailwindcss.com"]
-            }}
-            customSetup={{
-              dependencies: {
-                'react': '^18.2.0',
-                'react-dom': '^18.2.0',
-                'react-router-dom': '^6.8.1',
-              },
-            }}
-          />
+        <div className="h-[1000px] w-full flex flex-col">
+          <div className="flex-1 min-h-0">
+            <SandpackProvider
+              files={sandpackFiles}
+              template="react-ts"
+              theme="light"
+              options={{
+                autorun: true,
+                recompileMode: 'immediate',
+                externalResources: ["https://cdn.tailwindcss.com"]
+              }}
+              customSetup={{
+                dependencies: {
+                  'react': '^18.2.0',
+                  'react-dom': '^18.2.0',
+                  'react-router-dom': '^6.8.1',
+                },
+              }}
+            >
+              <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <SandpackLayout style={{ height: '100%', width: '100%', flex: 1 }}>
+                  <SandpackCodeEditor 
+                    showTabs
+                    showLineNumbers
+                    showInlineErrors
+                    wrapContent
+                    closableTabs
+                    style={{ height: '100%', minHeight: '100%', flex: 1 }}
+                  />
+                  <SandpackPreview 
+                    showNavigator
+                    showOpenInCodeSandbox
+                    showRefreshButton
+                    showSandpackErrorOverlay
+                    showOpenNewtab
+                    style={{ height: "80vh", minHeight: '100%', flex: 1 }}
+                  />
+                </SandpackLayout>
+              </div>
+            </SandpackProvider>
+          </div>
         </div>
       </div>
 
