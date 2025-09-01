@@ -14,8 +14,8 @@ export const SITE_GEN_CONFIG = {
     budget: "gpt-3.5-turbo",                     // ราคาถูกที่สุด (เร็ว)
   },
   
-  // Current model selection - ใช้ GPT-3.5 เพื่อความเร็วและประหยัด
-  currentModel: "gpt-3.5-turbo", // เปลี่ยนเป็น GPT-3.5 ตามที่ร้องขอ
+  // Current model selection - ใช้ GPT-4o-mini เพื่อความสมดุล
+  currentModel: "gpt-4o-mini", 
   
   // Temperature settings - เพิ่มความหลากหลาย
   temperatures: {
