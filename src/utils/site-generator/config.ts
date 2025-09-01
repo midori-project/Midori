@@ -15,7 +15,7 @@ export const SITE_GEN_CONFIG = {
   },
   
   // Current model selection - ใช้ GPT-5o-nano
-  currentModel: "gpt-5o-nano", 
+  currentModel: "gpt-4o-mini", 
   
   // Temperature settings - ใช้ค่า default (1) สำหรับ gpt-5
   temperatures: {
