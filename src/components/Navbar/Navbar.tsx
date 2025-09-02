@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { logoutAction } from "@/app/logout/action";
+import { logoutAction } from "@/app/(app)/(auth)/logout/action";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { loginAction } from "@/app/login/action";
+import { loginAction } from "@/app/(app)/(auth)/login/action";
 import { LoginSchema } from "@/schemas/auth/login";
 import { useAuth } from "@/contexts/AuthContext";
 

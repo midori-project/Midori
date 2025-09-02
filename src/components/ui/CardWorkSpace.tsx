@@ -1,5 +1,5 @@
 import React from 'react';
-import { getUserProjects } from '@/app/projects/workspace/getUserProjects';
+import { getUserProjects } from '@/app/(app)/(projects)/projects/workspace/getUserProjects';
 import { CardWorkspaceClient } from './CardWorkspaceClient';
 
 interface CardWorkspaceProps {

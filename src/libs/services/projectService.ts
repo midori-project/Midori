@@ -123,8 +123,6 @@ export async function createProjectWithCategories(
     return { projectId: project.id };
   } catch (error) {
     throw new Error(`Failed to create project: ${(error as Error).message}`);
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -228,8 +226,6 @@ export async function getPublicProjectsWithPreview(
         hasPreviousPage: false,
       },
     };
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -357,8 +353,6 @@ export async function getUserProjectsWithPreview(
         hasPreviousPage: false,
       },
     };
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

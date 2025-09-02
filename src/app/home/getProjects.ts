@@ -1,6 +1,6 @@
 "use server";
 
-import { getPublicProjectsWithPreviewLegacy, ProjectWithPreview } from '@/libs/services/projectService';
+import { getPublicProjectsWithPreview, ProjectWithPreview } from '@/libs/services/projectService';
 
 /**
  * ✅ Server Action ที่ถูกต้อง - เป็นแค่ wrapper
@@ -9,10 +9,9 @@ import { getPublicProjectsWithPreviewLegacy, ProjectWithPreview } from '@/libs/s
  */
 export async function getProjectsFromDatabase(): Promise<ProjectWithPreview[]> {
   try {
-    // ✅ ใช้ legacy function สำหรับ backward compatibility
-    const projects = await getPublicProjectsWithPreviewLegacy();
-    
-    return projects;
+  // ✅ โหลดโปรเจค 12 รายการแรกโดยตรงจาก service (pagination)
+  const response = await getPublicProjectsWithPreview({ page: 1, limit: 12 });
+  return response.projects || [];
   } catch (error) {
     console.error('Error in getProjectsFromDatabase action:', error);
     // Return empty array เมื่อเกิด error

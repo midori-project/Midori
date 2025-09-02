@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { registerAction, State } from "@/app/signup/action";
+import { registerAction, State } from "@/app/(app)/(auth)/signup/action";
 import { RegisterSchema } from "@/schemas/auth/register";
 
 interface RegisterFormData {
