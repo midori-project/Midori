@@ -7,7 +7,6 @@ import { OpenAIService } from '../../../utils/site-generator/openai-service';
 interface BusinessContext {
   industry: string;
   specificNiche: string;
-  targetAudience: string;
   businessModel: string;
   keyDifferentiators: string[];
 }
@@ -17,7 +16,6 @@ interface UserIntent {
   colorScheme: string;
   layoutPreference: string;
   tone: string;
-  targetAudience: string;
   pages?: string[];
 }
 
@@ -307,7 +305,7 @@ export class FileGenerator {
     // เพิ่มข้อมูลจาก finalJson
     const projectInfo = finalJson.project as any;
     const features = finalJson.features as any[];
-    const targetAudience = finalJson.targetAudience as string[];
+    
     const dataModel = finalJson.dataModel as any;
     
     console.log('📋 Generating file with finalJson data:', {
@@ -342,7 +340,7 @@ ${pageImports.map(p => `import ${p.name} from './${p.path.replace('src/', '').re
 
 **BUSINESS CONTEXT:**
 - Industry: ${businessContext.industry}
-- Target Audience: ${businessContext.targetAudience}
+- Target Audience: 
 
 **🚨 CRITICAL ROUTING LOGIC:**
 - Available pages: ${pageImports.map(p => p.name).join(', ')}
@@ -419,14 +417,15 @@ Return only React code, no markdown headers or explanations.`;
 - Features: ${features?.map(f => f.name || f.id).join(', ') || 'Basic features'}
 
 **TARGET AUDIENCE:**
-${targetAudience?.join(', ') || businessContext.targetAudience}
+
 
 **COMPONENT-SPECIFIC REQUIREMENTS:**
 ${componentRequirements}
 
 **BUSINESS CONTEXT:**
 - Industry: ${businessContext.industry}
-- Target Audience: ${businessContext.targetAudience}
+- Target Audience: 
+
 
 **🎨 TAILWIND CSS STYLING REQUIREMENTS:**
 - EVERY element MUST have Tailwind CSS classes defined inline
@@ -466,14 +465,14 @@ Return only React code with Tailwind classes applied to ALL elements, no markdow
 - Features: ${features?.map(f => f.name || f.id).join(', ') || 'Basic features'}
 
 **TARGET AUDIENCE:**
-${targetAudience?.join(', ') || businessContext.targetAudience}
+
 
 **PAGE-SPECIFIC REQUIREMENTS:**
 ${pageRequirements}
 
 **BUSINESS CONTEXT:**
 - Industry: ${businessContext.industry}
-- Target Audience: ${businessContext.targetAudience}
+
 
 **🎨 TAILWIND CSS STYLING REQUIREMENTS:**
 - EVERY element MUST have Tailwind CSS classes defined inline
@@ -646,6 +645,1121 @@ Return ONLY code with complete imports and Tailwind styling, no explanations, no
   }
 
   /**
+   * Get default Home template based on business type
+   */
+  private static getDefaultHomeTemplate(projectName: string, businessContext: BusinessContext): string {
+    const { industry } = businessContext;
+    
+    switch (industry) {
+      case 'blog':
+        return `import React from 'react';
+import HeroSection from '../components/HeroSection.tsx';
+
+const Home: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <HeroSection />
+      
+      {/* Featured Articles Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Articles</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <article className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-full h-48 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg mb-4"></div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Article Title 1]</h3>
+              <p className="text-gray-600 mb-4">[Article Description 1]</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">By Admin</span>
+                <span className="text-sm text-gray-500">2 days ago</span>
+              </div>
+            </article>
+            
+            <article className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-full h-48 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg mb-4"></div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Article Title 2]</h3>
+              <p className="text-gray-600 mb-4">[Article Description 2]</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">By Writer</span>
+                <span className="text-sm text-gray-500">5 days ago</span>
+              </div>
+            </article>
+            
+            <article className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-full h-48 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg mb-4"></div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Article Title 3]</h3>
+              <p className="text-gray-600 mb-4">[Article Description 3]</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">By Editor</span>
+                <span className="text-sm text-gray-500">1 week ago</span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+      
+      {/* Categories Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Article Categories</h2>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">[Category 1]</h3>
+              <p className="text-sm text-gray-600">[Article Count 1]</p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">[Category 2]</h3>
+              <p className="text-sm text-gray-600">[Article Count 2]</p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">[Category 3]</h3>
+              <p className="text-sm text-gray-600">[Article Count 3]</p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">[Category 4]</h3>
+              <p className="text-sm text-gray-600">[Article Count 4]</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;`;
+
+      case 'restaurant':
+        return `import React from 'react';
+import HeroSection from '../components/HeroSection.tsx';
+
+const Home: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <HeroSection />
+      
+      {/* Featured Dishes Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Menu</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-full h-48 bg-gradient-to-r from-red-500 to-orange-600 rounded-lg mb-4"></div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Menu Item 1]</h3>
+              <p className="text-gray-600 mb-4">[Menu Description 1]</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-red-600">฿1,890</span>
+                <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                  Order Now
+                </button>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-full h-48 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg mb-4"></div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Menu Item 2]</h3>
+              <p className="text-gray-600 mb-4">[Menu Description 2]</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-red-600">฿890</span>
+                <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                  Order Now
+                </button>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-full h-48 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg mb-4"></div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Menu Item 3]</h3>
+              <p className="text-gray-600 mb-4">[Menu Description 3]</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-red-600">฿290</span>
+                <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                  Order Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Restaurant Info Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Why Choose Us</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Feature 1]</h3>
+              <p className="text-gray-600">[Feature Description 1]</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Feature 2]</h3>
+              <p className="text-gray-600">[Feature Description 2]</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Feature 3]</h3>
+              <p className="text-gray-600">[Feature Description 3]</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;`;
+
+      case 'cafe':
+        return `import React from 'react';
+import HeroSection from '../components/HeroSection.tsx';
+
+const Home: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <HeroSection />
+      
+      {/* Coffee Menu Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Coffee Menu</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-full h-48 bg-gradient-to-r from-amber-600 to-orange-600 rounded-lg mb-4"></div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Coffee Name 1]</h3>
+              <p className="text-gray-600 mb-4">[Coffee Description 1]</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-amber-600">฿120</span>
+                <button className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">
+                  Order Now
+                </button>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-full h-48 bg-gradient-to-r from-yellow-600 to-amber-600 rounded-lg mb-4"></div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Coffee Name 2]</h3>
+              <p className="text-gray-600 mb-4">[Coffee Description 2]</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-amber-600">฿95</span>
+                <button className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">
+                  Order Now
+                </button>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-full h-48 bg-gradient-to-r from-green-600 to-teal-600 rounded-lg mb-4"></div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Coffee Name 3]</h3>
+              <p className="text-gray-600 mb-4">[Coffee Description 3]</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-amber-600">฿110</span>
+                <button className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">
+                  Order Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Cafe Atmosphere Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Cafe Atmosphere</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">[Atmosphere Topic 1]</h3>
+              <p className="text-gray-600 mb-6">
+                [Atmosphere Description 1]
+              </p>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  WiFi ฟรีความเร็วสูง
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  ปลั๊กไฟครบทุกโต๊ะ
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  โต๊ะทำงานขนาดใหญ่
+                </li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">[Atmosphere Topic 2]</h3>
+              <p className="text-gray-600 mb-6">
+                [Atmosphere Description 2]
+              </p>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  เพลงเบาๆ ฟังสบาย
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  ไฟสลัวสบายตา
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  เก้าอี้นั่งสบาย
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;`;
+
+      case 'fashion':
+        return `import React from 'react';
+import HeroSection from '../components/HeroSection.tsx';
+
+const Home: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <HeroSection />
+      
+      {/* Featured Collection Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">New Collection</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="w-full h-64 bg-gradient-to-r from-pink-500 to-purple-600"></div>
+              <div className="p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">[Product Name 1]</h3>
+                <p className="text-gray-600 mb-4">[Product Description 1]</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-pink-600">฿2,490</span>
+                  <button className="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="w-full h-64 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+              <div className="p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">[Product Name 2]</h3>
+                <p className="text-gray-600 mb-4">[Product Description 2]</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-pink-600">฿1,890</span>
+                  <button className="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="w-full h-64 bg-gradient-to-r from-green-500 to-teal-600"></div>
+              <div className="p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">[Product Name 3]</h3>
+                <p className="text-gray-600 mb-4">[Product Description 3]</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-pink-600">฿1,590</span>
+                  <button className="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Style Guide Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Style Guide</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">[Style Guide Topic 1]</h3>
+              <p className="text-gray-600 mb-6">
+                [Style Guide Description 1]
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                  <span className="text-gray-700">รอบอก</span>
+                  <span className="text-gray-500">32-34 นิ้ว</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                  <span className="text-gray-700">รอบเอว</span>
+                  <span className="text-gray-500">26-28 นิ้ว</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                  <span className="text-gray-700">รอบสะโพก</span>
+                  <span className="text-gray-500">36-38 นิ้ว</span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">[Style Guide Topic 2]</h3>
+              <p className="text-gray-600 mb-6">
+                [Style Guide Description 2]
+              </p>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-pink-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  ซักด้วยน้ำเย็น
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-pink-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  ใช้ผงซักฟอกอ่อน
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-pink-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  ตากในที่ร่ม
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-pink-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  รีดด้วยความร้อนต่ำ
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;`;
+
+      case 'technology':
+        return `import React from 'react';
+import HeroSection from '../components/HeroSection.tsx';
+
+const Home: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <HeroSection />
+      
+      {/* Services Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Services</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">พัฒนาเว็บไซต์</h3>
+              <p className="text-gray-600 mb-4 text-center">พัฒนาเว็บไซต์ที่ทันสมัยและตอบสนองความต้องการของธุรกิจ</p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• React & Next.js</li>
+                <li>• Responsive Design</li>
+                <li>• SEO Optimization</li>
+                <li>• Performance Tuning</li>
+              </ul>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">แอปมือถือ</h3>
+              <p className="text-gray-600 mb-4 text-center">พัฒนาแอปพลิเคชันมือถือสำหรับ iOS และ Android</p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• React Native</li>
+                <li>• Flutter</li>
+                <li>• Native Development</li>
+                <li>• App Store Optimization</li>
+              </ul>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">ระบบจัดการ</h3>
+              <p className="text-gray-600 mb-4 text-center">พัฒนาระบบจัดการข้อมูลและระบบอัตโนมัติ</p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Database Design</li>
+                <li>• API Development</li>
+                <li>• Cloud Integration</li>
+                <li>• Security Implementation</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Technology Stack Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Technologies We Use</h2>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-blue-600 font-bold text-lg">R</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">React</h3>
+              <p className="text-sm text-gray-600">Frontend Framework</p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-green-600 font-bold text-lg">N</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Node.js</h3>
+              <p className="text-sm text-gray-600">Backend Runtime</p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-purple-600 font-bold text-lg">T</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">TypeScript</h3>
+              <p className="text-sm text-gray-600">Type Safety</p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-orange-600 font-bold text-lg">A</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">AWS</h3>
+              <p className="text-sm text-gray-600">Cloud Platform</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;`;
+
+      default:
+        return `import React from 'react';
+import HeroSection from '../components/HeroSection.tsx';
+
+const Home: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <HeroSection />
+      
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Welcome to ${projectName}</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-gray-50 rounded-xl p-6 text-center">
+                          <h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 1]</h3>
+            <p className="text-gray-600">[Feature Description 1]</p>
+            </div>
+            
+            <div className="bg-gray-50 rounded-xl p-6 text-center">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 2]</h3>
+              <p className="text-gray-600">[Feature Description 2]</p>
+            </div>
+            
+            <div className="bg-gray-50 rounded-xl p-6 text-center">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 3]</h3>
+              <p className="text-gray-600">[Feature Description 3]</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;`;
+    }
+  }
+
+  /**
+   * Get default About template based on business type
+   */
+  private static getDefaultAboutTemplate(projectName: string, businessContext: BusinessContext): string {
+    const { industry } = businessContext;
+    
+    switch (industry) {
+      case 'blog':
+        return `import React from 'react';
+import { Link } from 'react-router-dom';
+
+const About: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">About Our Blog</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">[Mission Title]</h2>
+            <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+              [Mission Description]
+            </p>
+            
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">[Team Title]</h3>
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <h4 className="font-semibold text-gray-900">[Team Position 1]</h4>
+                <p className="text-gray-600">[Team Description 1]</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <h4 className="font-semibold text-gray-900">[Team Position 2]</h4>
+                <p className="text-gray-600">[Team Description 2]</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <h4 className="font-semibold text-gray-900">[Team Position 3]</h4>
+                <p className="text-gray-600">[Team Description 3]</p>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">[Statistics Title]</h2>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                <div className="text-3xl font-bold text-blue-600">[Statistic Number 1]</div>
+                <div className="text-gray-600">[Statistic Description 1]</div>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                <div className="text-3xl font-bold text-green-600">[Statistic Number 2]</div>
+                <div className="text-gray-600">[Statistic Description 2]</div>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                <div className="text-3xl font-bold text-purple-600">[Statistic Number 3]</div>
+                <div className="text-gray-600">[Statistic Description 3]</div>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                <div className="text-3xl font-bold text-orange-600">[Statistic Number 4]</div>
+                <div className="text-gray-600">[Statistic Description 4]</div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">[Contact Title]</h3>
+              <p className="text-gray-600 mb-4">
+                [Contact Description]
+              </p>
+              <Link 
+                to="/contact" 
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium inline-block"
+              >
+                Contact Page
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default About;`;
+
+      case 'restaurant':
+        return `import React from 'react';
+import { Link } from 'react-router-dom';
+
+const About: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">About Our Restaurant</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Restaurant History</h2>
+            <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+              Our restaurant has been serving customers for over 10 years with a commitment to providing 
+              high-quality food and friendly service to all our customers.
+            </p>
+            
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Head Chef</h3>
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <div className="flex items-center mb-4">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Chef Somchai</h4>
+                  <p className="text-gray-600">Head Chef</p>
+                </div>
+              </div>
+              <p className="text-gray-600">
+                With over 15 years of culinary experience, graduated from a leading culinary institute.
+              </p>
+            </div>
+          </div>
+          
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Our Features</h2>
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center">
+                <svg className="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-gray-700">Fresh ingredients daily</span>
+              </div>
+              <div className="flex items-center">
+                <svg className="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-gray-700">Over 100 diverse menu items</span>
+              </div>
+              <div className="flex items-center">
+                <svg className="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-gray-700">24-hour service</span>
+              </div>
+              <div className="flex items-center">
+                <svg className="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-gray-700">Convenient parking</span>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">Contact Information</h3>
+              <div className="space-y-2 text-gray-600">
+                <p>📍 123 Sukhumvit Road, Bangkok 10110</p>
+                <p>📞 02-123-4567</p>
+                <p>🕒 Open 24 hours</p>
+              </div>
+              <Link 
+                to="/contact" 
+                className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-medium inline-block mt-4"
+              >
+                Make Reservation
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default About;`;
+
+      default:
+        return `import React from 'react';
+import { Link } from 'react-router-dom';
+
+const About: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">About ${projectName}</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Our Mission</h2>
+            <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+              We are committed to providing high-quality service and meeting the needs of all our customers 
+              with an experienced and professional team.
+            </p>
+            
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Our Team</h3>
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <h4 className="font-semibold text-gray-900">Management Team</h4>
+                <p className="text-gray-600">Oversee operations and strategic planning</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <h4 className="font-semibold text-gray-900">Operations Team</h4>
+                <p className="text-gray-600">Execute plans and provide customer service</p>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Company Information</h2>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                <div className="text-3xl font-bold text-blue-600">5+</div>
+                <div className="text-gray-600">Years Experience</div>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                <div className="text-3xl font-bold text-green-600">1,000+</div>
+                <div className="text-gray-600">Customers</div>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                <div className="text-3xl font-bold text-purple-600">50+</div>
+                <div className="text-gray-600">Employees</div>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                <div className="text-3xl font-bold text-orange-600">24/7</div>
+                <div className="text-gray-600">Service</div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">Contact Us</h3>
+              <p className="text-gray-600 mb-4">
+                If you have any questions or need more information
+              </p>
+              <Link 
+                to="/contact" 
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium inline-block"
+              >
+                Contact Us
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default About;`;
+    }
+  }
+
+  /**
+   * Get default Products template based on business type
+   */
+  private static getDefaultProductsTemplate(projectName: string, businessContext: BusinessContext): string {
+    const { industry } = businessContext;
+    
+    switch (industry) {
+      case 'fashion':
+        return `import React from 'react';
+
+const Products: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Our Products</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="w-full h-64 bg-gradient-to-r from-pink-500 to-purple-600"></div>
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">ชุดเดรสสไตล์โมเดิร์น</h3>
+              <p className="text-gray-600 mb-4">ชุดเดรสที่ทันสมัย เหมาะสำหรับโอกาสพิเศษ</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-pink-600">฿2,490</span>
+                <button className="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors">
+                  เพิ่มในตะกร้า
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="w-full h-64 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">เสื้อเชิ้ตแฟชั่น</h3>
+              <p className="text-gray-600 mb-4">เสื้อเชิ้ตที่ใส่สบาย เหมาะสำหรับทุกโอกาส</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-pink-600">฿1,890</span>
+                <button className="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors">
+                  เพิ่มในตะกร้า
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="w-full h-64 bg-gradient-to-r from-green-500 to-teal-600"></div>
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">กางเกงยีนส์สไตล์</h3>
+              <p className="text-gray-600 mb-4">กางเกงยีนส์ที่ทันสมัย ใส่สบาย</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-pink-600">฿1,590</span>
+                <button className="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors">
+                  เพิ่มในตะกร้า
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Products;`;
+
+      default:
+        return `import React from 'react';
+
+const Products: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Our Products</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="w-full h-48 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg mb-4"></div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">[Product Name 1]</h3>
+            <p className="text-gray-600 mb-4">[Product Description 1]</p>
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-bold text-blue-600">฿1,000</span>
+                              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  View Details
+                </button>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="w-full h-48 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg mb-4"></div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">[Product Name 2]</h3>
+            <p className="text-gray-600 mb-4">[Product Description 2]</p>
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-bold text-blue-600">฿1,500</span>
+                              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  View Details
+                </button>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="w-full h-48 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg mb-4"></div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">[Product Name 3]</h3>
+            <p className="text-gray-600 mb-4">[Product Description 3]</p>
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-bold text-blue-600">฿2,000</span>
+                              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  View Details
+                </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Products;`;
+    }
+  }
+
+  /**
+   * Get default Services template based on business type
+   */
+  private static getDefaultServicesTemplate(projectName: string, businessContext: BusinessContext): string {
+    const { industry } = businessContext;
+    
+    switch (industry) {
+      case 'technology':
+        return `import React from 'react';
+
+const Services: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Our Services</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">[Service Name 1]</h3>
+            <p className="text-gray-600 mb-4 text-center">[Service Description 1]</p>
+            <ul className="text-sm text-gray-600 space-y-1 mb-4">
+              <li>• React & Next.js</li>
+              <li>• Responsive Design</li>
+              <li>• SEO Optimization</li>
+              <li>• Performance Tuning</li>
+            </ul>
+            <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              Get Started
+            </button>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">[Service Name 2]</h3>
+            <p className="text-gray-600 mb-4 text-center">[Service Description 2]</p>
+            <ul className="text-sm text-gray-600 space-y-1 mb-4">
+              <li>• React Native</li>
+              <li>• Flutter</li>
+              <li>• Native Development</li>
+              <li>• App Store Optimization</li>
+            </ul>
+            <button className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+              เริ่มต้นใช้งาน
+            </button>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">[Service Name 3]</h3>
+            <p className="text-gray-600 mb-4 text-center">[Service Description 3]</p>
+            <ul className="text-sm text-gray-600 space-y-1 mb-4">
+              <li>• Database Design</li>
+              <li>• API Development</li>
+              <li>• Cloud Integration</li>
+              <li>• Security Implementation</li>
+            </ul>
+            <button className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+              เริ่มต้นใช้งาน
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Services;`;
+
+      default:
+        return `import React from 'react';
+
+const Services: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Our Services</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">[Service Name 1]</h3>
+            <p className="text-gray-600 mb-4 text-center">[Service Description 1]</p>
+            <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              Get Started
+            </button>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">[Service Name 2]</h3>
+            <p className="text-gray-600 mb-4 text-center">[Service Description 2]</p>
+            <button className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+              เริ่มต้นใช้งาน
+            </button>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">[Service Name 3]</h3>
+            <p className="text-gray-600 mb-4 text-center">[Service Description 3]</p>
+            <button className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+              เริ่มต้นใช้งาน
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Services;`;
+    }
+  }
+
+  /**
    * Create template-based file for fallback - SandPack Compatible
    */
   private static createTemplateFile(
@@ -779,42 +1893,8 @@ code {
     monospace;
 }`,
       
-      // เพิ่ม template ที่สมบูรณ์สำหรับไฟล์ที่ขาดหายไป
-      'src/pages/Home.tsx': `import React from 'react';
-import HeroSection from '../components/HeroSection.tsx';
-
-const Home: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <HeroSection />
-      
-      <section className="py-16 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">ยินดีต้อนรับสู่ ${projectName}</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-gray-50 rounded-xl p-6 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">คุณสมบัติหลัก</h3>
-              <p className="text-gray-600">ค้นพบคุณสมบัติที่น่าสนใจของเว็บไซต์เรา</p>
-            </div>
-            
-            <div className="bg-gray-50 rounded-xl p-6 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">บริการของเรา</h3>
-              <p className="text-gray-600">บริการคุณภาพที่ตอบสนองความต้องการของคุณ</p>
-            </div>
-            
-            <div className="bg-gray-50 rounded-xl p-6 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">ติดต่อเรา</h3>
-              <p className="text-gray-600">พร้อมให้บริการและตอบคำถามของคุณ</p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
-
-export default Home;`,
+      // เพิ่ม template ที่สมบูรณ์สำหรับไฟล์ที่ขาดหายไป - แบ่งตามประเภทธุรกิจ
+      'src/pages/Home.tsx': this.getDefaultHomeTemplate(projectName, businessContext),
       
       'src/pages/Contact.tsx': `import React from 'react';
 import ContactForm from '../components/ContactForm.tsx';
@@ -1067,6 +2147,11 @@ export default {
   plugins: [],
 };`,
 
+      // เพิ่ม template สำหรับหน้า default อื่นๆ ตามประเภทธุรกิจ
+      'src/pages/About.tsx': this.getDefaultAboutTemplate(projectName, businessContext),
+      'src/pages/Products.tsx': this.getDefaultProductsTemplate(projectName, businessContext),
+      'src/pages/Services.tsx': this.getDefaultServicesTemplate(projectName, businessContext),
+      
       // เพิ่ม template สำหรับไฟล์อื่นๆ ที่อาจขาดหายไป
       'src/types/index.ts': `import { ReactNode } from 'react';
 

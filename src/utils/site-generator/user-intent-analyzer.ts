@@ -269,7 +269,7 @@ ${conversationText}
     }
     
     // ใช้ targetAudience โดยตรง
-    const audienceText = targetAudience?.join(', ') || 'general-public';
+    const audienceText =  'general-public';
     
     // กำหนด specificNiche ตาม industry และ features
     let specificNiche = 'general-business';
