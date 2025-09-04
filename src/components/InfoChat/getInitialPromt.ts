@@ -52,7 +52,7 @@ export async function saveFinalJsonToGeneration(
   projectId: string,
   data: {
     finalJson: Prisma.InputJsonValue,
-    prompt: string
+    prompt: Prisma.InputJsonValue
   },
   model: string = "gpt-5-nano"
 ): Promise<{ id: string } | { ok: false; error: string }> {

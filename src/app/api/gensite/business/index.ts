@@ -1,0 +1,23 @@
+import { BusinessHandler } from './types';
+import { blogHandler } from './presets/blog';
+import { restaurantHandler } from './presets/restaurant';
+import { cafeHandler } from './presets/cafe';
+import { fashionHandler } from './presets/fashion';
+import { technologyHandler } from './presets/technology';
+import { defaultHandler } from './presets/default';
+
+const BUSINESS_HANDLERS: Record<string, BusinessHandler> = {
+  blog: blogHandler,
+  restaurant: restaurantHandler,
+  cafe: cafeHandler,
+  fashion: fashionHandler,
+  technology: technologyHandler,
+  default: defaultHandler,
+};
+
+export function getBusinessHandler(industry?: string): BusinessHandler {
+  const key = (industry || '').toLowerCase();
+  return BUSINESS_HANDLERS[key] || BUSINESS_HANDLERS.default;
+}
+
+

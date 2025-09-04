@@ -2,6 +2,7 @@ import { SITE_GEN_CONFIG } from '../../../utils/site-generator/config';
 import { GeneratedFile, ProjectStructure, GenerationOptions, FileConfig } from '../../../utils/site-generator/types';
 import { UserIntentAnalyzer } from '../../../utils/site-generator/user-intent-analyzer';
 import { OpenAIService } from '../../../utils/site-generator/openai-service';
+import { getBusinessHandler } from './business';
 
 // เพิ่ม interfaces สำหรับ type safety
 interface BusinessContext {
@@ -142,7 +143,8 @@ export class FileGenerator {
     console.log('🏢 Business Context detected:', businessContext);
     
     // เลือกไฟล์ตาม business context
-    const essentialFiles = this.getEssentialFilesByBusinessContext(businessContext, projectStructure);
+    const handler = getBusinessHandler(businessContext.industry);
+    const essentialFiles = handler.getEssentialFiles(projectStructure as any);
     
     console.log(`📁 Generating ${essentialFiles.length} essential files for ${businessContext.industry} business`);
     console.log('📋 Files to generate:', essentialFiles.map(f => f.path));
@@ -185,109 +187,12 @@ export class FileGenerator {
   /**
    * Get essential files based on business context
    */
-  private static getEssentialFilesByBusinessContext(
-    businessContext: BusinessContext, 
-    projectStructure: ProjectStructure
-  ): FileConfig[] {
-    const baseFiles: FileConfig[] = [
-      // Core structure (6 files) - ใช้ Tailwind inline ไม่ต้องใช้ PostCSS
-      { path: 'package.json', type: 'config' as const },
-      { path: 'index.html', type: 'config' as const },
-      { path: 'src/main.tsx', type: 'entry' as const },
-      { path: 'src/App.tsx', type: 'app' as const },
-      { path: 'src/index.css', type: 'style' as const },
-      { path: 'vite.config.ts', type: 'config' as const },
-    ];
-
-    // Common pages that every website needs
-    const commonFiles: FileConfig[] = [
-      { path: 'src/pages/About.tsx', type: 'page' as const },
-      { path: 'src/pages/Contact.tsx', type: 'page' as const },
-      { path: 'src/components/Navbar.tsx', type: 'component' as const },
-      { path: 'src/components/Footer.tsx', type: 'component' as const },
-      { path: 'src/components/HeroSection.tsx', type: 'component' as const },
-      { path: 'src/components/ContactForm.tsx', type: 'component' as const },
-    ];
-
-    const businessSpecificFiles = this.getBusinessSpecificFiles(businessContext);
-    const utilityFiles: FileConfig[] = [
-      { path: 'tailwind.config.js', type: 'config' as const },
-      { path: 'src/types/index.ts', type: 'util' as const },
-      { path: 'src/lib/utils.ts', type: 'util' as const }
-    ];
-    
-    return [...baseFiles, ...commonFiles, ...businessSpecificFiles, ...utilityFiles];
-  }
+  // getEssentialFilesByBusinessContext ถูกแทนที่ด้วย handler.getEssentialFiles
 
   /**
    * Get business-specific files based on industry
    */
-  private static getBusinessSpecificFiles(businessContext: BusinessContext): FileConfig[] {
-    const { industry } = businessContext;
-    
-    switch (industry) {
-      case 'blog':
-        return [
-          { path: 'src/pages/Home.tsx', type: 'page' as const },
-          { path: 'src/pages/Articles.tsx', type: 'page' as const },
-          { path: 'src/pages/Article.tsx', type: 'page' as const },
-          { path: 'src/pages/Categories.tsx', type: 'page' as const },
-          { path: 'src/pages/AdminDashboard.tsx', type: 'page' as const },
-          { path: 'src/components/ArticleList.tsx', type: 'component' as const },
-          { path: 'src/components/ArticleCard.tsx', type: 'component' as const },
-          { path: 'src/components/CommentSection.tsx', type: 'component' as const },
-          { path: 'src/components/CategoryList.tsx', type: 'component' as const },
-        ];
-        
-      case 'restaurant':
-        return [
-          { path: 'src/pages/Home.tsx', type: 'page' as const },
-          { path: 'src/pages/Menu.tsx', type: 'page' as const },
-          { path: 'src/pages/Reservation.tsx', type: 'page' as const },
-          { path: 'src/pages/ChefProfile.tsx', type: 'page' as const },
-          { path: 'src/pages/DishGallery.tsx', type: 'page' as const },
-          { path: 'src/components/MenuCard.tsx', type: 'component' as const },
-          { path: 'src/components/ReservationForm.tsx', type: 'component' as const },
-        ];
-        
-      case 'cafe':
-        return [
-          { path: 'src/pages/Home.tsx', type: 'page' as const },
-          { path: 'src/pages/CoffeeMenu.tsx', type: 'page' as const },
-          { path: 'src/pages/BaristaProfile.tsx', type: 'page' as const },
-          { path: 'src/pages/OrderTracking.tsx', type: 'page' as const },
-          { path: 'src/pages/BeanOrigin.tsx', type: 'page' as const },
-          { path: 'src/components/CoffeeCard.tsx', type: 'component' as const },
-          { path: 'src/components/OrderStatus.tsx', type: 'component' as const },
-        ];
-        
-      case 'fashion':
-        return [
-          { path: 'src/pages/Home.tsx', type: 'page' as const },
-          { path: 'src/pages/Collection.tsx', type: 'page' as const },
-          { path: 'src/pages/ProductDetail.tsx', type: 'page' as const },
-          { path: 'src/pages/StyleGuide.tsx', type: 'page' as const },
-          { path: 'src/components/ProductCard.tsx', type: 'component' as const },
-          { path: 'src/components/SizeGuide.tsx', type: 'component' as const },
-        ];
-        
-      case 'technology':
-        return [
-          { path: 'src/pages/Home.tsx', type: 'page' as const },
-          { path: 'src/pages/Projects.tsx', type: 'page' as const },
-          { path: 'src/pages/Services.tsx', type: 'page' as const },
-          { path: 'src/pages/Team.tsx', type: 'page' as const },
-          { path: 'src/components/ProjectCard.tsx', type: 'component' as const },
-        ];
-        
-      default:
-        return [
-          { path: 'src/pages/Home.tsx', type: 'page' as const },
-          { path: 'src/pages/Products.tsx', type: 'page' as const },
-          { path: 'src/pages/Services.tsx', type: 'page' as const },
-        ];
-    }
-  }
+  // getBusinessSpecificFiles ถูกแทนที่ด้วย handler.getEssentialFiles
 
   /**
    * Generate a single essential file - SandPack Compatible
@@ -316,7 +221,7 @@ export class FileGenerator {
     });
     
     // เพิ่ม User Intent Analysis
-    const userIntent = await UserIntentAnalyzer.analyzeUserIntent(projectStructure as any) as UserIntent;
+    const userIntent = await UserIntentAnalyzer.analyzeUserIntent(finalJson) as UserIntent;
     
     // 🚨 สำคัญ: สำหรับ App.tsx ต้องรู้ว่าจะสร้างไฟล์หน้าไหนบ้าง
     let prompt: string;
@@ -407,7 +312,7 @@ Return only valid JSON code, no markdown headers or explanations.`;
 
 Return only React code, no markdown headers or explanations.`;
     } else if (type === 'component') {
-      const componentRequirements = this.getComponentSpecificRequirements(path, projectInfo, features, dataModel);
+      const componentRequirements = getBusinessHandler(businessContext.industry).getComponentRequirements(path, finalJson as any, projectStructure as any, businessContext);
       
       prompt = `Create a proper React functional component for ${path}. 
 
@@ -455,7 +360,7 @@ ${componentRequirements}
 
 Return only React code with Tailwind classes applied to ALL elements, no markdown headers or explanations.`;
     } else if (type === 'page') {
-      const pageRequirements = this.getPageSpecificRequirements(path, projectInfo, features, dataModel);
+      const pageRequirements = getBusinessHandler(businessContext.industry).getPageRequirements(path, finalJson as any, projectStructure as any, businessContext);
       
       prompt = `Create a proper React page component for ${path}. 
 
@@ -1894,7 +1799,13 @@ code {
 }`,
       
       // เพิ่ม template ที่สมบูรณ์สำหรับไฟล์ที่ขาดหายไป - แบ่งตามประเภทธุรกิจ
-      'src/pages/Home.tsx': this.getDefaultHomeTemplate(projectName, businessContext),
+      'src/pages/Home.tsx': (() => {
+        const h = getBusinessHandler(businessContext.industry);
+        if (h.templates['src/pages/Home.tsx']) {
+          return h.templates['src/pages/Home.tsx'](projectStructure);
+        }
+        return this.getDefaultHomeTemplate(projectName, businessContext);
+      })(),
       
       'src/pages/Contact.tsx': `import React from 'react';
 import ContactForm from '../components/ContactForm.tsx';
@@ -2148,9 +2059,27 @@ export default {
 };`,
 
       // เพิ่ม template สำหรับหน้า default อื่นๆ ตามประเภทธุรกิจ
-      'src/pages/About.tsx': this.getDefaultAboutTemplate(projectName, businessContext),
-      'src/pages/Products.tsx': this.getDefaultProductsTemplate(projectName, businessContext),
-      'src/pages/Services.tsx': this.getDefaultServicesTemplate(projectName, businessContext),
+      'src/pages/About.tsx': (() => {
+        const h = getBusinessHandler(businessContext.industry);
+        if (h.templates['src/pages/About.tsx']) {
+          return h.templates['src/pages/About.tsx'](projectStructure);
+        }
+        return this.getDefaultAboutTemplate(projectName, businessContext);
+      })(),
+      'src/pages/Products.tsx': (() => {
+        const h = getBusinessHandler(businessContext.industry);
+        if (h.templates['src/pages/Products.tsx']) {
+          return h.templates['src/pages/Products.tsx'](projectStructure);
+        }
+        return this.getDefaultProductsTemplate(projectName, businessContext);
+      })(),
+      'src/pages/Services.tsx': (() => {
+        const h = getBusinessHandler(businessContext.industry);
+        if (h.templates['src/pages/Services.tsx']) {
+          return h.templates['src/pages/Services.tsx'](projectStructure);
+        }
+        return this.getDefaultServicesTemplate(projectName, businessContext);
+      })(),
       
       // เพิ่ม template สำหรับไฟล์อื่นๆ ที่อาจขาดหายไป
       'src/types/index.ts': `import { ReactNode } from 'react';
@@ -2312,237 +2241,12 @@ export default ${fileName};`;
   /**
    * Get component-specific requirements based on project info and finalJson
    */
-  private static getComponentSpecificRequirements(
-    path: string, 
-    projectInfo: any, 
-    features: any[], 
-    dataModel: any
-  ): string {
-    const fileName = path.split('/').pop()?.replace('.tsx', '') || '';
-    const projectType = projectInfo?.type?.toLowerCase() || '';
-    const projectGoal = projectInfo?.goal || '';
-    
-    // Blog-specific components
-    if (projectType.includes('blog') || projectGoal.includes('บทความ')) {
-      if (fileName.includes('Article') && fileName.includes('List')) {
-        return `
-- Create article listing component with title, excerpt, author, date, category
-- Include pagination and filtering capabilities
-- Add read more buttons and category tags
-- Use responsive grid layout for article cards
-- Include search functionality if search feature exists`;
-      }
-      
-      if (fileName.includes('Article') && !fileName.includes('List')) {
-        return `
-- Create single article display with title, full content, author info, publication date
-- Include category and tag display
-- Add social sharing buttons
-- Include related articles section
-- Support markdown rendering if editor feature exists`;
-      }
-      
-      if (fileName.includes('Comment')) {
-        return `
-- Create comment section with comment display, reply functionality
-- Include user avatars, timestamps, nested replies
-- Add comment submission form with validation
-- Include moderation features for admin users
-- Support real-time updates if applicable`;
-      }
-      
-      if (fileName.includes('Category')) {
-        return `
-- Create category listing and management component
-- Include category descriptions and article counts
-- Add category creation/editing forms for admin
-- Include hierarchical category support
-- Show related categories and tags`;
-      }
-      
-      if (fileName.includes('Admin') || fileName.includes('Dashboard')) {
-        return `
-- Create admin dashboard with statistics (total articles, comments, users)
-- Include CRUD operations for articles, categories, tags
-- Add user management interface with role assignments
-- Include content moderation tools
-- Add analytics and reporting features`;
-      }
-      
-      // Header removed - use Navbar instead
-    }
-    
-    // Default for other project types - REMOVED Header, use Navbar instead
-    
-    if (fileName.includes('Footer')) {
-      return `- Create footer with links, contact info, and branding appropriate for ${projectType}`;
-    }
-    
-    if (fileName.includes('Navbar')) {
-      if (projectType.includes('blog') || projectGoal.includes('บทความ')) {
-        return `
-- CRITICAL: Import React Router Link: import { Link } from 'react-router-dom';
-- Create sticky responsive navigation bar for blog website with modern design
-- Include navigation items using Link components: หน้าแรก, บทความ, หมวดหมู่, เกี่ยวกับ, ติดต่อ
-- Use <Link to="/"> for Home, <Link to="/articles"> for Articles, etc.
-- NEVER use <a href="#"> - ALWAYS use <Link to="/path">
-- Add search functionality with search icon that opens search modal
-- Include user authentication menu (เข้าสู่ระบบ/ลงทะเบียน/โปรไฟล์)
-- Add admin dashboard link for authorized users using <Link to="/admin">
-- Implement mobile-responsive hamburger menu with smooth animations
-- Style with Tailwind: sticky top-0 z-50, white background, shadow-md
-- Include brand/logo section with project name: "${projectInfo?.name || 'BlogEase'}"
-- Add hover effects, active states, and smooth transitions for all menu items`;
-      }
-      
-      return `
-- CRITICAL: Import React Router Link: import { Link } from 'react-router-dom';
-- Create sticky responsive navigation bar for ${projectType} website
-- Include main navigation items using Link components appropriate for the business type
-- Use <Link to="/path"> for ALL internal navigation - NEVER <a href="#">
-- Add brand/logo section with project name: "${projectInfo?.name || 'Website'}"
-- Implement mobile-responsive hamburger menu with smooth animations
-- Style with Tailwind CSS: sticky top-0 z-50, proper spacing, modern design
-- Add hover effects, active states, and transitions
-- Include CTA button or search functionality if relevant to business`;
-    }
-    
-    if (fileName.includes('HeroSection')) {
-      if (projectType.includes('blog') || projectGoal.includes('บทความ')) {
-        return `
-- Create impressive hero section as the main focal point of the homepage
-- Include large compelling headline about the blog's purpose
-- Add descriptive subtitle explaining what visitors can expect
-- Include prominent CTA button (เริ่มอ่าน/สำรวจบทความ) linking to articles page
-- Add search bar for finding articles quickly
-- Use attractive background (gradient, image, or modern pattern)
-- Style with Tailwind: min-h-screen or min-h-[80vh], centered content, responsive
-- Include statistics if available (total articles, subscribers, etc.)
-- Add subtle animations or effects to make it engaging`;
-      }
-      
-      return `
-- Create impressive hero section as the main focal point of the homepage
-- Include large compelling headline related to the business goal: "${projectGoal}"
-- Add descriptive subtitle explaining the value proposition
-- Include prominent CTA button relevant to the business type
-- Use attractive modern design with background styling
-- Style with Tailwind: min-h-screen or min-h-[80vh], centered content, responsive
-- Add engaging visual elements appropriate for ${projectType}
-- Include key business highlights or features if applicable`;
-    }
-    
-    return `- Create ${fileName} component that supports the project goal: "${projectGoal}"`;
-  }
+  // getComponentSpecificRequirements ถูกแทนที่ด้วย handler.getComponentRequirements
 
   /**
    * Get page-specific requirements based on project info and finalJson
    */
-  private static getPageSpecificRequirements(
-    path: string, 
-    projectInfo: any, 
-    features: any[], 
-    dataModel: any
-  ): string {
-    const fileName = path.split('/').pop()?.replace('.tsx', '') || '';
-    const projectType = projectInfo?.type?.toLowerCase() || '';
-    const projectGoal = projectInfo?.goal || '';
-    
-    // Blog-specific pages
-    if (projectType.includes('blog') || projectGoal.includes('บทความ')) {
-      if (fileName.toLowerCase().includes('home')) {
-        return `
-- CRITICAL: Import HeroSection: import HeroSection from '../components/HeroSection.tsx';
-- Create stunning blog homepage with Hero Section as the main attraction
-- Start with <HeroSection /> component as the FIRST element in the page
-- Include featured/recent articles section with beautiful card layouts
-- Add categories showcase with visual icons and descriptions
-- Include newsletter subscription section with attractive design
-- Add author spotlight or team introduction section
-- Include site statistics or achievements section
-- Use modern layout with proper spacing and visual hierarchy
-- Implement responsive design for all devices
-- Add smooth scrolling and subtle animations for engagement`;
-      }
-      
-      if (fileName.toLowerCase().includes('article') && fileName.toLowerCase().includes('s')) {
-        return `
-- Create article listing page with comprehensive article grid/list
-- Include advanced search and filtering (by category, tag, author, date)
-- Add pagination with page numbers and load more options
-- Include sorting options (newest, popular, most commented)
-- Show article preview cards with title, excerpt, author, date, category
-- Add breadcrumb navigation`;
-      }
-      
-      if (fileName.toLowerCase().includes('article') && !fileName.toLowerCase().includes('s')) {
-        return `
-- Create single article page with full article content display
-- Include article metadata (author, date, category, tags, reading time)
-- Add social sharing buttons and bookmark functionality
-- Include comment section with submission form
-- Show related articles and category navigation
-- Add print-friendly formatting`;
-      }
-      
-      if (fileName.toLowerCase().includes('categor')) {
-        return `
-- Create category listing and browsing page
-- Display all categories with descriptions and article counts
-- Include articles filtered by selected category
-- Add subcategory navigation if hierarchical categories exist
-- Include category-specific search and filtering
-- Show related tags for each category`;
-      }
-      
-      if (fileName.toLowerCase().includes('admin') || fileName.toLowerCase().includes('dashboard')) {
-        return `
-- Create comprehensive admin dashboard with overview statistics
-- Include article management (create, edit, delete, publish/unpublish)
-- Add user management with role assignments (Reader, Writer, Editor, Admin)
-- Include category and tag management interfaces
-- Add comment moderation tools and spam detection
-- Include site settings and theme customization options
-- Add analytics dashboard with visitor stats and popular content`;
-      }
-      
-      if (fileName.toLowerCase().includes('contact')) {
-        return `
-- Create contact page with contact form (name, email, subject, message)
-- Include site admin contact information
-- Add social media links and newsletter subscription
-- Include FAQ section for common blogging questions
-- Add submission success/error handling`;
-      }
-      
-      if (fileName.toLowerCase().includes('about')) {
-        return `
-- Create about page describing the blog's purpose and mission
-- Include information about the blogging platform and its features
-- Add author/team information and bios
-- Include blog statistics and achievements
-- Add contact information and social media links`;
-      }
-    }
-    
-    // Default home page for other business types
-    if (fileName.toLowerCase().includes('home')) {
-      return `
-- CRITICAL: Import HeroSection: import HeroSection from '../components/HeroSection.tsx';
-- Create impressive homepage with Hero Section as the main focal point
-- Start with <HeroSection /> component as the FIRST element in the page
-- Include key business sections that highlight main services/products
-- Add testimonials or social proof section
-- Include call-to-action sections strategically placed
-- Add about us preview or team introduction
-- Include contact information or location if applicable
-- Use modern responsive design with excellent visual hierarchy
-- Implement smooth user experience with proper navigation flow`;
-    }
-    
-    // Default for other project types
-    return `- Create ${fileName} page that fulfills the project goal: "${projectGoal}" for ${projectType}`;
-  }
+  // getPageSpecificRequirements ถูกแทนที่ด้วย handler.getPageRequirements
 
   /**
    * Map string type to GeneratedFile type
