@@ -22,7 +22,30 @@ export const defaultHandler: BusinessHandler = {
     ];
   },
 
-  templates: {},
+  templates: {
+    'src/pages/Home.tsx': (project) => `import React from 'react';
+import HeroSection from '../components/HeroSection.tsx';
+
+const Home: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <HeroSection />
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Welcome to ${project.name}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-gray-50 rounded-xl p-6 text-center"><h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 1]</h3><p className="text-gray-600">[Feature Description 1]</p></div>
+            <div className="bg-gray-50 rounded-xl p-6 text-center"><h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 2]</h3><p className="text-gray-600">[Feature Description 2]</p></div>
+            <div className="bg-gray-50 rounded-xl p-6 text-center"><h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 3]</h3><p className="text-gray-600">[Feature Description 3]</p></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;`,
+  },
 
   getComponentRequirements(path: string, finalJson: Record<string, unknown>, project: ProjectLike, ctx: BusinessContext): string {
     const name = path.split('/').pop() || '';

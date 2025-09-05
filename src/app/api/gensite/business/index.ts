@@ -5,6 +5,7 @@ import { cafeHandler } from './presets/cafe';
 import { fashionHandler } from './presets/fashion';
 import { technologyHandler } from './presets/technology';
 import { defaultHandler } from './presets/default';
+import { fallbackHandler } from './presets/fallback';
 
 const BUSINESS_HANDLERS: Record<string, BusinessHandler> = {
   blog: blogHandler,
@@ -13,11 +14,12 @@ const BUSINESS_HANDLERS: Record<string, BusinessHandler> = {
   fashion: fashionHandler,
   technology: technologyHandler,
   default: defaultHandler,
+  fallback: fallbackHandler,
 };
 
 export function getBusinessHandler(industry?: string): BusinessHandler {
   const key = (industry || '').toLowerCase();
-  return BUSINESS_HANDLERS[key] || BUSINESS_HANDLERS.default;
+  return BUSINESS_HANDLERS[key] || BUSINESS_HANDLERS.fallback;
 }
 
 

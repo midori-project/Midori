@@ -11,7 +11,7 @@ export default function GenerateSiteButton({ projectId, promptJson }: GenerateSi
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-
+  console.log(result)
   const handleGenerateSite = async () => {
     if (!promptJson) return;
     
@@ -43,7 +43,7 @@ export default function GenerateSiteButton({ projectId, promptJson }: GenerateSi
       });
       
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         console.log('✅ Site generation successful:', data);
         setResult(data.data);
