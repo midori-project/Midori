@@ -1,6 +1,27 @@
 import { UserIntent, BusinessContext, ConversationContext } from './types';
 import { openai } from './config';
 
+// เพิ่ม interface สำหรับ Content Analysis
+interface ContentAnalysis {
+  businessName: string;
+  tagline: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  aboutText: string;
+  contactInfo: {
+    phone?: string;
+    email?: string;
+    address?: string;
+  };
+  navigationItems: string[];
+  callToActionText: string;
+  tone: 'professional' | 'casual' | 'luxury' | 'friendly' | 'modern';
+  language: 'thai' | 'english' | 'mixed';
+  industrySpecificContent: {
+    [key: string]: any;
+  };
+}
+
 /**
  * User Intent Analyzer
  * Analyzes user intent and business context from conversation data using AI
@@ -625,5 +646,471 @@ ${conversationText}
       default:
         return 0.7; // ปกติ
     }
+  }
+
+  /**
+   * วิเคราะห์และสร้างเนื้อหาที่เหมาะสมสำหรับแต่ละ preset
+   */
+  static async analyzeContentForPreset(
+    finalJson: Record<string, unknown>, 
+    businessContext: BusinessContext
+  ): Promise<ContentAnalysis> {
+    const projectInfo = finalJson.project as any;
+    const features = finalJson.features as any[];
+    
+    console.log('🎯 Analyzing content for preset:', businessContext.industry);
+    console.log('📋 Project Info:', {
+      name: projectInfo?.name,
+      type: projectInfo?.type,
+      goal: projectInfo?.goal
+    });
+    console.log('🏢 Business Context:', businessContext);
+    
+    // วิเคราะห์ Business Name
+    const businessName = projectInfo?.name || this.generateBusinessName(businessContext);
+    console.log('🏷️ Generated Business Name:', businessName);
+    
+    // วิเคราะห์ Tagline
+    const tagline = this.generateTagline(businessContext, projectInfo);
+    console.log('💬 Generated Tagline:', tagline);
+    
+    // วิเคราะห์ Hero Content
+    const heroContent = this.generateHeroContent(businessContext, projectInfo);
+    console.log('🎨 Generated Hero Content:', heroContent);
+    
+    // วิเคราะห์ About Text
+    const aboutText = this.generateAboutText(businessContext, projectInfo);
+    console.log('📝 Generated About Text (first 100 chars):', aboutText.substring(0, 100) + '...');
+    
+    // วิเคราะห์ Navigation Items
+    const navigationItems = this.generateNavigationItems(businessContext);
+    console.log('🧭 Generated Navigation Items:', navigationItems);
+    
+    // วิเคราะห์ Tone และ Language
+    const tone = this.analyzeTone(finalJson);
+    const language = this.analyzeLanguage(finalJson);
+    console.log('🎭 Analyzed Tone:', tone);
+    console.log('🌐 Analyzed Language:', language);
+    
+    // วิเคราะห์ Industry Specific Content
+    const industrySpecificContent = this.generateIndustrySpecificContent(businessContext, features);
+    console.log('🏭 Generated Industry Specific Content:', industrySpecificContent);
+    
+    const result = {
+      businessName,
+      tagline,
+      heroTitle: heroContent.title,
+      heroSubtitle: heroContent.subtitle,
+      aboutText,
+      contactInfo: this.generateContactInfo(businessContext),
+      navigationItems,
+      callToActionText: this.generateCallToAction(businessContext),
+      tone,
+      language,
+      industrySpecificContent
+    };
+    
+    console.log('✅ Content Analysis Complete:', {
+      businessName: result.businessName,
+      tagline: result.tagline,
+      heroTitle: result.heroTitle,
+      tone: result.tone,
+      language: result.language,
+      navigationItems: result.navigationItems
+    });
+    
+    return result;
+  }
+
+  /**
+   * สร้าง Business Name ที่เหมาะสม
+   */
+  private static generateBusinessName(businessContext: BusinessContext): string {
+    const { industry, specificNiche } = businessContext;
+    
+    const nameTemplates = {
+      blog: ['Tech Blog', 'Creative Thoughts', 'Digital Stories', 'Content Hub', 'Knowledge Base'],
+      restaurant: ['Bella Vista', 'Golden Spoon', 'Taste Paradise', 'Culinary Corner', 'Flavor House'],
+      cafe: ['Coffee Corner', 'Bean & Brew', 'Morning Glory', 'Cafe Delight', 'Brew & Bite'],
+      fashion: ['Style Studio', 'Fashion Forward', 'Trendy Boutique', 'Chic Collection', 'Style Hub'],
+      technology: ['Tech Solutions', 'Digital Innovation', 'Code Craft', 'Future Tech', 'Tech Hub'],
+      default: ['Business Hub', 'Professional Site', 'Company Portal', 'Digital Presence', 'Business Center']
+    };
+    
+    const templates = nameTemplates[industry as keyof typeof nameTemplates] || nameTemplates.default;
+    return templates[Math.floor(Math.random() * templates.length)];
+  }
+
+  /**
+   * สร้าง Tagline ที่เหมาะสม
+   */
+  private static generateTagline(businessContext: BusinessContext, projectInfo: any): string {
+    const { industry, specificNiche } = businessContext;
+    
+    const taglines = {
+      blog: [
+        'Sharing knowledge, inspiring minds',
+        'Where ideas come to life',
+        'Your daily dose of insights',
+        'Thoughts worth sharing',
+        'Knowledge that matters'
+      ],
+      restaurant: [
+        'Where taste meets tradition',
+        'Culinary excellence since day one',
+        'Fresh ingredients, authentic flavors',
+        'A dining experience to remember',
+        'Taste the difference'
+      ],
+      cafe: [
+        'Brewing happiness, one cup at a time',
+        'Where coffee meets community',
+        'Artisan coffee, crafted with love',
+        'Your perfect coffee destination',
+        'Coffee culture at its finest'
+      ],
+      fashion: [
+        'Style that defines you',
+        'Fashion forward, always',
+        'Where trends meet timeless elegance',
+        'Express your unique style',
+        'Fashion that speaks'
+      ],
+      technology: [
+        'Innovation at your fingertips',
+        'Building the future, today',
+        'Technology solutions that matter',
+        'Empowering digital transformation',
+        'Tech that works'
+      ],
+      default: [
+        'Excellence in everything we do',
+        'Your trusted partner',
+        'Quality service, guaranteed',
+        'Making a difference',
+        'Professional excellence'
+      ]
+    };
+    
+    const industryTaglines = taglines[industry as keyof typeof taglines] || taglines.default;
+    return industryTaglines[Math.floor(Math.random() * industryTaglines.length)];
+  }
+
+  /**
+   * สร้าง Hero Content ที่เหมาะสม
+   */
+  private static generateHeroContent(businessContext: BusinessContext, projectInfo: any): { title: string; subtitle: string } {
+    const { industry } = businessContext;
+    
+    const heroContent = {
+      blog: {
+        title: 'Welcome to Our Blog',
+        subtitle: 'Discover insights, stories, and knowledge that inspire and inform your journey'
+      },
+      restaurant: {
+        title: 'Welcome to Our Restaurant',
+        subtitle: 'Experience authentic flavors and exceptional dining in a warm, inviting atmosphere'
+      },
+      cafe: {
+        title: 'Welcome to Our Cafe',
+        subtitle: 'Savor premium coffee and delicious treats in our cozy, welcoming space'
+      },
+      fashion: {
+        title: 'Discover Your Style',
+        subtitle: 'Explore our curated collection of fashion-forward pieces that define your unique look'
+      },
+      technology: {
+        title: 'Innovation Meets Excellence',
+        subtitle: 'Cutting-edge technology solutions designed to transform your business and drive success'
+      },
+      default: {
+        title: 'Welcome to Our Website',
+        subtitle: 'Discover what makes us special and how we can serve you better'
+      }
+    };
+    
+    return heroContent[industry as keyof typeof heroContent] || heroContent.default;
+  }
+
+  /**
+   * สร้าง About Text ที่เหมาะสม
+   */
+  private static generateAboutText(businessContext: BusinessContext, projectInfo: any): string {
+    const { industry, specificNiche } = businessContext;
+    
+    const aboutTexts = {
+      blog: 'We are passionate storytellers and knowledge sharers, dedicated to bringing you valuable insights, thought-provoking articles, and engaging content that matters. Our mission is to inform, inspire, and connect with readers who share our love for learning and discovery.',
+      restaurant: 'We are passionate about creating exceptional dining experiences that celebrate authentic flavors and culinary traditions. Our commitment to quality ingredients, skilled preparation, and warm hospitality ensures every visit is memorable.',
+      cafe: 'We are coffee enthusiasts dedicated to serving the finest brews in a welcoming atmosphere. From carefully sourced beans to expertly crafted beverages, we believe every cup should be a moment of pure enjoyment.',
+      fashion: 'We are style curators passionate about helping you express your unique personality through fashion. Our carefully selected pieces combine contemporary trends with timeless elegance, ensuring you always look and feel your best.',
+      technology: 'We are technology innovators committed to delivering cutting-edge solutions that drive business success. Our expertise spans across modern technologies, helping organizations transform and thrive in the digital age.',
+      default: 'We are dedicated professionals committed to delivering exceptional service and value to our clients. Our passion for excellence drives everything we do, ensuring we meet and exceed expectations in every interaction.'
+    };
+    
+    return aboutTexts[industry as keyof typeof aboutTexts] || aboutTexts.default;
+  }
+
+  /**
+   * สร้าง Navigation Items ที่เหมาะสม
+   */
+  private static generateNavigationItems(businessContext: BusinessContext): string[] {
+    const { industry } = businessContext;
+    
+    const navigationItems = {
+      blog: ['Home', 'Articles', 'Categories', 'About', 'Contact'],
+      restaurant: ['Home', 'Menu', 'Reservation', 'About', 'Contact'],
+      cafe: ['Home', 'Coffee Menu', 'About', 'Contact'],
+      fashion: ['Home', 'Collection', 'Style Guide', 'About', 'Contact'],
+      technology: ['Home', 'Projects', 'Services', 'Team', 'About', 'Contact'],
+      default: ['Home', 'About', 'Services', 'Contact']
+    };
+    
+    return navigationItems[industry as keyof typeof navigationItems] || navigationItems.default;
+  }
+
+  /**
+   * สร้าง Call to Action ที่เหมาะสม
+   */
+  private static generateCallToAction(businessContext: BusinessContext): string {
+    const { industry } = businessContext;
+    
+    const ctaTexts = {
+      blog: 'Read Our Latest Articles',
+      restaurant: 'Make a Reservation',
+      cafe: 'Visit Us Today',
+      fashion: 'Shop the Collection',
+      technology: 'Get Started',
+      default: 'Learn More'
+    };
+    
+    return ctaTexts[industry as keyof typeof ctaTexts] || ctaTexts.default;
+  }
+
+  /**
+   * สร้าง Contact Info ที่เหมาะสม
+   */
+  private static generateContactInfo(businessContext: BusinessContext): any {
+    return {
+      phone: '+66 2-123-4567',
+      email: 'info@example.com',
+      address: '123 Business Street, Bangkok, Thailand'
+    };
+  }
+
+  /**
+   * สร้าง Industry Specific Content
+   */
+  private static generateIndustrySpecificContent(businessContext: BusinessContext, features: any[]): any {
+    const { industry } = businessContext;
+    
+    const industryContent = {
+      blog: {
+        featuredArticles: [
+          { title: 'Getting Started with Modern Web Development', excerpt: 'Learn the fundamentals of modern web development...' },
+          { title: 'Best Practices for React Development', excerpt: 'Discover the best practices for building React applications...' }
+        ],
+        categories: ['Technology', 'Design', 'Business', 'Lifestyle'],
+        recentPosts: 5
+      },
+      restaurant: {
+        featuredDishes: [
+          { name: 'Signature Pasta', description: 'Handmade pasta with fresh ingredients', price: '฿299' },
+          { name: 'Grilled Salmon', description: 'Fresh salmon with seasonal vegetables', price: '฿399' }
+        ],
+        specialties: ['Italian Cuisine', 'Fresh Seafood', 'Vegetarian Options'],
+        openingHours: 'Mon-Sun: 11:00 AM - 10:00 PM'
+      },
+      cafe: {
+        featuredDrinks: [
+          { name: 'Signature Latte', description: 'Our house blend with perfect foam', price: '฿89' },
+          { name: 'Cold Brew', description: 'Smooth and refreshing cold brew coffee', price: '฿79' }
+        ],
+        atmosphere: ['Cozy', 'Modern', 'WiFi Available', 'Pet Friendly'],
+        openingHours: 'Mon-Fri: 7:00 AM - 8:00 PM, Sat-Sun: 8:00 AM - 9:00 PM'
+      },
+      fashion: {
+        featuredItems: [
+          { name: 'Summer Collection', description: 'Light and breezy styles for the season', category: 'Women' },
+          { name: 'Business Casual', description: 'Professional yet stylish office wear', category: 'Men' }
+        ],
+        categories: ['Women', 'Men', 'Accessories', 'Sale'],
+        sizeGuide: 'Available in sizes XS to XXL'
+      },
+      technology: {
+        services: [
+          { name: 'Web Development', description: 'Custom web applications and websites' },
+          { name: 'Mobile Apps', description: 'iOS and Android app development' }
+        ],
+        technologies: ['React', 'Node.js', 'Python', 'AWS'],
+        portfolio: '50+ successful projects delivered'
+      },
+      default: {
+        services: [
+          { name: 'Consulting', description: 'Professional consulting services' },
+          { name: 'Support', description: '24/7 customer support' }
+        ],
+        features: ['Quality', 'Reliability', 'Innovation'],
+        experience: '10+ years of experience'
+      }
+    };
+    
+    return industryContent[industry as keyof typeof industryContent] || industryContent.default;
+  }
+
+  /**
+   * วิเคราะห์ Tone
+   */
+  private static analyzeTone(finalJson: Record<string, unknown>): 'professional' | 'casual' | 'luxury' | 'friendly' | 'modern' {
+    const projectInfo = finalJson.project as any;
+    const goal = projectInfo?.goal?.toLowerCase() || '';
+    
+    if (goal.includes('professional') || goal.includes('corporate')) return 'professional';
+    if (goal.includes('luxury') || goal.includes('premium')) return 'luxury';
+    if (goal.includes('casual') || goal.includes('relaxed')) return 'casual';
+    if (goal.includes('friendly') || goal.includes('warm')) return 'friendly';
+    
+    return 'modern';
+  }
+
+  /**
+   * วิเคราะห์ Language
+   */
+  private static analyzeLanguage(finalJson: Record<string, unknown>): 'thai' | 'english' | 'mixed' {
+    const projectInfo = finalJson.project as any;
+    const text = JSON.stringify(projectInfo).toLowerCase();
+    
+    const thaiWords = ['ไทย', 'ภาษาไทย', 'ประเทศไทย', 'กรุงเทพ', 'ร้าน', 'อาหาร', 'กาแฟ'];
+    const hasThai = thaiWords.some(word => text.includes(word));
+    
+    if (hasThai) return 'mixed';
+    return 'english';
+  }
+
+  /**
+   * สร้าง Enhanced Requirements สำหรับ Components
+   */
+  static generateEnhancedComponentRequirements(
+    path: string, 
+    finalJson: Record<string, unknown>, 
+    project: any, 
+    businessContext: BusinessContext,
+    contentAnalysis: ContentAnalysis
+  ): string {
+    const name = path.split('/').pop() || '';
+    
+    console.log('🔧 Generating Enhanced Component Requirements for:', name);
+    console.log('📁 Component Path:', path);
+    console.log('🏢 Business Context:', businessContext.industry);
+    console.log('🎭 Content Analysis:', {
+      businessName: contentAnalysis.businessName,
+      tone: contentAnalysis.tone,
+      navigationItems: contentAnalysis.navigationItems
+    });
+    
+    if (name.includes('Navbar')) {
+      const requirements = `
+-- CRITICAL: Import React Router Link: import { Link } from 'react-router-dom';
+-- Create sticky responsive navigation bar with modern design
+-- Business Name: "${contentAnalysis.businessName}"
+-- Navigation Items: ${contentAnalysis.navigationItems.map(item => `"${item}"`).join(', ')}
+-- Tone: ${contentAnalysis.tone}
+-- Use Tailwind CSS for styling with ${contentAnalysis.tone} design approach`;
+      console.log('🧭 Navbar Requirements Generated:', requirements);
+      return requirements;
+    }
+    
+    if (name.includes('HeroSection')) {
+      const requirements = `
+-- Create impressive hero section as the main focal point
+-- Title: "${contentAnalysis.heroTitle}"
+-- Subtitle: "${contentAnalysis.heroSubtitle}"
+-- Call to Action: "${contentAnalysis.callToActionText}"
+-- Tone: ${contentAnalysis.tone}
+-- Include background image or gradient
+-- Use Tailwind CSS for responsive design`;
+      console.log('🎨 HeroSection Requirements Generated:', requirements);
+      return requirements;
+    }
+    
+    if (name.includes('Footer')) {
+      const requirements = `
+-- Create comprehensive footer with contact information
+-- Contact Info: ${JSON.stringify(contentAnalysis.contactInfo)}
+-- Business Name: "${contentAnalysis.businessName}"
+-- Tagline: "${contentAnalysis.tagline}"
+-- Include social media links and copyright
+-- Use Tailwind CSS for styling`;
+      console.log('🦶 Footer Requirements Generated:', requirements);
+      return requirements;
+    }
+    
+    const defaultRequirements = `-- Create ${name} component with ${contentAnalysis.tone} design approach`;
+    console.log('🔧 Default Component Requirements Generated:', defaultRequirements);
+    return defaultRequirements;
+  }
+
+  /**
+   * สร้าง Enhanced Requirements สำหรับ Pages
+   */
+  static generateEnhancedPageRequirements(
+    path: string, 
+    finalJson: Record<string, unknown>, 
+    project: any, 
+    businessContext: BusinessContext,
+    contentAnalysis: ContentAnalysis
+  ): string {
+    const file = path.toLowerCase();
+    
+    console.log('📄 Generating Enhanced Page Requirements for:', file);
+    console.log('📁 Page Path:', path);
+    console.log('🏢 Business Context:', businessContext.industry);
+    console.log('🎭 Content Analysis:', {
+      businessName: contentAnalysis.businessName,
+      tone: contentAnalysis.tone,
+      industryContent: Object.keys(contentAnalysis.industrySpecificContent)
+    });
+    
+    if (file.includes('home')) {
+      const requirements = `
+-- CRITICAL: Import HeroSection: import HeroSection from '../components/HeroSection.tsx';
+-- Start with <HeroSection /> and add key sections
+-- Business Name: "${contentAnalysis.businessName}"
+-- Tagline: "${contentAnalysis.tagline}"
+-- Industry: ${businessContext.industry}
+-- Include industry-specific content: ${JSON.stringify(contentAnalysis.industrySpecificContent)}
+-- Tone: ${contentAnalysis.tone}
+-- Use Tailwind CSS for responsive layout`;
+      console.log('🏠 Home Page Requirements Generated:', requirements);
+      return requirements;
+    }
+    
+    if (file.includes('about')) {
+      const requirements = `
+-- Create comprehensive about page
+-- About Text: "${contentAnalysis.aboutText}"
+-- Business Name: "${contentAnalysis.businessName}"
+-- Industry: ${businessContext.industry}
+-- Include company values and mission
+-- Tone: ${contentAnalysis.tone}
+-- Use Tailwind CSS for styling`;
+      console.log('ℹ️ About Page Requirements Generated:', requirements);
+      return requirements;
+    }
+    
+    if (file.includes('contact')) {
+      const requirements = `
+-- Create contact page with form and information
+-- Contact Info: ${JSON.stringify(contentAnalysis.contactInfo)}
+-- Business Name: "${contentAnalysis.businessName}"
+-- Include contact form and map
+-- Tone: ${contentAnalysis.tone}
+-- Use Tailwind CSS for form styling`;
+      console.log('📞 Contact Page Requirements Generated:', requirements);
+      return requirements;
+    }
+    
+    const defaultRequirements = `-- Create ${path} page with ${contentAnalysis.tone} design approach`;
+    console.log('📄 Default Page Requirements Generated:', defaultRequirements);
+    return defaultRequirements;
   }
 }

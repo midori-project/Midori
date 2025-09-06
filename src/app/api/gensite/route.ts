@@ -10,6 +10,7 @@ interface BusinessContext {
   specificNiche: string;
   businessModel: string;
   keyDifferentiators: string[];
+  targetAudience: string;
 }
 
 interface UserIntent {
@@ -139,12 +140,15 @@ export class FileGenerator {
     const startTime = Date.now();
     
     // วิเคราะห์ business context
+    console.log('🔍 Starting Business Context Analysis...');
     const businessContext = await UserIntentAnalyzer.analyzeBusinessContext(finalJson);
     console.log('🏢 Business Context detected:', businessContext);
     
     // เลือกไฟล์ตาม business context
+    console.log('🎯 Selecting Business Handler for industry:', businessContext.industry);
     const handler = getBusinessHandler(businessContext.industry);
     const essentialFiles = handler.getEssentialFiles(projectStructure as any);
+    console.log('📁 Essential Files Selected:', essentialFiles.map(f => f.path));
     
     console.log(`📁 Generating ${essentialFiles.length} essential files for ${businessContext.industry} business`);
     console.log('📋 Files to generate:', essentialFiles.map(f => f.path));
@@ -156,12 +160,14 @@ export class FileGenerator {
     for (let i = 0; i < essentialFiles.length; i += batchSize) {
       const batch = essentialFiles.slice(i, i + batchSize);
 
-      const batchPromises = batch.map((fileConfig) =>
-        this.generateEssentialFile(fileConfig, projectStructure, businessContext, essentialFiles, finalJson).catch((error: unknown) => {
+      const batchPromises = batch.map((fileConfig) => {
+        console.log(`🔄 Generating file: ${fileConfig.path} (${fileConfig.type})`);
+        return this.generateEssentialFile(fileConfig, projectStructure, businessContext, essentialFiles, finalJson).catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
+          console.error(`❌ Failed to generate ${fileConfig.path}:`, message);
           throw new Error(`[FileGenerator] Failed to generate ${fileConfig.path}: ${message}`);
-        })
-      );
+        });
+      });
 
       const batchResults = await Promise.allSettled(batchPromises);
 
@@ -172,6 +178,7 @@ export class FileGenerator {
       }
 
       (batchResults as PromiseFulfilledResult<GeneratedFile>[]).forEach((result) => {
+        console.log(`✅ Generated file: ${result.value.path} (${result.value.type})`);
         files.push(result.value);
       });
 
@@ -207,6 +214,8 @@ export class FileGenerator {
     const { path, type } = fileConfig;
     const projectName = projectStructure.name || 'Generated Project';
     
+    console.log(`🚀 Starting file generation: ${path} (${type})`);
+    
     // เพิ่มข้อมูลจาก finalJson
     const projectInfo = finalJson.project as any;
     const features = finalJson.features as any[];
@@ -221,9 +230,16 @@ export class FileGenerator {
     });
     
     // เพิ่ม User Intent Analysis
+    console.log('🎭 Analyzing User Intent...');
     const userIntent = await UserIntentAnalyzer.analyzeUserIntent(finalJson) as UserIntent;
+    console.log('✅ User Intent Analysis Complete:', {
+      visualStyle: userIntent.visualStyle,
+      colorScheme: userIntent.colorScheme,
+      tone: userIntent.tone
+    });
     
     // 🚨 สำคัญ: สำหรับ App.tsx ต้องรู้ว่าจะสร้างไฟล์หน้าไหนบ้าง
+    console.log('📝 Building prompt for file generation...');
     let prompt: string;
     
     if (path === 'src/App.tsx') {
@@ -312,7 +328,20 @@ Return only valid JSON code, no markdown headers or explanations.`;
 
 Return only React code, no markdown headers or explanations.`;
     } else if (type === 'component') {
-      const componentRequirements = getBusinessHandler(businessContext.industry).getComponentRequirements(path, finalJson as any, projectStructure as any, businessContext);
+      // วิเคราะห์เนื้อหาสำหรับ preset
+      console.log('🔧 Starting Component Generation with Content Analysis...');
+      console.log('📁 Component Path:', path);
+      console.log('🏢 Business Context:', businessContext.industry);
+      
+      const contentAnalysis = await UserIntentAnalyzer.analyzeContentForPreset(finalJson, businessContext);
+      console.log('✅ Content Analysis Complete for Component:', {
+        businessName: contentAnalysis.businessName,
+        tone: contentAnalysis.tone,
+        navigationItems: contentAnalysis.navigationItems
+      });
+      
+      const componentRequirements = UserIntentAnalyzer.generateEnhancedComponentRequirements(path, finalJson, projectStructure, businessContext, contentAnalysis);
+      console.log('📋 Component Requirements Generated:', componentRequirements.substring(0, 200) + '...');
       
       prompt = `Create a proper React functional component for ${path}. 
 
@@ -321,8 +350,11 @@ Return only React code, no markdown headers or explanations.`;
 - Goal: ${projectInfo?.goal || 'Create a functional website'}
 - Features: ${features?.map(f => f.name || f.id).join(', ') || 'Basic features'}
 
-**TARGET AUDIENCE:**
-
+**CONTENT ANALYSIS:**
+- Business Name: ${contentAnalysis.businessName}
+- Tagline: ${contentAnalysis.tagline}
+- Tone: ${contentAnalysis.tone}
+- Language: ${contentAnalysis.language}
 
 **COMPONENT-SPECIFIC REQUIREMENTS:**
 ${componentRequirements}
@@ -360,7 +392,21 @@ ${componentRequirements}
 
 Return only React code with Tailwind classes applied to ALL elements, no markdown headers or explanations.`;
     } else if (type === 'page') {
-      const pageRequirements = getBusinessHandler(businessContext.industry).getPageRequirements(path, finalJson as any, projectStructure as any, businessContext);
+      // วิเคราะห์เนื้อหาสำหรับ preset
+      console.log('📄 Starting Page Generation with Content Analysis...');
+      console.log('📁 Page Path:', path);
+      console.log('🏢 Business Context:', businessContext.industry);
+      
+      const contentAnalysis = await UserIntentAnalyzer.analyzeContentForPreset(finalJson, businessContext);
+      console.log('✅ Content Analysis Complete for Page:', {
+        businessName: contentAnalysis.businessName,
+        heroTitle: contentAnalysis.heroTitle,
+        tone: contentAnalysis.tone,
+        industryContent: Object.keys(contentAnalysis.industrySpecificContent)
+      });
+      
+      const pageRequirements = UserIntentAnalyzer.generateEnhancedPageRequirements(path, finalJson, projectStructure, businessContext, contentAnalysis);
+      console.log('📋 Page Requirements Generated:', pageRequirements.substring(0, 200) + '...');
       
       prompt = `Create a proper React page component for ${path}. 
 
@@ -369,8 +415,15 @@ Return only React code with Tailwind classes applied to ALL elements, no markdow
 - Goal: ${projectInfo?.goal || 'Create a functional website'}
 - Features: ${features?.map(f => f.name || f.id).join(', ') || 'Basic features'}
 
-**TARGET AUDIENCE:**
-
+**CONTENT ANALYSIS:**
+- Business Name: ${contentAnalysis.businessName}
+- Tagline: ${contentAnalysis.tagline}
+- Hero Title: ${contentAnalysis.heroTitle}
+- Hero Subtitle: ${contentAnalysis.heroSubtitle}
+- About Text: ${contentAnalysis.aboutText}
+- Tone: ${contentAnalysis.tone}
+- Language: ${contentAnalysis.language}
+- Industry Content: ${JSON.stringify(contentAnalysis.industrySpecificContent)}
 
 **PAGE-SPECIFIC REQUIREMENTS:**
 ${pageRequirements}
@@ -437,6 +490,10 @@ Return JavaScript/TypeScript code (not JSON), no markdown headers or explanation
     }
     
     try {
+      console.log('🤖 Sending request to OpenAI for file generation...');
+      console.log('📝 Prompt length:', prompt.length);
+      console.log('🎯 File type:', type);
+      
       const completion = await OpenAIService.makeOpenAIRequestWithRetry({
         model: SITE_GEN_CONFIG.currentModel,
         messages: [
@@ -520,9 +577,13 @@ Return ONLY code with complete imports and Tailwind styling, no explanations, no
       });
       
       const content = completion.choices[0]?.message?.content || '';
+      console.log('📄 OpenAI Response received, length:', content.length);
+      
       const cleanedContent = OpenAIService.cleanCodeResponse(content);
+      console.log('🧹 Content cleaned, final length:', cleanedContent.length);
       
       // Validate generated code
+      console.log('🔍 Validating generated code...');
       const validation = this.validateGeneratedCode(cleanedContent, path);
       
       if (!validation.isValid) {
@@ -532,6 +593,14 @@ Return ONLY code with complete imports and Tailwind styling, no explanations, no
         // Use template fallback when validation fails
         return this.createTemplateFile(fileConfig, projectStructure, businessContext, allFiles);
       }
+      
+      console.log('✅ Code validation passed for:', path);
+      console.log('📊 Generated file stats:', {
+        path,
+        type: this.mapFileType(type),
+        language: this.getLanguage(path),
+        contentLength: cleanedContent.length
+      });
       
       return {
         path,

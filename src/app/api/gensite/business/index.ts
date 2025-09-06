@@ -1,8 +1,8 @@
 import { BusinessHandler } from './types';
 import { blogHandler } from './presets/blog';
 import { restaurantHandler } from './presets/restaurant';
-import { cafeHandler } from './presets/cafe';
-import { fashionHandler } from './presets/fashion';
+import { cafeHandler } from './presets/cafe_new';
+import { fashionHandler } from './presets/fashion_new';
 import { technologyHandler } from './presets/technology';
 import { defaultHandler } from './presets/default';
 import { fallbackHandler } from './presets/fallback';

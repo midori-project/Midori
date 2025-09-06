@@ -61,50 +61,57 @@ export const fallbackHandler: BusinessHandler = {
   </body>
 </html>`,
 
-    'src/main.tsx': (project) => `import React from 'react';
+    'src/main.tsx': (project) => `import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
 
-const rootElement = document.getElementById('root');
-
-if (!rootElement) {
-  throw new Error('Failed to find the root element');
+function ThemeBootstrapper() {
+  useEffect(() => {
+    const w = globalThis as any;
+    const data = w?.__MIDORI_FINAL_JSON__;
+    const colors = data?.brand?.colors || data?.theme?.colors;
+    if (colors) {
+      const root = document.documentElement;
+      if (colors.primary) root.style.setProperty('--color-primary', colors.primary);
+      if (colors.secondary) root.style.setProperty('--color-secondary', colors.secondary);
+      if (colors.accent) root.style.setProperty('--color-accent', colors.accent);
+    }
+  }, []);
+  return null;
 }
 
-const root = ReactDOM.createRoot(rootElement);
-
-root.render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
+      <ThemeBootstrapper />
       <App />
     </BrowserRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );`,
 
-    'src/index.css': (project) => `/* Tailwind CSS Inline Mode - ไม่ต้องใช้ @tailwind directives */
+    'src/index.css': (project) => `@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Base styles */
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #f9fafb;
-  color: #111827;
+/* THEME VARIABLES (AI: override from finalJson.brand.colors if provided) */
+:root {
+  --color-primary: #3b82f6; /* fallback: blue-500 */
+  --color-secondary: #10b981; /* fallback: emerald-500 */
+  --color-accent: #f59e0b; /* fallback: amber-500 */
 }
 
-* {
-  box-sizing: border-box;
-}
+/* Utilities using CSS variables */
+.text-primary { color: var(--color-primary); }
+.bg-primary { background-color: var(--color-primary); }
+.bg-secondary { background-color: var(--color-secondary); }
+.btn-primary { background-color: var(--color-primary); color: #fff; }
+.btn-primary:hover { filter: brightness(0.9); }
+.badge-accent { background-color: var(--color-accent); color: #fff; }
+.bg-hero-gradient { background-image: linear-gradient(90deg, var(--color-primary), var(--color-secondary)); }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}`,
+html, body, #root { height: 100%; }`,
 
     'vite.config.ts': (project) => `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -388,22 +395,16 @@ export default Footer;`,
 
 const HeroSection: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 flex flex-col justify-center items-center text-center p-6">
-      <h2 className="text-5xl font-bold text-white mb-4">ยินดีต้อนรับสู่ ${project.name || 'เว็บไซต์ของเรา'}</h2>
-      <p className="text-lg text-white mb-6">เว็บไซต์สมัยใหม่ที่สร้างด้วยเทคโนโลยีล่าสุด</p>
-      <button className="bg-yellow-500 text-white px-8 py-3 rounded-lg hover:bg-yellow-600 transition-colors font-medium mb-6">
-        เริ่มต้นใช้งาน
-      </button>
-      <input 
-        type="text" 
-        placeholder="ค้นหา..." 
-        className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent mb-4"
-      />
-      <div className="text-white">
-        <p className="text-sm">คุณสมบัติหลัก: 120+</p>
-        <p className="text-sm">ผู้ใช้งาน: 1,500+</p>
+    <section className="relative text-white bg-hero-gradient">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">ยินดีต้อนรับสู่ ${project.name || 'เว็บไซต์ของเรา'}</h1>
+        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">เว็บไซต์สมัยใหม่ที่สร้างด้วยเทคโนโลยีล่าสุด</p>
+        <div className="space-x-3">
+          <a href="/about" className="btn-primary px-6 py-3 rounded-lg font-semibold">เริ่มต้นใช้งาน</a>
+          <a href="/contact" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">ติดต่อเรา</a>
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 
