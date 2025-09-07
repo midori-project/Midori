@@ -261,59 +261,41 @@ ${conversationText}
    * Analyze business context from conversation data using AI
    */
   static async analyzeBusinessContext(finalJson: Record<string, unknown>): Promise<BusinessContext> {
-    // ใช้ข้อมูลโดยตรงจาก finalJson แทน string analysis
     const projectInfo = finalJson.project as any;
     const targetAudience = finalJson.targetAudience as string[];
     const features = finalJson.features as any[];
+    const userIntent = finalJson.userIntent as string;
     
-    console.log('🎯 Direct finalJson analysis:', {
+    console.log('🤖 Starting AI Business Context Analysis:', {
       projectType: projectInfo?.type,
       projectGoal: projectInfo?.goal,
-      targetAudience: targetAudience
+      projectName: projectInfo?.name,
+      projectDescription: projectInfo?.description,
+      targetAudience: targetAudience,
+      userIntent: userIntent
     });
     
-    // Direct mapping จาก project type และ goal
-    let industry = 'general';
-    const projectType = projectInfo?.type?.toLowerCase() || '';
-    const projectGoal = projectInfo?.goal?.toLowerCase() || '';
-    
-    if (projectType.includes('blog') || projectGoal.includes('บทความ') || projectGoal.includes('เขียน') || projectGoal.includes('แชร์')) {
-      industry = 'blog';
-    } else if (projectType.includes('restaurant') || projectGoal.includes('ร้านอาหาร') || projectGoal.includes('อาหาร')) {
-      industry = 'restaurant';
-    } else if (projectType.includes('cafe') || projectGoal.includes('คาเฟ่') || projectGoal.includes('กาแฟ')) {
-      industry = 'cafe';
-    } else if (projectType.includes('fashion') || projectGoal.includes('แฟชั่น') || projectGoal.includes('เสื้อผ้า')) {
-      industry = 'fashion';
-    } else if (projectType.includes('technology') || projectGoal.includes('เทคโนโลยี') || projectGoal.includes('software')) {
-      industry = 'technology';
+    try {
+      // สร้างข้อความสำหรับ AI analysis
+      const analysisText = this.buildAnalysisText(projectInfo, targetAudience, features, userIntent);
+      
+      // ใช้ AI วิเคราะห์ business context
+      const aiAnalysis = await this.performAIBusinessAnalysis(analysisText);
+      
+      // ใช้ผลลัพธ์จาก AI หรือ fallback
+      const result = this.buildBusinessContext(aiAnalysis, projectInfo, targetAudience, features);
+      
+      console.log('✅ AI Business Context Result:', result);
+      return result;
+      
+    } catch (error) {
+      console.warn('⚠️ AI analysis failed, using fallback:', error);
+      
+      // Fallback to keyword analysis
+      const fallbackResult = this.performFallbackAnalysis(projectInfo, targetAudience, features);
+      console.log('✅ Fallback Business Context Result:', fallbackResult);
+      return fallbackResult;
     }
-    
-    // ใช้ targetAudience โดยตรง
-    const audienceText =  'general-public';
-    
-    // กำหนด specificNiche ตาม industry และ features
-    let specificNiche = 'general-business';
-    if (industry === 'blog') {
-      if (features?.some(f => f.name?.includes('CMS') || f.name?.includes('Admin'))) {
-        specificNiche = 'cms-blog';
-      } else if (features?.some(f => f.name?.includes('Comment') || f.name?.includes('Social'))) {
-        specificNiche = 'social-blog';
-      } else {
-        specificNiche = 'content-blog';
-      }
-    }
-    
-    const result = {
-      industry,
-      specificNiche,
-      targetAudience: audienceText,
-      businessModel: 'b2c' as const,
-      keyDifferentiators: [] // เพิ่ม keyDifferentiators เป็น array ว่าง
-    };
-    
-    console.log('✅ Business Context Result:', result);
-    return result;
   }
 
   /**
@@ -330,9 +312,9 @@ ${conversationText}
 
 **รูปแบบ JSON ที่ต้องการ:**
 {
-  "industry": "general|cafe|restaurant|fashion|technology|education|healthcare",
-  "specificNiche": "general-business|specialty-coffee|organic-cafe|coffee-roastery|luxury-fashion|vintage-clothing|sustainable-fashion",
-  "targetAudience": "general-public|students|professionals|families|young-adults",
+  "industry": "default|blog|restaurant|cafe|fashion|technology|ecommerce|portfolio|agency",
+  "specificNiche": "general-business|content-blog|cms-blog|social-blog|fine-dining|casual-dining|fast-food|specialty-coffee|organic-cafe|coffee-roastery|luxury-fashion|vintage-clothing|sustainable-fashion|tech-startup|software-company|full-ecommerce|product-showcase|creative-agency|marketing-agency",
+  "targetAudience": "general-public|students|professionals|families|young-adults|business-owners|tech-savvy-users",
   "businessModel": "b2c|b2b|subscription|marketplace",
   "keyDifferentiators": ["array", "of", "differentiators"]
 }
@@ -340,10 +322,21 @@ ${conversationText}
 **คำแนะนำในการวิเคราะห์:**
 - วิเคราะห์จากบริบทและความหมาย
 - รองรับทั้งภาษาไทยและภาษาอังกฤษ
-- ระบุ industry ที่เหมาะสมที่สุด
-- ระบุ niche ที่เฉพาะเจาะจง
+- เลือก industry ที่เหมาะสมที่สุดจากรายการที่กำหนด
+- ระบุ niche ที่เฉพาะเจาะจงตาม industry
 - ระบุ business model ที่เหมาะสม
 - ระบุจุดเด่นที่สำคัญ
+
+**เกณฑ์การเลือก Industry:**
+- blog: สำหรับเว็บไซต์บทความ, บล็อก, ข่าวสาร, content creation
+- restaurant: สำหรับร้านอาหาร, ภัตตาคาร, ครัว, เมนูอาหาร
+- cafe: สำหรับคาเฟ่, ร้านกาแฟ, coffee shop, barista
+- fashion: สำหรับแฟชั่น, เสื้อผ้า, clothing store, boutique
+- technology: สำหรับบริษัทเทคโนโลยี, software, app development, IT
+- ecommerce: สำหรับร้านค้าออนไลน์, online store, marketplace, retail
+- portfolio: สำหรับ personal website, portfolio, resume, showcase
+- agency: สำหรับเอเจนซี่, marketing, advertising, creative services
+- default: สำหรับเว็บไซต์ทั่วไปที่ไม่ตรงกับหมวดหมู่ข้างต้น
 
 ตอบเป็น JSON เท่านั้น ไม่มีคำอธิบายเพิ่มเติม
 `;
@@ -367,6 +360,104 @@ ${conversationText}
       console.error('Failed to parse AI business response:', parseError);
       throw new Error('Invalid AI business response format');
     }
+  }
+
+  /**
+   * Build analysis text from project data
+   */
+  private static buildAnalysisText(
+    projectInfo: any, 
+    targetAudience: string[], 
+    features: any[], 
+    userIntent?: string
+  ): string {
+    const parts = [];
+    
+    if (projectInfo?.name) parts.push(`Project Name: ${projectInfo.name}`);
+    if (projectInfo?.type) parts.push(`Project Type: ${projectInfo.type}`);
+    if (projectInfo?.goal) parts.push(`Project Goal: ${projectInfo.goal}`);
+    if (projectInfo?.description) parts.push(`Description: ${projectInfo.description}`);
+    if (userIntent) parts.push(`User Intent: ${userIntent}`);
+    if (targetAudience && targetAudience.length > 0) {
+      parts.push(`Target Audience: ${targetAudience.join(', ')}`);
+    }
+    if (features && features.length > 0) {
+      const featureNames = features.map(f => f.name || f).join(', ');
+      parts.push(`Features: ${featureNames}`);
+    }
+    
+    return parts.join('\n');
+  }
+
+  /**
+   * Build business context from AI analysis
+   */
+  private static buildBusinessContext(
+    aiAnalysis: Partial<BusinessContext>,
+    projectInfo: any,
+    targetAudience: string[],
+    features: any[]
+  ): BusinessContext {
+    return {
+      industry: aiAnalysis.industry || 'default',
+      specificNiche: aiAnalysis.specificNiche || 'general-business',
+      targetAudience: aiAnalysis.targetAudience || (targetAudience?.join(', ') || 'general-public'),
+      businessModel: aiAnalysis.businessModel || 'b2c',
+      keyDifferentiators: aiAnalysis.keyDifferentiators || []
+    };
+  }
+
+  /**
+   * Fallback analysis using keyword matching
+   */
+  private static performFallbackAnalysis(
+    projectInfo: any,
+    targetAudience: string[],
+    features: any[]
+  ): BusinessContext {
+    console.log('🔄 Using fallback keyword analysis');
+    
+    const projectType = projectInfo?.type?.toLowerCase() || '';
+    const projectGoal = projectInfo?.goal?.toLowerCase() || '';
+    const projectName = projectInfo?.name?.toLowerCase() || '';
+    const projectDescription = projectInfo?.description?.toLowerCase() || '';
+    
+    const combinedText = `${projectType} ${projectGoal} ${projectName} ${projectDescription}`.toLowerCase();
+    
+    let industry = 'default';
+    
+    if (this.matchesKeywords(combinedText, ['blog', 'บทความ', 'เขียน', 'แชร์', 'content', 'article', 'post', 'news'])) {
+      industry = 'blog';
+    } else if (this.matchesKeywords(combinedText, ['restaurant', 'ร้านอาหาร', 'อาหาร', 'food', 'dining', 'chef', 'menu', 'เมนู'])) {
+      industry = 'restaurant';
+    } else if (this.matchesKeywords(combinedText, ['cafe', 'คาเฟ่', 'กาแฟ', 'coffee', 'coffee shop', 'espresso', 'latte'])) {
+      industry = 'cafe';
+    } else if (this.matchesKeywords(combinedText, ['fashion', 'แฟชั่น', 'เสื้อผ้า', 'clothing', 'apparel', 'style', 'trend'])) {
+      industry = 'fashion';
+    } else if (this.matchesKeywords(combinedText, ['ecommerce', 'e-commerce', 'online store', 'shop', 'store', 'retail', 'selling', 'ขาย', 'ร้านค้า'])) {
+      industry = 'ecommerce';
+    } else if (this.matchesKeywords(combinedText, ['portfolio', 'personal', 'profile', 'work', 'projects', 'showcase', 'ผลงาน', 'ประวัติ'])) {
+      industry = 'portfolio';
+    } else if (this.matchesKeywords(combinedText, ['agency', 'marketing', 'advertising', 'branding', 'design', 'creative', 'เอเจนซี่', 'การตลาด'])) {
+      industry = 'agency';
+    } else if (this.matchesKeywords(combinedText, ['technology', 'tech', 'software', 'app', 'development', 'programming', 'เทคโนโลยี', 'ซอฟต์แวร์'])) {
+      industry = 'technology';
+    }
+    
+    return {
+      industry,
+      specificNiche: 'general-business',
+      targetAudience: targetAudience?.join(', ') || 'general-public',
+      businessModel: 'b2c',
+      keyDifferentiators: []
+    };
+  }
+
+  /**
+   * Check if text matches any keywords
+   */
+  private static matchesKeywords(text: string, keywords: string[]): boolean {
+    return keywords.some(keyword => text.includes(keyword.toLowerCase()));
   }
 
   /**
@@ -1112,5 +1203,77 @@ ${conversationText}
     const defaultRequirements = `-- Create ${path} page with ${contentAnalysis.tone} design approach`;
     console.log('📄 Default Page Requirements Generated:', defaultRequirements);
     return defaultRequirements;
+  }
+
+  /**
+   * Test function for AI business analysis
+   */
+  static async testAIBusinessAnalysis(): Promise<void> {
+    console.log('🧪 Testing AI Business Analysis...');
+    
+    const testCases = [
+      {
+        name: 'Restaurant Test',
+        finalJson: {
+          project: {
+            name: 'Siam Kitchen',
+            type: 'restaurant',
+            goal: 'สร้างเว็บไซต์ร้านอาหารไทย',
+            description: 'ร้านอาหารไทยแบบดั้งเดิม เน้นอาหารพื้นบ้าน'
+          },
+          targetAudience: ['families', 'food-lovers'],
+          features: [
+            { name: 'Menu Display' },
+            { name: 'Reservation System' }
+          ],
+          userIntent: 'ต้องการเว็บไซต์ร้านอาหารที่สวยงาม มีเมนูและระบบจองโต๊ะ'
+        }
+      },
+      {
+        name: 'E-commerce Test',
+        finalJson: {
+          project: {
+            name: 'TechStore',
+            type: 'ecommerce',
+            goal: 'ร้านค้าออนไลน์ขายอุปกรณ์อิเล็กทรอนิกส์',
+            description: 'ขายสมาร์ทโฟน แท็บเล็ต และอุปกรณ์เสริม'
+          },
+          targetAudience: ['tech-savvy-users', 'young-adults'],
+          features: [
+            { name: 'Product Catalog' },
+            { name: 'Shopping Cart' },
+            { name: 'Payment Gateway' }
+          ],
+          userIntent: 'ต้องการเว็บไซต์ขายของออนไลน์ที่ทันสมัย'
+        }
+      },
+      {
+        name: 'Portfolio Test',
+        finalJson: {
+          project: {
+            name: 'John Designer',
+            type: 'portfolio',
+            goal: 'เว็บไซต์แสดงผลงานนักออกแบบ',
+            description: 'Portfolio ของนักออกแบบกราฟิกและ UI/UX'
+          },
+          targetAudience: ['clients', 'employers'],
+          features: [
+            { name: 'Project Gallery' },
+            { name: 'Contact Form' }
+          ],
+          userIntent: 'ต้องการเว็บไซต์แสดงผลงานที่ดูเป็นมืออาชีพ'
+        }
+      }
+    ];
+
+    for (const testCase of testCases) {
+      console.log(`\n🔍 Testing: ${testCase.name}`);
+      try {
+        const result = await this.analyzeBusinessContext(testCase.finalJson);
+        console.log(`✅ Result:`, result);
+      } catch (error) {
+        console.error(`❌ Error:`, error);
+      }
+    }
   }
 }

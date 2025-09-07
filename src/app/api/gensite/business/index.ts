@@ -4,6 +4,9 @@ import { restaurantHandler } from './presets/restaurant';
 import { cafeHandler } from './presets/cafe_new';
 import { fashionHandler } from './presets/fashion_new';
 import { technologyHandler } from './presets/technology';
+import { ecommerceHandler } from './presets/ecommerce';
+import { portfolioHandler } from './presets/portfolio';
+import { agencyHandler } from './presets/agency';
 import { defaultHandler } from './presets/default';
 import { fallbackHandler } from './presets/fallback';
 
@@ -13,6 +16,10 @@ const BUSINESS_HANDLERS: Record<string, BusinessHandler> = {
   cafe: cafeHandler,
   fashion: fashionHandler,
   technology: technologyHandler,
+  ecommerce: ecommerceHandler,
+  'e-commerce': ecommerceHandler,
+  portfolio: portfolioHandler,
+  agency: agencyHandler,
   default: defaultHandler,
   fallback: fallbackHandler,
 };

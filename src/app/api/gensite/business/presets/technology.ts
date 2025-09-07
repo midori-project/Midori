@@ -1,4 +1,5 @@
 import { BusinessContext, BusinessHandler, FileConfigLite, ProjectLike } from '../types';
+import { TemplateReplacer } from '../../../../../utils/template-replacer';
 
 export const technologyHandler: BusinessHandler = {
   getEssentialFiles(project: ProjectLike): FileConfigLite[] {
@@ -24,7 +25,7 @@ export const technologyHandler: BusinessHandler = {
   },
 
   templates: {
-    'package.json': (project) => `{
+    'package.json': (project, finalJson, ctx) => `{
   "name": "${project.name || 'tech-site'}",
   "private": true,
   "version": "1.0.0",
@@ -51,12 +52,12 @@ export const technologyHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${project.name || 'Tech Company'}</title>
+    <title>[BUSINESS_NAME]</title>
   </head>
   <body>
     <div id="root"></div>
@@ -350,19 +351,19 @@ export default Home;`,
     'src/pages/Projects.tsx': (project) => `import React from 'react';
 import ProjectCard from '../components/ProjectCard.tsx';
 
-// AI NOTE: โปรเจคจะถูกเติมจาก promptJson (finalJson.projects.items)
-// โครงสร้างที่คาดหวัง: finalJson.projects = { items: [{ title, description, techStack, status, image }] }
+// AI NOTE: Projects will be filled from promptJson (finalJson.projects.items)
+// Expected structure: finalJson.projects = { items: [{ title, description, techStack, status, image }] }
 
 type ProjectItem = { title: string; description: string; techStack: string[]; status: 'completed' | 'ongoing' | 'upcoming'; image: string };
 
-// fallback เผื่อไม่มีข้อมูลจาก AI
+// fallback in case no data from AI
 const fallbackProjects: ProjectItem[] = [
   { title: 'E-Commerce Platform', description: 'Modern e-commerce solution', techStack: ['React', 'Node.js', 'MongoDB'], status: 'completed', image: '/placeholder.jpg' },
   { title: 'Mobile App', description: 'Cross-platform mobile application', techStack: ['React Native', 'Firebase'], status: 'ongoing', image: '/placeholder.jpg' },
   { title: 'AI Dashboard', description: 'Machine learning analytics dashboard', techStack: ['Python', 'TensorFlow', 'React'], status: 'upcoming', image: '/placeholder.jpg' },
 ];
 
-// อ่านข้อมูลจาก window.__MIDORI_FINAL_JSON__ ที่ฝั่ง preview จะ inject ให้
+// Read data from window.__MIDORI_FINAL_JSON__ that preview will inject
 function getProjects(): ProjectItem[] {
   const w = globalThis as any;
   const data = w?.__MIDORI_FINAL_JSON__;
@@ -477,7 +478,7 @@ const Team: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {teamMembers.map((member, index) => (
             <div key={index} className="bg-white rounded-xl shadow-md p-6 text-center hover:shadow-lg transition-shadow">
-              <div className={\`w-24 h-24 \${member.image} rounded-full mx-auto mb-4\`}></div>
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4"></div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">{member.name}</h3>
               <p className="text-blue-600 font-medium mb-2">{member.role}</p>
               <p className="text-gray-600 text-sm">{member.bio}</p>

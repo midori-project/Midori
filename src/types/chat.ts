@@ -44,6 +44,20 @@ export const ChatSessionSchema = z.object({
   analysis: AnalysisSchema.optional(),
   userResponses: z.record(z.string()),
   finalJson: z.any().optional(),
+  currentData: z.object({
+    Name: z.string().optional(),
+    Type: z.string().optional(),
+    Goal: z.string().optional(),
+    Features: z.string().optional(),
+    Design: z.object({
+      Theme: z.string().optional(),
+      PrimaryColor: z.string().optional(),
+      SecondaryColor: z.string().optional(),
+      Typography: z.string().optional(),
+    }).optional(),
+    Background: z.union([z.string(), z.null()]).optional(),
+  }).default({}),
+  askedFields: z.array(z.string()).default([]),
   createdAt: z.union([z.date(), z.string()]).transform((val) => {
     if (typeof val === 'string') {
       return new Date(val);

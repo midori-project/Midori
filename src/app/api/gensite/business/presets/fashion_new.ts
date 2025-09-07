@@ -1,4 +1,5 @@
 import { BusinessContext, BusinessHandler, FileConfigLite, ProjectLike } from '../types';
+import { TemplateReplacer } from '../../../../../utils/template-replacer';
 
 export const fashionHandler: BusinessHandler = {
   getEssentialFiles(project: ProjectLike): FileConfigLite[] {
@@ -25,7 +26,7 @@ export const fashionHandler: BusinessHandler = {
   },
 
   templates: {
-    'package.json': (project) => `{
+    'package.json': (project, finalJson, ctx) => `{
   "name": "${project.name || 'fashion-site'}",
   "private": true,
   "version": "1.0.0",
@@ -52,12 +53,12 @@ export const fashionHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${project.name || 'Fashion Store'}</title>
+    <title>[BUSINESS_NAME]</title>
   </head>
   <body>
     <div id="root"></div>
@@ -202,7 +203,7 @@ const Footer: React.FC = () => {
     <footer className="bg-gray-100 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 py-6 text-sm text-gray-600 flex items-center justify-between">
         <span>© ${new Date().getFullYear()} Fashion Store. All rights reserved.</span>
-        <span>Free shipping on orders over ฿2,000</span>
+        <span>Free shipping on orders over $20</span>
       </div>
     </footer>
   );
@@ -256,8 +257,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, originalPrice, i
         <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors">{name}</h3>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-primary">฿${price.toLocaleString()}</span>
-            {originalPrice && <span className="text-sm text-gray-500 line-through">฿${originalPrice.toLocaleString()}</span>}
+            <span className="text-xl font-bold text-primary">${price.toLocaleString()}</span>
+            {originalPrice && <span className="text-sm text-gray-500 line-through">${originalPrice.toLocaleString()}</span>}
           </div>
           <button className="btn-primary px-4 py-2 rounded-lg text-sm transition-colors">Add to Cart</button>
         </div>
@@ -332,7 +333,7 @@ const Home: React.FC = () => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">[Product Name 1]</h3>
                 <p className="text-gray-600 mb-4">[Product Description 1]</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-violet-600">฿1,890</span>
+                  <span className="text-2xl font-bold text-violet-600">$18.90</span>
                   <button className="bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700 transition-colors">Add to Cart</button>
                 </div>
               </div>
@@ -343,7 +344,7 @@ const Home: React.FC = () => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">[Product Name 2]</h3>
                 <p className="text-gray-600 mb-4">[Product Description 2]</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-violet-600">฿2,490</span>
+                  <span className="text-2xl font-bold text-violet-600">$24.90</span>
                   <button className="bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700 transition-colors">Add to Cart</button>
                 </div>
               </div>
@@ -354,7 +355,7 @@ const Home: React.FC = () => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">[Product Name 3]</h3>
                 <p className="text-gray-600 mb-4">[Product Description 3]</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-violet-600">฿3,290</span>
+                  <span className="text-2xl font-bold text-violet-600">$32.90</span>
                   <button className="bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700 transition-colors">Add to Cart</button>
                 </div>
               </div>
@@ -416,19 +417,19 @@ export default Home;`,
     'src/pages/Collection.tsx': (project) => `import React from 'react';
 import ProductCard from '../components/ProductCard.tsx';
 
-// AI NOTE: ผลิตภัณฑ์จะถูกเติมจาก promptJson (finalJson.products.items)
-// โครงสร้างที่คาดหวัง: finalJson.products = { items: [{ name, price, originalPrice?, image, category, isNew?, isSale? }] }
+// AI NOTE: Products will be filled from promptJson (finalJson.products.items)
+// Expected structure: finalJson.products = { items: [{ name, price, originalPrice?, image, category, isNew?, isSale? }] }
 
 type ProductItem = { name: string; price: number; originalPrice?: number; image: string; category: string; isNew?: boolean; isSale?: boolean };
 
-// fallback เผื่อไม่มีข้อมูลจาก AI
+// fallback in case no data from AI
 const fallbackProducts: ProductItem[] = [
   { name: 'Elegant Dress', price: 1890, originalPrice: 2290, image: '/placeholder.jpg', category: 'Dresses', isSale: true },
   { name: 'Casual T-Shirt', price: 590, image: '/placeholder.jpg', category: 'Tops', isNew: true },
   { name: 'Designer Jeans', price: 2490, image: '/placeholder.jpg', category: 'Bottoms' },
 ];
 
-// อ่านข้อมูลจาก window.__MIDORI_FINAL_JSON__ ที่ฝั่ง preview จะ inject ให้
+// Read data from window.__MIDORI_FINAL_JSON__ that preview will inject
 function getProducts(): ProductItem[] {
   const w = globalThis as any;
   const data = w?.__MIDORI_FINAL_JSON__;
@@ -481,8 +482,8 @@ const ProductDetail: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Product Name</h1>
             <div className="flex items-center space-x-4 mb-4">
-              <span className="text-3xl font-bold text-violet-600">฿1,890</span>
-              <span className="text-xl text-gray-500 line-through">฿2,290</span>
+              <span className="text-3xl font-bold text-violet-600">$18.90</span>
+              <span className="text-xl text-gray-500 line-through">$22.90</span>
               <span className="bg-red-500 text-white px-2 py-1 rounded text-sm">Sale</span>
             </div>
             <p className="text-gray-600 mb-6">

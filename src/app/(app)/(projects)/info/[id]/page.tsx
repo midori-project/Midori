@@ -67,6 +67,7 @@ export default async function InfoPage({ params, searchParams }: Props) {
         <InfoChatClient 
           projectId={project.id} 
           initialPrompt={resolvedSearchParams.prompt || project.description || ""}
+          
         />
       </div>
     </div>

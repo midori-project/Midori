@@ -1,4 +1,5 @@
-import { BusinessContext, BusinessHandler, FileConfigLite, ProjectLike } from '../types';
+import { BusinessContext, BusinessHandler, FileConfigLite, ProjectLike, EnhancedContentAnalysis, StyleConfiguration } from '../types';
+import { TemplateReplacer } from '../../../../../utils/template-replacer';
 
 export const cafeHandler: BusinessHandler = {
   getEssentialFiles(project: ProjectLike): FileConfigLite[] {
@@ -26,8 +27,8 @@ export const cafeHandler: BusinessHandler = {
   },
 
   templates: {
-    'package.json': (project) => `{
-  "name": "${project.name || 'cafe-site'}",
+    'package.json': (project, finalJson, ctx) => `{
+  "name": "${project.name || 'cafe-website'}",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -53,12 +54,12 @@ export const cafeHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${project.name || 'Cafe'}</title>
+    <title>[BUSINESS_NAME]</title>
   </head>
   <body>
     <div id="root"></div>
@@ -184,13 +185,13 @@ const Navbar: React.FC = () => {
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="text-xl font-bold text-amber-600">Cafe</Link>
           <div className="flex space-x-2">
-            <NavLink to="/" end className={({isActive}) => \`$\{base} $\{isActive ? active : inactive}\`}>Home</NavLink>
-            <NavLink to="/menu" className={({isActive}) => \`$\{base} $\{isActive ? active : inactive}\`}>Menu</NavLink>
-            <NavLink to="/barista" className={({isActive}) => \`$\{base} $\{isActive ? active : inactive}\`}>Barista</NavLink>
-            <NavLink to="/tracking" className={({isActive}) => \`$\{base} $\{isActive ? active : inactive}\`}>Track Order</NavLink>
-            <NavLink to="/beans" className={({isActive}) => \`$\{base} $\{isActive ? active : inactive}\`}>Bean Origin</NavLink>
-            <NavLink to="/about" className={({isActive}) => \`$\{base} $\{isActive ? active : inactive}\`}>About</NavLink>
-            <NavLink to="/contact" className={({isActive}) => \`$\{base} $\{isActive ? active : inactive}\`}>Contact</NavLink>
+            <NavLink to="/" end className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50">Home</NavLink>
+            <NavLink to="/menu" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50">Menu</NavLink>
+            <NavLink to="/barista" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50">Barista</NavLink>
+            <NavLink to="/tracking" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50">Track Order</NavLink>
+            <NavLink to="/beans" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50">Bean Origin</NavLink>
+            <NavLink to="/about" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50">About</NavLink>
+            <NavLink to="/contact" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50">Contact</NavLink>
           </div>
         </div>
       </div>
@@ -215,16 +216,17 @@ const Footer: React.FC = () => {
 
 export default Footer;`,
 
-    'src/components/HeroSection.tsx': () => `import React from 'react';
+    'src/components/HeroSection.tsx': async (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">Artisan Coffee Experience</h1>
-        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">Discover the perfect blend of tradition and innovation in every cup.</p>
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">[HERO_TITLE]</h1>
+        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">[HERO_SUBTITLE]</p>
         <div className="space-x-3">
-          <a href="/menu" className="btn-primary px-6 py-3 rounded-lg font-semibold">View Menu</a>
+          <a href="/menu" className="btn-primary px-6 py-3 rounded-lg font-semibold">[MENU_BUTTON_TEXT]</a>
           <a href="/tracking" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">Track Order</a>
         </div>
       </div>
@@ -232,7 +234,10 @@ const HeroSection: React.FC = () => {
   );
 };
 
-export default HeroSection;`,
+export default HeroSection;`;
+      
+      return await TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/components/CoffeeCard.tsx': () => `import React from 'react';
 
@@ -255,7 +260,7 @@ const CoffeeCard: React.FC<CoffeeCardProps> = ({ name, description, price, origi
       <h3 className="text-xl font-semibold text-gray-900 mb-2">{name}</h3>
       <p className="text-gray-600 mb-4">{description}</p>
       <div className="flex items-center justify-between">
-        <span className="text-2xl font-bold text-primary">฿${price.toLocaleString()}</span>
+        <span className="text-2xl font-bold text-primary">[COFFEE_PRICE]</span>
         <button className="btn-primary px-4 py-2 rounded-lg transition-colors">Order</button>
       </div>
     </div>
@@ -284,20 +289,20 @@ const OrderStatus: React.FC<OrderStatusProps> = ({ orderId, status, estimatedTim
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-xl font-semibold mb-4">Order #${orderId}</h3>
+      <h3 className="text-xl font-semibold mb-4">Order #{orderId}</h3>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <span className="font-medium">Status:</span>
-          <span className={\`font-semibold \${getStatusColor(status)}\`}>
-            ${status.charAt(0).toUpperCase() + status.slice(1)}
+          <span className="font-semibold text-blue-600">
+            [ORDER_STATUS]
           </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="font-medium">Estimated Time:</span>
-          <span className="text-gray-600">${estimatedTime}</span>
+          <span className="text-gray-600">{estimatedTime}</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
-          <div className={\`h-2 rounded-full \${status === 'completed' ? 'bg-green-500' : status === 'ready' ? 'bg-yellow-500' : 'bg-blue-500'}\`} style={{width: status === 'completed' ? '100%' : status === 'ready' ? '75%' : '50%'}}></div>
+          <div className="h-2 rounded-full bg-blue-500" style={{width: '50%'}}></div>
         </div>
       </div>
     </div>
@@ -306,7 +311,8 @@ const OrderStatus: React.FC<OrderStatusProps> = ({ orderId, status, estimatedTim
 
 export default OrderStatus;`,
 
-    'src/pages/Home.tsx': (project) => `import React from 'react';
+    'src/pages/Home.tsx': async (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 import HeroSection from '../components/HeroSection.tsx';
 
 const Home: React.FC = () => {
@@ -317,33 +323,33 @@ const Home: React.FC = () => {
       {/* Featured Coffee Section */}
       <section className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Coffee</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">[FEATURED_SECTION_TITLE]</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="w-full h-48 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg mb-4"></div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Coffee Name 1]</h3>
-              <p className="text-gray-600 mb-4">[Coffee Description 1]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[MENU_ITEM_1_NAME]</h3>
+              <p className="text-gray-600 mb-4">[MENU_ITEM_1_DESCRIPTION]</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-amber-600">฿120</span>
-                <button className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">Order Now</button>
+                <span className="text-2xl font-bold text-amber-600">[MENU_ITEM_1_PRICE]</span>
+                <button className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">[ORDER_BUTTON_TEXT]</button>
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="w-full h-48 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-lg mb-4"></div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Coffee Name 2]</h3>
-              <p className="text-gray-600 mb-4">[Coffee Description 2]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[MENU_ITEM_2_NAME]</h3>
+              <p className="text-gray-600 mb-4">[MENU_ITEM_2_DESCRIPTION]</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-amber-600">฿95</span>
-                <button className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">Order Now</button>
+                <span className="text-2xl font-bold text-amber-600">[MENU_ITEM_2_PRICE]</span>
+                <button className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">[ORDER_BUTTON_TEXT]</button>
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="w-full h-48 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg mb-4"></div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Coffee Name 3]</h3>
-              <p className="text-gray-600 mb-4">[Coffee Description 3]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[MENU_ITEM_3_NAME]</h3>
+              <p className="text-gray-600 mb-4">[MENU_ITEM_3_DESCRIPTION]</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-amber-600">฿150</span>
-                <button className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">Order Now</button>
+                <span className="text-2xl font-bold text-amber-600">[MENU_ITEM_3_PRICE]</span>
+                <button className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">[ORDER_BUTTON_TEXT]</button>
               </div>
             </div>
           </div>
@@ -353,28 +359,28 @@ const Home: React.FC = () => {
       {/* Atmosphere Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Atmosphere</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">[ABOUT_SECTION_TITLE]</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Feature 1]</h3>
-              <p className="text-gray-600">[Feature Description 1]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[FEATURE_1_TITLE]</h3>
+              <p className="text-gray-600">[FEATURE_1_DESCRIPTION]</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Feature 2]</h3>
-              <p className="text-gray-600">[Feature Description 2]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[FEATURE_2_TITLE]</h3>
+              <p className="text-gray-600">[FEATURE_2_DESCRIPTION]</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Feature 3]</h3>
-              <p className="text-gray-600">[Feature Description 3]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[FEATURE_3_TITLE]</h3>
+              <p className="text-gray-600">[FEATURE_3_DESCRIPTION]</p>
             </div>
           </div>
         </div>
@@ -383,24 +389,27 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;`,
+export default Home;`;
+      
+      return await TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/pages/CoffeeMenu.tsx': (project) => `import React from 'react';
 import CoffeeCard from '../components/CoffeeCard.tsx';
 
-// AI NOTE: เมนูจะถูกเติมจาก promptJson (finalJson.menu.items)
-// โครงสร้างที่คาดหวัง: finalJson.menu = { items: [{ name, description, price, origin, roast }] }
+// AI NOTE: Menu will be filled from promptJson (finalJson.menu.items)
+// Expected structure: finalJson.menu = { items: [{ name, description, price, origin, roast }] }
 
 type CoffeeItem = { name: string; description: string; price: number; origin: string; roast: string };
 
-// fallback เผื่อไม่มีข้อมูลจาก AI
+// fallback in case no data from AI
 const fallbackMenu: CoffeeItem[] = [
   { name: 'Espresso', description: 'Rich and bold', price: 80, origin: 'Colombia', roast: 'Dark' },
   { name: 'Cappuccino', description: 'Perfect balance', price: 120, origin: 'Ethiopia', roast: 'Medium' },
   { name: 'Latte', description: 'Smooth and creamy', price: 140, origin: 'Brazil', roast: 'Light' },
 ];
 
-// อ่านข้อมูลจาก window.__MIDORI_FINAL_JSON__ ที่ฝั่ง preview จะ inject ให้
+// Read data from window.__MIDORI_FINAL_JSON__ that preview will inject
 function getCoffeeItems(): CoffeeItem[] {
   const w = globalThis as any;
   const data = w?.__MIDORI_FINAL_JSON__;
@@ -643,25 +652,29 @@ export function getOrderStatusColor(status: string): string {
   }
 }`,
 
-    'src/pages/Contact.tsx': () => `import React from 'react';
+    'src/pages/Contact.tsx': async (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 const Contact: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">Contact Us</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">[CONTACT_BUTTON_TEXT]</h1>
         <div className="bg-white p-6 rounded-lg shadow space-y-4">
-          <p>📍 123 Coffee Street, Bangkok 10110</p>
-          <p>📞 02-123-4567</p>
-          <p>🕒 Open 7AM - 10PM Daily</p>
-          <p>✉️ info@cafe.local</p>
+          <p>📍 [CONTACT_ADDRESS]</p>
+          <p>📞 [CONTACT_PHONE]</p>
+          <p>🕒 [CONTACT_HOURS]</p>
+          <p>✉️ [CONTACT_EMAIL]</p>
         </div>
       </div>
     </div>
   );
 };
 
-export default Contact;`,
+export default Contact;`;
+      
+      return await TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
   },
 
   getComponentRequirements(path: string, finalJson: Record<string, unknown>, project: ProjectLike, ctx: BusinessContext): string {
@@ -695,4 +708,53 @@ export default Contact;`,
     }
     return `- Create page ${path} for cafe`;
   },
+
+  getEnhancedContentAnalysis(finalJson: Record<string, unknown>, ctx: BusinessContext): EnhancedContentAnalysis {
+    const projectInfo = finalJson.project as any;
+    return {
+      businessName: projectInfo?.name || 'Cafe',
+      tagline: 'Great Coffee, Great Atmosphere',
+      heroTitle: 'Experience Exceptional Coffee',
+      heroSubtitle: 'Premium quality coffee from freshly roasted beans every day',
+      aboutText: 'We are a cafe dedicated to serving high-quality coffee in a warm and relaxing atmosphere',
+      tone: 'warm',
+      language: 'en',
+      contentStyle: 'cozy',
+      navigationItems: ['Home', 'Coffee Menu', 'Barista', 'Order Tracking', 'Bean Origin', 'About', 'Contact'],
+      industrySpecificContent: {
+        coffeeTypes: ['Espresso', 'Latte', 'Cappuccino', 'Americano'],
+        origins: ['Ethiopia', 'Colombia', 'Brazil', 'Jamaica'],
+        roastLevels: ['Light Roast', 'Medium Roast', 'Dark Roast'],
+        atmosphere: ['City Center', 'Warm Atmosphere', 'Free WiFi']
+      },
+      colorPreferences: ['brown', 'amber', 'warm'],
+      layoutPreferences: ['cozy', 'warm', 'comfortable'],
+      contactInfo: {
+        phone: '02-123-4567',
+        hours: '7:00 - 22:00',
+        email: 'info@cafe.com'
+      }
+    };
+  },
+
+  getStyleConfiguration(finalJson: Record<string, unknown>, ctx: BusinessContext): StyleConfiguration {
+    return {
+      colorScheme: {
+        primary: '#8b4513', // brown-600
+        secondary: '#d2691e', // chocolate
+        accent: '#f4a460', // sandybrown
+        neutral: ['#faf8f5', '#f5f1eb', '#e8e0d1', '#d4c4a8']
+      },
+      typography: {
+        headingFont: 'Inter',
+        bodyFont: 'Inter',
+        fontSize: 'medium'
+      },
+      layout: {
+        spacing: 'comfortable',
+        borderRadius: 'medium',
+        shadows: 'subtle'
+      }
+    };
+  }
 };

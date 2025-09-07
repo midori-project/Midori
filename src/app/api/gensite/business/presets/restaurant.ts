@@ -1,4 +1,5 @@
 import { BusinessContext, BusinessHandler, FileConfigLite, ProjectLike } from '../types';
+import { TemplateReplacer } from '../../../../../utils/template-replacer';
 
 export const restaurantHandler: BusinessHandler = {
   getEssentialFiles(project: ProjectLike): FileConfigLite[] {
@@ -26,7 +27,7 @@ export const restaurantHandler: BusinessHandler = {
   },
 
   templates: {
-    'package.json': (project) => `{
+    'package.json': (project, finalJson, ctx) => `{
   "name": "${project.name || 'restaurant-site'}",
   "private": true,
   "version": "1.0.0",
@@ -53,12 +54,12 @@ export const restaurantHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${project.name || 'Restaurant'}</title>
+    <title>[BUSINESS_NAME]</title>
   </head>
   <body>
     <div id="root"></div>
@@ -216,24 +217,28 @@ const Footer: React.FC = () => {
 
 export default Footer;`,
 
-    'src/components/HeroSection.tsx': () => `import React from 'react';
+    'src/components/HeroSection.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">Fine Dining Experience</h1>
-        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">Discover exquisite flavors and unforgettable moments crafted by our master chefs.</p>
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">[HERO_TITLE]</h1>
+        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">[HERO_SUBTITLE]</p>
         <div className="space-x-3">
-          <a href="/menu" className="btn-primary px-6 py-3 rounded-lg font-semibold">Explore Menu</a>
-          <a href="/reservation" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">Reserve Now</a>
+          <a href="/menu" className="btn-primary px-6 py-3 rounded-lg font-semibold">[MENU_BUTTON_TEXT]</a>
+          <a href="/reservation" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">[ORDER_BUTTON_TEXT]</a>
         </div>
       </div>
     </section>
   );
 };
 
-export default HeroSection;`,
+export default HeroSection;`;
+      
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/components/MenuCard.tsx': () => `import React from 'react';
 
@@ -250,7 +255,7 @@ const MenuCard: React.FC<MenuCardProps> = ({ title, description, price }) => {
       <h3 className="text-xl font-semibold text-gray-900 mb-1">{title}</h3>
       {description && <p className="text-gray-600 mb-4">{description}</p>}
       <div className="flex items-center justify-between">
-        <span className="text-2xl font-bold text-primary">฿{price.toLocaleString()}</span>
+        <span className="text-2xl font-bold text-primary">[DISH_PRICE]</span>
         <button className="btn-primary px-4 py-2 rounded-lg transition-colors">Order</button>
       </div>
     </div>
@@ -320,7 +325,7 @@ const Home: React.FC = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">[Menu Item 1]</h3>
               <p className="text-gray-600 mb-4">[Menu Description 1]</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-red-600">฿1,890</span>
+                <span className="text-2xl font-bold text-red-600">$18.90</span>
                 <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">Order Now</button>
               </div>
             </div>
@@ -329,7 +334,7 @@ const Home: React.FC = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">[Menu Item 2]</h3>
               <p className="text-gray-600 mb-4">[Menu Description 2]</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-red-600">฿890</span>
+                <span className="text-2xl font-bold text-red-600">$8.90</span>
                 <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">Order Now</button>
               </div>
             </div>
@@ -338,7 +343,7 @@ const Home: React.FC = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">[Menu Item 3]</h3>
               <p className="text-gray-600 mb-4">[Menu Description 3]</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-red-600">฿290</span>
+                <span className="text-2xl font-bold text-red-600">$2.90</span>
                 <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">Order Now</button>
               </div>
             </div>
@@ -382,19 +387,19 @@ export default Home;`,
     'src/pages/Menu.tsx': (project) => `import React from 'react';
 import MenuCard from '../components/MenuCard.tsx';
 
-// AI NOTE: เมนูจะถูกเติมจาก promptJson (finalJson.menu.items)
-// โครงสร้างที่คาดหวัง: finalJson.menu = { items: [{ title, description?, price }] }
+// AI NOTE: Menu will be filled from promptJson (finalJson.menu.items)
+// Expected structure: finalJson.menu = { items: [{ title, description?, price }] }
 
 type MenuItem = { title: string; description?: string; price: number };
 
-// fallback เผื่อไม่มีข้อมูลจาก AI
+// fallback in case no data from AI
 const fallbackMenu: MenuItem[] = [
   { title: 'Signature Steak', price: 1890 },
   { title: 'Truffle Pasta', price: 890 },
   { title: 'Seafood Platter', price: 2990 },
 ];
 
-// อ่านข้อมูลจาก window.__MIDORI_FINAL_JSON__ ที่ฝั่ง preview จะ inject ให้
+// Read data from window.__MIDORI_FINAL_JSON__ that preview will inject
 function getMenuItems(): MenuItem[] {
   const w = globalThis as any;
   const data = w?.__MIDORI_FINAL_JSON__;

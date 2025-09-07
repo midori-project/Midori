@@ -3,6 +3,7 @@ import { GeneratedFile, ProjectStructure, GenerationOptions, FileConfig } from '
 import { UserIntentAnalyzer } from '../../../utils/site-generator/user-intent-analyzer';
 import { OpenAIService } from '../../../utils/site-generator/openai-service';
 import { getBusinessHandler } from './business';
+import { TemplateReplacer } from '../../../utils/template-replacer';
 
 // เพิ่ม interfaces สำหรับ type safety
 interface BusinessContext {
@@ -149,6 +150,25 @@ export class FileGenerator {
     const handler = getBusinessHandler(businessContext.industry);
     const essentialFiles = handler.getEssentialFiles(projectStructure as any);
     console.log('📁 Essential Files Selected:', essentialFiles.map(f => f.path));
+
+    // ทำ Enhanced Content Analysis ถ้า handler รองรับ
+    let enhancedContent = null;
+    let styleConfig = null;
+    if (handler.getEnhancedContentAnalysis) {
+      console.log('🎨 Performing Enhanced Content Analysis...');
+      enhancedContent = handler.getEnhancedContentAnalysis(finalJson, businessContext);
+      console.log('✅ Enhanced Content Analysis Complete:', {
+        businessName: enhancedContent.businessName,
+        contentStyle: enhancedContent.contentStyle,
+        tone: enhancedContent.tone
+      });
+    }
+
+    if (handler.getStyleConfiguration) {
+      console.log('🎨 Getting Style Configuration...');
+      styleConfig = handler.getStyleConfiguration(finalJson, businessContext);
+      console.log('✅ Style Configuration Complete:', styleConfig.colorScheme);
+    }
     
     console.log(`📁 Generating ${essentialFiles.length} essential files for ${businessContext.industry} business`);
     console.log('📋 Files to generate:', essentialFiles.map(f => f.path));
@@ -211,6 +231,59 @@ export class FileGenerator {
     allFiles: FileConfig[],
     finalJson: Record<string, unknown>
   ): Promise<GeneratedFile> {
+    
+    // ตรวจสอบว่ามี template หรือไม่
+    const handler = getBusinessHandler(businessContext.industry);
+    if (handler.templates[fileConfig.path]) {
+      console.log(`📋 Using template for ${fileConfig.path}`);
+      
+      try {
+        const template = await handler.templates[fileConfig.path](
+          projectStructure, 
+          finalJson, 
+          businessContext
+        );
+        
+        // ตรวจสอบความถูกต้องของ template
+        const validation = TemplateReplacer.validateTemplate(template);
+        if (!validation.isValid) {
+          console.warn(`⚠️ Template validation errors for ${fileConfig.path}:`, validation.errors);
+          // ถ้ามี error หนัก ให้ fallback ไป AI generation
+          if (validation.errors.length > 0) {
+            console.log(`🔄 Falling back to AI generation due to template errors`);
+            // Continue to AI generation below
+          }
+        }
+        if (validation.warnings.length > 0) {
+          console.warn(`⚠️ Template validation warnings for ${fileConfig.path}:`, validation.warnings);
+        }
+        
+        // ใช้ template แทน AI generation (ถ้าไม่มี error หนัก)
+        if (validation.isValid || validation.errors.length === 0) {
+          // ใช้ AI replacement สำหรับ template
+          const userIntent = finalJson.userIntent as string || 'Create a professional website';
+          const replacedTemplate = await TemplateReplacer.replacePlaceholders(
+            template, 
+            finalJson, 
+            businessContext, 
+            projectStructure.name,
+            userIntent
+          );
+          
+          return {
+            path: fileConfig.path,
+            content: replacedTemplate,
+            type: this.mapFileType(fileConfig.type),
+            language: this.getLanguage(fileConfig.path)
+          };
+        }
+      } catch (error) {
+        console.error(`❌ Template generation failed for ${fileConfig.path}:`, error);
+        // Fallback to AI generation
+      }
+    }
+    
+    console.log(`🤖 Using AI generation for ${fileConfig.path}`);
     const { path, type } = fileConfig;
     const projectName = projectStructure.name || 'Generated Project';
     
@@ -591,7 +664,7 @@ Return ONLY code with complete imports and Tailwind styling, no explanations, no
         console.log('🔄 Using template fallback due to validation failure');
         
         // Use template fallback when validation fails
-        return this.createTemplateFile(fileConfig, projectStructure, businessContext, allFiles);
+        return await this.createTemplateFile(fileConfig, projectStructure, businessContext, allFiles, finalJson);
       }
       
       console.log('✅ Code validation passed for:', path);
@@ -614,7 +687,7 @@ Return ONLY code with complete imports and Tailwind styling, no explanations, no
       console.log('🔄 Falling back to template for', path);
       
       // Enhanced fallback with business context
-      return this.createTemplateFile(fileConfig, projectStructure, businessContext, allFiles);
+      return await this.createTemplateFile(fileConfig, projectStructure, businessContext, allFiles, finalJson);
     }
   }
 
@@ -623,12 +696,13 @@ Return ONLY code with complete imports and Tailwind styling, no explanations, no
   /**
    * Create template-based file for fallback - SandPack Compatible
    */
-  private static createTemplateFile(
+  private static async createTemplateFile(
     fileConfig: FileConfig,
     projectStructure: ProjectStructure,
     businessContext: BusinessContext,
-    allFiles: FileConfig[]
-  ): GeneratedFile {
+    allFiles: FileConfig[],
+    finalJson: Record<string, unknown>
+  ): Promise<GeneratedFile> {
     const { path } = fileConfig;
     const projectName = projectStructure.name || 'Generated Project';
     
@@ -639,7 +713,7 @@ Return ONLY code with complete imports and Tailwind styling, no explanations, no
     if (handlerTemplate) {
       return {
         path,
-        content: typeof handlerTemplate === 'function' ? handlerTemplate(projectStructure) : handlerTemplate,
+        content: typeof handlerTemplate === 'function' ? await handlerTemplate(projectStructure, finalJson, businessContext) : handlerTemplate,
         type: this.mapFileType(fileConfig.type),
         language: this.getLanguage(path)
       };

@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ChatRequest, ChatResponse } from "@/types/chat";
 import { getProjectName, saveFinalJsonToGeneration, getUserIdFromSession } from "./getInitialPromt";
 
 interface Message {
@@ -59,91 +58,66 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
     
     const initializeChat = async () => {
       const projectName = await getProjectName(projectId);
-      setInitialPrompt(projectName || "");
-      
-      if (!initialPrompt || initializedRef.current) return;
-      
-      // ป้องกันการเรียกซ้ำ
-      initializedRef.current = true;
-      
-      // ถ้ามี sessionId จากหน้าแรก ให้ใช้เลย
+      const initial = projectName || "";
+      setInitialPrompt(initial);
+
+      if (initializedRef.current) return;
+
+      // ถ้ามี sessionId จากหน้าแรก ให้ใช้เลย (ไม่ฮาร์ดโค้ดคำถามเพิ่ม)
       if (initialSessionId) {
-        console.log('ใช้ sessionId จากหน้าแรก:', initialSessionId);
         setSessionId(initialSessionId);
         initializedRef.current = true;
         setIsInitialized(true);
-        
-        // เพิ่มข้อความเริ่มต้น
-        setMessages(prev => [
-          ...prev,
-          { 
-            id: `assistant-${Date.now()}-${Math.random()}`, 
-            role: "assistant", 
-            text: "ชื่อโปรเจ็คที่คุณต้องการสร้างคืออะไร?" 
-          }
-        ]);
         return;
       }
-      
-      // ถ้าไม่มี sessionId ให้เรียก API เอง
-      console.log('ไม่มี sessionId จากหน้าแรก - เรียก API เอง');
+
+      // ไม่มี sessionId → หากมีข้อความเริ่มต้น ให้เรียก API ทันที
+      if (!initial.trim()) {
+        initializedRef.current = true;
+        setIsInitialized(true);
+        return;
+      }
+
       setIsAssistantTyping(true);
       setLoading(true);
       
       try {
-        const request: ChatRequest = {
-          message: initialPrompt,
-        };
-
-        const response = await fetch('/api/openai', {
+        const response = await fetch('/api/questionAi', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(request),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: initial })
         });
 
         if (!response.ok) {
           throw new Error('Failed to initialize chat');
         }
-        console.log('response:', response);
-        const data: ChatResponse = await response.json();
-        
-        if (data.success) {
-          setSessionId(data.sessionId);
-          setCurrentQuestion(data.currentquestion || "");
-          setTotalQuestions(data.totalQuestions || 0);
-          setCurrentQuestionNumber(data.currentQuestion || 0);
-          setIsComplete(data.isComplete);
-          setIsInitialized(true);
-          initializedRef.current = true;
-          
-          // Debug: แสดงคำถามทั้งหมด
-          console.log('=== คำถามทั้งหมด ===');
-          console.log('Session ID:', data.sessionId);
-          console.log('คำถามปัจจุบัน:', data.currentquestion);
-          console.log('จำนวนคำถามทั้งหมด:', data.totalQuestions);
-          console.log('คำถามที่:', data.currentQuestion);
-          console.log('Analysis:', data.analysis);
-          if (data.analysis?.refinementQuestions) {
-            console.log('คำถามทั้งหมด:');
-            data.analysis.refinementQuestions.forEach((question, index) => {
-              console.log(`${index + 1}. ${question}`);
-            });
+        const data: {
+          sessionId: string;
+          currentData: Record<string, unknown>;
+          missingFields: string[];
+          nextQuestions: string[];
+          isComplete?: boolean;
+        } = await response.json();
+
+        setSessionId(data.sessionId);
+        setIsInitialized(true);
+        initializedRef.current = true;
+
+        const assistantText = data.nextQuestions?.[0]
+          || (data.missingFields?.length > 0 ? `โปรดระบุ: ${data.missingFields[0]}` : 'ข้อมูลครบถ้วนแล้ว');
+
+        setMessages(prev => [
+          ...prev,
+          { 
+            id: `assistant-${Date.now()}-${Math.random()}`, 
+            role: "assistant", 
+            text: assistantText
           }
-          console.log('========================');
-          
-          // Add assistant message
-          setMessages(prev => [
-            ...prev,
-            { 
-              id: `assistant-${Date.now()}-${Math.random()}`, 
-              role: "assistant", 
-              text: data.message 
-            }
-          ]);
-        } else {
-          setError(data.error || 'เกิดข้อผิดพลาดในการเริ่มต้นการสนทนา');
+        ]);
+        const done = data.isComplete ?? ((data.missingFields?.length || 0) === 0);
+        setIsComplete(done);
+        if (done) {
+          alert('✅ ตอบคำถามครบแล้ว! ขอบคุณสำหรับข้อมูล');
         }
       } catch (error) {
         console.error('Error initializing chat:', error);
@@ -155,7 +129,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
     };
 
     initializeChat();
-  }, [initialPrompt]);
+  }, [projectId, initialSessionId]);
 
   React.useLayoutEffect(() => {
     const el = textareaRef.current;
@@ -191,12 +165,12 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
     setIsAssistantTyping(true);
     
     try {
-      const request: ChatRequest = {
+      const request = {
         message: userMessage,
         sessionId: sessionId,
       };
 
-      const response = await fetch('/api/openai', {
+      const response = await fetch('/api/questionAi', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,96 +182,46 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         throw new Error('Failed to send message');
       }
       
-      const data: ChatResponse = await response.json();
+      const data: {
+        sessionId: string;
+        currentData: Record<string, unknown>;
+        missingFields: string[];
+        nextQuestions: string[];
+        isComplete?: boolean;
+      } = await response.json();
       console.log('data:', data);
-             if (data.success) {
-         setCurrentQuestion(data.currentquestion || "");
-         setTotalQuestions(data.totalQuestions || 0);
-         setCurrentQuestionNumber(data.currentQuestion || 0);
-         setIsComplete(data.isComplete);
-         
-         // เก็บ finalJson ถ้ามี
-         if (data.finalJson) {
-           setFinalJson(data.finalJson);
-         }
-         
-         // Debug: แสดงคำถามที่เปลี่ยนไป
-         console.log('=== คำถามที่เปลี่ยนไป ===');
-         console.log('คำถามใหม่:', data.currentquestion);
-         console.log('คำถามที่:', data.currentQuestion);
-         console.log('จำนวนคำถามทั้งหมด:', data.totalQuestions);
-         console.log('เสร็จสิ้น:', data.isComplete);
-         console.log('finalJson exists:', !!data.finalJson);
-         console.log('========================');
-        
-        // Add assistant message
-        const reply: Message = {
-          id: `assistant-${Date.now()}-${Math.random()}`,
-          role: "assistant",
-          text: data.message,
-        };
-        setMessages((s) => [...s, reply]);
-        
-        // ถ้าตอบคำถามครบ 5 ข้อแล้ว ให้ redirect ไปหน้า [id]/ อัตโนมัติ
-        if (data.isComplete && (data.currentQuestion || 0) >= 5) {
-          console.log('ตอบคำถามครบ 5 ข้อแล้ว - redirect ไปหน้า project');
-          
-          // บันทึก finalJson ลงในตาราง generation
-          if (data.finalJson && sessionId) {
-            try {
-              // สร้าง finalPrompt จากข้อความทั้งหมดในแชท
-              const allMessages = [...messages, {
-                id: `user-${Date.now()}`,
-                role: "user" as const,
-                text: userMessage
-              }, {
-                id: `assistant-${Date.now()}`,
-                role: "assistant" as const,
-                text: data.message
-              }];
-              
-              const finalPrompt = allMessages
-                .filter(msg => msg.role === "user" || msg.role === "assistant")
-                .map(msg => `${msg.role === "user" ? "ผู้ใช้" : "AI"}: ${msg.text}`)
-                .join("\n");
-              
-              // บันทึกข้อมูล แปลงtype data.analysis เป็น string
-              const promptPayload =
-                typeof (data as any).analysis === "string"
-                  ? (data as any).analysis
-                  : JSON.stringify((data as any).analysis ?? {});
 
-              await saveFinalJsonToGeneration(
-                projectId,
-                { finalJson: data.finalJson,
-                  prompt : promptPayload
-                }
-              );
-              
-              console.log("บันทึก finalJson สำเร็จ");
-            } catch (error) {
-              console.error("Error saving finalJson:", error);
-            }
-          }
-          
-          // แสดงข้อความแจ้งเตือน
-          setTimeout(() => {
-            setMessages(prev => [
-              ...prev,
-              {
-                id: `system-redirect-${Date.now()}`,
-                role: "system",
-                text: "✅ ตอบคำถามครบแล้ว! กำลังนำคุณไปยังหน้าโปรเจคในอีก 2 วินาที..."
-              }
-            ]);
-          }, 1000);
-          
-          setTimeout(() => {
-            router.push(`/projects/${projectId}`);
-          }, 3000 ); // รอ 3 วินาทีให้ผู้ใช้เห็นข้อความแจ้งเตือน
-        }
-      } else {
-        setError(data.error || 'เกิดข้อผิดพลาดในการส่งข้อความ');
+      // ข้อความถัดไปจาก analyzeAndAskNext
+      const reply: Message = {
+        id: `assistant-${Date.now()}-${Math.random()}`,
+        role: "assistant",
+        text: data.nextQuestions?.[0] || (data.missingFields?.length > 0 ? `โปรดระบุ: ${data.missingFields[0]}` : 'ข้อมูลครบถ้วนแล้ว')
+      };
+      setMessages((s) => [...s, reply]);
+
+      // สถานะเสร็จสิ้นเมื่อไม่มี missingFields
+      const done = data.isComplete ?? ((data.missingFields?.length || 0) === 0);
+      setIsComplete(done);
+      if (done) {
+        alert('✅ ตอบคำถามครบแล้ว! ขอบคุณสำหรับข้อมูล');
+      }
+
+      // ถ้าเสร็จแล้ว เก็บ finalJson เป็นโครงสร้างสุดท้ายจาก currentData (เติมค่า null/ช่องว่างให้ครบสคีมา)
+      if (done) {
+        const normalize = (input: Record<string, unknown>) => ({
+          Name: typeof input?.["Name"] === 'string' ? input["Name"] : "",
+          Type: typeof input?.["Type"] === 'string' ? input["Type"] : "",
+          Goal: typeof input?.["Goal"] === 'string' ? input["Goal"] : "",
+          Features: typeof input?.["Features"] === 'string' ? input["Features"] : "",
+          Design: {
+            Theme: typeof (input?.["Design"] as any)?.Theme === 'string' ? (input as any).Design.Theme : "",
+            PrimaryColor: typeof (input?.["Design"] as any)?.PrimaryColor === 'string' ? (input as any).Design.PrimaryColor : "",
+            SecondaryColor: typeof (input?.["Design"] as any)?.SecondaryColor === 'string' ? (input as any).Design.SecondaryColor : "",
+            Typography: typeof (input?.["Design"] as any)?.Typography === 'string' ? (input as any).Design.Typography : ""
+          },
+          Background: (input?.["Background"] ?? null) as string | null
+        });
+        setFinalJson(normalize(data.currentData || {}));
       }
     } catch (error) {
       console.error('Error sending message:', error);

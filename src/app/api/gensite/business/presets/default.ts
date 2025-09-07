@@ -1,4 +1,5 @@
 import { BusinessContext, BusinessHandler, FileConfigLite, ProjectLike } from '../types';
+import { TemplateReplacer } from '../../../../../utils/template-replacer';
 
 export const defaultHandler: BusinessHandler = {
   getEssentialFiles(project: ProjectLike): FileConfigLite[] {
@@ -23,8 +24,8 @@ export const defaultHandler: BusinessHandler = {
   },
 
   templates: {
-    'package.json': (project) => `{
-  "name": "${project.name || 'default-site'}",
+    'package.json': (project, finalJson, ctx) => `{
+  "name": "${project.name || 'default-website'}",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -50,12 +51,12 @@ export const defaultHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${project.name || 'Default Site'}</title>
+    <title>[BUSINESS_NAME]</title>
   </head>
   <body>
     <div id="root"></div>

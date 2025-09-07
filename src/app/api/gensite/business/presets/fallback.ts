@@ -1,4 +1,5 @@
 import { BusinessContext, BusinessHandler, FileConfigLite, ProjectLike } from '../types';
+import { TemplateReplacer } from '../../../../../utils/template-replacer';
 
 export const fallbackHandler: BusinessHandler = {
   getEssentialFiles(project: ProjectLike): FileConfigLite[] {
@@ -23,7 +24,7 @@ export const fallbackHandler: BusinessHandler = {
   },
 
   templates: {
-    'package.json': (project) => JSON.stringify({
+    'package.json': (project, finalJson, ctx) => JSON.stringify({
       "name": project.name?.toLowerCase().replace(/\s+/g, '-') || 'generated-project',
       "version": "1.0.0",
       "type": "module",
@@ -47,13 +48,13 @@ export const fallbackHandler: BusinessHandler = {
       }
     }, null, 2),
 
-    'index.html': (project) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${project.name || 'Generated Project'}</title>
+    <title>[BUSINESS_NAME]</title>
   </head>
   <body>
     <div id="root"></div>
@@ -253,14 +254,14 @@ const Contact: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">ติดต่อเรา</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">Contact Us</h1>
         <p className="text-lg text-gray-600 mb-8 text-center">
-          เราพร้อมรับฟังความคิดเห็นและคำแนะนำจากคุณ
+          We are ready to listen to your feedback and suggestions
         </p>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">ข้อมูลติดต่อ</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Contact Information</h2>
             <div className="space-y-4">
               <div className="flex items-center">
                 <svg className="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,7 +280,7 @@ const Contact: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span className="text-gray-700">กรุงเทพมหานคร, ประเทศไทย</span>
+                <span className="text-gray-700">Bangkok, Thailand</span>
               </div>
             </div>
           </div>
@@ -313,13 +314,13 @@ const Navbar: React.FC = () => {
           {/* Navigation Links */}
           <div className="flex items-center space-x-4">
             <Link to="/" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              หน้าแรก
+              Home
             </Link>
             <Link to="/about" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              เกี่ยวกับ
+              About
             </Link>
             <Link to="/contact" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              ติดต่อ
+              Contact
             </Link>
           </div>
           
@@ -327,11 +328,11 @@ const Navbar: React.FC = () => {
           <div className="flex items-center space-x-4">
             <input 
               type="text" 
-              placeholder="ค้นหา..." 
+              placeholder="Search..." 
               className="w-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-              ค้นหา
+              Search
             </button>
           </div>
         </div>
@@ -357,21 +358,21 @@ const Footer: React.FC = () => {
               ${project.name || 'Website'}
             </Link>
             <p className="text-gray-600 mb-4">
-              เว็บไซต์สมัยใหม่ที่สร้างด้วย React และ TypeScript
+              Modern website built with React and TypeScript
             </p>
           </div>
           
           <div>
-            <h4 className="font-semibold text-gray-900 mb-4">เมนูด่วน</h4>
+            <h4 className="font-semibold text-gray-900 mb-4">Quick Menu</h4>
             <ul className="space-y-2 text-gray-600">
-              <li><Link to="/" className="hover:text-gray-900">หน้าแรก</Link></li>
-              <li><Link to="/about" className="hover:text-gray-900">เกี่ยวกับเรา</Link></li>
-              <li><Link to="/contact" className="hover:text-gray-900">ติดต่อ</Link></li>
+              <li><Link to="/" className="hover:text-gray-900">Home</Link></li>
+              <li><Link to="/about" className="hover:text-gray-900">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-gray-900">Contact</Link></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="font-semibold text-gray-900 mb-4">เทคโนโลยี</h4>
+            <h4 className="font-semibold text-gray-900 mb-4">Technology</h4>
             <ul className="space-y-2 text-gray-600 text-sm">
               <li>• React 18</li>
               <li>• TypeScript</li>
@@ -382,7 +383,7 @@ const Footer: React.FC = () => {
         </div>
         
         <div className="border-t mt-8 pt-8 text-center text-gray-600">
-          <p>&copy; {currentYear} ${project.name || 'Website'}. สงวนลิขสิทธิ์.</p>
+          <p>&copy; {currentYear} ${project.name || 'Website'}. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -397,11 +398,11 @@ const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">ยินดีต้อนรับสู่ ${project.name || 'เว็บไซต์ของเรา'}</h1>
-        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">เว็บไซต์สมัยใหม่ที่สร้างด้วยเทคโนโลยีล่าสุด</p>
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">Welcome to ${project.name || 'Our Website'}</h1>
+        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">Modern website built with the latest technology</p>
         <div className="space-x-3">
-          <a href="/about" className="btn-primary px-6 py-3 rounded-lg font-semibold">เริ่มต้นใช้งาน</a>
-          <a href="/contact" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">ติดต่อเรา</a>
+          <a href="/about" className="btn-primary px-6 py-3 rounded-lg font-semibold">Get Started</a>
+          <a href="/contact" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">Contact Us</a>
         </div>
       </div>
     </section>
@@ -415,35 +416,35 @@ export default HeroSection;`,
 const ContactForm: React.FC = () => {
   return (
     <div className="max-w-lg mx-auto bg-white shadow-lg rounded-xl p-6">
-      <h2 className="text-3xl font-bold text-gray-900 mb-6">ส่งข้อความถึงเรา</h2>
+      <h2 className="text-3xl font-bold text-gray-900 mb-6">Send us a message</h2>
       <form>
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="name">ชื่อ</label>
+          <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="name">Name</label>
           <input
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             type="text"
             id="name"
-            placeholder="ชื่อของคุณ"
+            placeholder="Your name"
             required
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="email">อีเมล</label>
+          <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="email">Email</label>
           <input
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             type="email"
             id="email"
-            placeholder="อีเมลของคุณ"
+            placeholder="Your email"
             required
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="message">ข้อความ</label>
+          <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="message">Message</label>
           <textarea
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             id="message"
             rows={4}
-            placeholder="ข้อความของคุณ"
+            placeholder="Your message"
             required
           ></textarea>
         </div>
@@ -451,7 +452,7 @@ const ContactForm: React.FC = () => {
           className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
           type="submit"
         >
-          ส่งข้อความ
+          Send Message
         </button>
       </form>
     </div>
