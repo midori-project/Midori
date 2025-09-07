@@ -93,8 +93,16 @@ async function handleInitialStep(session: ChatSession, userMessage: string): Pro
   const systemPrompt = `คุณคือmidoriเป็นกบเพื่อนรักนักเขียนโค้ดมี มีวิธีการพูดคุยที่เป็นมิตร แทรกemoji บ้างในคำตอบ ถ้าผู้ใช้ตอบเป็นภาษาไทย ให้ใช้ภาษาไทยหรือคำศัพท์อังกฤษบางคำเพื่ออธธิบายให้เข้าใจง่าย เพื่อให้บทสนาทนาลื่นไหล ถ้าไม่ใช่ให้ตอบภาษาอังกฤษ มีความสามารถในการวิเคราะห์พรอมท์อย่างละเอียด เพื่อวิเคราะห์จุดประสงค์ของผู้ใช้ และตั้งคำถามต่อยอดเกี่ยวกับความต้องการพรอมท์ที่ได้รับเข้ามาเพื่อให้ได้พรอมท์ที่ละเอียดที่สุดสำหรับการสร้างโปรเจ็ค
   เรียกผู้ใช้ว่า "เธอ" ตอบกลับด้วยคำลงท้ายด้วยครับ
 
+**สำคัญ:** ระบบรองรับเฉพาะประเภทโปรเจ็คต่อไปนี้:
+- blog (บล็อก/เว็บไซต์บทความ)
+- restaurant (ร้านอาหาร)
+- cafe (คาเฟ่/ร้านกาแฟ)
+- fashion (แฟชั่น/เสื้อผ้า)
+- technology (เทคโนโลยี/ซอฟต์แวร์)
+- default (เว็บไซต์ทั่วไป)
+
 ขั้นตอนที่ 1: วิเคราะห์ความสมบูรณ์ของ prompt แรก
-- วิเคราะห์ประเภทโปรเจกต์ (เช่น e-commerce, blog, portfolio, business website)
+- วิเคราะห์ประเภทโปรเจกต์ (ต้องเป็นหนึ่งในประเภทที่รองรับข้างต้น)
 - ระบุฟีเจอร์หลักที่จำเป็น
 - ระบุกลุ่มเป้าหมาย
 - ประเมินความซับซ้อน (simple/medium/complex)
@@ -107,16 +115,16 @@ async function handleInitialStep(session: ChatSession, userMessage: string): Pro
 
 ตอบกลับในรูปแบบ JSON เท่านั้น:
 {
-  "projectType": "ประเภทโปรเจกต์",
+  "projectType": "blog|restaurant|cafe|fashion|technology|default",
   "coreFeatures": ["ฟีเจอร์1", "ฟีเจอร์2"],
   "targetAudience": "กลุ่มเป้าหมาย",
   "complexity": "simple|medium|complex",
   "estimatedTokens": จำนวน,
   "techStack": {
-    "frontend": ["เทคโนโลยี1", "เทคโนโลยี2"],
-    "backend": ["เทคโนโลยี1", "เทคโนโลยี2"],
-    "database": ["เทคโนโลยี1", "เทคโนโลยี2"],
-    "deployment": ["เทคโนโลยี1", "เทคโนโลยี2"]
+    "frontend": ["React", "TypeScript", "Tailwind CSS"],
+    "backend": ["Node.js", "Express"],
+    "database": ["PostgreSQL", "Prisma"],
+    "deployment": ["Vercel", "Railway"]
   },
   "completeness": {
     "score": 0-100,
@@ -133,6 +141,9 @@ async function handleInitialStep(session: ChatSession, userMessage: string): Pro
 }`;
 
   try {
+    console.log('🤖 Sending request to OpenAI for initial analysis...');
+    console.log('📝 User message:', userMessage.substring(0, 100) + '...');
+    
     const completion = await openai.chat.completions.create({
       model: "gpt-5-nano",
       messages: [
@@ -143,16 +154,35 @@ async function handleInitialStep(session: ChatSession, userMessage: string): Pro
     });
 
     const aiResponse = completion.choices[0]?.message?.content || '';
+    console.log('📄 OpenAI Response received, length:', aiResponse.length);
+    
     const parsedResponse = parseAIResponse(aiResponse);
+    console.log('🔍 Parsed response:', {
+      projectType: parsedResponse?.projectType,
+      coreFeatures: parsedResponse?.coreFeatures?.length || 0,
+      targetAudience: parsedResponse?.targetAudience
+    });
 
     if (!parsedResponse) {
       throw new Error('Failed to parse AI response');
     }
 
+    // ตรวจสอบและปรับปรุง projectType ให้ตรงกับ preset ที่รองรับ
+    const validProjectTypes = ['blog', 'restaurant', 'cafe', 'fashion', 'technology', 'default'];
+    let validatedProjectType = parsedResponse.projectType;
+    
+    // ถ้า projectType ไม่ตรงกับ preset ที่รองรับ ให้แปลงเป็น default
+    if (!validProjectTypes.includes(parsedResponse.projectType)) {
+      console.log(`⚠️ Invalid project type: ${parsedResponse.projectType}, converting to default`);
+      validatedProjectType = 'default';
+    }
+    
+    console.log('🎯 Validated Project Type:', validatedProjectType);
+
     // Update session
     session.originalPrompt = userMessage;
     session.analysis = {
-      projectType: parsedResponse.projectType,
+      projectType: validatedProjectType,
       coreFeatures: parsedResponse.coreFeatures,
       targetAudience: parsedResponse.targetAudience,
       complexity: parsedResponse.complexity,
@@ -364,6 +394,14 @@ ${Object.entries(session.userResponses).map(([key, value]) => `${key}: ${value}`
 
 **สำคัญ**: สร้างไฟล์ JSON ที่ครบถ้วนและชัดเจนสำหรับการสร้างเว็บไซต์นี้ โดยรวมข้อมูลทั้งหมดที่ได้จากการวิเคราะห์และคำตอบของผู้ใช้
 
+**ข้อกำหนด JSON ที่ต้องมี:**
+- project.name: ชื่อโปรเจ็ค
+- project.type: ประเภทโปรเจ็ค (ต้องเป็น blog|restaurant|cafe|fashion|technology|default)
+- project.goal: เป้าหมายของโปรเจ็ค
+- features: รายการฟีเจอร์
+- targetAudience: กลุ่มเป้าหมาย
+- dataModel: โครงสร้างข้อมูล (ถ้ามี)
+
 **ข้อกำหนด JSON**:
 - ต้องเป็น JSON ที่ถูกต้องตามมาตรฐาน
 - ไม่มีข้อความอธิบายนอก JSON object
@@ -374,6 +412,13 @@ ${Object.entries(session.userResponses).map(([key, value]) => `${key}: ${value}`
 ตอบกลับด้วย JSON เท่านั้น ไม่มีข้อความอื่น`;
 
   try {
+    console.log('🤖 Sending request to OpenAI for final JSON generation...');
+    console.log('📊 Session data:', {
+      projectType: session.analysis?.projectType,
+      userResponsesCount: Object.keys(session.userResponses).length,
+      targetAudience: session.analysis?.targetAudience
+    });
+    
     const completion = await openai.chat.completions.create({
       model: "gpt-5-nano",
       messages: [
@@ -384,7 +429,10 @@ ${Object.entries(session.userResponses).map(([key, value]) => `${key}: ${value}`
     });
 
     const finalJsonResponse = completion.choices[0]?.message?.content || '';
+    console.log('📄 Final JSON Response received, length:', finalJsonResponse.length);
+    
     let finalJson = parseAIResponse(finalJsonResponse);
+    console.log('🔍 Initial parse result:', !!finalJson);
     
     // ถ้า parse ไม่สำเร็จ ให้ลอง parse ใหม่
     if (!finalJson) {
@@ -396,13 +444,51 @@ ${Object.entries(session.userResponses).map(([key, value]) => `${key}: ${value}`
         
         // สร้าง JSON ตัวอย่างแทน
         finalJson = {
-          projectName: "เว็บไซต์ใหม่",
-          description: "เว็บไซต์ที่สร้างจากข้อมูลที่ผู้ใช้ให้มา",
-          type: "website",
+          project: {
+            name: "เว็บไซต์ใหม่",
+            type: "default",
+            goal: "สร้างเว็บไซต์ที่ใช้งานได้"
+          },
           features: ["หน้าแรก", "เกี่ยวกับเรา", "ติดต่อ"],
+          targetAudience: "ผู้ใช้ทั่วไป",
           error: "ไม่สามารถ parse JSON จาก AI ได้ ใช้ข้อมูลตัวอย่างแทน"
         };
       }
+    }
+    
+    // ตรวจสอบและปรับปรุง JSON structure ให้ตรงกับ preset system
+    if (finalJson) {
+      // ตรวจสอบว่า project.type ตรงกับ preset ที่รองรับหรือไม่
+      const validProjectTypes = ['blog', 'restaurant', 'cafe', 'fashion', 'technology', 'default'];
+      if (finalJson.project && finalJson.project.type) {
+        if (!validProjectTypes.includes(finalJson.project.type)) {
+          console.log(`⚠️ Invalid project.type in final JSON: ${finalJson.project.type}, converting to default`);
+          finalJson.project.type = 'default';
+        }
+      } else if (finalJson.type) {
+        // ถ้าใช้ structure เก่า ให้แปลงเป็น structure ใหม่
+        if (!validProjectTypes.includes(finalJson.type)) {
+          console.log(`⚠️ Invalid type in final JSON: ${finalJson.type}, converting to default`);
+          finalJson.type = 'default';
+        }
+        // แปลง structure เก่าเป็นใหม่
+        finalJson = {
+          project: {
+            name: finalJson.projectName || finalJson.name || "เว็บไซต์ใหม่",
+            type: finalJson.type || "default",
+            goal: finalJson.description || finalJson.goal || "สร้างเว็บไซต์ที่ใช้งานได้"
+          },
+          features: finalJson.features || ["หน้าแรก", "เกี่ยวกับเรา", "ติดต่อ"],
+          targetAudience: finalJson.targetAudience || "ผู้ใช้ทั่วไป",
+          dataModel: finalJson.dataModel || {}
+        };
+      }
+      
+      console.log('✅ Final JSON validated and structured:', {
+        projectType: finalJson.project?.type || finalJson.type,
+        projectName: finalJson.project?.name || finalJson.projectName,
+        featuresCount: finalJson.features?.length || 0
+      });
     }
     
     // Update session

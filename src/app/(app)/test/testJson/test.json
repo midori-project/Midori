@@ -1,0 +1,189 @@
+{
+  "files": [
+    {
+      "path": "package.json",
+      "content": "{\n  \"name\": \"my-sandpack-vite-react-project\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"build\": \"tsc\",\n    \"preview\": \"vite preview\"\n  },\n  \"dependencies\": {\n    \"react\": \"18.2.0\",\n    \"react-dom\": \"18.2.0\",\n    \"react-router-dom\": \"6.8.1\"\n  },\n  \"devDependencies\": {\n    \"tailwindcss\": \"3.3.3\",\n    \"@types/react\": \"18.2.15\",\n    \"@types/react-dom\": \"18.2.7\",\n    \"typescript\": \"5.1.6\",\n    \"@vitejs/plugin-react\": \"4.0.3\",\n    \"vite\": \"4.4.9\"\n  }\n}",
+      "type": "config",
+      "language": "json"
+    },
+    {
+      "path": "index.html",
+      "content": "<!doctype html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Vite + React App</title>\n</head>\n<body>\n    <div id=\"root\"></div>\n    <script type=\"module\" src=\"/src/main.tsx\"></script>\n</body>\n</html>",
+      "type": "config",
+      "language": "html"
+    },
+    {
+      "path": "src/main.tsx",
+      "content": "import React, { useEffect } from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App.tsx';\nimport './index.css';\n\nfunction ThemeBootstrapper() {\n  useEffect(() => {\n    const w = globalThis as any;\n    const data = w?.__MIDORI_FINAL_JSON__;\n    const colors = data?.brand?.colors || data?.theme?.colors;\n    if (colors) {\n      const root = document.documentElement;\n      if (colors.primary) root.style.setProperty('--color-primary', colors.primary);\n      if (colors.secondary) root.style.setProperty('--color-secondary', colors.secondary);\n      if (colors.accent) root.style.setProperty('--color-accent', colors.accent);\n    }\n  }, []);\n  return null;\n}\n\nReactDOM.createRoot(document.getElementById('root')!).render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <ThemeBootstrapper />\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>,\n);",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/App.tsx",
+      "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Navbar from './components/Navbar.tsx';\nimport Footer from './components/Footer.tsx';\nimport Home from './pages/Home.tsx';\nimport Menu from './pages/Menu.tsx';\nimport Reservation from './pages/Reservation.tsx';\nimport ChefProfile from './pages/ChefProfile.tsx';\nimport DishGallery from './pages/DishGallery.tsx';\nimport About from './pages/About.tsx';\nimport Contact from './pages/Contact.tsx';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"min-h-screen flex flex-col\">\n      <Navbar />\n      <main className=\"flex-1\">\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/menu\" element={<Menu />} />\n          <Route path=\"/reservation\" element={<Reservation />} />\n          <Route path=\"/chef-profile\" element={<ChefProfile />} />\n          <Route path=\"/dish-gallery\" element={<DishGallery />} />\n          <Route path=\"/about\" element={<About />} />\n          <Route path=\"/contact\" element={<Contact />} />\n        </Routes>\n      </main>\n      <Footer />\n    </div>\n  );\n};\n\nexport default App;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/index.css",
+      "content": "@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');\n\nhtml, body, div, h1, h2, h3, h4, h5, h6, p, ul, li {\n  margin: 0;\n  padding: 0;\n  box-sizing: border-box;\n}\n\nbody {\n  font-family: 'Montserrat', sans-serif;\n  background-color: #fff3e0; /* light warm background */\n  color: #cc0000; /* warm red text color */\n}\n\nh1, h2, h3, h4, h5, h6 {\n  font-weight: 700;\n}\n\np {\n  font-weight: 400;\n}\n\nul {\n  list-style: none;\n}\n\na {\n  text-decoration: none;\n  color: #cc0000; /* warm red for links */\n}\n\na:hover {\n  text-decoration: underline;\n}\n\nbutton {\n  cursor: pointer;\n  background-color: #ff5722; /* warm orange background */\n  color: white; /* white text for buttons */\n  border: none;\n  border-radius: 0.375rem; /* rounded-md */\n  padding: 0.5rem 1rem; /* p-2 */\n  transition: background-color 0.3s;\n}\n\nbutton:hover {\n  background-color: #e64a19; /* darker orange on hover */\n}\n\ninput, textarea {\n  border: 1px solid #cccccc; /* gray border for inputs */\n  border-radius: 0.375rem; /* rounded-md */\n  padding: 0.5rem; /* p-2 */\n  width: 100%;\n}\n\ninput:focus, textarea:focus {\n  border-color: #ff5722; /* orange border on focus */\n  outline: none;\n  box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.3); /* focus ring */\n}",
+      "type": "style",
+      "language": "css"
+    },
+    {
+      "path": "vite.config.ts",
+      "content": "import { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react';\n\nexport default defineConfig({\n  plugins: [react()],\n  server: {\n    open: true,\n  },\n});",
+      "type": "config",
+      "language": "typescript"
+    },
+    {
+      "path": "tailwind.config.js",
+      "content": "export default {\n  content: [\n    './index.html',\n    './src/**/*.{js,ts,jsx,tsx}',\n  ],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n}",
+      "type": "config",
+      "language": "javascript"
+    },
+    {
+      "path": "src/pages/Home.tsx",
+      "content": "import React from 'react';\nimport HeroSection from '../components/HeroSection.tsx';\n\nconst Home: React.FC = () => {\n  return (\n    <div className=\"min-h-screen bg-gray-50\">\n      <HeroSection />\n      <section className=\"py-16 bg-white\">\n        <div className=\"max-w-6xl mx-auto px-4 sm:px-6 lg:px-8\">\n          <h2 className=\"text-3xl font-bold text-gray-900 mb-8 text-center\">Featured Menu</h2>\n          <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n            <div className=\"bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow\">\n              <div className=\"w-full h-48 bg-gradient-to-r from-red-500 to-orange-600 rounded-lg mb-4\"></div>\n              <h3 className=\"text-xl font-semibold text-gray-900 mb-2\">[Menu Item 1]</h3>\n              <p className=\"text-gray-600 mb-4\">[Menu Description 1]</p>\n              <div className=\"flex items-center justify-between\">\n                <span className=\"text-2xl font-bold text-red-600\">฿1,890</span>\n                <button className=\"bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors\">Order Now</button>\n              </div>\n            </div>\n            <div className=\"bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow\">\n              <div className=\"w-full h-48 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg mb-4\"></div>\n              <h3 className=\"text-xl font-semibold text-gray-900 mb-2\">[Menu Item 2]</h3>\n              <p className=\"text-gray-600 mb-4\">[Menu Description 2]</p>\n              <div className=\"flex items-center justify-between\">\n                <span className=\"text-2xl font-bold text-red-600\">฿890</span>\n                <button className=\"bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors\">Order Now</button>\n              </div>\n            </div>\n            <div className=\"bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow\">\n              <div className=\"w-full h-48 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg mb-4\"></div>\n              <h3 className=\"text-xl font-semibold text-gray-900 mb-2\">[Menu Item 3]</h3>\n              <p className=\"text-gray-600 mb-4\">[Menu Description 3]</p>\n              <div className=\"flex items-center justify-between\">\n                <span className=\"text-2xl font-bold text-red-600\">฿290</span>\n                <button className=\"bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors\">Order Now</button>\n              </div>\n            </div>\n          </div>\n        </div>\n      </section>\n      <section className=\"py-16 bg-gray-50\">\n        <div className=\"max-w-6xl mx-auto px-4 sm:px-6 lg:px-8\">\n          <h2 className=\"text-3xl font-bold text-gray-900 mb-8 text-center\">Why Choose Us</h2>\n          <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n            <div className=\"text-center\">\n              <div className=\"w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4\">\n                <svg className=\"w-8 h-8 text-red-600\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path strokeLinecap=\"round\" strokeLinejoin=\"round\" strokeWidth={2} d=\"M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z\" /></svg>\n              </div>\n              <h3 className=\"text-xl font-semibold text-gray-900 mb-2\">[Feature 1]</h3>\n              <p className=\"text-gray-600\">[Feature Description 1]</p>\n            </div>\n            <div className=\"text-center\">\n              <div className=\"w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4\">\n                <svg className=\"w-8 h-8 text-red-600\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path strokeLinecap=\"round\" strokeLinejoin=\"round\" strokeWidth={2} d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\" /></svg>\n              </div>\n              <h3 className=\"text-xl font-semibold text-gray-900 mb-2\">[Feature 2]</h3>\n              <p className=\"text-gray-600\">[Feature Description 2]</p>\n            </div>\n            <div className=\"text-center\">\n              <div className=\"w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4\">\n                <svg className=\"w-8 h-8 text-red-600\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path strokeLinecap=\"round\" strokeLinejoin=\"round\" strokeWidth={2} d=\"M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z\" /></svg>\n              </div>\n              <h3 className=\"text-xl font-semibold text-gray-900 mb-2\">[Feature 3]</h3>\n              <p className=\"text-gray-600\">[Feature Description 3]</p>\n            </div>\n          </div>\n        </div>\n      </section>\n    </div>\n  );\n};\n\nexport default Home;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Menu.tsx",
+      "content": "import React from 'react';\nimport MenuCard from '../components/MenuCard.tsx';\n\n// AI NOTE: เมนูจะถูกเติมจาก promptJson (finalJson.menu.items)\n// โครงสร้างที่คาดหวัง: finalJson.menu = { items: [{ title, description?, price }] }\n\ntype MenuItem = { title: string; description?: string; price: number };\n\n// fallback เผื่อไม่มีข้อมูลจาก AI\nconst fallbackMenu: MenuItem[] = [\n  { title: 'Signature Steak', price: 1890 },\n  { title: 'Truffle Pasta', price: 890 },\n  { title: 'Seafood Platter', price: 2990 },\n];\n\n// อ่านข้อมูลจาก window.__MIDORI_FINAL_JSON__ ที่ฝั่ง preview จะ inject ให้\nfunction getMenuItems(): MenuItem[] {\n  const w = globalThis as any;\n  const data = w?.__MIDORI_FINAL_JSON__;\n  const items = data?.menu?.items;\n  if (Array.isArray(items) && items.length > 0) return items as MenuItem[];\n  return fallbackMenu;\n}\n\nconst Menu: React.FC = () => {\n  const items = getMenuItems();\n  return (\n    <div className=\"min-h-screen bg-gray-50 py-12\">\n      <div className=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\">\n        <h1 className=\"text-4xl font-bold text-gray-900 mb-8 text-center\">Our Menu</h1>\n        <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n          {items.map((it, i) => (\n            <MenuCard key={i} title={it.title} description={it.description} price={it.price} />\n          ))}\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default Menu;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Reservation.tsx",
+      "content": "import React from 'react';\nimport ReservationForm from '../components/ReservationForm.tsx';\n\nconst Reservation: React.FC = () => {\n  return (\n    <div className=\"min-h-screen bg-gray-50 py-12\">\n      <div className=\"max-w-3xl mx-auto px-4 sm:px-6 lg:px-8\">\n        <h1 className=\"text-4xl font-bold text-gray-900 mb-6 text-center\">Make a Reservation</h1>\n        <div className=\"bg-white p-6 rounded-lg shadow\">\n          <ReservationForm />\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default Reservation;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/ChefProfile.tsx",
+      "content": "import React from 'react';\n\nconst ChefProfile: React.FC = () => {\n  return (\n    <div className=\"min-h-screen bg-gray-50 py-12\">\n      <div className=\"max-w-5xl mx-auto px-4 sm:px-6 lg:px-8\">\n        <h1 className=\"text-4xl font-bold text-gray-900 mb-8 text-center\">Meet Our Chef</h1>\n        <div className=\"grid grid-cols-1 md:grid-cols-2 gap-8 items-center\">\n          <div className=\"w-full h-80 bg-red-100 rounded-xl\" />\n          <div>\n            <h2 className=\"text-2xl font-semibold text-gray-900 mb-4\">Chef Somchai</h2>\n            <p className=\"text-gray-700 leading-relaxed\">With over 15 years of culinary experience and a passion for creating unforgettable flavors, Chef Somchai leads our kitchen with creativity and precision.</p>\n          </div>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default ChefProfile;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/DishGallery.tsx",
+      "content": "import React from 'react';\n\nconst DishGallery: React.FC = () => {\n  const items = new Array(9).fill(0);\n  return (\n    <div className=\"min-h-screen bg-gray-50 py-12\">\n      <div className=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\">\n        <h1 className=\"text-4xl font-bold text-gray-900 mb-8 text-center\">Dish Gallery</h1>\n        <div className=\"grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6\">\n          {items.map((_, i) => (\n            <div key={i} className=\"aspect-square bg-gradient-to-br from-red-400 to-orange-400 rounded-xl\" />\n          ))}\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default DishGallery;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/MenuCard.tsx",
+      "content": "import React from 'react';\n\nconst MenuCard: React.FC = () => {\n    return (\n        <div className=\"bg-white rounded-lg shadow-md overflow-hidden transition-shadow hover:shadow-lg p-4\">\n            <img src=\"https://via.placeholder.com/300\" alt=\"Dish\" className=\"w-full h-48 object-cover mb-4\" />\n            <h2 className=\"text-2xl font-semibold text-gray-900 mb-2\">SomTam Fusion</h2>\n            <p className=\"text-gray-700 text-base mb-4\">A delightful fusion of Thai and Japanese flavors with fresh ingredients.</p>\n            <span className=\"text-xl font-bold text-blue-600\">฿150</span>\n            <button className=\"mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50\">\n                Order Now\n            </button>\n        </div>\n    );\n};\n\nexport default MenuCard;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/ReservationForm.tsx",
+      "content": "import React from 'react';\n\nconst ReservationForm: React.FC = () => {\n    return (\n        <div className=\"max-w-lg mx-auto p-6 bg-white rounded-lg shadow-lg\">\n            <h2 className=\"text-3xl font-bold text-gray-800 mb-4 text-center\">Reserve Your Table</h2>\n            <form>\n                <div className=\"mb-4\">\n                    <label className=\"block text-gray-700 text-sm font-semibold mb-2\" htmlFor=\"name\">Name</label>\n                    <input\n                        type=\"text\"\n                        id=\"name\"\n                        className=\"w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                        placeholder=\"Your Name\"\n                        required\n                    />\n                </div>\n                <div className=\"mb-4\">\n                    <label className=\"block text-gray-700 text-sm font-semibold mb-2\" htmlFor=\"email\">Email</label>\n                    <input\n                        type=\"email\"\n                        id=\"email\"\n                        className=\"w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                        placeholder=\"Your Email\"\n                        required\n                    />\n                </div>\n                <div className=\"mb-4\">\n                    <label className=\"block text-gray-700 text-sm font-semibold mb-2\" htmlFor=\"date\">Date</label>\n                    <input\n                        type=\"date\"\n                        id=\"date\"\n                        className=\"w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                        required\n                    />\n                </div>\n                <div className=\"mb-4\">\n                    <label className=\"block text-gray-700 text-sm font-semibold mb-2\" htmlFor=\"time\">Time</label>\n                    <input\n                        type=\"time\"\n                        id=\"time\"\n                        className=\"w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                        required\n                    />\n                </div>\n                <div className=\"mb-4\">\n                    <label className=\"block text-gray-700 text-sm font-semibold mb-2\" htmlFor=\"guests\">Number of Guests</label>\n                    <input\n                        type=\"number\"\n                        id=\"guests\"\n                        min=\"1\"\n                        className=\"w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                        placeholder=\"Number of Guests\"\n                        required\n                    />\n                </div>\n                <button\n                    type=\"submit\"\n                    className=\"w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium\"\n                >\n                    Submit Reservation\n                </button>\n            </form>\n        </div>\n    );\n};\n\nexport default ReservationForm;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/About.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst About: React.FC = () => {\n  return (\n    <div className=\"min-h-screen bg-gray-50 py-12\">\n      <div className=\"max-w-6xl mx-auto px-4 sm:px-6 lg:px-8\">\n        <h1 className=\"text-4xl font-bold text-gray-900 mb-6 text-center\">About Our Restaurant</h1>\n        <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12\">\n          <div>\n            <h2 className=\"text-2xl font-semibold text-gray-800 mb-4\">Restaurant History</h2>\n            <p className=\"text-lg text-gray-600 mb-6 leading-relaxed\">Our restaurant has been serving customers for over 10 years with a commitment to providing high-quality food and friendly service to all our customers.</p>\n            <h3 className=\"text-xl font-semibold text-gray-800 mb-4\">Head Chef</h3>\n            <div className=\"bg-white rounded-lg p-6 shadow-sm\">\n              <div className=\"flex items-center mb-4\">\n                <div className=\"w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mr-4\">\n                  <svg className=\"w-8 h-8 text-red-600\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path strokeLinecap=\"round\" strokeLinejoin=\"round\" strokeWidth={2} d=\"M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\" /></svg>\n                </div>\n                <div>\n                  <h4 className=\"font-semibold text-gray-900\">Chef Somchai</h4>\n                  <p className=\"text-gray-600\">Head Chef</p>\n                </div>\n              </div>\n              <p className=\"text-gray-600\">With over 15 years of culinary experience, graduated from a leading culinary institute.</p>\n            </div>\n          </div>\n          <div>\n            <h2 className=\"text-2xl font-semibold text-gray-800 mb-4\">Our Features</h2>\n            <div className=\"space-y-4 mb-6\">\n              <div className=\"flex items-center\"><svg className=\"w-6 h-6 text-red-500 mr-3\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path strokeLinecap=\"round\" strokeLinejoin=\"round\" strokeWidth={2} d=\"M5 13l4 4L19 7\" /></svg><span className=\"text-gray-700\">Fresh ingredients daily</span></div>\n              <div className=\"flex items-center\"><svg className=\"w-6 h-6 text-red-500 mr-3\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path strokeLinecap=\"round\" strokeLinejoin=\"round\" strokeWidth={2} d=\"M5 13l4 4L19 7\" /></svg><span className=\"text-gray-700\">Over 100 diverse menu items</span></div>\n              <div className=\"flex items-center\"><svg className=\"w-6 h-6 text-red-500 mr-3\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path strokeLinecap=\"round\" strokeLinejoin=\"round\" strokeWidth={2} d=\"M5 13l4 4L19 7\" /></svg><span className=\"text-gray-700\">24-hour service</span></div>\n              <div className=\"flex items-center\"><svg className=\"w-6 h-6 text-red-500 mr-3\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path strokeLinecap=\"round\" strokeLinejoin=\"round\" strokeWidth={2} d=\"M5 13l4 4L19 7\" /></svg><span className=\"text-gray-700\">Convenient parking</span></div>\n            </div>\n            <div className=\"bg-white rounded-lg p-6 shadow-sm\">\n              <h3 className=\"text-xl font-semibold text-gray-800 mb-4\">Contact Information</h3>\n              <div className=\"space-y-2 text-gray-600\">\n                <p>📍 123 Sukhumvit Road, Bangkok 10110</p>\n                <p>📞 02-123-4567</p>\n                <p>🕒 Open 24 hours</p>\n              </div>\n              <Link to=\"/contact\" className=\"bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-medium inline-block mt-4\">Make Reservation</Link>\n            </div>\n          </div>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default About;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/pages/Contact.tsx",
+      "content": "import React from 'react';\n\nconst Contact: React.FC = () => {\n  return (\n    <div className=\"min-h-screen bg-gray-50 py-12\">\n      <div className=\"max-w-3xl mx-auto px-4 sm:px-6 lg:px-8\">\n        <h1 className=\"text-4xl font-bold text-gray-900 mb-6 text-center\">Contact Us</h1>\n        <div className=\"bg-white p-6 rounded-lg shadow space-y-4\">\n          <p>📍 123 Sukhumvit Road, Bangkok 10110</p>\n          <p>📞 02-123-4567</p>\n          <p>🕒 Open 24 hours</p>\n          <p>✉️ contact@restaurant.local</p>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default Contact;",
+      "type": "page",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Navbar.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Navbar: React.FC = () => {\n    return (\n        <div className=\"bg-white shadow-lg px-6 py-4 border-b sticky top-0 z-50\">\n            <div className=\"max-w-screen-xl mx-auto flex justify-between items-center\">\n                <div className=\"text-2xl font-bold text-gray-900\">Thai-Japanese SomTam Fusion</div>\n                <nav className=\"flex space-x-6\">\n                    <Link to=\"/\" className=\"text-gray-700 hover:text-blue-600 transition-colors\">Home</Link>\n                    <Link to=\"/menu\" className=\"text-gray-700 hover:text-blue-600 transition-colors\">Menu</Link>\n                    <Link to=\"/reservation\" className=\"text-gray-700 hover:text-blue-600 transition-colors\">Reservation</Link>\n                    <Link to=\"/about\" className=\"text-gray-700 hover:text-blue-600 transition-colors\">About</Link>\n                    <Link to=\"/contact\" className=\"text-gray-700 hover:text-blue-600 transition-colors\">Contact</Link>\n                </nav>\n            </div>\n        </div>\n    );\n};\n\nexport default Navbar;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "content": "import React from 'react';\n\nconst Footer: React.FC = () => {\n    return (\n        <div className=\"bg-gray-800 text-white py-8\">\n            <div className=\"container mx-auto px-6\">\n                <h2 className=\"text-xl font-bold mb-2\">Thai-Japanese SomTam Fusion</h2>\n                <p className=\"text-sm mb-4\">Culinary excellence since day one</p>\n                <div className=\"mb-4\">\n                    <h3 className=\"text-lg font-semibold\">Contact Information</h3>\n                    <p className=\"text-sm\">Phone: <a href=\"tel:+6621234567\" className=\"text-blue-400 hover:text-blue-300\">( +66 2-123-4567 )</a></p>\n                    <p className=\"text-sm\">Email: <a href=\"mailto:info@example.com\" className=\"text-blue-400 hover:text-blue-300\">info@example.com</a></p>\n                    <p className=\"text-sm\">Address: 123 Business Street, Bangkok, Thailand</p>\n                </div>\n                <div className=\"flex space-x-4 mb-4\">\n                    <a href=\"https://facebook.com\" target=\"_blank\" rel=\"noopener noreferrer\" className=\"text-blue-400 hover:text-blue-300\">Facebook</a>\n                    <a href=\"https://instagram.com\" target=\"_blank\" rel=\"noopener noreferrer\" className=\"text-blue-400 hover:text-blue-300\">Instagram</a>\n                    <a href=\"https://twitter.com\" target=\"_blank\" rel=\"noopener noreferrer\" className=\"text-blue-400 hover:text-blue-300\">Twitter</a>\n                </div>\n                <p className=\"text-sm text-gray-400\">© 2023 Thai-Japanese SomTam Fusion. All rights reserved.</p>\n            </div>\n        </div>\n    );\n};\n\nexport default Footer;",
+      "type": "component",
+      "language": "typescript"
+    },
+    {
+      "path": "src/components/HeroSection.tsx",
+      "content": "import React from 'react';\n\nconst HeroSection: React.FC = () => {\n    return (\n        <div className=\"bg-cover bg-center h-screen flex flex-col items-center justify-center text-white\" style={{ backgroundImage: 'url(/path-to-your-background-image.jpg)' }}>\n            <h2 className=\"text-5xl font-bold mb-4 drop-shadow-md\">Welcome to Our Restaurant</h2>\n            <p className=\"text-xl mb-6 max-w-md text-center drop-shadow-md\">Experience authentic flavors and exceptional dining in a warm, inviting atmosphere</p>\n            <button className=\"bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50\">\n                Make a Reservation\n            </button>\n        </div>\n    );\n};\n\nexport default HeroSection;",
+      "type": "component",
+      "language": "typescript"
+    }
+  ],
+  "projectStructure": {
+    "name": "Thai-Japanese SomTam Fusion",
+    "description": "สร้างเว็บไซต์สำหรับร้านอาหารที่เสิร์ฟอาหารไทยและอาหารญี่ปุ่น มีฟีเจอร์ครบถ้วนในการจัดการเมนู การจองโต๊ะ และบริการจัดส่ง",
+    "framework": "vite-react",
+    "type": "restaurant-b2c",
+    "pages": [
+      "Homepage",
+      "FoodGallery",
+      "MenuCategories",
+      "OnlineReservation",
+      "ContactInformation",
+      "AdminDashboard"
+    ],
+    "components": [
+      "HeroSection",
+      "FoodGalleryDisplay",
+      "MenuCategoryFilter",
+      "BookingForm",
+      "ContactMap",
+      "AdminMenuManager",
+      "LoyaltyProgramWidget"
+    ],
+    "features": [
+      "Homepage with food gallery and hero sections",
+      "Menu with categories and searchable filters",
+      "Online table reservation system",
+      "Delivery and takeout ordering",
+      "Contact page with map and operating hours",
+      "Admin backend for managing menus and orders",
+      "Multi-language support (English) with basic translations",
+      "Loyalty program integration and customer segmentation",
+      "Search, filters, and AI-powered recommendations",
+      "Order tracking and status updates",
+      "Responsive design using Vite, React, TypeScript, Tailwind CSS"
+    ],
+    "dependencies": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "react-router-dom": "^6.8.0"
+    },
+    "devDependencies": {
+      "@types/react": "^18.2.0",
+      "@types/react-dom": "^18.2.0",
+      "@vitejs/plugin-react": "^4.0.0",
+      "tailwindcss": "^3.3.0",
+      "typescript": "^5.0.0",
+      "vite": "^4.4.0"
+    },
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "preview": "vite preview"
+    },
+    "fileStructure": [
+      "src/pages/Homepage.tsx",
+      "src/pages/FoodGallery.tsx",
+      "src/pages/MenuCategories.tsx",
+      "src/pages/OnlineReservation.tsx",
+      "src/pages/ContactInformation.tsx",
+      "src/pages/AdminDashboard.tsx",
+      "src/components/HeroSection.tsx",
+      "src/components/FoodGalleryDisplay.tsx",
+      "src/components/MenuCategoryFilter.tsx",
+      "src/components/BookingForm.tsx",
+      "src/components/ContactMap.tsx",
+      "src/components/AdminMenuManager.tsx",
+      "src/components/LoyaltyProgramWidget.tsx"
+    ]
+  },
+  "fileCount": 19,
+  "generatedAt": "2025-09-06T18:51:01.980Z"
+}
