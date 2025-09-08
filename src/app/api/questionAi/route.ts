@@ -116,15 +116,22 @@ function deepMerge(prev: any, next: any): any {
 
 const REQUIRED_FIELDS = [
   "Name",
-  "Type",
-  "Goal",
+  "Type", 
   "Features",
   "Design.Theme",
-  "Design.PrimaryColor",
+  "Design.PrimaryColor", 
   "Design.SecondaryColor",
-  "Design.Typography",
   "Background",
 ];
+
+// ชุดคำถามที่กำหนดไว้ล่วงหน้าเพื่อให้ครบถ้วนและไม่ซ้ำ
+const PREDEFINED_QUESTIONS = {
+  "Name": "What is the name of your website project?",
+  "Type": "What type of website are you creating? (e.g., blog, restaurant, cafe, fashion, technology, ecommerce, portfolio, agency)",
+  "Features": "What specific features do you want on your website? (e.g., contact form, gallery, blog, online store, booking system)",
+  "Design.Theme": "What design theme and colors do you prefer? Please specify the theme style and your preferred primary and secondary colors.",
+  "Background": "Do you have any specific background information or context about your project that would help us understand your vision better?"
+};
 
 function getMissingFields(data: Record<string, any>): string[] {
   const has = (path: string) => {
@@ -142,68 +149,61 @@ function getMissingFields(data: Record<string, any>): string[] {
 // Core analyzer used by this route
 async function analyzeAndAskNext(userPrompt: string, existing: Record<string, any>): Promise<AnalyzeAndAskNextResponse> {
   const systemPrompt = `
-You are a professional assistant for gathering website project requirements.
+You are a professional assistant for gathering website project requirements. Your task is to analyze user input and extract relevant information while asking targeted questions for missing data.
 
-Known current data (do NOT re-ask these): 
+CURRENT SESSION DATA (do NOT re-ask fields that already have values):
 ${JSON.stringify(existing ?? {}, null, 2)}
 
-Your goal is to extract the following fields from the user's message:
+REQUIRED FIELDS TO COLLECT:
+1. Name - Website/project name
+2. Type - Website type (blog, restaurant, cafe, fashion, technology, ecommerce, portfolio, agency, etc.)
+3. Goal - Main purpose/objective of the website
+4. Features - Specific functionality needed (contact form, gallery, blog, online store, booking system, etc.)
+5. Design.Theme - Overall design style/theme
+6. Design.PrimaryColor - Main color scheme
+7. Design.SecondaryColor - Secondary/accent color
+8. Background - Additional context or background information
 
-- Name
-- Type (e.g., blog, restaurant, cafe, fashion, technology, ecommerce, portfolio, agency)
-- Goal
-- Features
-- Design:
-  - Theme
-  - PrimaryColor
-  - SecondaryColor
-  - Typography
-- Background
+CRITICAL INSTRUCTIONS:
+- Analyze the user's input carefully to extract ANY relevant information
+- For Design fields (Theme, PrimaryColor, SecondaryColor), treat them as a single combined field
+- Be intelligent about inferring missing information from context
+- If user mentions website type keywords (blog, restaurant, cafe, etc.), extract the Type field
+- If user describes colors or design preferences, extract all Design fields from that response
 
-If any fields are missing, generate natural language questions to ask the user.
+PREDEFINED QUESTIONS (use exactly as written, in English only):
+- Name: "What is the name of your website project?"
+- Type: "What type of website are you creating? (e.g., blog, restaurant, cafe, fashion, technology, ecommerce, portfolio, agency)"
+- Goal: "What is the main goal or purpose of your website?"
+- Features: "What specific features do you want on your website? (e.g., contact form, gallery, blog, online store, booking system)"
+- Design.Theme: "What design theme and colors do you prefer? Please specify the theme style and your preferred primary and secondary colors."
+- Background: "Do you have any specific background information or context about your project that would help us understand your vision better?"
 
-Do not guess or fill in any missing values yourself.
-
-Strict question rules:
-- nextQuestions MUST be written in English only.
-- Ask questions ONLY for fields listed in missingFields.
-- Do NOT include questions about fields that already exist in Known current data.
-- Each question should focus on a single field.
-
-Your response must be a valid JSON object in this format:
-
+RESPONSE FORMAT (valid JSON only):
 {
   "currentData": {
-    // fields extracted from userPrompt
+    "Name": "extracted name or empty string",
+    "Type": "extracted type or empty string", 
+    "Features": "extracted features or empty string",
+    "Design": {
+      "Theme": "extracted theme or empty string",
+      "PrimaryColor": "extracted primary color or empty string",
+      "SecondaryColor": "extracted secondary color or empty string"
+    },
+    "Background": "extracted background or null"
   },
-  "missingFields": [
-    "FieldName",
-    "Design.Theme"
-  ],
-  "nextQuestions": [
-    "What's the name of your project?",
-    "Do you have a design theme in mind?"
-  ]
+  "missingFields": ["list of field names that are still missing"],
+  "nextQuestions": ["list of predefined questions for missing fields only"]
 }
 
-Rules for currentData structure:
-- currentData MUST follow EXACTLY this schema (keys and nesting):
-{
-  "Name": "",
-  "Type": "",
-  "Goal": "",
-  "Features": "",
-  "Design": {
-    "Theme": "",
-    "PrimaryColor": "",
-    "SecondaryColor": "",
-  },
-  "Background": ""||null
-}
-- Only include keys that you can extract with confidence from the user input.
-- If a field is not provided by the user, DO NOT invent values; leave it out of currentData and list it in missingFields.
-- When all fields are provided (no missingFields), nextQuestions should be an empty array.
-- Do not include any text outside of the JSON object.
+STRICT RULES:
+1. Extract information intelligently - don't just look for exact matches
+2. If user says "I want a blog about cooking" → extract Type: "blog", Goal: "cooking blog"
+3. If user says "blue and white colors" → extract PrimaryColor: "blue", SecondaryColor: "white"
+4. Only ask questions for fields that are actually missing
+5. Use ONLY the predefined questions above
+6. For Design fields, ask the combined question only once
+7. Return valid JSON only - no additional text
 `;
 
   const completion = await openai.chat.completions.create({
@@ -224,12 +224,23 @@ Rules for currentData structure:
   // Merge with existing to avoid losing previously collected fields
   const merged = deepMerge(existing ?? {}, parsed.currentData ?? {});
   const missing = getMissingFields(merged);
-  const questions: string[] = Array.isArray(parsed.nextQuestions) ? parsed.nextQuestions : [];
+  
+  // ใช้ชุดคำถามที่กำหนดไว้ล่วงหน้าแทนการสร้างคำถามใหม่
+  const questions: string[] = missing.map(field => {
+    // สำหรับ Design fields ให้รวมเป็นคำถามเดียว
+    if (field === "Design.Theme" || field === "Design.PrimaryColor" || field === "Design.SecondaryColor") {
+      return PREDEFINED_QUESTIONS["Design.Theme"];
+    }
+    return PREDEFINED_QUESTIONS[field as keyof typeof PREDEFINED_QUESTIONS] || "";
+  }).filter((q, index, arr) => {
+    // ลบคำถามซ้ำ (โดยเฉพาะ Design question)
+    return q && arr.indexOf(q) === index;
+  });
 
   return {
     currentData: merged,
     missingFields: missing,
-    nextQuestions: questions.filter((q) => typeof q === 'string' && q.trim().length > 0)
+    nextQuestions: questions
   };
 }
 
@@ -254,33 +265,62 @@ export async function POST(req: NextRequest) {
     }
 
     const session = chatSessions.get(sessionId)!;
-    // If previous question targeted a specific field, treat current message as the answer
+    
+    // Always analyze the current user message first to extract any information
+    const analysis = await analyzeAndAskNext(userMessage, session.currentData ?? {});
+    
+    // If previous question targeted a specific field, also treat current message as the answer to that field
     const prevLastField: string | undefined = (session as any).lastField;
     if (prevLastField && typeof userMessage === 'string' && userMessage.trim().length > 0) {
       session.currentData = session.currentData ?? {};
       setByPath(session.currentData as any, prevLastField, userMessage.trim());
     }
 
-    const analysis = await analyzeAndAskNext(userMessage, session.currentData ?? {});
-
     // Update session minimal state
     session.updatedAt = new Date();
-    session.currentData = analysis.currentData ?? session.currentData ?? {};
+    
+    // Merge all data sources: AI analysis + direct field answers
+    const mergedData = deepMerge(session.currentData ?? {}, analysis.currentData ?? {});
+    session.currentData = mergedData;
+    
+    // Recalculate missing fields based on merged data
+    const finalMissingFields = getMissingFields(mergedData);
+    
+    // Generate questions for missing fields
+    const finalQuestions: string[] = finalMissingFields.map(field => {
+      // สำหรับ Design fields ให้รวมเป็นคำถามเดียว
+      if (field === "Design.Theme" || field === "Design.PrimaryColor" || field === "Design.SecondaryColor") {
+        return PREDEFINED_QUESTIONS["Design.Theme"];
+      }
+      return PREDEFINED_QUESTIONS[field as keyof typeof PREDEFINED_QUESTIONS] || "";
+    }).filter((q, index, arr) => {
+      // ลบคำถามซ้ำ (โดยเฉพาะ Design question)
+      return q && arr.indexOf(q) === index;
+    });
+    
     // dedupe asked questions
     const askedSet = new Set((session as any).askedFields ?? []);
-    const dedupQuestions = (analysis.nextQuestions ?? []).filter((q) => {
+    const dedupQuestions = finalQuestions.filter((q) => {
       const key = q.trim().toLowerCase();
       if (askedSet.has(key)) return false;
       askedSet.add(key);
       return true;
     });
     (session as any).askedFields = Array.from(askedSet);
+    
     // Advance lastField to the next missing field (first in list), or undefined if complete
-    const nextField = (analysis.missingFields ?? [])[0];
+    const nextField = finalMissingFields[0];
     (session as any).lastField = nextField;
     
-    const isComplete = (analysis.missingFields?.length ?? 0) === 0;
-    return NextResponse.json({ sessionId, currentData: session.currentData, missingFields: analysis.missingFields, nextQuestions: dedupQuestions, lastField: (session as any).lastField, isComplete });
+    const isComplete = finalMissingFields.length === 0;
+    return NextResponse.json({ 
+      sessionId, 
+      currentData: session.currentData, 
+      missingFields: finalMissingFields, 
+      nextQuestions: dedupQuestions, 
+      lastField: (session as any).lastField, 
+      isComplete 
+    });
   } catch (err: any) {
     console.error('questionAi POST error:', err);
     const message = typeof err?.message === 'string' ? err.message : 'Internal Server Error';

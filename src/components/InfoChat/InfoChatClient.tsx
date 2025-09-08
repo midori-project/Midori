@@ -15,6 +15,24 @@ interface InfoChatClientProps {
   sessionId?: string;
 }
 
+// Predefined questions mapping (same as in route.ts)
+const PREDEFINED_QUESTIONS = {
+  "Name": "What is the name of your website project?",
+  "Type": "What type of website are you creating? (e.g., blog, restaurant, cafe, fashion, technology, ecommerce, portfolio, agency)",
+  "Features": "What specific features do you want on your website? (e.g., contact form, gallery, blog, online store, booking system)",
+  "Design.Theme": "What design theme and colors do you prefer? Please specify the theme style and your preferred primary and secondary colors.",
+  "Background": "Do you have any specific background information or context about your project that would help us understand your vision better?"
+};
+
+// Function to get predefined question for a missing field
+function getPredefinedQuestion(field: string): string {
+  // สำหรับ Design fields ให้ใช้คำถามรวม
+  if (field === "Design.Theme" || field === "Design.PrimaryColor" || field === "Design.SecondaryColor") {
+    return PREDEFINED_QUESTIONS["Design.Theme"];
+  }
+  return PREDEFINED_QUESTIONS[field as keyof typeof PREDEFINED_QUESTIONS] || `โปรดระบุ: ${field}`;
+}
+
 export default function InfoChatClient({ projectId,sessionId: initialSessionId }: InfoChatClientProps) {
   const router = useRouter();
   const chatRef = React.useRef<HTMLDivElement | null>(null);
@@ -103,8 +121,9 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         setIsInitialized(true);
         initializedRef.current = true;
 
-        const assistantText = data.nextQuestions?.[0]
-          || (data.missingFields?.length > 0 ? `โปรดระบุ: ${data.missingFields[0]}` : 'ข้อมูลครบถ้วนแล้ว');
+        const nextQuestion = data.nextQuestions?.[0];
+        const fallbackQuestion = data.missingFields?.length > 0 ? getPredefinedQuestion(data.missingFields[0]) : 'ข้อมูลครบถ้วนแล้ว';
+        const assistantText = nextQuestion || fallbackQuestion;
 
         setMessages(prev => [
           ...prev,
@@ -118,6 +137,11 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         setIsComplete(done);
         if (done) {
           alert('✅ ตอบคำถามครบแล้ว! ขอบคุณสำหรับข้อมูล');
+          try {
+            router.push(`/projects/${projectId}`);
+          } catch (e) {
+            console.error('navigation error:', e);
+          }
         }
       } catch (error) {
         console.error('Error initializing chat:', error);
@@ -192,12 +216,21 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
       console.log('data:', data);
 
       // ข้อความถัดไปจาก analyzeAndAskNext
-      const reply: Message = {
-        id: `assistant-${Date.now()}-${Math.random()}`,
-        role: "assistant",
-        text: data.nextQuestions?.[0] || (data.missingFields?.length > 0 ? `โปรดระบุ: ${data.missingFields[0]}` : 'ข้อมูลครบถ้วนแล้ว')
-      };
-      setMessages((s) => [...s, reply]);
+      const nextQuestion = data.nextQuestions?.[0];
+      const fallbackQuestion = data.missingFields?.length > 0 ? getPredefinedQuestion(data.missingFields[0]) : 'ข้อมูลครบถ้วนแล้ว';
+      
+      // ตรวจสอบว่าคำถามนี้ซ้ำกับข้อความสุดท้ายหรือไม่
+      const lastMessage = messages[messages.length - 1];
+      const shouldShowQuestion = nextQuestion && nextQuestion !== lastMessage?.text;
+      
+      if (shouldShowQuestion || !nextQuestion) {
+        const reply: Message = {
+          id: `assistant-${Date.now()}-${Math.random()}`,
+          role: "assistant",
+          text: nextQuestion || fallbackQuestion
+        };
+        setMessages((s) => [...s, reply]);
+      }
 
       // สถานะเสร็จสิ้นเมื่อไม่มี missingFields
       const done = data.isComplete ?? ((data.missingFields?.length || 0) === 0);
@@ -211,7 +244,6 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         const normalize = (input: Record<string, unknown>) => ({
           Name: typeof input?.["Name"] === 'string' ? input["Name"] : "",
           Type: typeof input?.["Type"] === 'string' ? input["Type"] : "",
-          Goal: typeof input?.["Goal"] === 'string' ? input["Goal"] : "",
           Features: typeof input?.["Features"] === 'string' ? input["Features"] : "",
           Design: {
             Theme: typeof (input?.["Design"] as any)?.Theme === 'string' ? (input as any).Design.Theme : "",
@@ -221,7 +253,27 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
           },
           Background: (input?.["Background"] ?? null) as string | null
         });
-        setFinalJson(normalize(data.currentData || {}));
+        const normalizedData = normalize(data.currentData || {});
+        setFinalJson(normalizedData);
+        
+        // บันทึก finalJson ลงตาราง generation
+        try {
+          const result = await saveFinalJsonToGeneration(projectId, {
+            finalJson: normalizedData
+          });
+          if ('id' in result) {
+            console.log('บันทึก finalJson ลงตาราง generation สำเร็จ:', result.id);
+          } else {
+            console.error('เกิดข้อผิดพลาดในการบันทึก finalJson:', result.error);
+          }
+        } catch (error) {
+          console.error('เกิดข้อผิดพลาดในการบันทึก finalJson:', error);
+        }
+        try {
+          router.push(`/projects/${projectId}`);
+        } catch (e) {
+          console.error('navigation error:', e);
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);

@@ -52,24 +52,21 @@ export async function saveFinalJsonToGeneration(
   projectId: string,
   data: {
     finalJson: Prisma.InputJsonValue,
-    prompt: Prisma.InputJsonValue
   },
   model: string = "gpt-5-nano"
 ): Promise<{ id: string } | { ok: false; error: string }> {
   try {
     const session = await getCurrentSession();
-  if (!session || !session.user || !session.user.id) {
-    return { ok: false, error: 'Unauthenticated' };
-  }
+    if (!session || !session.user || !session.user.id) {
+      return { ok: false, error: 'Unauthenticated' };
+    }
     // สร้าง generation ใหม่
     const generation = await prisma.generation.create({
       data: {
         projectId: projectId,
         userId: session.user.id,
-        // Prisma ต้องการ prompt เป็น String เสมอ
-        prompt: typeof data.finalJson === "string" ? data.finalJson : JSON.stringify(data.finalJson),
-        model: model,
-        promptJson: data.finalJson
+        promptJson: data.finalJson,
+        model: model
       }
     });
 
