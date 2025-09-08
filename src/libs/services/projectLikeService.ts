@@ -169,14 +169,14 @@ export async function getUserLikedProjects(userId: string) {
       include: {
         project: {
           include: {
-            user: {
+            owner: {
               select: {
                 id: true,
                 displayName: true,
                 avatarUrl: true,
               },
             },
-            projectCategories: {
+            categories: {
               include: {
                 category: {
                   select: {

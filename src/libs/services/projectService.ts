@@ -15,7 +15,7 @@ export interface ProjectWithPreview {
     content: string | null;
     path: string;
   } | null;
-  projectCategories: {
+  categories: {
     category: {
       key: string;
       label: string;
@@ -52,7 +52,7 @@ export async function createProjectWithCategories(
         name,
         description: description ?? undefined,
         visibility,
-        user: { connect: { id: userId } },
+        ownerId: userId,
       },
       select: { id: true },
     });
@@ -184,7 +184,7 @@ export async function getPublicProjectsWithPreview(
             path: true,
           },
         },
-        projectCategories: {
+        categories: {
           include: {
             category: {
               select: {
@@ -263,7 +263,7 @@ export async function getUserProjectsWithPreview(
     // Count total items for pagination info
     const totalItems = await (prisma as any).project.count({
       where: {
-        userId: userId,
+        ownerId: userId,
       },
     });
 
@@ -275,7 +275,7 @@ export async function getUserProjectsWithPreview(
     // Fetch projects with pagination
     const projects = await (prisma as any).project.findMany({
       where: {
-        userId: userId,
+        ownerId: userId,
       },
       select: {
         id: true,
@@ -292,7 +292,7 @@ export async function getUserProjectsWithPreview(
             path: true,
           },
         },
-        projectCategories: {
+        categories: {
           include: {
             category: {
               select: {
@@ -320,7 +320,7 @@ export async function getUserProjectsWithPreview(
       preview_file: project.previewFile?.content || null,
       created_at: project.createdAt,
       updated_at: project.updatedAt,
-      categories: project.projectCategories.map((pc: any) => ({
+      categories: project.categories.map((pc: any) => ({
         category: {
           id: pc.category.id,
           name: pc.category.label,

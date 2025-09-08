@@ -51,9 +51,9 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
       pills: {
         category: { 
           // ✅ แสดง category หลัก หรือข้อความพิเศษถ้ามีหลาย categories
-          text: project.projectCategories?.length > 1 
-            ? `${project.projectCategories[0]?.category?.label} +${project.projectCategories.length - 1}`
-            : project.projectCategories?.[0]?.category?.label || "General", 
+          text: project.categories?.length > 1 
+            ? `${project.categories[0]?.category?.label} +${project.categories.length - 1}`
+            : project.categories?.[0]?.category?.label || "General", 
           color: "bg-blue-100", 
           textColor: "text-blue-800" 
         }
