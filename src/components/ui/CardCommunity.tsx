@@ -1,6 +1,6 @@
 import React from 'react';
 import { HoverDetailCard, HoverDetailCardData } from './hover-detail-card';
-import { getProjectsFromDatabase } from '../../app/home/getProjects';
+import { getPublicProjectsWithPreview } from '@/libs/services/projectService';
 
 export interface HoverDetailCardGridProps {
   columns?: number;
@@ -10,13 +10,11 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
   columns = 4,
 }) => {
   // Fetch real data from database - จำกัดที่ 12 cards สำหรับหน้าโฮม
-  const projects = await getProjectsFromDatabase();
-  
-  // ✅ จำกัดให้แสดงแค่ 12 cards ในหน้าโฮม
-  const limitedProjects = projects.slice(0, 12);
+  const response = await getPublicProjectsWithPreview({ page: 1, limit: 12 });
+  const projects = response.projects || [];
   
   // Transform database projects to HoverDetailCardData format
-  const items: HoverDetailCardData[] = limitedProjects.map((project: any) => {
+  const items: HoverDetailCardData[] = projects.map((project: any) => {
     // ✅ ปรับปรุง logic ให้รองรับกรณีต่างๆ
     const hasValidPreviewContent = project.previewFile?.content && 
                                    project.previewFile.content.trim().length > 0 &&

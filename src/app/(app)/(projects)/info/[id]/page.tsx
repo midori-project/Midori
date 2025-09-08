@@ -21,7 +21,7 @@ export default async function InfoPage({ params, searchParams }: Props) {
       name: true,
       description: true,
       visibility: true,
-      userId: true,
+      ownerId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -40,7 +40,7 @@ export default async function InfoPage({ params, searchParams }: Props) {
   const [owner] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (prisma as any).user.findUnique({
-      where: { id: project.userId },
+      where: { id: project.ownerId },
       select: { displayName: true, email: true },
     }),
   ]);
