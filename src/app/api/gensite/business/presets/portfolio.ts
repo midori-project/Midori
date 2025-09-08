@@ -78,6 +78,7 @@ export const portfolioHandler: BusinessHandler = {
 const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient min-h-screen flex items-center">
+      <img src="[HERO_IMAGE_URL]" alt="[HERO_IMAGE_ALT]" className="absolute inset-0 w-full h-full object-cover opacity-40" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>

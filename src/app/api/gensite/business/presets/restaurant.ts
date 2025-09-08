@@ -226,6 +226,7 @@ export default Footer;`,
 const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient">
+      <img src="[HERO_IMAGE_URL]" alt="[HERO_IMAGE_ALT]" className="absolute inset-0 w-full h-full object-cover opacity-40" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <h1 className="text-4xl md:text-6xl font-bold mb-6">[HERO_TITLE]</h1>
         <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">[HERO_SUBTITLE]</p>
@@ -255,7 +256,7 @@ interface MenuCardProps {
 const MenuCard: React.FC<MenuCardProps> = ({ title, description, price }) => {
   return (
     <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-      <div className="w-full h-40 bg-gradient-to-r from-red-500 to-orange-600 rounded-lg mb-4" />
+      <img src="[MENU_IMAGE_URL]" alt="[MENU_IMAGE_ALT]" className="w-full h-40 object-cover rounded-lg mb-4" />
       <h3 className="text-xl font-semibold text-gray-900 mb-1">{title}</h3>
       {description && <p className="text-gray-600 mb-4">{description}</p>}
       <div className="flex items-center justify-between">

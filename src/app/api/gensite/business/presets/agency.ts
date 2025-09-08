@@ -62,6 +62,7 @@ export const agencyHandler: BusinessHandler = {
 const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient min-h-screen flex items-center">
+      <img src="[HERO_IMAGE_URL]" alt="[HERO_IMAGE_ALT]" className="absolute inset-0 w-full h-full object-cover opacity-40" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">[HERO_TITLE]</h1>

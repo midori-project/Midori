@@ -219,6 +219,7 @@ export default Footer;`,
 const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient">
+      <img src="[HERO_IMAGE_URL]" alt="[HERO_IMAGE_ALT]" className="absolute inset-0 w-full h-full object-cover opacity-40" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <h1 className="text-4xl md:text-6xl font-bold mb-6">Fashion Forward</h1>
         <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">Discover the latest trends and express your unique style with our curated collection.</p>

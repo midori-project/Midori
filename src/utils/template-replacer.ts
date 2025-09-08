@@ -73,6 +73,20 @@ export class TemplateReplacer {
       .replace(/\[HERO_TITLE\]/g, heroInfo?.title || this.getDefaultHeroTitle(ctx.industry))
       .replace(/\[HERO_SUBTITLE\]/g, heroInfo?.subtitle || this.getDefaultHeroSubtitle(ctx.industry))
       .replace(/\[HERO_DESCRIPTION\]/g, heroInfo?.description || this.getDefaultHeroDescription(ctx.industry))
+      .replace(/\[HERO_IMAGE_URL\]/g, heroInfo?.imageUrl || this.getDefaultHeroImage(ctx.industry))
+      .replace(/\[HERO_IMAGE_ALT\]/g, heroInfo?.imageAlt || this.getDefaultHeroAlt(ctx.industry))
+      .replace(/\[MENU_IMAGE_URL\]/g, this.getDefaultMenuImage(ctx.industry))
+      .replace(/\[MENU_IMAGE_ALT\]/g, this.getDefaultMenuAlt(ctx.industry))
+      .replace(/\[COFFEE_IMAGE_URL\]/g, this.getDefaultCoffeeImage(ctx.industry))
+      .replace(/\[COFFEE_IMAGE_ALT\]/g, this.getDefaultCoffeeAlt(ctx.industry))
+      .replace(/\[PRODUCT_IMAGE_URL\]/g, this.getDefaultProductImage(ctx.industry))
+      .replace(/\[PRODUCT_IMAGE_ALT\]/g, this.getDefaultProductAlt(ctx.industry))
+      .replace(/\[SERVICE_IMAGE_URL\]/g, this.getDefaultServiceImage(ctx.industry))
+      .replace(/\[SERVICE_IMAGE_ALT\]/g, this.getDefaultServiceAlt(ctx.industry))
+      .replace(/\[TEAM_IMAGE_URL\]/g, this.getDefaultTeamImage(ctx.industry))
+      .replace(/\[TEAM_IMAGE_ALT\]/g, this.getDefaultTeamAlt(ctx.industry))
+      .replace(/\[GALLERY_IMAGE_URL\]/g, this.getDefaultGalleryImage(ctx.industry))
+      .replace(/\[GALLERY_IMAGE_ALT\]/g, this.getDefaultGalleryAlt(ctx.industry))
 
       // Contact Information
       .replace(/\[CONTACT_PHONE\]/g, contactInfo?.phone || this.getDefaultPhone(ctx.industry))
@@ -183,10 +197,155 @@ export class TemplateReplacer {
       
       for (const placeholder of placeholders) {
         const key = placeholder.slice(1, -1); // Remove [ and ]
+        // Skip image placeholders - let system handle them separately
+        if (key === 'HERO_IMAGE_URL' || key === 'MENU_IMAGE_URL' || key === 'COFFEE_IMAGE_URL' || 
+            key === 'PRODUCT_IMAGE_URL' || key === 'SERVICE_IMAGE_URL' || key === 'TEAM_IMAGE_URL' || key === 'GALLERY_IMAGE_URL') {
+          continue;
+        }
         if (aiReplacements[key]) {
           replacedTemplate = replacedTemplate.replace(new RegExp(`\\${placeholder}`, 'g'), aiReplacements[key]);
           appliedReplacements[key] = aiReplacements[key];
         }
+      }
+
+      // หากมีการขอรูป Hero ให้เรียก Images API เพื่อสร้างรูปและแทนที่
+      const needHeroImage = placeholders.includes('[HERO_IMAGE_URL]');
+      const needHeroAlt = placeholders.includes('[HERO_IMAGE_ALT]');
+      if (needHeroImage) {
+        try {
+          const imageUrl = await this.generateHeroImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[HERO_IMAGE_URL\]/g, imageUrl);
+            appliedReplacements['HERO_IMAGE_URL'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateHeroImage failed, will fallback to default image', e);
+        }
+      }
+      if (needHeroAlt) {
+        const alt = this.createHeroAlt(ctx, projectName);
+        replacedTemplate = replacedTemplate.replace(/\[HERO_IMAGE_ALT\]/g, alt);
+        appliedReplacements['HERO_IMAGE_ALT'] = alt;
+      }
+
+      // หากมีการขอรูปเมนู ให้เรียก Images API เพื่อสร้างรูปและแทนที่
+      const needMenuImage = placeholders.includes('[MENU_IMAGE_URL]');
+      const needMenuAlt = placeholders.includes('[MENU_IMAGE_ALT]');
+      if (needMenuImage) {
+        try {
+          const imageUrl = await this.generateMenuImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_URL\]/g, imageUrl);
+            appliedReplacements['MENU_IMAGE_URL'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateMenuImage failed, will fallback to default image', e);
+        }
+      }
+      if (needMenuAlt) {
+        const alt = this.createMenuAlt(ctx, projectName);
+        replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_ALT\]/g, alt);
+        appliedReplacements['MENU_IMAGE_ALT'] = alt;
+      }
+
+      // หากมีการขอรูปกาแฟ ให้เรียก Images API เพื่อสร้างรูปและแทนที่
+      const needCoffeeImage = placeholders.includes('[COFFEE_IMAGE_URL]');
+      const needCoffeeAlt = placeholders.includes('[COFFEE_IMAGE_ALT]');
+      if (needCoffeeImage) {
+        try {
+          const imageUrl = await this.generateCoffeeImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[COFFEE_IMAGE_URL\]/g, imageUrl);
+            appliedReplacements['COFFEE_IMAGE_URL'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateCoffeeImage failed, will fallback to default image', e);
+        }
+      }
+      if (needCoffeeAlt) {
+        const alt = this.createCoffeeAlt(ctx, projectName);
+        replacedTemplate = replacedTemplate.replace(/\[COFFEE_IMAGE_ALT\]/g, alt);
+        appliedReplacements['COFFEE_IMAGE_ALT'] = alt;
+      }
+
+      // หากมีการขอรูปสินค้า ให้เรียก Images API เพื่อสร้างรูปและแทนที่
+      const needProductImage = placeholders.includes('[PRODUCT_IMAGE_URL]');
+      const needProductAlt = placeholders.includes('[PRODUCT_IMAGE_ALT]');
+      if (needProductImage) {
+        try {
+          const imageUrl = await this.generateProductImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[PRODUCT_IMAGE_URL\]/g, imageUrl);
+            appliedReplacements['PRODUCT_IMAGE_URL'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateProductImage failed, will fallback to default image', e);
+        }
+      }
+      if (needProductAlt) {
+        const alt = this.createProductAlt(ctx, projectName);
+        replacedTemplate = replacedTemplate.replace(/\[PRODUCT_IMAGE_ALT\]/g, alt);
+        appliedReplacements['PRODUCT_IMAGE_ALT'] = alt;
+      }
+
+      // หากมีการขอรูปบริการ ให้เรียก Images API เพื่อสร้างรูปและแทนที่
+      const needServiceImage = placeholders.includes('[SERVICE_IMAGE_URL]');
+      const needServiceAlt = placeholders.includes('[SERVICE_IMAGE_ALT]');
+      if (needServiceImage) {
+        try {
+          const imageUrl = await this.generateServiceImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[SERVICE_IMAGE_URL\]/g, imageUrl);
+            appliedReplacements['SERVICE_IMAGE_URL'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateServiceImage failed, will fallback to default image', e);
+        }
+      }
+      if (needServiceAlt) {
+        const alt = this.createServiceAlt(ctx, projectName);
+        replacedTemplate = replacedTemplate.replace(/\[SERVICE_IMAGE_ALT\]/g, alt);
+        appliedReplacements['SERVICE_IMAGE_ALT'] = alt;
+      }
+
+      // หากมีการขอรูปทีม ให้เรียก Images API เพื่อสร้างรูปและแทนที่
+      const needTeamImage = placeholders.includes('[TEAM_IMAGE_URL]');
+      const needTeamAlt = placeholders.includes('[TEAM_IMAGE_ALT]');
+      if (needTeamImage) {
+        try {
+          const imageUrl = await this.generateTeamImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[TEAM_IMAGE_URL\]/g, imageUrl);
+            appliedReplacements['TEAM_IMAGE_URL'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateTeamImage failed, will fallback to default image', e);
+        }
+      }
+      if (needTeamAlt) {
+        const alt = this.createTeamAlt(ctx, projectName);
+        replacedTemplate = replacedTemplate.replace(/\[TEAM_IMAGE_ALT\]/g, alt);
+        appliedReplacements['TEAM_IMAGE_ALT'] = alt;
+      }
+
+      // หากมีการขอรูปแกลเลอรี่ ให้เรียก Images API เพื่อสร้างรูปและแทนที่
+      const needGalleryImage = placeholders.includes('[GALLERY_IMAGE_URL]');
+      const needGalleryAlt = placeholders.includes('[GALLERY_IMAGE_ALT]');
+      if (needGalleryImage) {
+        try {
+          const imageUrl = await this.generateGalleryImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[GALLERY_IMAGE_URL\]/g, imageUrl);
+            appliedReplacements['GALLERY_IMAGE_URL'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateGalleryImage failed, will fallback to default image', e);
+        }
+      }
+      if (needGalleryAlt) {
+        const alt = this.createGalleryAlt(ctx, projectName);
+        replacedTemplate = replacedTemplate.replace(/\[GALLERY_IMAGE_ALT\]/g, alt);
+        appliedReplacements['GALLERY_IMAGE_ALT'] = alt;
       }
       const remaining = replacedTemplate.match(/\[[A-Z0-9_]+\]/g) || [];
       console.log('[TemplateReplacer] AI replacements applied', {
@@ -249,6 +408,8 @@ ${placeholders.map(p => `- ${p}`).join('\n')}
 4. Keep text concise and appropriate for web use
 5. Use English for international businesses
 6. Ensure content is relevant to user intent: "${userIntent || 'Create a professional website'}"
+7. If placeholders contain HERO_IMAGE_ALT, provide a concise, descriptive alt text.
+8. IMPORTANT: Do NOT replace image placeholders - leave them as [HERO_IMAGE_URL], [MENU_IMAGE_URL], [COFFEE_IMAGE_URL], [PRODUCT_IMAGE_URL], [SERVICE_IMAGE_URL], [TEAM_IMAGE_URL], [GALLERY_IMAGE_URL] for system processing.
 
 **Return Format:**
 Return only a JSON object with the placeholder names (without brackets) as keys and the replacement content as values.
@@ -259,6 +420,398 @@ Example:
   "HERO_SUBTITLE": "Experience the finest coffee in town",
   "CONTACT_PHONE": "02-123-4567"
 }`;
+  }
+
+  /**
+   * สร้างรูปภาพสำหรับ Hero โดยใช้ OpenAI Images API
+   */
+  private static async generateHeroImage(
+    openai: any,
+    ctx: BusinessContext,
+    projectName?: string,
+    userIntent?: string,
+    finalJson?: Record<string, unknown>
+  ): Promise<string | null> {
+    try {
+      const businessInfo = (finalJson?.business as any) || {};
+      const projectInfo = (finalJson?.project as any) || {};
+      const heroInfo = (finalJson?.hero as any) || {};
+
+      const promptParts: string[] = [];
+      promptParts.push(`Hero image for a ${ctx.industry} website`);
+      if (projectName || projectInfo?.name || businessInfo?.name) {
+        promptParts.push(`brand: ${projectName || projectInfo?.name || businessInfo?.name}`);
+      }
+      if (userIntent) {
+        promptParts.push(`intent: ${userIntent}`);
+      }
+      if (heroInfo?.style) {
+        promptParts.push(`style: ${heroInfo.style}`);
+      }
+      // เน้นภาพกว้างเหมาะกับ hero section
+      promptParts.push('high quality, cinematic lighting, 16:9, website hero banner');
+
+      const imagePrompt = promptParts.join(', ');
+
+      const response = await openai.images.generate({
+        model: 'dall-e-3',
+        prompt: imagePrompt,
+        size: '1024x1024',
+        quality: 'hd',
+        n: 1,
+      });
+
+      const url: string | undefined = response?.data?.[0]?.url;
+      return url || null;
+    } catch (error) {
+      console.error('[TemplateReplacer] generateHeroImage error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * สร้าง alt text สำหรับรูป Hero
+   */
+  private static createHeroAlt(ctx: BusinessContext, projectName?: string): string {
+    const business = ctx?.industry || 'business';
+    const name = projectName || 'website';
+    return `${name} ${business} hero image`;
+  }
+
+  /**
+   * สร้างรูปเมนูอาหารผ่าน OpenAI Images API
+   */
+  private static async generateMenuImage(
+    openai: any,
+    ctx: BusinessContext,
+    projectName?: string,
+    userIntent?: string,
+    finalJson?: Record<string, unknown>
+  ): Promise<string | null> {
+    try {
+      const businessInfo = (finalJson?.business as any) || {};
+      const projectInfo = (finalJson?.project as any) || {};
+      const menuInfo = (finalJson?.menu as any) || {};
+
+      const promptParts: string[] = [];
+      promptParts.push(`Delicious food dish for a ${ctx.industry} restaurant`);
+      if (projectName || projectInfo?.name || businessInfo?.name) {
+        promptParts.push(`restaurant: ${projectName || projectInfo?.name || businessInfo?.name}`);
+      }
+      if (menuInfo?.cuisine) {
+        promptParts.push(`cuisine: ${menuInfo.cuisine}`);
+      }
+      if (menuInfo?.specialty) {
+        promptParts.push(`specialty: ${menuInfo.specialty}`);
+      }
+      // เน้นภาพอาหารที่ดูน่าอร่อย
+      promptParts.push('high quality, appetizing, professional food photography, restaurant menu item');
+
+      const imagePrompt = promptParts.join(', ');
+
+      const response = await openai.images.generate({
+        model: 'dall-e-3',
+        prompt: imagePrompt,
+        size: '1024x1024',
+        quality: 'hd',
+        n: 1,
+      });
+
+      const url: string | undefined = response?.data?.[0]?.url;
+      return url || null;
+    } catch (error) {
+      console.error('[TemplateReplacer] generateMenuImage error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * สร้างรูปกาแฟผ่าน OpenAI Images API
+   */
+  private static async generateCoffeeImage(
+    openai: any,
+    ctx: BusinessContext,
+    projectName?: string,
+    userIntent?: string,
+    finalJson?: Record<string, unknown>
+  ): Promise<string | null> {
+    try {
+      const businessInfo = (finalJson?.business as any) || {};
+      const projectInfo = (finalJson?.project as any) || {};
+      const menuInfo = (finalJson?.menu as any) || {};
+
+      const promptParts: string[] = [];
+      promptParts.push(`Beautiful coffee drink for a ${ctx.industry} cafe`);
+      if (projectName || projectInfo?.name || businessInfo?.name) {
+        promptParts.push(`cafe: ${projectName || projectInfo?.name || businessInfo?.name}`);
+      }
+      if (menuInfo?.coffeeType) {
+        promptParts.push(`coffee type: ${menuInfo.coffeeType}`);
+      }
+      if (menuInfo?.roast) {
+        promptParts.push(`roast: ${menuInfo.roast}`);
+      }
+      // เน้นภาพกาแฟที่ดูน่าดื่ม
+      promptParts.push('high quality, aromatic coffee, professional cafe photography, latte art');
+
+      const imagePrompt = promptParts.join(', ');
+
+      const response = await openai.images.generate({
+        model: 'dall-e-3',
+        prompt: imagePrompt,
+        size: '1024x1024',
+        quality: 'hd',
+        n: 1,
+      });
+
+      const url: string | undefined = response?.data?.[0]?.url;
+      return url || null;
+    } catch (error) {
+      console.error('[TemplateReplacer] generateCoffeeImage error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * สร้าง alt text สำหรับรูปเมนู
+   */
+  private static createMenuAlt(ctx: BusinessContext, projectName?: string): string {
+    const business = ctx?.industry || 'restaurant';
+    const name = projectName || 'restaurant';
+    return `${name} delicious food menu item`;
+  }
+
+  /**
+   * สร้าง alt text สำหรับรูปกาแฟ
+   */
+  private static createCoffeeAlt(ctx: BusinessContext, projectName?: string): string {
+    const business = ctx?.industry || 'cafe';
+    const name = projectName || 'cafe';
+    return `${name} premium coffee drink`;
+  }
+
+  /**
+   * สร้างรูปสินค้าผ่าน OpenAI Images API
+   */
+  private static async generateProductImage(
+    openai: any,
+    ctx: BusinessContext,
+    projectName?: string,
+    userIntent?: string,
+    finalJson?: Record<string, unknown>
+  ): Promise<string | null> {
+    try {
+      const businessInfo = (finalJson?.business as any) || {};
+      const projectInfo = (finalJson?.project as any) || {};
+      const productInfo = (finalJson?.product as any) || {};
+
+      const promptParts: string[] = [];
+      promptParts.push(`High-quality product for a ${ctx.industry} business`);
+      if (projectName || projectInfo?.name || businessInfo?.name) {
+        promptParts.push(`brand: ${projectName || projectInfo?.name || businessInfo?.name}`);
+      }
+      if (productInfo?.category) {
+        promptParts.push(`category: ${productInfo.category}`);
+      }
+      if (productInfo?.type) {
+        promptParts.push(`type: ${productInfo.type}`);
+      }
+      // เน้นภาพสินค้าที่ดูน่าสนใจ
+      promptParts.push('high quality, professional product photography, clean background, e-commerce style');
+
+      const imagePrompt = promptParts.join(', ');
+
+      const response = await openai.images.generate({
+        model: 'dall-e-3',
+        prompt: imagePrompt,
+        size: '1024x1024',
+        quality: 'hd',
+        n: 1,
+      });
+
+      const url: string | undefined = response?.data?.[0]?.url;
+      return url || null;
+    } catch (error) {
+      console.error('[TemplateReplacer] generateProductImage error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * สร้างรูปบริการผ่าน OpenAI Images API
+   */
+  private static async generateServiceImage(
+    openai: any,
+    ctx: BusinessContext,
+    projectName?: string,
+    userIntent?: string,
+    finalJson?: Record<string, unknown>
+  ): Promise<string | null> {
+    try {
+      const businessInfo = (finalJson?.business as any) || {};
+      const projectInfo = (finalJson?.project as any) || {};
+      const serviceInfo = (finalJson?.service as any) || {};
+
+      const promptParts: string[] = [];
+      promptParts.push(`Professional service illustration for a ${ctx.industry} business`);
+      if (projectName || projectInfo?.name || businessInfo?.name) {
+        promptParts.push(`company: ${projectName || projectInfo?.name || businessInfo?.name}`);
+      }
+      if (serviceInfo?.type) {
+        promptParts.push(`service type: ${serviceInfo.type}`);
+      }
+      if (serviceInfo?.category) {
+        promptParts.push(`category: ${serviceInfo.category}`);
+      }
+      // เน้นภาพบริการที่ดูเป็นมืออาชีพ
+      promptParts.push('high quality, professional business illustration, modern style, corporate');
+
+      const imagePrompt = promptParts.join(', ');
+
+      const response = await openai.images.generate({
+        model: 'dall-e-3',
+        prompt: imagePrompt,
+        size: '1024x1024',
+        quality: 'hd',
+        n: 1,
+      });
+
+      const url: string | undefined = response?.data?.[0]?.url;
+      return url || null;
+    } catch (error) {
+      console.error('[TemplateReplacer] generateServiceImage error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * สร้างรูปทีมผ่าน OpenAI Images API
+   */
+  private static async generateTeamImage(
+    openai: any,
+    ctx: BusinessContext,
+    projectName?: string,
+    userIntent?: string,
+    finalJson?: Record<string, unknown>
+  ): Promise<string | null> {
+    try {
+      const businessInfo = (finalJson?.business as any) || {};
+      const projectInfo = (finalJson?.project as any) || {};
+      const teamInfo = (finalJson?.team as any) || {};
+
+      const promptParts: string[] = [];
+      promptParts.push(`Professional team photo for a ${ctx.industry} company`);
+      if (projectName || projectInfo?.name || businessInfo?.name) {
+        promptParts.push(`company: ${projectName || projectInfo?.name || businessInfo?.name}`);
+      }
+      if (teamInfo?.department) {
+        promptParts.push(`department: ${teamInfo.department}`);
+      }
+      if (teamInfo?.role) {
+        promptParts.push(`role: ${teamInfo.role}`);
+      }
+      // เน้นภาพทีมที่ดูเป็นมืออาชีพ
+      promptParts.push('high quality, professional team photo, business attire, friendly atmosphere, corporate');
+
+      const imagePrompt = promptParts.join(', ');
+
+      const response = await openai.images.generate({
+        model: 'dall-e-3',
+        prompt: imagePrompt,
+        size: '1024x1024',
+        quality: 'hd',
+        n: 1,
+      });
+
+      const url: string | undefined = response?.data?.[0]?.url;
+      return url || null;
+    } catch (error) {
+      console.error('[TemplateReplacer] generateTeamImage error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * สร้างรูปแกลเลอรี่ผ่าน OpenAI Images API
+   */
+  private static async generateGalleryImage(
+    openai: any,
+    ctx: BusinessContext,
+    projectName?: string,
+    userIntent?: string,
+    finalJson?: Record<string, unknown>
+  ): Promise<string | null> {
+    try {
+      const businessInfo = (finalJson?.business as any) || {};
+      const projectInfo = (finalJson?.project as any) || {};
+      const galleryInfo = (finalJson?.gallery as any) || {};
+
+      const promptParts: string[] = [];
+      promptParts.push(`Beautiful gallery image for a ${ctx.industry} business`);
+      if (projectName || projectInfo?.name || businessInfo?.name) {
+        promptParts.push(`business: ${projectName || projectInfo?.name || businessInfo?.name}`);
+      }
+      if (galleryInfo?.category) {
+        promptParts.push(`category: ${galleryInfo.category}`);
+      }
+      if (galleryInfo?.style) {
+        promptParts.push(`style: ${galleryInfo.style}`);
+      }
+      // เน้นภาพแกลเลอรี่ที่ดูสวยงาม
+      promptParts.push('high quality, artistic, visually appealing, portfolio style, professional photography');
+
+      const imagePrompt = promptParts.join(', ');
+
+      const response = await openai.images.generate({
+        model: 'dall-e-3',
+        prompt: imagePrompt,
+        size: '1024x1024',
+        quality: 'hd',
+        n: 1,
+      });
+
+      const url: string | undefined = response?.data?.[0]?.url;
+      return url || null;
+    } catch (error) {
+      console.error('[TemplateReplacer] generateGalleryImage error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * สร้าง alt text สำหรับรูปสินค้า
+   */
+  private static createProductAlt(ctx: BusinessContext, projectName?: string): string {
+    const business = ctx?.industry || 'business';
+    const name = projectName || 'business';
+    return `${name} high-quality product`;
+  }
+
+  /**
+   * สร้าง alt text สำหรับรูปบริการ
+   */
+  private static createServiceAlt(ctx: BusinessContext, projectName?: string): string {
+    const business = ctx?.industry || 'business';
+    const name = projectName || 'company';
+    return `${name} professional service`;
+  }
+
+  /**
+   * สร้าง alt text สำหรับรูปทีม
+   */
+  private static createTeamAlt(ctx: BusinessContext, projectName?: string): string {
+    const business = ctx?.industry || 'business';
+    const name = projectName || 'company';
+    return `${name} professional team`;
+  }
+
+  /**
+   * สร้าง alt text สำหรับรูปแกลเลอรี่
+   */
+  private static createGalleryAlt(ctx: BusinessContext, projectName?: string): string {
+    const business = ctx?.industry || 'business';
+    const name = projectName || 'business';
+    return `${name} beautiful gallery image`;
   }
 
   /**
@@ -347,6 +900,63 @@ Example:
       'technology': 'Cutting-edge solutions for businesses'
     };
     return descriptions[industry] || 'Professional services and solutions';
+  }
+
+  private static getDefaultHeroImage(industry: string): string {
+    // ใช้รูปภาพพื้นฐานจาก public เป็นค่าเริ่มต้นที่ปลอดภัย
+    return '/img/frame.png';
+  }
+
+  private static getDefaultHeroAlt(industry: string): string {
+    return `${industry || 'business'} hero image`;
+  }
+
+  private static getDefaultMenuImage(industry: string): string {
+    return '/img/frame.png'; // Default placeholder image
+  }
+
+  private static getDefaultMenuAlt(industry: string): string {
+    return `Delicious ${industry} menu item`;
+  }
+
+  private static getDefaultCoffeeImage(industry: string): string {
+    return '/img/frame.png'; // Default placeholder image
+  }
+
+  private static getDefaultCoffeeAlt(industry: string): string {
+    return `Premium ${industry} coffee drink`;
+  }
+
+  private static getDefaultProductImage(industry: string): string {
+    return '/img/frame.png'; // Default placeholder image
+  }
+
+  private static getDefaultProductAlt(industry: string): string {
+    return `High-quality ${industry} product`;
+  }
+
+  private static getDefaultServiceImage(industry: string): string {
+    return '/img/frame.png'; // Default placeholder image
+  }
+
+  private static getDefaultServiceAlt(industry: string): string {
+    return `Professional ${industry} service`;
+  }
+
+  private static getDefaultTeamImage(industry: string): string {
+    return '/img/frame.png'; // Default placeholder image
+  }
+
+  private static getDefaultTeamAlt(industry: string): string {
+    return `Professional ${industry} team`;
+  }
+
+  private static getDefaultGalleryImage(industry: string): string {
+    return '/img/frame.png'; // Default placeholder image
+  }
+
+  private static getDefaultGalleryAlt(industry: string): string {
+    return `Beautiful ${industry} gallery image`;
   }
 
   private static getDefaultPhone(industry: string): string {
