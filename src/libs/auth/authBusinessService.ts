@@ -112,19 +112,22 @@ export class AuthBusinessService {
     // เข้ารหัสรหัสผ่าน
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // สร้างผู้ใช้ใหม่พร้อม credentials
+    // สร้างผู้ใช้ใหม่ก่อน
     const user = await prisma.user.create({
       data: {
         email,
-        displayName: name,
-        authCredentials: {
-          create: {
-            type: 'PASSWORD',
-            identifier: email,
-            secret: hashedPassword,
-            isVerified: false // ต้องยืนยันอีเมลก่อน
-          }
-        }
+        displayName: name
+      }
+    });
+
+    // สร้าง AuthCredential สำหรับผู้ใช้
+    await prisma.authCredential.create({
+      data: {
+        userId: user.id,
+        type: 'PASSWORD',
+        identifier: email,
+        secret: hashedPassword,
+        isVerified: false // ต้องยืนยันอีเมลก่อน
       }
     });
 
