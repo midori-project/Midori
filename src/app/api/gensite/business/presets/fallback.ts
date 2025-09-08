@@ -48,7 +48,8 @@ export const fallbackHandler: BusinessHandler = {
       }
     }, null, 2),
 
-    'index.html': (project, finalJson, ctx) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => {
+      const template = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -60,7 +61,9 @@ export const fallbackHandler: BusinessHandler = {
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html>`,
+</html>`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/main.tsx': (project) => `import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
@@ -139,7 +142,8 @@ export default {
   plugins: [],
 };`,
 
-    'src/pages/Home.tsx': (project) => `import React from 'react';
+    'src/pages/Home.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 import HeroSection from '../components/HeroSection.tsx';
 
 const Home: React.FC = () => {
@@ -153,18 +157,18 @@ const Home: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-gray-50 rounded-xl p-6 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 1]</h3>
-              <p className="text-gray-600">[Feature Description 1]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">[FEATURE_1_TITLE]</h3>
+              <p className="text-gray-600">[FEATURE_1_DESCRIPTION]</p>
             </div>
             
             <div className="bg-gray-50 rounded-xl p-6 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 2]</h3>
-              <p className="text-gray-600">[Feature Description 2]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">[FEATURE_2_TITLE]</h3>
+              <p className="text-gray-600">[FEATURE_2_DESCRIPTION]</p>
             </div>
             
             <div className="bg-gray-50 rounded-xl p-6 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 3]</h3>
-              <p className="text-gray-600">[Feature Description 3]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">[FEATURE_3_TITLE]</h3>
+              <p className="text-gray-600">[FEATURE_3_DESCRIPTION]</p>
             </div>
           </div>
         </div>
@@ -173,7 +177,9 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;`,
+export default Home;`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/pages/About.tsx': (project) => `import React from 'react';
 import { Link } from 'react-router-dom';

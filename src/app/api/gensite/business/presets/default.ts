@@ -51,7 +51,8 @@ export const defaultHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project, finalJson, ctx) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => {
+      const template = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -62,7 +63,9 @@ export const defaultHandler: BusinessHandler = {
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html>`,
+</html>`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'vite.config.ts': () => `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -286,7 +289,8 @@ const ContactForm: React.FC = () => {
 
 export default ContactForm;`,
 
-    'src/pages/Home.tsx': (project) => `import React from 'react';
+    'src/pages/Home.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 import HeroSection from '../components/HeroSection.tsx';
 
 const Home: React.FC = () => {
@@ -297,9 +301,9 @@ const Home: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Welcome to ${project.name || 'Our Site'}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-gray-50 rounded-xl p-6 text-center"><h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 1]</h3><p className="text-gray-600">[Feature Description 1]</p></div>
-            <div className="bg-gray-50 rounded-xl p-6 text-center"><h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 2]</h3><p className="text-gray-600">[Feature Description 2]</p></div>
-            <div className="bg-gray-50 rounded-xl p-6 text-center"><h3 className="text-xl font-semibold text-gray-900 mb-4">[Feature Title 3]</h3><p className="text-gray-600">[Feature Description 3]</p></div>
+            <div className="bg-gray-50 rounded-xl p-6 text-center"><h3 className="text-xl font-semibold text-gray-900 mb-4">[FEATURE_1_TITLE]</h3><p className="text-gray-600">[FEATURE_1_DESCRIPTION]</p></div>
+            <div className="bg-gray-50 rounded-xl p-6 text-center"><h3 className="text-xl font-semibold text-gray-900 mb-4">[FEATURE_2_TITLE]</h3><p className="text-gray-600">[FEATURE_2_DESCRIPTION]</p></div>
+            <div className="bg-gray-50 rounded-xl p-6 text-center"><h3 className="text-xl font-semibold text-gray-900 mb-4">[FEATURE_3_TITLE]</h3><p className="text-gray-600">[FEATURE_3_DESCRIPTION]</p></div>
           </div>
         </div>
       </section>
@@ -307,7 +311,9 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;`,
+export default Home;`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/pages/About.tsx': () => `import React from 'react';
 

@@ -96,6 +96,8 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         return;
       }
 
+      // ป้องกัน useEffect ถูกเรียกซ้ำ (เช่น Strict Mode) ระหว่าง await โดยตั้งธงให้เร็วที่สุด
+      initializedRef.current = true;
       setIsAssistantTyping(true);
       setLoading(true);
       
@@ -138,7 +140,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         const done = data.isComplete ?? ((data.missingFields?.length || 0) === 0);
         setIsComplete(done);
         if (done) {
-          alert('✅ ตอบคำถามครบแล้ว! ขอบคุณสำหรับข้อมูล');
+        
           try {
             router.push(`/projects/${projectId}`);
           } catch (e) {
@@ -148,6 +150,8 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
       } catch (error) {
         console.error('Error initializing chat:', error);
         setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        // หากล้มเหลว ให้ยกเลิกธงเพื่อให้สามารถลองใหม่ได้
+        initializedRef.current = false;
       } finally {
         setIsAssistantTyping(false);
         setLoading(false);
@@ -235,7 +239,6 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
       const done = data.isComplete ?? ((data.missingFields?.length || 0) === 0);
       setIsComplete(done);
       if (done) {
-        alert('✅ ตอบคำถามครบแล้ว! ขอบคุณสำหรับข้อมูล');
       }
 
       // ถ้าเสร็จแล้ว เก็บ finalJson เป็นโครงสร้างสุดท้ายจาก currentData (เติมค่า null/ช่องว่างให้ครบสคีมา)

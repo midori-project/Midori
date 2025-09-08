@@ -53,7 +53,8 @@ export const fashionHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project, finalJson, ctx) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => {
+      const template = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -64,7 +65,9 @@ export const fashionHandler: BusinessHandler = {
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html>`,
+</html>`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'vite.config.ts': () => `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -314,7 +317,8 @@ const SizeGuide: React.FC = () => {
 
 export default SizeGuide;`,
 
-    'src/pages/Home.tsx': (project) => `import React from 'react';
+    'src/pages/Home.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 import HeroSection from '../components/HeroSection.tsx';
 
 const Home: React.FC = () => {
@@ -330,10 +334,10 @@ const Home: React.FC = () => {
             <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
               <div className="w-full h-64 bg-gradient-to-r from-violet-400 to-pink-400"></div>
               <div className="p-4">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">[Product Name 1]</h3>
-                <p className="text-gray-600 mb-4">[Product Description 1]</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">[PRODUCT_1_NAME]</h3>
+                <p className="text-gray-600 mb-4">[PRODUCT_1_DESCRIPTION]</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-violet-600">$18.90</span>
+                  <span className="text-2xl font-bold text-violet-600">[PRODUCT_1_PRICE]</span>
                   <button className="bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700 transition-colors">Add to Cart</button>
                 </div>
               </div>
@@ -341,10 +345,10 @@ const Home: React.FC = () => {
             <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
               <div className="w-full h-64 bg-gradient-to-r from-pink-400 to-rose-400"></div>
               <div className="p-4">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">[Product Name 2]</h3>
-                <p className="text-gray-600 mb-4">[Product Description 2]</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">[PRODUCT_2_NAME]</h3>
+                <p className="text-gray-600 mb-4">[PRODUCT_2_DESCRIPTION]</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-violet-600">$24.90</span>
+                  <span className="text-2xl font-bold text-violet-600">[PRODUCT_2_PRICE]</span>
                   <button className="bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700 transition-colors">Add to Cart</button>
                 </div>
               </div>
@@ -352,10 +356,10 @@ const Home: React.FC = () => {
             <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
               <div className="w-full h-64 bg-gradient-to-r from-purple-400 to-violet-400"></div>
               <div className="p-4">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">[Product Name 3]</h3>
-                <p className="text-gray-600 mb-4">[Product Description 3]</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">[PRODUCT_3_NAME]</h3>
+                <p className="text-gray-600 mb-4">[PRODUCT_3_DESCRIPTION]</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-violet-600">$32.90</span>
+                  <span className="text-2xl font-bold text-violet-600">[PRODUCT_3_PRICE]</span>
                   <button className="bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700 transition-colors">Add to Cart</button>
                 </div>
               </div>
@@ -375,8 +379,8 @@ const Home: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">[Category 1]</h3>
-              <p className="text-sm text-gray-600">[Item Count 1]</p>
+              <h3 className="font-semibold text-gray-900 mb-2">[CATEGORY_1_NAME]</h3>
+              <p className="text-sm text-gray-600">[CATEGORY_1_COUNT]</p>
             </div>
             <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -384,8 +388,8 @@ const Home: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">[Category 2]</h3>
-              <p className="text-sm text-gray-600">[Item Count 2]</p>
+              <h3 className="font-semibold text-gray-900 mb-2">[CATEGORY_2_NAME]</h3>
+              <p className="text-sm text-gray-600">[CATEGORY_2_COUNT]</p>
             </div>
             <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -393,8 +397,8 @@ const Home: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">[Category 3]</h3>
-              <p className="text-sm text-gray-600">[Item Count 3]</p>
+              <h3 className="font-semibold text-gray-900 mb-2">[CATEGORY_3_NAME]</h3>
+              <p className="text-sm text-gray-600">[CATEGORY_3_COUNT]</p>
             </div>
             <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -402,8 +406,8 @@ const Home: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">[Category 4]</h3>
-              <p className="text-sm text-gray-600">[Item Count 4]</p>
+              <h3 className="font-semibold text-gray-900 mb-2">[CATEGORY_4_NAME]</h3>
+              <p className="text-sm text-gray-600">[CATEGORY_4_COUNT]</p>
             </div>
           </div>
         </div>
@@ -412,7 +416,9 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;`,
+export default Home;`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/pages/Collection.tsx': (project) => `import React from 'react';
 import ProductCard from '../components/ProductCard.tsx';

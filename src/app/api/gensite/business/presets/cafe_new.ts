@@ -54,7 +54,8 @@ export const cafeHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project, finalJson, ctx) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => {
+      const template = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -65,7 +66,9 @@ export const cafeHandler: BusinessHandler = {
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html>`,
+</html>`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'vite.config.ts': () => `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';

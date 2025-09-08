@@ -56,7 +56,8 @@ export const portfolioHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project, finalJson, ctx) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => {
+      const template = `<!doctype html>
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
@@ -67,7 +68,9 @@ export const portfolioHandler: BusinessHandler = {
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html>`,
+</html>`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/components/HeroSection.tsx': (project, finalJson, ctx) => {
       const template = `import React from 'react';

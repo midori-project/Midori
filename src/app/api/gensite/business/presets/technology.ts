@@ -52,7 +52,8 @@ export const technologyHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project, finalJson, ctx) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => {
+      const template = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -63,7 +64,9 @@ export const technologyHandler: BusinessHandler = {
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html>`,
+</html>`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'vite.config.ts': () => `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -272,7 +275,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ title, description, techStack
 
 export default ProjectCard;`,
 
-    'src/pages/Home.tsx': (project) => `import React from 'react';
+    'src/pages/Home.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 import HeroSection from '../components/HeroSection.tsx';
 
 const Home: React.FC = () => {
@@ -289,22 +293,22 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Service 1]</h3>
-              <p className="text-gray-600">[Service Description 1]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[SERVICE_1_TITLE]</h3>
+              <p className="text-gray-600">[SERVICE_1_DESCRIPTION]</p>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Service 2]</h3>
-              <p className="text-gray-600">[Service Description 2]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[SERVICE_2_TITLE]</h3>
+              <p className="text-gray-600">[SERVICE_2_DESCRIPTION]</p>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="w-16 h-16 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Service 3]</h3>
-              <p className="text-gray-600">[Service Description 3]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[SERVICE_3_TITLE]</h3>
+              <p className="text-gray-600">[SERVICE_3_DESCRIPTION]</p>
             </div>
           </div>
         </div>
@@ -319,25 +323,25 @@ const Home: React.FC = () => {
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">[Tech 1]</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">[TECH_1_NAME]</h3>
             </div>
             <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" /></svg>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">[Tech 2]</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">[TECH_2_NAME]</h3>
             </div>
             <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">[Tech 3]</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">[TECH_3_NAME]</h3>
             </div>
             <div className="bg-white rounded-xl p-6 text-center hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" /></svg>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">[Tech 4]</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">[TECH_4_NAME]</h3>
             </div>
           </div>
         </div>
@@ -346,7 +350,9 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;`,
+export default Home;`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/pages/Projects.tsx': (project) => `import React from 'react';
 import ProjectCard from '../components/ProjectCard.tsx';
