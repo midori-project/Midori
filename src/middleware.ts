@@ -75,7 +75,7 @@ export async function middleware(request: NextRequest) {
     
     // ตรวจสอบ session จาก cookie (Edge Runtime compatible)
     const sessionCookie = request.cookies.get('midori-session');
-    console.log('� Session cookie:', sessionCookie ? 'Found' : 'Not found');
+    console.log('🍪 Session cookie:', sessionCookie ? 'Found' : 'Not found');
     
     if (!sessionCookie?.value) {
       console.log('❌ No session cookie - redirecting to login');

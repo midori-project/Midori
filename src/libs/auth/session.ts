@@ -151,7 +151,22 @@ export async function getCurrentSession(): Promise<Session | null> {
       } catch (error) {
         console.error("Error deleting expired session:", error);
       }
-      cookieStore.delete(sessionConfig.cookieName);
+      
+      // ลบ cookie อย่างสมบูรณ์
+      try {
+        cookieStore.set(sessionConfig.cookieName, '', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          expires: new Date(0), // ตั้งเป็นอดีต
+          maxAge: 0
+        });
+      } catch (error) {
+        console.error("Error clearing expired cookie:", error);
+      }
+      
+      console.log('🔄 Session expired/terminated, cookie cleared');
       return null;
     }
 
@@ -165,7 +180,22 @@ export async function getCurrentSession(): Promise<Session | null> {
       } catch (error) {
         console.error("Error deleting idle session:", error);
       }
-      cookieStore.delete(sessionConfig.cookieName);
+      
+      // ลบ cookie อย่างสมบูรณ์
+      try {
+        cookieStore.set(sessionConfig.cookieName, '', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          expires: new Date(0), // ตั้งเป็นอดีต
+          maxAge: 0
+        });
+      } catch (error) {
+        console.error("Error clearing idle cookie:", error);
+      }
+      
+      console.log('🔄 Session idle timeout, cookie cleared');
       return null;
     }
 
@@ -210,7 +240,27 @@ export async function revokeCurrentSession(): Promise<void> {
     console.error("Error revoking session:", error);
   }
 
-  cookieStore.delete(sessionConfig.cookieName);
+  // ลบ cookie อย่างสมบูรณ์
+  try {
+    cookieStore.set(sessionConfig.cookieName, '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: new Date(0), // ตั้งเป็นอดีต
+      maxAge: 0
+    });
+  } catch (error) {
+    console.error("Error clearing logout cookie:", error);
+    // Fallback: ใช้ delete method
+    try {
+      cookieStore.delete(sessionConfig.cookieName);
+    } catch (deleteError) {
+      console.error("Error deleting logout cookie:", deleteError);
+    }
+  }
+  
+  console.log('🔄 Session revoked, cookie cleared');
 }
 
 /**
