@@ -21,6 +21,7 @@ export class ProjectStructureGenerator {
     const features = this.extractFeatures(finalJson);
     const pages = this.extractPages(finalJson);
     
+    const optionsFromJson = (finalJson as any)?.options || {};
     const systemPrompt = `🎨 CREATIVE FRONTEND DEVELOPER: สร้างเว็บไซต์ที่ตรงตามความต้องการของผู้ใช้
 
 **TECH STACK:** Vite + React + TypeScript + Tailwind CSS (Frontend-only)
@@ -41,6 +42,14 @@ export class ProjectStructureGenerator {
 - กลุ่มเป้าหมาย: ${userIntent.targetAudience}
 - โทนการสื่อสาร: ${userIntent.tone}
 - ความซับซ้อน: ${userIntent.complexity}
+
+**🎨 THEME & BRANDING (from finalJson.options):**
+- Project Name: ${optionsFromJson.name || this.extractProjectName(finalJson)}
+- Business: ${optionsFromJson.business || businessContext.industry}
+- Theme: ${optionsFromJson.theme || 'default'}
+- Primary Color: ${optionsFromJson.primaryColor || '#16a34a'}
+- Secondary Color: ${optionsFromJson.secondaryColor || '#0ea5e9'}
+- Background: ${optionsFromJson.background || '#ffffff'}
 
 **🚨 CRITICAL REQUIREMENTS:**
 - สร้าง React/TypeScript frontend เท่านั้น

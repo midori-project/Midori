@@ -265,12 +265,17 @@ export async function POST(req: NextRequest) {
     }
 
     const session = chatSessions.get(sessionId)!;
-    
-    // Always analyze the current user message first to extract any information
-    const analysis = await analyzeAndAskNext(userMessage, session.currentData ?? {});
-    
-    // If previous question targeted a specific field, also treat current message as the answer to that field
+    // Apply the current user answer to lastField BEFORE analysis to avoid repeating the same question
     const prevLastField: string | undefined = (session as any).lastField;
+    const effectiveData = deepMerge({}, session.currentData ?? {});
+    if (prevLastField && typeof userMessage === 'string' && userMessage.trim().length > 0) {
+      setByPath(effectiveData as any, prevLastField, userMessage.trim());
+    }
+
+    // Analyze with the effective data so missing fields advance properly
+    const analysis = await analyzeAndAskNext(userMessage, effectiveData);
+
+    // Persist merged lastField answer to the session store
     if (prevLastField && typeof userMessage === 'string' && userMessage.trim().length > 0) {
       session.currentData = session.currentData ?? {};
       setByPath(session.currentData as any, prevLastField, userMessage.trim());

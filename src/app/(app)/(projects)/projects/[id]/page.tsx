@@ -2,7 +2,7 @@ import { getCurrentSession } from '@/libs/auth/session';
 import { redirect } from 'next/navigation';
 import { NextPage } from 'next';
 import { getPromptJson } from '@/components/projects/getProject';
-import GenerateSiteButton from '@/components/projects/GenerateSiteButton';
+import AutoGenerateOnLoad from '@/components/projects/AutoGenerateOnLoad';
 import SitePreview from '@/components/projects/SitePreview';
 
 interface ProjectPageProps {
@@ -33,14 +33,11 @@ const ProjectPage: NextPage<ProjectPageProps> = async ({ params }) => {
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-4">ข้อมูลโปรเจค</h2>
-            
-            {/* ปุ่มสร้างเว็บไซต์ */}
-            <div className="mt-6 flex justify-center">
-              <GenerateSiteButton 
-                projectId={projectId} 
-                promptJson={promptJson as Record<string, unknown>} 
-              />
-            </div>
+            {/* สร้างเว็บไซต์อัตโนมัติเมื่อเข้าหน้า */}
+            <AutoGenerateOnLoad 
+              projectId={projectId}
+              promptJson={promptJson}
+            />
           </div>
           
           {/* SandPack Preview */}

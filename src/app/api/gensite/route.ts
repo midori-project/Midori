@@ -420,7 +420,6 @@ Return only React code, no markdown headers or explanations.`;
 
 **PROJECT CONTEXT:**
 - Project: ${projectInfo?.name || projectName} (${projectInfo?.type || 'Website'})
-- Goal: ${projectInfo?.goal || 'Create a functional website'}
 - Features: ${features?.map(f => f.name || f.id).join(', ') || 'Basic features'}
 
 **CONTENT ANALYSIS:**

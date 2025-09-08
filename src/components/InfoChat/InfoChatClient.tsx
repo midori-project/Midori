@@ -122,17 +122,19 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         initializedRef.current = true;
 
         const nextQuestion = data.nextQuestions?.[0];
-        const fallbackQuestion = data.missingFields?.length > 0 ? getPredefinedQuestion(data.missingFields[0]) : 'ข้อมูลครบถ้วนแล้ว';
-        const assistantText = nextQuestion || fallbackQuestion;
-
-        setMessages(prev => [
-          ...prev,
-          { 
-            id: `assistant-${Date.now()}-${Math.random()}`, 
-            role: "assistant", 
-            text: assistantText
-          }
-        ]);
+        const fallbackQuestion = data.missingFields?.length > 0 ? getPredefinedQuestion(data.missingFields[0]) : undefined;
+        const candidateQuestion = nextQuestion || fallbackQuestion;
+        const lastAssistant = [...messages].reverse().find(m => m.role === "assistant");
+        if (candidateQuestion && candidateQuestion !== lastAssistant?.text) {
+          setMessages(prev => [
+            ...prev,
+            { 
+              id: `assistant-${Date.now()}-${Math.random()}`, 
+              role: "assistant", 
+              text: candidateQuestion
+            }
+          ]);
+        }
         const done = data.isComplete ?? ((data.missingFields?.length || 0) === 0);
         setIsComplete(done);
         if (done) {
@@ -217,17 +219,14 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
 
       // ข้อความถัดไปจาก analyzeAndAskNext
       const nextQuestion = data.nextQuestions?.[0];
-      const fallbackQuestion = data.missingFields?.length > 0 ? getPredefinedQuestion(data.missingFields[0]) : 'ข้อมูลครบถ้วนแล้ว';
-      
-      // ตรวจสอบว่าคำถามนี้ซ้ำกับข้อความสุดท้ายหรือไม่
-      const lastMessage = messages[messages.length - 1];
-      const shouldShowQuestion = nextQuestion && nextQuestion !== lastMessage?.text;
-      
-      if (shouldShowQuestion || !nextQuestion) {
+      const fallbackQuestion = data.missingFields?.length > 0 ? getPredefinedQuestion(data.missingFields[0]) : undefined;
+      const candidateQuestion = nextQuestion || fallbackQuestion;
+      const lastAssistant = [...messages].reverse().find(m => m.role === "assistant");
+      if (candidateQuestion && candidateQuestion !== lastAssistant?.text) {
         const reply: Message = {
           id: `assistant-${Date.now()}-${Math.random()}`,
           role: "assistant",
-          text: nextQuestion || fallbackQuestion
+          text: candidateQuestion
         };
         setMessages((s) => [...s, reply]);
       }

@@ -29,13 +29,16 @@ export class SiteGeneratorService {
 
     console.log('🚀 Starting site generation process...');
     
+    // Enrich finalJson with options so templates can read from finalJson.options
+    const enrichedFinalJson = { ...finalJson, options } as Record<string, unknown>;
+
     // Step 1: Analyze finalJson and create project structure
-    const projectStructure = await this.createProjectStructureWithTimeout(finalJson, options);
+    const projectStructure = await this.createProjectStructureWithTimeout(enrichedFinalJson, options);
     console.log('✅ Project structure created:', projectStructure.name);
     console.log('📋 Project structure details:', projectStructure);
     
     // Step 2: Generate files based on the project structure (OPTIMIZED)
-    const files = await FileGenerator.generateEssentialFilesOnly(finalJson, projectStructure, options);
+    const files = await FileGenerator.generateEssentialFilesOnly(enrichedFinalJson, projectStructure, options);
     console.log('✅ User-intent based files generated:', files.length);
     console.log(' Generated files:', files.map(f => f.path));
     
