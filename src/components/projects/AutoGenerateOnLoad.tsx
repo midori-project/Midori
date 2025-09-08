@@ -30,7 +30,7 @@ function getBranding(value: unknown) {
   };
   return {
     name: get('Name', 'name', 'project.name', 'business.name'),
-    business: get('type', 'business.type', 'project.type'),
+    business: get('Type', 'business.type', 'project.type'),
     theme: get('Design.Theme', 'design.theme', 'theme'),
     primaryColor: get('Design.PrimaryColor', 'design.primaryColor', 'primaryColor'),
     secondaryColor: get('Design.SecondaryColor', 'design.secondaryColor', 'secondaryColor'),
@@ -43,7 +43,8 @@ export default function AutoGenerateOnLoad({ projectId, promptJson }: AutoGenera
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedInfo, setGeneratedInfo] = useState<{ fileCount: number; name: string } | null>(null);
-  console.log(promptJson)
+  const [skeleton, setSkeleton] = useState<any | null>(null);
+  console.log(skeleton)
   const hasRunRef = useRef(false);
   useEffect(() => {
     if (!promptJson || hasRunRef.current) return;
@@ -76,8 +77,10 @@ export default function AutoGenerateOnLoad({ projectId, promptJson }: AutoGenera
         });
 
         const data = await response.json();
-
+        
         if (response.ok && data.success) {
+          // ตั้งค่าสเกเลตอนด้วยข้อมูลจาก /api/gensite
+          setSkeleton(data.data.files);
           const previewData = {
             files: data.data.files,
             projectStructure: data.data.projectStructure,
@@ -90,9 +93,11 @@ export default function AutoGenerateOnLoad({ projectId, promptJson }: AutoGenera
           try { alert(`สร้างเว็บไซต์สำเร็จ: ${data.data.fileCount} ไฟล์`); } catch {}
         } else {
           setError(data.error || 'เกิดข้อผิดพลาดในการสร้างเว็บไซต์');
+          setSkeleton(null);
         }
       } catch (err) {
         setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        setSkeleton(null);
       } finally {
         setIsGenerating(false);
       }

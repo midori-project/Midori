@@ -33,20 +33,103 @@ export class UserIntentAnalyzer {
    */
   static async analyzeUserIntent(finalJson: Record<string, unknown>): Promise<UserIntent> {
     const conversationText = JSON.stringify(finalJson).toLowerCase();
-    
-    try {
-      // Step 1: ใช้ AI analysis เป็นหลัก
-      const aiAnalysis = await this.performAIAnalysis(conversationText);
-      
-      // Step 2: ใช้ keyword analysis เป็น fallback และ validation
-      const keywordAnalysis = this.performKeywordAnalysis(conversationText);
-      
-      // Step 3: รวมผลการวิเคราะห์
-      return this.mergeAnalysis(aiAnalysis, keywordAnalysis);
-      
-    } catch (error) {
-      console.warn('AI analysis failed, falling back to keyword analysis:', error);
-      return this.performKeywordAnalysis(conversationText);
+    const projectTypeRaw = (finalJson as any)?.type;
+    const projectType = typeof projectTypeRaw === 'string' ? projectTypeRaw.toLowerCase() : '';
+    console.log('[UserIntentAnalyzer] Using finalJson.type to determine intent:', projectTypeRaw);
+
+    if (projectType) {
+      return this.userIntentFromProjectType(projectType);
+    }
+
+    console.warn('[UserIntentAnalyzer] finalJson.type is missing. Falling back to keyword analysis.');
+    return this.performKeywordAnalysis(conversationText);
+  }
+
+  /**
+   * Map project type to a deterministic UserIntent (no AI)
+   */
+  private static userIntentFromProjectType(projectType: string): UserIntent {
+    switch (projectType) {
+      case 'blog':
+        return {
+          visualStyle: 'modern-minimal',
+          colorScheme: 'blue-gray',
+          layoutPreference: 'responsive-grid',
+          features: ['blog', 'search'],
+          pages: ['home', 'about', 'contact', 'articles', 'categories'],
+          targetAudience: 'general-users',
+          tone: 'professional-friendly',
+          complexity: 'moderate',
+        };
+      case 'ecommerce':
+      case 'e-commerce':
+        return {
+          visualStyle: 'professional-corporate',
+          colorScheme: 'cool-blue-green',
+          layoutPreference: 'responsive-grid',
+          features: ['ecommerce', 'search', 'analytics'],
+          pages: ['home', 'products', 'about', 'contact', 'pricing'],
+          targetAudience: 'business-professionals',
+          tone: 'professional-friendly',
+          complexity: 'advanced-complex',
+        };
+      case 'portfolio':
+        return {
+          visualStyle: 'artistic-creative',
+          colorScheme: 'neutral-beige-brown',
+          layoutPreference: 'fullscreen-hero',
+          features: ['gallery', 'contact'],
+          pages: ['home', 'about', 'gallery', 'contact'],
+          targetAudience: 'creative-professionals',
+          tone: 'modern',
+          complexity: 'minimal-clean',
+        };
+      case 'restaurant':
+      case 'cafe':
+        return {
+          visualStyle: 'luxury-elegant',
+          colorScheme: 'warm-orange-red',
+          layoutPreference: 'fullscreen-hero',
+          features: ['booking', 'gallery', 'contact'],
+          pages: ['home', 'menu', 'reservation', 'about', 'contact'],
+          targetAudience: 'general-users',
+          tone: 'friendly',
+          complexity: 'moderate',
+        };
+      case 'agency':
+        return {
+          visualStyle: 'professional-corporate',
+          colorScheme: 'blue-gray',
+          layoutPreference: 'responsive-grid',
+          features: ['contact', 'analytics', 'blog'],
+          pages: ['home', 'services', 'about', 'blog', 'contact'],
+          targetAudience: 'business-professionals',
+          tone: 'professional-friendly',
+          complexity: 'moderate',
+        };
+      case 'technology':
+      case 'fashion':
+        return {
+          visualStyle: projectType === 'fashion' ? 'luxury-elegant' : 'modern-minimal',
+          colorScheme: projectType === 'fashion' ? 'bold-vibrant' : 'cool-blue-green',
+          layoutPreference: 'responsive-grid',
+          features: ['blog', 'contact'],
+          pages: ['home', 'about', 'blog', 'contact'],
+          targetAudience: 'young-adults',
+          tone: 'modern',
+          complexity: 'moderate',
+        };
+      default:
+        return {
+          visualStyle: 'modern-minimal',
+          colorScheme: 'blue-gray',
+          layoutPreference: 'responsive-grid',
+          features: ['contact'],
+          pages: ['home', 'about', 'contact'],
+          targetAudience: 'general-users',
+          tone: 'professional-friendly',
+          complexity: 'moderate',
+        };
     }
   }
 
@@ -261,38 +344,38 @@ ${conversationText}
    * Analyze business context from conversation data using AI
    */
   static async analyzeBusinessContext(finalJson: Record<string, unknown>): Promise<BusinessContext> {
-    const projectInfo = finalJson.project as any;
-    const targetAudience = finalJson.targetAudience as string[];
-    const features = finalJson.features as any[];
-    const userIntent = finalJson.userIntent as string;
-    
+    const projectInfo = (finalJson as any)?.project;
+    const typeFromRoot = ((finalJson as any)?.type || (finalJson as any)?.Type) as string | undefined;
+    const typeFromProject = (projectInfo?.type || projectInfo?.Type) as string | undefined;
+    const targetAudienceRaw = ((finalJson as any)?.targetAudience || (finalJson as any)?.TargetAudience) as string[] | string | undefined;
+
     console.log('🤖 Starting AI Business Context Analysis:', {
-      projectType: projectInfo?.type,
+      projectType: typeFromProject,
       projectGoal: projectInfo?.goal,
       projectName: projectInfo?.name,
       projectDescription: projectInfo?.description,
-      targetAudience: targetAudience,
-      userIntent: userIntent
+      targetAudience: targetAudienceRaw
     });
-    
+
     try {
-      // สร้างข้อความสำหรับ AI analysis
-      const analysisText = this.buildAnalysisText(projectInfo, targetAudience, features, userIntent);
-      
-      // ใช้ AI วิเคราะห์ business context
+      const normalizedTargetAudience = Array.isArray(targetAudienceRaw) ? targetAudienceRaw : (targetAudienceRaw ? [String(targetAudienceRaw)] : []);
+      const analysisText = this.buildAnalysisText(projectInfo, normalizedTargetAudience, (finalJson as any)?.features as any[], (finalJson as any)?.userIntent as string);
       const aiAnalysis = await this.performAIBusinessAnalysis(analysisText);
-      
-      // ใช้ผลลัพธ์จาก AI หรือ fallback
-      const result = this.buildBusinessContext(aiAnalysis, projectInfo, targetAudience, features);
-      
+      const result = this.buildBusinessContext(aiAnalysis, projectInfo, normalizedTargetAudience, (finalJson as any)?.features as any[]);
+
+      if (!result.industry || result.industry === 'default') {
+        const fallbackIndustry = (typeFromRoot || typeFromProject || 'default').toLowerCase();
+        result.industry = fallbackIndustry;
+      }
+
       console.log('✅ AI Business Context Result:', result);
       return result;
-      
     } catch (error) {
       console.warn('⚠️ AI analysis failed, using fallback:', error);
-      
-      // Fallback to keyword analysis
-      const fallbackResult = this.performFallbackAnalysis(projectInfo, targetAudience, features);
+      const normalizedTargetAudience = Array.isArray(targetAudienceRaw) ? targetAudienceRaw : (targetAudienceRaw ? [String(targetAudienceRaw)] : []);
+      const fallbackResult = this.performFallbackAnalysis(projectInfo, normalizedTargetAudience, (finalJson as any)?.features as any[]);
+      const fallbackIndustry = (typeFromRoot || typeFromProject);
+      if (fallbackIndustry) fallbackResult.industry = fallbackIndustry.toLowerCase();
       console.log('✅ Fallback Business Context Result:', fallbackResult);
       return fallbackResult;
     }

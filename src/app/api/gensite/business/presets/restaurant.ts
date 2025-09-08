@@ -54,7 +54,8 @@ export const restaurantHandler: BusinessHandler = {
   }
 }`,
 
-    'index.html': (project, finalJson, ctx) => `<!doctype html>
+    'index.html': (project, finalJson, ctx) => {
+      const template = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -66,7 +67,9 @@ export const restaurantHandler: BusinessHandler = {
     <script type="module" src="/src/main.tsx"></script>
   </body>
   
-</html>`,
+</html>`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'vite.config.ts': () => `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -240,7 +243,8 @@ export default HeroSection;`;
       return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
     },
 
-    'src/components/MenuCard.tsx': () => `import React from 'react';
+    'src/components/MenuCard.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 interface MenuCardProps {
   title: string;
@@ -262,7 +266,10 @@ const MenuCard: React.FC<MenuCardProps> = ({ title, description, price }) => {
   );
 };
 
-export default MenuCard;`,
+export default MenuCard;`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
+
 
     'src/components/ReservationForm.tsx': () => `import React, { useState } from 'react';
 
@@ -309,7 +316,8 @@ const ReservationForm: React.FC = () => {
 
 export default ReservationForm;`,
 
-    'src/pages/Home.tsx': (project) => `import React from 'react';
+    'src/pages/Home.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 import HeroSection from '../components/HeroSection.tsx';
 
 const Home: React.FC = () => {
@@ -322,28 +330,28 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="w-full h-48 bg-gradient-to-r from-red-500 to-orange-600 rounded-lg mb-4"></div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Menu Item 1]</h3>
-              <p className="text-gray-600 mb-4">[Menu Description 1]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[MENU_ITEM_1_NAME]</h3>
+              <p className="text-gray-600 mb-4">[MENU_ITEM_1_DESCRIPTION]</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-red-600">$18.90</span>
+                <span className="text-2xl font-bold text-red-600">[MENU_ITEM_1_PRICE]</span>
                 <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">Order Now</button>
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="w-full h-48 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg mb-4"></div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Menu Item 2]</h3>
-              <p className="text-gray-600 mb-4">[Menu Description 2]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[MENU_ITEM_2_NAME]</h3>
+              <p className="text-gray-600 mb-4">[MENU_ITEM_2_DESCRIPTION]</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-red-600">$8.90</span>
+                <span className="text-2xl font-bold text-red-600">[MENU_ITEM_2_PRICE]</span>
                 <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">Order Now</button>
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="w-full h-48 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg mb-4"></div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Menu Item 3]</h3>
-              <p className="text-gray-600 mb-4">[Menu Description 3]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[MENU_ITEM_3_NAME]</h3>
+              <p className="text-gray-600 mb-4">[MENU_ITEM_3_DESCRIPTION]</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-red-600">$2.90</span>
+                <span className="text-2xl font-bold text-red-600">[MENU_ITEM_3_PRICE]</span>
                 <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">Order Now</button>
               </div>
             </div>
@@ -358,22 +366,22 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Feature 1]</h3>
-              <p className="text-gray-600">[Feature Description 1]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[FEATURE_1_TITLE]</h3>
+              <p className="text-gray-600">[FEATURE_1_DESCRIPTION]</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Feature 2]</h3>
-              <p className="text-gray-600">[Feature Description 2]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[FEATURE_2_TITLE]</h3>
+              <p className="text-gray-600">[FEATURE_2_DESCRIPTION]</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 111.314 0z" /></svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">[Feature 3]</h3>
-              <p className="text-gray-600">[Feature Description 3]</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">[FEATURE_3_TITLE]</h3>
+              <p className="text-gray-600">[FEATURE_3_DESCRIPTION]</p>
             </div>
           </div>
         </div>
@@ -382,9 +390,11 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;`,
+export default Home;`;
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
-    'src/pages/Menu.tsx': (project) => `import React from 'react';
+    'src/pages/Menu.tsx': (project, finalJson, ctx) => `import React from 'react';
 import MenuCard from '../components/MenuCard.tsx';
 
 // AI NOTE: Menu will be filled from promptJson (finalJson.menu.items)

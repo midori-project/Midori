@@ -19,9 +19,16 @@ export class TemplateReplacer {
     projectName?: string,
     userIntent?: string
   ): Promise<string> {
+    console.log('[TemplateReplacer] Start replacePlaceholders', {
+      industry: ctx?.industry,
+      projectName,
+      hasUserIntent: Boolean(userIntent)
+    });
     // ตรวจสอบว่า template มี placeholders หรือไม่
-    const placeholders = template.match(/\[[A-Z_]+\]/g);
+    const placeholders = template.match(/\[[A-Z0-9_]+\]/g);
+    console.log('[TemplateReplacer] Detected placeholders:', placeholders?.length || 0);
     if (!placeholders || placeholders.length === 0) {
+      console.log('[TemplateReplacer] No placeholders found. Return original template.');
       return template;
     }
 
@@ -29,6 +36,7 @@ export class TemplateReplacer {
     const cacheKey = `${template.substring(0, 100)}_${ctx.industry}_${projectName}`;
     const cached = this.getCachedTemplate(cacheKey);
     if (cached) {
+      console.log('[TemplateReplacer] Cache hit. Returning cached template.');
       return cached;
     }
 
@@ -39,6 +47,7 @@ export class TemplateReplacer {
       if (aiResult && !aiResult.fallbackUsed) {
         // Cache AI result
         this.cacheTemplate(cacheKey, aiResult.replacedTemplate);
+        console.log('[TemplateReplacer] AI replacement success. Cached and returning.');
         return aiResult.replacedTemplate;
       }
     } catch (error) {
@@ -103,6 +112,11 @@ export class TemplateReplacer {
 
     // Cache fallback result
     this.cacheTemplate(cacheKey, result);
+    const remaining = result.match(/\[[A-Z0-9_]+\]/g) || [];
+    console.log('[TemplateReplacer] Fallback replacement complete', {
+      industry: ctx.industry,
+      remainingPlaceholders: remaining,
+    });
     return result;
   }
 
@@ -125,8 +139,9 @@ export class TemplateReplacer {
       });
 
       // ตรวจสอบว่า template มี placeholders หรือไม่
-      const placeholders = template.match(/\[[A-Z_]+\]/g);
+      const placeholders = template.match(/\[[A-Z0-9_]+\]/g);
       if (!placeholders || placeholders.length === 0) {
+        console.log('[TemplateReplacer] getAIReplacements: No placeholders. Skip AI.');
         return {
           replacedTemplate: template,
           fallbackUsed: false
@@ -155,6 +170,7 @@ export class TemplateReplacer {
 
       const aiResponse = completion.choices[0]?.message?.content;
       if (!aiResponse) {
+        console.warn('[TemplateReplacer] AI responded with empty content');
         throw new Error('No response from AI');
       }
 
@@ -172,6 +188,11 @@ export class TemplateReplacer {
           appliedReplacements[key] = aiReplacements[key];
         }
       }
+      const remaining = replacedTemplate.match(/\[[A-Z0-9_]+\]/g) || [];
+      console.log('[TemplateReplacer] AI replacements applied', {
+        appliedCount: Object.keys(appliedReplacements).length,
+        remainingPlaceholders: remaining
+      });
 
       return {
         replacedTemplate,
@@ -179,7 +200,7 @@ export class TemplateReplacer {
       };
 
     } catch (error) {
-      console.error('AI replacement error:', error);
+      console.error('[TemplateReplacer] AI replacement error:', error);
       return null;
     }
   }
@@ -248,7 +269,7 @@ Example:
     const warnings: string[] = [];
 
     // ตรวจสอบ placeholder ที่ไม่ได้ replace
-    const unreplacedPlaceholders = template.match(/\[[A-Z_]+\]/g);
+    const unreplacedPlaceholders = template.match(/\[[A-Z0-9_]+\]/g);
     if (unreplacedPlaceholders) {
       warnings.push(`Unreplaced placeholders: ${unreplacedPlaceholders.join(', ')}`);
     }

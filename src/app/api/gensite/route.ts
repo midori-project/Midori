@@ -140,13 +140,13 @@ export class FileGenerator {
     console.log('🎯 Starting ESSENTIAL files generation (SandPack Compatible)');
     const startTime = Date.now();
     
-    // วิเคราะห์ business context
-    console.log('🔍 Starting Business Context Analysis...');
+    // วิเคราะห์ Business Context ด้วย AI จาก finalJson โดยตรง
+    console.log('🔍 Starting AI Business Context Analysis for template selection...');
     const businessContext = await UserIntentAnalyzer.analyzeBusinessContext(finalJson);
-    console.log('🏢 Business Context detected:', businessContext);
-    
-    // เลือกไฟล์ตาม business context
-    console.log('🎯 Selecting Business Handler for industry:', businessContext.industry);
+    console.log('🏢 Business Context detected (AI):', businessContext);
+
+    // เลือกไฟล์ตาม business context ที่วิเคราะห์ได้
+    console.log('🎯 Selecting Business Handler for industry (AI):', businessContext.industry);
     const handler = getBusinessHandler(businessContext.industry);
     const essentialFiles = handler.getEssentialFiles(projectStructure as any);
     console.log('📁 Essential Files Selected:', essentialFiles.map(f => f.path));
