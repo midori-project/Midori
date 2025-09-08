@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 /**
  * Component สำหรับแสดงข้อความแจ้งเมื่อ session หมดอายุ
  */
-export function SessionExpiredNotification() {
+function SessionExpiredNotificationInner() {
   const [show, setShow] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -79,5 +79,13 @@ export function SessionExpiredNotification() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function SessionExpiredNotification() {
+  return (
+    <Suspense fallback={null}>
+      <SessionExpiredNotificationInner />
+    </Suspense>
   );
 }

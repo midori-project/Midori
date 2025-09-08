@@ -1,7 +1,10 @@
 import { getPromptJson } from "./getProject";
 
-export default function previewProject({ projectId }: { projectId: string }) {
-  const project = getPromptJson(projectId);
-  return
-   <div>{project?.name}</div>;
+export default async function previewProject({ projectId }: { projectId: string }) {
+  const project = await getPromptJson(projectId);
+  const projectData = project as { name?: string } | null;
+  
+  return (
+    <div>{projectData?.name}</div>
+  );
 }
