@@ -7,6 +7,7 @@ interface AutoGenerateOnLoadProps {
   projectId: string;
   promptJson?: PromptJson | null;
   userId?: string;
+  onLoadingChange?: (isLoading: boolean) => void;
 }
 
 // ดึงค่าแบบยืดหยุ่น รองรับหลายรูปแบบ/ตัวพิมพ์
@@ -40,13 +41,18 @@ function getBranding(value: unknown) {
 }
 
 
-export default function AutoGenerateOnLoad({ projectId, promptJson, userId }: AutoGenerateOnLoadProps) {
+export default function AutoGenerateOnLoad({ projectId, promptJson, userId, onLoadingChange }: AutoGenerateOnLoadProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedInfo, setGeneratedInfo] = useState<{ fileCount: number; name: string; isExisting?: boolean } | null>(null);
   const [skeleton, setSkeleton] = useState<any | null>(null);
   console.log(skeleton)
   const hasRunRef = useRef(false);
+
+  // ส่ง loading state ออกไปเมื่อมีการเปลี่ยนแปลง
+  useEffect(() => {
+    onLoadingChange?.(isGenerating);
+  }, [isGenerating, onLoadingChange]);
   
   useEffect(() => {
     if (!promptJson || hasRunRef.current) return;
