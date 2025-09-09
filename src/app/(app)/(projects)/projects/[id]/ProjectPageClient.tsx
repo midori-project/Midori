@@ -38,7 +38,7 @@ export const ProjectPageClient: React.FC<ProjectPageClientProps> = ({
           {isGenerating ? (
             <ProjectGenerationLoading 
               projectName={getProjectName()}
-              currentStep="กำลังสร้างเว็บไซต์ด้วย AI"
+              currentStep=""
             />
           ) : (
             <div className="space-y-6">

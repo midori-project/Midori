@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from 'react';
-import { toggleProjectLikeAction } from '@/app/projects/likeAction';
+import { toggleProjectLikeAction } from '@/app/(app)/(projects)/projects/likeAction';
 
 interface LikeButtonProps {
   projectId: string;

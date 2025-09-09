@@ -27,7 +27,7 @@ const ProjectPage: NextPage<ProjectPageProps> = async ({ params }) => {
   return (
     <ProjectPageClient 
       projectId={projectId}
-      promptJson={promptJson}
+      promptJson={promptJson as any}
     />
   );
 };

@@ -28,7 +28,7 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
   const [loadingFromAPI, setLoadingFromAPI] = useState(false);
   const [jsonData, setJsonData] = useState<any>(null);
   const [showJsonViewer, setShowJsonViewer] = useState(false);
-  const [showCodeEditor, setShowCodeEditor] = useState(true);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
 
   // ฟังก์ชันดึงข้อมูลจาก localStorage
   const loadPreviewData = () => {
@@ -237,7 +237,7 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
         <div className="text-4xl mb-4">⚠️</div>
         <h3 className="text-lg font-semibold text-yellow-800 mb-2">
-          ยังไม่มีพรีวิว
+          No preview
         </h3>
         <p className="text-yellow-600 mb-4">{error}</p>
         <div className="flex justify-center gap-3">
@@ -246,7 +246,7 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
             disabled={loadingFromAPI}
             className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition-colors disabled:opacity-50"
           >
-            🔄 ตรวจสอบอีกครั้ง
+            🔄 Check again
           </button>
           <button
             onClick={loadFromAPI}
@@ -256,12 +256,12 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
             {loadingFromAPI ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>โหลด...</span>
+                <span>Loading...</span>
               </>
             ) : (
               <>
                 <span>📥</span>
-                <span>โหลดโค้ด</span>
+                <span>Load code</span>
               </>
             )}
           </button>

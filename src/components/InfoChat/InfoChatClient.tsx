@@ -55,7 +55,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
     {
       id: `system-${Date.now()}`,
       role: "system",
-      text: "เริ่มการตั้งค่า Midori — ตอบคำถามทีละข้อ",
+      text: "Getting started with Midori - answer the questions one by one",
     },
   ]);
   console.log('finalJson:', finalJson);
@@ -70,7 +70,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
     
     // ถ้าได้ initialize แล้ว ให้ไม่ทำอะไร
     if (initializedRef.current) {
-      console.log('ได้ initialize แล้ว - ไม่ทำอะไร');
+      console.log('Already initialized - do nothing');
       return;
     }
     
@@ -149,7 +149,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         }
       } catch (error) {
         console.error('Error initializing chat:', error);
-        setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        setError('Error connecting');
         // หากล้มเหลว ให้ยกเลิกธงเพื่อให้สามารถลองใหม่ได้
         initializedRef.current = false;
       } finally {
@@ -247,12 +247,12 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
             finalJson: normalizedData
           });
           if ('id' in result) {
-            console.log('บันทึก finalJson ลงตาราง generation สำเร็จ:', result.id);
+            console.log('Save finalJson to generation table successfully:', result.id);
           } else {
-            console.error('เกิดข้อผิดพลาดในการบันทึก finalJson:', result.error);
+            console.error('Error saving finalJson:', result.error);
           }
         } catch (error) {
-          console.error('เกิดข้อผิดพลาดในการบันทึก finalJson:', error);
+          console.error('Error saving finalJson:', error);
         }
         
         // นำทางไปหน้าโปรเจค
@@ -261,10 +261,15 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         } catch (e) {
           console.error('navigation error:', e);
         }
+        try {
+          router.push(`/projects/${projectId}`);
+        } catch (e) {
+          console.error('navigation error:', e);
+        }
       }
     } catch (error) {
       console.error('Error skipping question:', error);
-      setError('เกิดข้อผิดพลาดในการข้ามคำถาม');
+      setError('Error skipping question');
     } finally {
       setIsAssistantTyping(false);
       setIsSending(false);

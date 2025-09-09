@@ -2,7 +2,7 @@ import { DEFAULT_GENERATION_OPTIONS } from './config';
 import { UserIntentAnalyzer } from './user-intent-analyzer';
 import { OpenAIService } from './openai-service';
 import { ProjectStructureGenerator } from './project-structure-generator';
-import { FileGenerator } from '../../app/api/gensite/route';
+import { FileGenerator } from './file-generator';
 import { GeneratedFile, ProjectStructure, GenerationOptions } from './types';
 
 /**
@@ -81,7 +81,7 @@ export class SiteGeneratorService {
 export { UserIntentAnalyzer } from './user-intent-analyzer';
 export { OpenAIService } from './openai-service';
 export { ProjectStructureGenerator } from './project-structure-generator';
-export { FileGenerator } from '../../app/api/gensite/route';
+export { FileGenerator } from './file-generator';
 export { DEFAULT_GENERATION_OPTIONS } from './config';
 export type { 
   GeneratedFile, 
