@@ -147,7 +147,7 @@ export default function AutoGenerateOnLoad({ projectId, promptJson, userId, onLo
             isExisting: false
           });
           // แจ้งเตือนสั้นๆ เพื่อบอกว่ากำลังพร้อมพรีวิว
-          try { alert(`สร้างเว็บไซต์สำเร็จ: ${data.data.fileCount} ไฟล์ (Generation ID: ${data.data.generationId})`); } catch {}
+          // try { alert(`สร้างเว็บไซต์สำเร็จ: ${data.data.fileCount} ไฟล์ (Generation ID: ${data.data.generationId})`); } catch {}
         } else {
           setError(data.error || 'เกิดข้อผิดพลาดในการสร้างเว็บไซต์');
           setSkeleton(null);

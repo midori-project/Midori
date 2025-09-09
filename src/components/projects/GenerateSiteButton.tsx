@@ -57,8 +57,7 @@ export default function GenerateSiteButton({ projectId, promptJson }: GenerateSi
         };
         localStorage.setItem(`preview_${projectId}`, JSON.stringify(previewData));
         
-        // แสดงผลสำเร็จ
-        alert(`🎉 สร้างเว็บไซต์สำเร็จ!\n📁 สร้างไฟล์ทั้งหมด: ${data.data.fileCount} ไฟล์\n🏗️ โครงสร้าง: ${data.data.projectStructure.name}\n\n✨ พรีวิวจะแสดงด้านล่างอัตโนมัติ`);
+  
       } else {
         setError(data.error || 'เกิดข้อผิดพลาดในการสร้างเว็บไซต์');
       }
@@ -87,11 +86,11 @@ export default function GenerateSiteButton({ projectId, promptJson }: GenerateSi
         {isGenerating ? (
           <>
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            กำลังสร้างเว็บไซต์...
+            Generating Website...
           </>
         ) : (
           <>
-            🚀 สร้างเว็บไซต์และดูพรีวิว
+            🐸 Generate Website and Preview
           </>
         )}
       </button>
@@ -101,14 +100,14 @@ export default function GenerateSiteButton({ projectId, promptJson }: GenerateSi
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center gap-2">
             <span className="text-red-500">❌</span>
-            <span className="text-red-700 font-medium">เกิดข้อผิดพลาด</span>
+            <span className="text-red-700 font-medium">Error</span>
           </div>
           <p className="text-red-600 mt-1">{error}</p>
           <button
             onClick={() => setError(null)}
             className="text-red-500 hover:text-red-700 text-sm mt-2"
           >
-            ปิด
+            Close
           </button>
         </div>
       )}
@@ -118,16 +117,16 @@ export default function GenerateSiteButton({ projectId, promptJson }: GenerateSi
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-green-500">✅</span>
-            <span className="text-green-700 font-medium">สร้างเว็บไซต์สำเร็จ!</span>
+            <span className="text-green-700 font-medium">Website generated successfully!</span>
           </div>
           
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">จำนวนไฟล์:</span>
+              <span className="text-gray-600">Number of files:</span>
               <span className="font-medium">{result.fileCount} ไฟล์</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">ชื่อโปรเจค:</span>
+              <span className="text-gray-600">Project name:</span>
               <span className="font-medium">{result.projectStructure.name}</span>
             </div>
             <div className="flex justify-between">

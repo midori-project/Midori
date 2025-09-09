@@ -28,6 +28,7 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
   const [loadingFromAPI, setLoadingFromAPI] = useState(false);
   const [jsonData, setJsonData] = useState<any>(null);
   const [showJsonViewer, setShowJsonViewer] = useState(false);
+  const [showCodeEditor, setShowCodeEditor] = useState(true);
 
   // ฟังก์ชันดึงข้อมูลจาก localStorage
   const loadPreviewData = () => {
@@ -324,22 +325,57 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
               }}
             >
               <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {/* Header bar สำหรับควบคุม Sandpack */}
+                <div className="flex justify-between items-center p-3 bg-gray-50 border-b border-gray-200">
+                  <div className="flex items-center space-x-3">
+                    <h3 className="text-lg font-semibold text-gray-800">Live Preview</h3>
+                    <span className="text-sm text-gray-500">
+                      {Object.keys(sandpackFiles).length} files
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    {/* ปุ่มเปิดปิดโค้ด */}
+                    <button
+                      onClick={() => setShowCodeEditor(!showCodeEditor)}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+                        showCodeEditor 
+                          ? 'bg-green-600 text-white hover:bg-green-600' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      <span className="text-sm font-medium">
+                        {showCodeEditor ? '<>' : '</>'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
                 <SandpackLayout style={{ height: '100%', width: '100%', flex: 1 }}>
-                  <SandpackCodeEditor 
-                    showTabs
-                    showLineNumbers
-                    showInlineErrors
-                    wrapContent
-                    closableTabs
-                    style={{ height: '100%', minHeight: '100%', flex: 1 }}
-                  />
+                  {/* แสดง CodeEditor เฉพาะเมื่อ showCodeEditor เป็น true */}
+                  {showCodeEditor && (
+                    <SandpackCodeEditor 
+                      showTabs
+                      showLineNumbers
+                      showInlineErrors
+                      wrapContent
+                      closableTabs
+                      style={{ height: '100%', minHeight: '100%', flex: 1 }}
+                    />
+                  )}
+                  
+                  {/* Preview จะขยายเต็มพื้นที่เมื่อซ่อนโค้ด */}
                   <SandpackPreview 
                     showNavigator
                     showOpenInCodeSandbox
                     showRefreshButton
                     showSandpackErrorOverlay
                     showOpenNewtab
-                    style={{ height: "80vh", minHeight: '100%', flex: 1 }}
+                    style={{ 
+                      height: showCodeEditor ? "calc(100vh - 200px)" : "calc(100vh - 100px)", 
+                      minHeight: '100%', 
+                      flex: 1 
+                    }}
                   />
                 </SandpackLayout>
               </div>
