@@ -43,5 +43,7 @@ next-env.d.ts
 # copilot
 .github/copilot-instructions.md
 
+# AWS CDK Infrastructure - ยกเว้นจาก Next.js build
+midori-infastructure/
 
 /src/generated/prisma
