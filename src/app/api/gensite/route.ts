@@ -1,5 +1,4 @@
 import { SITE_GEN_CONFIG } from '../../../utils/site-generator/config';
-import { FileGenerator } from '../../../utils/site-generator/file-generator';
 import { prisma } from '../../../libs/prisma/prisma';
 import { getCurrentSession } from '../../../libs/auth/session';
 

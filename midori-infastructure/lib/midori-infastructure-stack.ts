@@ -57,17 +57,25 @@ export class MidoriInfastructureStack extends cdk.Stack {
     
 
     // ให้ Lambda เข้าถึง RDS
-    dbSecurityGroup.addIngressRule(
-      ec2.Peer.ipv4('125.27.255.248/32'),
-      ec2.Port.tcp(5432),
-      'Allow PostgreSQL from 125.27.255.248 Korn'
-    );
+    // dbSecurityGroup.addIngressRule(
+    //   ec2.Peer.ipv4('125.27.255.248/32'),
+    //   ec2.Port.tcp(5432),
+    //   'Allow PostgreSQL from 125.27.255.248 Korn'
+    // );
     
+    // dbSecurityGroup.addIngressRule(
+    //   ec2.Peer.ipv4('110.168.219.48/32'), // แทนค่าเป็น IP ที่สองของคุณ
+    //   ec2.Port.tcp(5432),
+    //   'Allow PostgreSQL from 110.168.219.48 Jin'
+    // );
+
+    // open ip for vercel deploy
     dbSecurityGroup.addIngressRule(
-      ec2.Peer.ipv4('110.168.219.48/32'), // แทนค่าเป็น IP ที่สองของคุณ
+      ec2.Peer.anyIpv4(), // อนุญาตทุก IP
       ec2.Port.tcp(5432),
-      'Allow PostgreSQL from 110.168.219.48 Jin'
+      'Allow PostgreSQL from anywhere (DEV ONLY - NOT SECURE FOR PRODUCTION)'
     );
+
     // 3. สร้าง RDS PostgreSQL
     const dbCredentials = rds.Credentials.fromGeneratedSecret('midori_admin', {
       secretName: 'midori/db-credentials',
