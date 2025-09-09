@@ -8,7 +8,9 @@ export const authPages: AuthPageEntry[] = [
   '/signup',
   '/register',
   '/forgot-password',
-  '/info'
+  '/info',
+  '/projects/[id]',  // dynamic route example
+
   // info pages: allow scroll in some cases; default not set (false)
 ];
 

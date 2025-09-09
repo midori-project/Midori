@@ -31,6 +31,8 @@ interface HoverDetailCardProps {
     };
   };
   enableAnimations?: boolean;
+  onPrimaryClick?: () => void;
+  onSecondaryClick?: () => void;
 }
 
 // Reusable data shape for mapping lists of cards
@@ -45,6 +47,8 @@ export interface HoverDetailCardData {
   orientation?: HoverDetailCardProps['orientation'];
   variant?: HoverDetailCardProps['variant'];
   enableAnimations?: boolean;
+  onPrimaryClick?: () => void;
+  onSecondaryClick?: () => void;
 }
 
 const defaultImages = [
@@ -74,7 +78,9 @@ export function HoverDetailCard({
   // default to full width so parent grid controls card sizing
   widthClass = "w-full flex flex-col",
   orientation = 'horizontal',
-  variant = 'default'
+  variant = 'default',
+  onPrimaryClick,
+  onSecondaryClick
 }: HoverDetailCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -289,6 +295,7 @@ export function HoverDetailCard({
                       exit={{ y: -20, opacity: 0 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.1 }}
                       className={`${primaryButton.color} ${primaryButton.hoverColor} ${primaryButton.textColor} cursor-pointer px-3 py-1.5 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200`}
+                      onClick={onPrimaryClick}
                     >
                       {primaryButton.text}
                     </motion.button>
@@ -298,6 +305,7 @@ export function HoverDetailCard({
                       exit={{ y: -20, opacity: 0 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.2 }}
                       className={`${secondaryButton.color} ${secondaryButton.hoverColor} ${secondaryButton.textColor} cursor-pointer px-3 py-1.5 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200`}
+                      onClick={onSecondaryClick}
                     >
                       {secondaryButton.text}
                     </motion.button>

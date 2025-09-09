@@ -26,29 +26,29 @@ const ProjectPage: NextPage<ProjectPageProps> = async ({ params }) => {
   const promptJson = await getPromptJson(projectId);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Project Details</h1>
+    <div className="container mx-auto px-4 py-16">
+
       
       {promptJson ? (
         <div className="space-y-6">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">ข้อมูลโปรเจค</h2>
+          {/* <div className="bg-white p-6 rounded-lg shadow"> */}
+            {/* <h2 className="text-xl font-semibold mb-4">ข้อมูลโปรเจค</h2> */}
             {/* สร้างเว็บไซต์อัตโนมัติเมื่อเข้าหน้า */}
             <AutoGenerateOnLoad 
               projectId={projectId}
               promptJson={promptJson}
             />
-          </div>
+          {/* </div> */}
           
           {/* SandPack Preview */}
           <SitePreview projectId={projectId} />
           
-          <div className="bg-white p-6 rounded-lg shadow">
+          {/* <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-2">ข้อมูลเต็ม (JSON)</h3>
             <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto">
               {JSON.stringify(promptJson, null, 2)}
             </pre>
-          </div>
+          </div> */}
         </div>
       ) : (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">

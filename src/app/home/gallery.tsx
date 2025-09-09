@@ -1,4 +1,4 @@
-import { CardCommunity } from "@/components/ui/CardCommunity";
+import { CardCommunityWrapper } from "@/components/ui/CardCommunityWrapper";
 import { CardWorkspace } from "@/components/ui/CardWorkSpace";
 import { getCurrentSession } from "@/libs/auth/session";
 
@@ -53,7 +53,7 @@ export default async function Gallery() {
 
         <div className="w-full">
           {/* Ensure the grid component can shrink on small screens; wrapper provides full width */}
-          <CardCommunity />
+          <CardCommunityWrapper />
         </div>
       </div>
     </>

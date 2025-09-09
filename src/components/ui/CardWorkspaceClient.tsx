@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { HoverDetailCard, HoverDetailCardData } from './hover-detail-card';
 import { UserProject } from '@/libs/services/projectService';
 
@@ -17,6 +18,7 @@ export const CardWorkspaceClient: React.FC<CardWorkspaceClientProps> = ({
   showLimited = false, // default ไม่จำกัด
   showPagination = false, // default ไม่แสดง pagination
 }) => {
+  const router = useRouter();
   // State สำหรับ pagination
   const [visibleRows, setVisibleRows] = useState(3); // เริ่มต้นแสดง 3 แถว
 
@@ -67,6 +69,14 @@ export const CardWorkspaceClient: React.FC<CardWorkspaceClientProps> = ({
       // เพิ่ม widthClass และ orientation เหมือน CardCommunity
       widthClass: 'w-full',
       orientation: 'horizontal' as const,
+      // เพิ่ม onClick handlers
+      onPrimaryClick: () => {
+        router.push(`/projects/${project.id}`);
+      },
+      onSecondaryClick: () => {
+        // TODO: เพิ่ม preview functionality
+        console.log('Preview project:', project.id);
+      },
     };
   });
 
@@ -129,6 +139,8 @@ export const CardWorkspaceClient: React.FC<CardWorkspaceClientProps> = ({
               widthClass={item.widthClass ?? widthClass}
               orientation={item.orientation ?? 'horizontal'}
               variant={item.variant ?? 'workspace'}
+              onPrimaryClick={item.onPrimaryClick}
+              onSecondaryClick={item.onSecondaryClick}
             />
           </div>
         ))}

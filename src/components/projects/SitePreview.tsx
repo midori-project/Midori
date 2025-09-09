@@ -272,7 +272,7 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-6">
+      {/* <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-emerald-800 mb-2">
@@ -287,7 +287,7 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
             <div className="text-sm text-emerald-600">ไฟล์</div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* SandPack Preview */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -349,7 +349,7 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
       </div>
 
       {/* File List */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      {/* <div className="bg-white rounded-lg shadow-lg p-6">
         <h4 className="text-lg font-semibold mb-4 flex items-center">
           <span className="mr-2">📂</span>
           ไฟล์ที่สร้าง ({files.length} ไฟล์)
@@ -381,10 +381,10 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* JSON Viewer */}
-      {jsonData && (
+      {/* {jsonData && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-semibold flex items-center">
@@ -422,10 +422,10 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
             </div>
           )}
         </div>
-      )}
+      )} */}
 
       {/* Actions */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      {/* <div className="bg-white rounded-lg shadow-lg p-6">
         <h4 className="text-lg font-semibold mb-4 flex items-center">
           <span className="mr-2">🎯</span>
           การดำเนินการต่อ
@@ -499,7 +499,7 @@ export default function SitePreview({ projectId }: SitePreviewProps) {
             <span>ดาวน์โหลด JSON</span>
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

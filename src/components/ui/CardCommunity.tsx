@@ -1,18 +1,21 @@
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { HoverDetailCard, HoverDetailCardData } from './hover-detail-card';
 import { getPublicProjectsWithPreview } from '@/libs/services/projectService';
 
 export interface HoverDetailCardGridProps {
   columns?: number;
+  projects: any[]; // เพิ่ม projects props
 }
 
-export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
+export const CardCommunity: React.FC<HoverDetailCardGridProps> = ({
   columns = 4,
+  projects,
 }) => {
-  // Fetch real data from database - จำกัดที่ 12 cards สำหรับหน้าโฮม
-  const response = await getPublicProjectsWithPreview({ page: 1, limit: 12 });
-  const projects = response.projects || [];
-  
+  const router = useRouter();
+
   // Transform database projects to HoverDetailCardData format
   const items: HoverDetailCardData[] = projects.map((project: any) => {
     // ✅ ปรับปรุง logic ให้รองรับกรณีต่างๆ
@@ -60,6 +63,14 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
       // เพิ่ม widthClass และ orientation เพื่อความสม่ำเสมอ
       widthClass: 'w-full',
       orientation: 'horizontal' as const,
+      // เพิ่ม onClick handlers
+      onPrimaryClick: () => {
+        router.push(`/projects/${project.id}`);
+      },
+      onSecondaryClick: () => {
+        // TODO: เพิ่ม preview functionality
+        console.log('Preview project:', project.id);
+      },
     };
   });
 
@@ -101,6 +112,8 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
             widthClass={item.widthClass ?? widthClass}
             orientation={item.orientation ?? 'horizontal'}
             variant={item.variant ?? 'home'}
+            onPrimaryClick={item.onPrimaryClick}
+            onSecondaryClick={item.onSecondaryClick}
           />
         </div>
       ))}

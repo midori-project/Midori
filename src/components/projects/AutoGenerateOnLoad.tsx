@@ -90,7 +90,7 @@ export default function AutoGenerateOnLoad({ projectId, promptJson, userId }: Au
             isExisting: true
           });
           try { 
-            alert(`โหลดเว็บไซต์ที่มีอยู่แล้ว: ${existingData.data.fileCount} ไฟล์ (Generation ID: ${existingData.data.generationId})`); 
+            // alert(`โหลดเว็บไซต์ที่มีอยู่แล้ว: ${existingData.data.fileCount} ไฟล์ (Generation ID: ${existingData.data.generationId})`); 
           } catch {}
           setIsGenerating(false);
           return;
@@ -159,7 +159,7 @@ export default function AutoGenerateOnLoad({ projectId, promptJson, userId }: Au
 
   return (
     <div className="w-full">
-      {isGenerating && (
+      {/* {isGenerating && (
         <div className="mt-4 text-sm text-gray-600">กำลังสร้างเว็บไซต์อัตโนมัติ...</div>
       )}
       {generatedInfo && (
@@ -170,7 +170,7 @@ export default function AutoGenerateOnLoad({ projectId, promptJson, userId }: Au
       )}
       {error && (
         <div className="mt-4 text-sm text-red-600">{error}</div>
-      )}
+      )} */}
     </div>
   );
 }
