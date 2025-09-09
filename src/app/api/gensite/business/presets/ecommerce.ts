@@ -233,27 +233,32 @@ const Footer: React.FC = () => {
 
 export default Footer;`,
 
-    'src/components/HeroSection.tsx': () => `import React from 'react';
+    'src/components/HeroSection.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient">
       <img src="[HERO_IMAGE_URL]" alt="[HERO_IMAGE_ALT]" className="absolute inset-0 w-full h-full object-cover opacity-40" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">Quality Online Shopping</h1>
-        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">Quality products, great prices, free shipping nationwide</p>
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">[HERO_TITLE]</h1>
+        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">[HERO_SUBTITLE]</p>
         <div className="space-x-3">
-          <a href="/products" className="btn-primary px-6 py-3 rounded-lg font-semibold">View Products</a>
-          <a href="/about" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">About Us</a>
+          <a href="/products" className="btn-primary px-6 py-3 rounded-lg font-semibold">[MENU_BUTTON_TEXT]</a>
+          <a href="/about" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">[ABOUT_BUTTON_TEXT]</a>
         </div>
       </div>
     </section>
   );
 };
 
-export default HeroSection;`,
+export default HeroSection;`;
+      
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
-    'src/components/ProductCard.tsx': () => `import React from 'react';
+    'src/components/ProductCard.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
@@ -274,7 +279,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow">
       <Link to={\`/product/\${id}\`}>
-        <div className="w-full h-48 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-lg mb-4 relative">
+        <div className="w-full h-48 rounded-lg mb-4 relative overflow-hidden">
+          <img src="[PRODUCT_IMAGE_URL]" alt="[PRODUCT_IMAGE_ALT]" className="w-full h-full object-cover" />
           {discount > 0 && (
             <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
               -{discount}%
@@ -320,7 +326,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
   );
 };
 
-export default ProductCard;`,
+export default ProductCard;`;
+      
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/pages/Home.tsx': (project) => `import React from 'react';
 import HeroSection from '../components/HeroSection.tsx';

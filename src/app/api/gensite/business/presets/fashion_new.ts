@@ -214,27 +214,32 @@ const Footer: React.FC = () => {
 
 export default Footer;`,
 
-    'src/components/HeroSection.tsx': () => `import React from 'react';
+    'src/components/HeroSection.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient">
       <img src="[HERO_IMAGE_URL]" alt="[HERO_IMAGE_ALT]" className="absolute inset-0 w-full h-full object-cover opacity-40" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">Fashion Forward</h1>
-        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">Discover the latest trends and express your unique style with our curated collection.</p>
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">[HERO_TITLE]</h1>
+        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">[HERO_SUBTITLE]</p>
         <div className="space-x-3">
-          <a href="/collection" className="btn-primary px-6 py-3 rounded-lg font-semibold">Shop Now</a>
-          <a href="/style-guide" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">Style Guide</a>
+          <a href="/collection" className="btn-primary px-6 py-3 rounded-lg font-semibold">[MENU_BUTTON_TEXT]</a>
+          <a href="/style-guide" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">[STYLE_GUIDE_BUTTON_TEXT]</a>
         </div>
       </div>
     </section>
   );
 };
 
-export default HeroSection;`,
+export default HeroSection;`;
+      
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
-    'src/components/ProductCard.tsx': () => `import React from 'react';
+    'src/components/ProductCard.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 interface ProductCardProps {
   name: string;
@@ -250,7 +255,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, originalPrice, i
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
       <div className="relative">
-        <div className="w-full h-64 bg-gradient-to-r from-violet-400 to-pink-400" />
+        <img src="[PRODUCT_IMAGE_URL]" alt="[PRODUCT_IMAGE_ALT]" className="w-full h-64 object-cover" />
         {isNew && <span className="absolute top-2 left-2 badge-accent px-2 py-1 rounded-full text-xs">New</span>}
         {isSale && <span className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs">Sale</span>}
       </div>
@@ -261,8 +266,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, originalPrice, i
         <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors">{name}</h3>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-primary">${price.toLocaleString()}</span>
-            {originalPrice && <span className="text-sm text-gray-500 line-through">${originalPrice.toLocaleString()}</span>}
+            <span className="text-xl font-bold text-primary">[PRODUCT_PRICE]</span>
+            {originalPrice && <span className="text-sm text-gray-500 line-through">[ORIGINAL_PRICE]</span>}
           </div>
           <button className="btn-primary px-4 py-2 rounded-lg text-sm transition-colors">Add to Cart</button>
         </div>
@@ -271,7 +276,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, originalPrice, i
   );
 };
 
-export default ProductCard;`,
+export default ProductCard;`;
+      
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/components/SizeGuide.tsx': () => `import React from 'react';
 

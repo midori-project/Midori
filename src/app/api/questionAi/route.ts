@@ -146,6 +146,62 @@ function getMissingFields(data: Record<string, any>): string[] {
   return REQUIRED_FIELDS.filter((f) => !has(f));
 }
 
+// Auto-fill missing data function
+function autoFillMissingData(existing: Record<string, any>): Record<string, any> {
+  const filled = { ...existing };
+  
+  // Ensure Design object exists
+  if (!filled.Design) {
+    filled.Design = {};
+  }
+  
+  // Fill missing Name with default
+  if (!filled.Name || filled.Name === "") {
+    filled.Name = "My Website Project";
+  }
+  
+  // Fill missing Type with default
+  if (!filled.Type || filled.Type === "") {
+    filled.Type = "portfolio";
+  }
+  
+  // Fill missing Features with defaults based on Type
+  if (!filled.Features || filled.Features === "") {
+    const type = filled.Type.toLowerCase();
+    if (type.includes('restaurant') || type.includes('food')) {
+      filled.Features = "menu, contact form, gallery, reservation system";
+    } else if (type.includes('blog') || type.includes('writing')) {
+      filled.Features = "blog posts, categories, search, comments";
+    } else if (type.includes('fashion') || type.includes('clothing') || type.includes('ecommerce')) {
+      filled.Features = "product catalog, shopping cart, checkout, size guide";
+    } else if (type.includes('portfolio') || type.includes('showcase')) {
+      filled.Features = "gallery, about page, contact form, project showcase";
+    } else {
+      filled.Features = "contact form, gallery, about page";
+    }
+  }
+  
+  // Fill missing Design fields with defaults
+  if (!filled.Design.Theme || filled.Design.Theme === "") {
+    filled.Design.Theme = "modern minimalist";
+  }
+  
+  if (!filled.Design.PrimaryColor || filled.Design.PrimaryColor === "") {
+    filled.Design.PrimaryColor = "blue";
+  }
+  
+  if (!filled.Design.SecondaryColor || filled.Design.SecondaryColor === "") {
+    filled.Design.SecondaryColor = "white";
+  }
+  
+  // Fill missing Background with default
+  if (!filled.Background || filled.Background === "") {
+    filled.Background = "A modern website project with clean design and user-friendly interface";
+  }
+  
+  return filled;
+}
+
 // Core analyzer used by this route
 async function analyzeAndAskNext(userPrompt: string, existing: Record<string, any>): Promise<AnalyzeAndAskNextResponse> {
   const systemPrompt = `
@@ -251,10 +307,32 @@ export async function POST(req: NextRequest) {
     }
     const body = await req.json().catch(() => ({}));
     const userMessage: string = body?.message ?? '';
+    const skipQuestion: boolean = body?.skipQuestion ?? false;
     let sessionId: string | undefined = body?.sessionId;
 
     if (!userMessage || typeof userMessage !== 'string') {
       return NextResponse.json({ error: 'message is required' }, { status: 400 });
+    }
+
+    // Handle skip question request
+    if (skipQuestion) {
+      if (!sessionId || !chatSessions.get(sessionId)) {
+        return NextResponse.json({ error: 'Session not found' }, { status: 400 });
+      }
+      
+      const session = chatSessions.get(sessionId)!;
+      const autoFilledData = autoFillMissingData(session.currentData ?? {});
+      session.currentData = autoFilledData;
+      session.updatedAt = new Date();
+      
+      return NextResponse.json({ 
+        sessionId, 
+        currentData: autoFilledData, 
+        missingFields: [], 
+        nextQuestions: [], 
+        isComplete: true,
+        message: "Skiped!"
+      });
     }
 
     // Ensure session exists (in-memory only)

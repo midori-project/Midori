@@ -176,6 +176,101 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
     el.scrollTop = el.scrollHeight;
   }, [messages]);
 
+  const handleSkipQuestion = async () => {
+    if (!sessionId || isComplete) return;
+    
+    setIsSending(true);
+    setIsAssistantTyping(true);
+    
+    try {
+      const request = {
+        message: "skip",
+        sessionId: sessionId,
+        skipQuestion: true
+      };
+
+      const response = await fetch('/api/questionAi', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to skip question');
+      }
+      
+      const data: {
+        sessionId: string;
+        currentData: Record<string, unknown>;
+        missingFields: string[];
+        nextQuestions: string[];
+        isComplete?: boolean;
+        message?: string;
+      } = await response.json();
+
+      // แสดงข้อความสำเร็จ
+      if (data.message) {
+        const skipMessage: Message = {
+          id: `assistant-${Date.now()}-${Math.random()}`,
+          role: "assistant",
+          text: data.message
+        };
+        setMessages((s) => [...s, skipMessage]);
+      }
+
+      // สถานะเสร็จสิ้น
+      const done = data.isComplete ?? ((data.missingFields?.length || 0) === 0);
+      setIsComplete(done);
+      
+      if (done) {
+        // สร้าง finalJson และบันทึก
+        const normalize = (input: Record<string, unknown>) => ({
+          Name: typeof input?.["Name"] === 'string' ? input["Name"] : "",
+          Type: typeof input?.["Type"] === 'string' ? input["Type"] : "",
+          Features: typeof input?.["Features"] === 'string' ? input["Features"] : "",
+          Design: {
+            Theme: typeof (input?.["Design"] as any)?.Theme === 'string' ? (input as any).Design.Theme : "",
+            PrimaryColor: typeof (input?.["Design"] as any)?.PrimaryColor === 'string' ? (input as any).Design.PrimaryColor : "",
+            SecondaryColor: typeof (input?.["Design"] as any)?.SecondaryColor === 'string' ? (input as any).Design.SecondaryColor : "",
+            Typography: typeof (input?.["Design"] as any)?.Typography === 'string' ? (input as any).Design.Typography : ""
+          },
+          Background: (input?.["Background"] ?? null) as string | null
+        });
+        const normalizedData = normalize(data.currentData || {});
+        setFinalJson(normalizedData);
+        
+        // บันทึก finalJson ลงตาราง generation
+        try {
+          const result = await saveFinalJsonToGeneration(projectId, {
+            finalJson: normalizedData
+          });
+          if ('id' in result) {
+            console.log('บันทึก finalJson ลงตาราง generation สำเร็จ:', result.id);
+          } else {
+            console.error('เกิดข้อผิดพลาดในการบันทึก finalJson:', result.error);
+          }
+        } catch (error) {
+          console.error('เกิดข้อผิดพลาดในการบันทึก finalJson:', error);
+        }
+        
+        // นำทางไปหน้าโปรเจค
+        try {
+          router.push(`/projects/${projectId}`);
+        } catch (e) {
+          console.error('navigation error:', e);
+        }
+      }
+    } catch (error) {
+      console.error('Error skipping question:', error);
+      setError('เกิดข้อผิดพลาดในการข้ามคำถาม');
+    } finally {
+      setIsAssistantTyping(false);
+      setIsSending(false);
+    }
+  };
+
   const handleSend = async () => {
     if (!value.trim() || !sessionId || isComplete) return;
     
@@ -409,31 +504,46 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3 bg-white/80 backdrop-blur rounded-full px-4 py-2 shadow-lg">
-                <textarea
-                  ref={textareaRef}
-                  className="flex-1 bg-transparent outline-none text-sm px-2 py-2 resize-none max-h-40 overflow-auto"
-                  placeholder="Write Your Answer"
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  rows={1}
-                  wrap="soft"
-                  disabled={loading || !sessionId}
-                />
-                <button
-                  onClick={handleSend}
-                  disabled={isSending || !value.trim() || loading || !sessionId}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-50"
-                  aria-label="Send"
-                >
-                  ⤴
-                </button>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 bg-white/80 backdrop-blur rounded-full px-4 py-2 shadow-lg">
+                  <textarea
+                    ref={textareaRef}
+                    className="flex-1 bg-transparent outline-none text-sm px-2 py-2 resize-none max-h-40 overflow-auto"
+                    placeholder="Write Your Answer"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    rows={1}
+                    wrap="soft"
+                    disabled={loading || !sessionId}
+                  />
+                  <button
+                    onClick={handleSend}
+                    disabled={isSending || !value.trim() || loading || !sessionId}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-50"
+                    aria-label="Send"
+                  >
+                    ⤴
+                  </button>
+                </div>
+                
+                {/* Skip Question Button */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={handleSkipQuestion}
+                    disabled={isSending || loading || !sessionId || isComplete}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Skip Question"
+                  >
+                    <span>⏭️</span>
+                    <span>🐸Skip!🐸</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>

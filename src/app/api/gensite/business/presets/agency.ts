@@ -77,16 +77,16 @@ const HeroSection: React.FC = () => {
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
             <div className="text-center">
-              <div className="text-4xl font-bold mb-2">150+</div>
-              <div className="text-lg opacity-80">Projects Completed</div>
+              <div className="text-4xl font-bold mb-2">[STAT_1_VALUE]</div>
+              <div className="text-lg opacity-80">[STAT_1_LABEL]</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold mb-2">50+</div>
-              <div className="text-lg opacity-80">Happy Clients</div>
+              <div className="text-4xl font-bold mb-2">[STAT_2_VALUE]</div>
+              <div className="text-lg opacity-80">[STAT_2_LABEL]</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold mb-2">5+</div>
-              <div className="text-lg opacity-80">Years Experience</div>
+              <div className="text-4xl font-bold mb-2">[STAT_3_VALUE]</div>
+              <div className="text-lg opacity-80">[STAT_3_LABEL]</div>
             </div>
           </div>
         </div>

@@ -222,27 +222,32 @@ const Footer: React.FC = () => {
 
 export default Footer;`,
 
-    'src/components/HeroSection.tsx': () => `import React from 'react';
+    'src/components/HeroSection.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 const HeroSection: React.FC = () => {
   return (
     <section className="relative text-white bg-hero-gradient">
       <img src="[HERO_IMAGE_URL]" alt="[HERO_IMAGE_ALT]" className="absolute inset-0 w-full h-full object-cover opacity-40" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">Welcome to Our Blog</h1>
-        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">Discover insights, stories, and knowledge shared by our community of writers.</p>
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">[HERO_TITLE]</h1>
+        <p className="text-lg md:text-2xl mb-8 opacity-90 max-w-2xl">[HERO_SUBTITLE]</p>
         <div className="space-x-3">
-          <a href="/articles" className="btn-primary px-6 py-3 rounded-lg font-semibold">Read Articles</a>
-          <a href="/categories" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">Browse Categories</a>
+          <a href="/articles" className="btn-primary px-6 py-3 rounded-lg font-semibold">[MENU_BUTTON_TEXT]</a>
+          <a href="/categories" className="bg-black/20 backdrop-blur px-6 py-3 rounded-lg font-semibold border border-white/30">[CATEGORIES_BUTTON_TEXT]</a>
         </div>
       </div>
     </section>
   );
 };
 
-export default HeroSection;`,
+export default HeroSection;`;
+      
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
-    'src/components/ArticleCard.tsx': () => `import React from 'react';
+    'src/components/ArticleCard.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 interface ArticleCardProps {
   title: string;
@@ -256,7 +261,7 @@ interface ArticleCardProps {
 const ArticleCard: React.FC<ArticleCardProps> = ({ title, excerpt, author, date, category, readTime }) => {
   return (
     <article className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-      <div className="w-full h-48 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg mb-4" />
+      <img src="[ARTICLE_IMAGE_URL]" alt="[ARTICLE_IMAGE_ALT]" className="w-full h-48 object-cover rounded-lg mb-4" />
       <div className="flex items-center justify-between mb-2">
         <span className="badge-accent px-2 py-1 rounded-full text-xs">{category}</span>
         <span className="text-sm text-gray-500">{readTime}</span>
@@ -271,7 +276,10 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ title, excerpt, author, date,
   );
 };
 
-export default ArticleCard;`,
+export default ArticleCard;`;
+      
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/components/ArticleList.tsx': () => `import React from 'react';
 import ArticleCard from './ArticleCard.tsx';

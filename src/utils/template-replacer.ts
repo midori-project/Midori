@@ -7,6 +7,22 @@ import { BusinessContext } from '../app/api/gensite/business/types';
  */
 export class TemplateReplacer {
   private static templateCache = new Map<string, string>();
+  private static dallEEnabled = false; // เปิด/ปิดการใช้งาน DALL-E API
+
+  /**
+   * เปิด/ปิดการใช้งาน DALL-E API
+   */
+  static setDallEEnabled(enabled: boolean): void {
+    this.dallEEnabled = enabled;
+    console.log(`[TemplateReplacer] DALL-E API ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  /**
+   * ตรวจสอบสถานะการใช้งาน DALL-E API
+   */
+  static isDallEEnabled(): boolean {
+    return this.dallEEnabled;
+  }
 
   /**
    * แทนที่ placeholders ใน template ด้วยข้อมูลจาก finalJson
@@ -214,7 +230,7 @@ export class TemplateReplacer {
       // หากมีการขอรูป Hero ให้เรียก Images API เพื่อสร้างรูปและแทนที่
       const needHeroImage = placeholders.includes('[HERO_IMAGE_URL]');
       const needHeroAlt = placeholders.includes('[HERO_IMAGE_ALT]');
-      if (needHeroImage) {
+      if (needHeroImage && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateHeroImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -224,6 +240,11 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateHeroImage failed, will fallback to default image', e);
         }
+      } else if (needHeroImage && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default hero image');
+        const defaultImage = this.getDefaultHeroImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[HERO_IMAGE_URL\]/g, defaultImage);
+        appliedReplacements['HERO_IMAGE_URL'] = defaultImage;
       }
       if (needHeroAlt) {
         const alt = this.createHeroAlt(ctx, projectName);
@@ -238,7 +259,7 @@ export class TemplateReplacer {
       const needMenuImage3 = placeholders.includes('[MENU_IMAGE_URL_3]');
       const needMenuAlt = placeholders.includes('[MENU_IMAGE_ALT]');
       
-      if (needMenuImage) {
+      if (needMenuImage && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateMenuImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -248,9 +269,14 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateMenuImage failed, will fallback to default image', e);
         }
+      } else if (needMenuImage && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default menu image');
+        const defaultImage = this.getDefaultMenuImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_URL\]/g, defaultImage);
+        appliedReplacements['MENU_IMAGE_URL'] = defaultImage;
       }
       
-      if (needMenuImage1) {
+      if (needMenuImage1 && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateMenuImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -260,9 +286,14 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateMenuImage1 failed, will fallback to default image', e);
         }
+      } else if (needMenuImage1 && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default menu image 1');
+        const defaultImage = this.getDefaultMenuImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_URL_1\]/g, defaultImage);
+        appliedReplacements['MENU_IMAGE_URL_1'] = defaultImage;
       }
       
-      if (needMenuImage2) {
+      if (needMenuImage2 && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateMenuImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -272,9 +303,14 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateMenuImage2 failed, will fallback to default image', e);
         }
+      } else if (needMenuImage2 && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default menu image 2');
+        const defaultImage = this.getDefaultMenuImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_URL_2\]/g, defaultImage);
+        appliedReplacements['MENU_IMAGE_URL_2'] = defaultImage;
       }
       
-      if (needMenuImage3) {
+      if (needMenuImage3 && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateMenuImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -284,6 +320,11 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateMenuImage3 failed, will fallback to default image', e);
         }
+      } else if (needMenuImage3 && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default menu image 3');
+        const defaultImage = this.getDefaultMenuImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_URL_3\]/g, defaultImage);
+        appliedReplacements['MENU_IMAGE_URL_3'] = defaultImage;
       }
       
       if (needMenuAlt) {
@@ -295,7 +336,7 @@ export class TemplateReplacer {
       // หากมีการขอรูปกาแฟ ให้เรียก Images API เพื่อสร้างรูปและแทนที่
       const needCoffeeImage = placeholders.includes('[COFFEE_IMAGE_URL]');
       const needCoffeeAlt = placeholders.includes('[COFFEE_IMAGE_ALT]');
-      if (needCoffeeImage) {
+      if (needCoffeeImage && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateCoffeeImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -305,6 +346,11 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateCoffeeImage failed, will fallback to default image', e);
         }
+      } else if (needCoffeeImage && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default coffee image');
+        const defaultImage = this.getDefaultCoffeeImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[COFFEE_IMAGE_URL\]/g, defaultImage);
+        appliedReplacements['COFFEE_IMAGE_URL'] = defaultImage;
       }
       if (needCoffeeAlt) {
         const alt = this.createCoffeeAlt(ctx, projectName);
@@ -315,7 +361,7 @@ export class TemplateReplacer {
       // หากมีการขอรูปสินค้า ให้เรียก Images API เพื่อสร้างรูปและแทนที่
       const needProductImage = placeholders.includes('[PRODUCT_IMAGE_URL]');
       const needProductAlt = placeholders.includes('[PRODUCT_IMAGE_ALT]');
-      if (needProductImage) {
+      if (needProductImage && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateProductImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -325,6 +371,11 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateProductImage failed, will fallback to default image', e);
         }
+      } else if (needProductImage && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default product image');
+        const defaultImage = this.getDefaultProductImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[PRODUCT_IMAGE_URL\]/g, defaultImage);
+        appliedReplacements['PRODUCT_IMAGE_URL'] = defaultImage;
       }
       if (needProductAlt) {
         const alt = this.createProductAlt(ctx, projectName);
@@ -335,7 +386,7 @@ export class TemplateReplacer {
       // หากมีการขอรูปบริการ ให้เรียก Images API เพื่อสร้างรูปและแทนที่
       const needServiceImage = placeholders.includes('[SERVICE_IMAGE_URL]');
       const needServiceAlt = placeholders.includes('[SERVICE_IMAGE_ALT]');
-      if (needServiceImage) {
+      if (needServiceImage && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateServiceImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -345,6 +396,11 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateServiceImage failed, will fallback to default image', e);
         }
+      } else if (needServiceImage && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default service image');
+        const defaultImage = this.getDefaultServiceImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[SERVICE_IMAGE_URL\]/g, defaultImage);
+        appliedReplacements['SERVICE_IMAGE_URL'] = defaultImage;
       }
       if (needServiceAlt) {
         const alt = this.createServiceAlt(ctx, projectName);
@@ -355,7 +411,7 @@ export class TemplateReplacer {
       // หากมีการขอรูปทีม ให้เรียก Images API เพื่อสร้างรูปและแทนที่
       const needTeamImage = placeholders.includes('[TEAM_IMAGE_URL]');
       const needTeamAlt = placeholders.includes('[TEAM_IMAGE_ALT]');
-      if (needTeamImage) {
+      if (needTeamImage && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateTeamImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -365,6 +421,11 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateTeamImage failed, will fallback to default image', e);
         }
+      } else if (needTeamImage && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default team image');
+        const defaultImage = this.getDefaultTeamImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[TEAM_IMAGE_URL\]/g, defaultImage);
+        appliedReplacements['TEAM_IMAGE_URL'] = defaultImage;
       }
       if (needTeamAlt) {
         const alt = this.createTeamAlt(ctx, projectName);
@@ -375,7 +436,7 @@ export class TemplateReplacer {
       // หากมีการขอรูปแกลเลอรี่ ให้เรียก Images API เพื่อสร้างรูปและแทนที่
       const needGalleryImage = placeholders.includes('[GALLERY_IMAGE_URL]');
       const needGalleryAlt = placeholders.includes('[GALLERY_IMAGE_ALT]');
-      if (needGalleryImage) {
+      if (needGalleryImage && this.dallEEnabled) {
         try {
           const imageUrl = await this.generateGalleryImage(openai, ctx, projectName, userIntent, finalJson);
           if (imageUrl) {
@@ -385,6 +446,11 @@ export class TemplateReplacer {
         } catch (e) {
           console.warn('[TemplateReplacer] generateGalleryImage failed, will fallback to default image', e);
         }
+      } else if (needGalleryImage && !this.dallEEnabled) {
+        console.log('[TemplateReplacer] DALL-E disabled, using default gallery image');
+        const defaultImage = this.getDefaultGalleryImage(ctx.industry);
+        replacedTemplate = replacedTemplate.replace(/\[GALLERY_IMAGE_URL\]/g, defaultImage);
+        appliedReplacements['GALLERY_IMAGE_URL'] = defaultImage;
       }
       if (needGalleryAlt) {
         const alt = this.createGalleryAlt(ctx, projectName);
@@ -947,8 +1013,8 @@ Example:
   }
 
   private static getDefaultHeroImage(industry: string): string {
-    // ใช้รูปภาพพื้นฐานจาก public เป็นค่าเริ่มต้นที่ปลอดภัย
-    return '/img/frame.png';
+    // ใช้ emoji รูปกบแทนรูปภาพเริ่มต้น
+    return '🐸';
   }
 
   private static getDefaultHeroAlt(industry: string): string {
@@ -956,7 +1022,7 @@ Example:
   }
 
   private static getDefaultMenuImage(industry: string): string {
-    return '/img/frame.png'; // Default placeholder image
+    return '🐸'; // ใช้ emoji รูปกบแทน
   }
 
   private static getDefaultMenuAlt(industry: string): string {
@@ -964,7 +1030,7 @@ Example:
   }
 
   private static getDefaultCoffeeImage(industry: string): string {
-    return '/img/frame.png'; // Default placeholder image
+    return '🐸'; // ใช้ emoji รูปกบแทน
   }
 
   private static getDefaultCoffeeAlt(industry: string): string {
@@ -972,7 +1038,7 @@ Example:
   }
 
   private static getDefaultProductImage(industry: string): string {
-    return '/img/frame.png'; // Default placeholder image
+    return '🐸'; // ใช้ emoji รูปกบแทน
   }
 
   private static getDefaultProductAlt(industry: string): string {
@@ -980,7 +1046,7 @@ Example:
   }
 
   private static getDefaultServiceImage(industry: string): string {
-    return '/img/frame.png'; // Default placeholder image
+    return '🐸'; // ใช้ emoji รูปกบแทน
   }
 
   private static getDefaultServiceAlt(industry: string): string {
@@ -988,7 +1054,7 @@ Example:
   }
 
   private static getDefaultTeamImage(industry: string): string {
-    return '/img/frame.png'; // Default placeholder image
+    return '🐸'; // ใช้ emoji รูปกบแทน
   }
 
   private static getDefaultTeamAlt(industry: string): string {
@@ -996,7 +1062,7 @@ Example:
   }
 
   private static getDefaultGalleryImage(industry: string): string {
-    return '/img/frame.png'; // Default placeholder image
+    return '🐸'; // ใช้ emoji รูปกบแทน
   }
 
   private static getDefaultGalleryAlt(industry: string): string {

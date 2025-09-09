@@ -243,7 +243,8 @@ export default HeroSection;`;
       return await TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
     },
 
-    'src/components/CoffeeCard.tsx': () => `import React from 'react';
+    'src/components/CoffeeCard.tsx': (project, finalJson, ctx) => {
+      const template = `import React from 'react';
 
 interface CoffeeCardProps {
   name: string;
@@ -271,7 +272,10 @@ const CoffeeCard: React.FC<CoffeeCardProps> = ({ name, description, price, origi
   );
 };
 
-export default CoffeeCard;`,
+export default CoffeeCard;`;
+      
+      return TemplateReplacer.replacePlaceholders(template, finalJson, ctx, project.name);
+    },
 
     'src/components/OrderStatus.tsx': () => `import React from 'react';
 
