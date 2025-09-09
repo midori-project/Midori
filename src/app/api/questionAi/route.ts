@@ -133,6 +133,30 @@ const PREDEFINED_QUESTIONS = {
   "Background": "Do you have any specific background information or context about your project that would help us understand your vision better?"
 };
 
+// เพิ่มฟังก์ชันเช็คว่าข้อมูลพื้นฐานครบหรือไม่ (ไม่รวม Background)
+function getCoreMissingFields(data: Record<string, any>): string[] {
+  const coreFields = [
+    "Name",
+    "Type", 
+    "Features",
+    "Design.Theme",
+    "Design.PrimaryColor", 
+    "Design.SecondaryColor",
+  ];
+  
+  const has = (path: string) => {
+    const parts = path.split('.');
+    let cur: any = data;
+    for (const p of parts) {
+      if (cur == null || typeof cur !== 'object' || !(p in cur)) return false;
+      cur = cur[p];
+    }
+    return cur !== undefined && cur !== null && cur !== "";
+  };
+  return coreFields.filter((f) => !has(f));
+}
+
+// แก้ไขฟังก์ชัน getMissingFields เดิม
 function getMissingFields(data: Record<string, any>): string[] {
   const has = (path: string) => {
     const parts = path.split('.');
@@ -143,7 +167,17 @@ function getMissingFields(data: Record<string, any>): string[] {
     }
     return cur !== undefined && cur !== null && cur !== "";
   };
-  return REQUIRED_FIELDS.filter((f) => !has(f));
+  
+  const coreMissing = getCoreMissingFields(data);
+  const backgroundMissing = !has("Background");
+  
+  // ถ้าข้อมูลพื้นฐานครบแล้ว ให้ถาม Background
+  if (coreMissing.length === 0 && backgroundMissing) {
+    return ["Background"];
+  }
+  
+  // ถ้าข้อมูลพื้นฐานยังไม่ครบ ให้ถามข้อมูลพื้นฐานก่อน
+  return coreMissing;
 }
 
 // Auto-fill missing data function
@@ -226,6 +260,7 @@ CRITICAL INSTRUCTIONS:
 - Be intelligent about inferring missing information from context
 - If user mentions website type keywords (blog, restaurant, cafe, etc.), extract the Type field
 - If user describes colors or design preferences, extract all Design fields from that response
+- PRIORITY: Collect core fields (Name, Type, Features, Design) first, then ask for Background
 
 PREDEFINED QUESTIONS (use exactly as written, in English only):
 - Name: "What is the name of your website project?"
@@ -259,7 +294,8 @@ STRICT RULES:
 4. Only ask questions for fields that are actually missing
 5. Use ONLY the predefined questions above
 6. For Design fields, ask the combined question only once
-7. Return valid JSON only - no additional text
+7. Ask Background question ONLY after core fields are complete
+8. Return valid JSON only - no additional text
 `;
 
   const completion = await openai.chat.completions.create({
@@ -271,10 +307,28 @@ STRICT RULES:
   });
 
   const content = completion.choices[0]?.message?.content || '';
+  console.log('AI Response:', content); // เพิ่ม log เพื่อ debug
+  
   const parsed = parseAIResponse(content);
 
   if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Analyzer returned invalid JSON');
+    console.error('Failed to parse AI response:', content);
+    // ถ้า parse ไม่ได้ ให้ใช้ข้อมูลเดิมและถามคำถามต่อไป
+    const missing = getMissingFields(existing ?? {});
+    const questions: string[] = missing.map(field => {
+      if (field === "Design.Theme" || field === "Design.PrimaryColor" || field === "Design.SecondaryColor") {
+        return PREDEFINED_QUESTIONS["Design.Theme"];
+      }
+      return PREDEFINED_QUESTIONS[field as keyof typeof PREDEFINED_QUESTIONS] || "";
+    }).filter((q, index, arr) => {
+      return q && arr.indexOf(q) === index;
+    });
+    
+    return {
+      currentData: existing ?? {},
+      missingFields: missing,
+      nextQuestions: questions
+    };
   }
 
   // Merge with existing to avoid losing previously collected fields

@@ -455,7 +455,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         {/* Redirect notification */}
         {isComplete && (currentQuestionNumber >= 5) && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded animate-pulse">
-            ✅ ตอบคำถามครบแล้ว! กำลังนำคุณไปยังหน้าโปรเจค...
+                ✅ Completed! Redirecting to project page...
           </div>
         )}
 
@@ -463,7 +463,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
         {totalQuestions > 0 && !isComplete && (
           <div className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow">
             <div className="text-sm text-gray-600">
-              คำถามที่ {currentQuestionNumber} จาก {totalQuestions}
+              Question {currentQuestionNumber} of {totalQuestions}
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
               <div 
@@ -494,10 +494,10 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
                   {/* Completion message */}
                   <div className="relative z-10 text-center">
                     <div className="text-lg font-semibold text-gray-700 mb-1">
-                      การสนทนาเสร็จสมบูรณ์แล้ว ✨
+                      Completed ✨
                     </div>
                     <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
-                      <span>ขอบคุณที่ใช้ Midori</span>
+                      <span>Thanks for using Midori</span>
                       <span className="animate-bounce">🌺</span>
                     </div>
                   </div>
@@ -540,7 +540,7 @@ export default function InfoChatClient({ projectId,sessionId: initialSessionId }
                     className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Skip Question"
                   >
-                    <span>⏭️</span>
+                    
                     <span>🐸Skip!🐸</span>
                   </button>
                 </div>
