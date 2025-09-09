@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CopyBlock",
+  "type": "object",
+  "required": [
+    "key",
+    "locale"
+  ],
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "locale": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "contentJson": {
+      "type": "object"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "clarifyMode": "ask_if_blocking",
+  "minConfidenceToProceed": 0.6,
+  "unknownsBudget": 3,
+  "maxQuestionsPerCommand": 1,
+  "askOnceCache": true,
+  "assumeOrder": [
+    "SpecBundle",
+    "Project.defaults",
+    "BrandGuide"
+  ],
+  "riskyChangeRules": {
+    "maxFilesTouched": 10,
+    "maxPatchLines": 200,
+    "blockOnDelete": true,
+    "criticalPaths": [
+      "src/app/_layout.tsx",
+      "src/theme",
+      "i18n/"
+    ]
+  }
+}

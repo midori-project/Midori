@@ -1,0 +1,24 @@
+{
+  "dev": {
+    "chat": "gpt-5-mini",
+    "orchestrator": "gpt-5-mini",
+    "blueprint": "gpt-5-mini",
+    "copywriter": "gpt-5-mini",
+    "visual": "flux-schnell",
+    "editor": "gpt-5-mini",
+    "squasher": "gpt-5-mini",
+    "tester": "gpt-5-mini",
+    "debug": "gpt-5-mini"
+  },
+  "prod": {
+    "chat": "gpt-5",
+    "orchestrator": "o3-pro",
+    "blueprint": "claude-sonnet-4",
+    "copywriter": "gpt-5",
+    "visual": "flux-pro",
+    "editor": "claude-sonnet-4",
+    "squasher": "o3-pro",
+    "tester": "o3-pro",
+    "debug": "claude-opus-4.1"
+  }
+}

@@ -3,7 +3,7 @@ import { getCurrentSession } from '@/libs/auth/session';
 
 /**
  * API endpoint สำหรับตรวจสอบ session validity
- * ใช้สำหรับ client-side validation
+ * ใช้สำหรับ client-side validation และ middleware validation
  */
 export async function GET(request: NextRequest) {
   try {
@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ 
         valid: false, 
+        success: false,
         error: 'Invalid or expired session' 
       }, { 
         status: 401 
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ 
       valid: true,
+      success: true,
       user: {
         id: session.userId,
         email: session.user?.email,
@@ -34,9 +36,15 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ 
       valid: false, 
+      success: false,
       error: 'Session validation failed' 
     }, { 
       status: 500 
     });
   }
+}
+
+// รองรับ POST method สำหรับ middleware
+export async function POST(request: NextRequest) {
+  return GET(request);
 }

@@ -1,0 +1,17 @@
+{
+  "model": "gpt-5-mini",
+  "temperature": 0.2,
+  "schemas": {
+    "plan": "./config/schemas/plan.schema.json",
+    "command": "./config/schemas/command.schema.json",
+    "patchset": "./config/schemas/patchset.schema.json",
+    "copyblock": "./config/schemas/copyblock.schema.json",
+    "imagebrief": "./config/schemas/imagebrief.schema.json",
+    "testrun": "./config/schemas/testrun.schema.json"
+  },
+  "policies": {
+    "qualityGates": "./config/policies/quality-gates.json",
+    "escalation": "./config/policies/escalation.json",
+    "interaction": "./config/policies/interaction.json"
+  }
+}

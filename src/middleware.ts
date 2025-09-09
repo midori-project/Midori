@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { securityHeadersMiddleware } from '@/libs/middleware/securityMiddleware';
 import { rateLimitMiddleware } from '@/libs/middleware/rateLimitMiddleware';
 
+// Session configuration
+const sessionConfig = {
+  cookieName: process.env.NODE_ENV === "production" ? "__Host-session" : "midori-session",
+} as const;
+
 // Public routes ที่ไม่ต้อง login
 const publicRoutes = [
   '/',
@@ -73,8 +78,8 @@ export async function middleware(request: NextRequest) {
   try {
     console.log('🔐 Checking authentication for protected route:', pathname);
     
-    // ตรวจสอบ session จาก cookie (Edge Runtime compatible)
-    const sessionCookie = request.cookies.get('midori-session');
+    // ตรวจสอบ session จาก cookie (เช็คแค่ว่ามีหรือไม่)
+    const sessionCookie = request.cookies.get(sessionConfig.cookieName);
     console.log('🍪 Session cookie:', sessionCookie ? 'Found' : 'Not found');
     
     if (!sessionCookie?.value) {
@@ -94,8 +99,11 @@ export async function middleware(request: NextRequest) {
       const response = NextResponse.redirect(loginUrl);
       return securityHeadersMiddleware(response);
     }
-
+    
     console.log('✅ Session cookie found, allowing access');
+    
+    // หมายเหตุ: การตรวจสอบ session expiry จะทำใน client-side (SessionManager)
+    // และใน API routes ที่ใช้ getCurrentSession() เพื่อไม่กระทบ middleware performance
     
     // Check admin routes
     const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));

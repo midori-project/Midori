@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TestRunSummary",
+  "type": "object",
+  "required": [
+    "gateStatus"
+  ],
+  "properties": {
+    "gateStatus": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    },
+    "failingGates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string"
+    },
+    "suggestedFixes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

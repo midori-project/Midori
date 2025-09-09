@@ -1,0 +1,14 @@
+{
+  "gates": [
+    "tsc",
+    "lint",
+    "unit",
+    "e2e",
+    "a11y",
+    "schema"
+  ],
+  "thresholds": {
+    "coverage": 0.8
+  },
+  "blockPreviewOnFail": true
+}

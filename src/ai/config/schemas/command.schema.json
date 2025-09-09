@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Command",
+  "type": "object",
+  "required": [
+    "commandType",
+    "payload"
+  ],
+  "properties": {
+    "commandType": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "meta": {
+      "type": "object"
+    },
+    "clarifyingQuestions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "interaction": {
+      "type": "object"
+    }
+  }
+}

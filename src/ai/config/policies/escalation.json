@@ -1,0 +1,18 @@
+{
+  "retriesBeforeEscalate": 1,
+  "map": {
+    "editor.modify_component": [
+      "gpt-5-mini",
+      "o4-mini",
+      "gpt-5"
+    ],
+    "testing.run": [
+      "gpt-5-mini",
+      "o3-pro"
+    ],
+    "debug.fix_failure": [
+      "gpt-5-mini",
+      "claude-sonnet-4"
+    ]
+  }
+}
