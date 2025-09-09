@@ -330,7 +330,18 @@ const Home: React.FC = () => {
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Menu</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-              <div className="w-full h-48 bg-gradient-to-r from-red-500 to-orange-600 rounded-lg mb-4"></div>
+              <div className="w-full h-48 rounded-lg mb-4 overflow-hidden">
+                <img 
+                  src="[MENU_IMAGE_URL_1]" 
+                  alt="[MENU_ITEM_1_NAME]"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.background = 'linear-gradient(to right, #ef4444, #ea580c)';
+                    target.src = '';
+                  }}
+                />
+              </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">[MENU_ITEM_1_NAME]</h3>
               <p className="text-gray-600 mb-4">[MENU_ITEM_1_DESCRIPTION]</p>
               <div className="flex items-center justify-between">
@@ -339,7 +350,18 @@ const Home: React.FC = () => {
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-              <div className="w-full h-48 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg mb-4"></div>
+              <div className="w-full h-48 rounded-lg mb-4 overflow-hidden">
+                <img 
+                  src="[MENU_IMAGE_URL_2]" 
+                  alt="[MENU_ITEM_2_NAME]"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.background = 'linear-gradient(to right, #eab308, #ea580c)';
+                    target.src = '';
+                  }}
+                />
+              </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">[MENU_ITEM_2_NAME]</h3>
               <p className="text-gray-600 mb-4">[MENU_ITEM_2_DESCRIPTION]</p>
               <div className="flex items-center justify-between">
@@ -348,7 +370,18 @@ const Home: React.FC = () => {
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-              <div className="w-full h-48 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg mb-4"></div>
+              <div className="w-full h-48 rounded-lg mb-4 overflow-hidden">
+                <img 
+                  src="[MENU_IMAGE_URL_3]" 
+                  alt="[MENU_ITEM_3_NAME]"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.background = 'linear-gradient(to right, #22c55e, #0d9488)';
+                    target.src = '';
+                  }}
+                />
+              </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">[MENU_ITEM_3_NAME]</h3>
               <p className="text-gray-600 mb-4">[MENU_ITEM_3_DESCRIPTION]</p>
               <div className="flex items-center justify-between">

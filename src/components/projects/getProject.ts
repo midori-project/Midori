@@ -11,3 +11,4 @@ export async function getPromptJson(projectId: string) {
   
   return generation?.promptJson;
 }
+

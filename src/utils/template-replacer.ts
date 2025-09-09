@@ -76,6 +76,9 @@ export class TemplateReplacer {
       .replace(/\[HERO_IMAGE_URL\]/g, heroInfo?.imageUrl || this.getDefaultHeroImage(ctx.industry))
       .replace(/\[HERO_IMAGE_ALT\]/g, heroInfo?.imageAlt || this.getDefaultHeroAlt(ctx.industry))
       .replace(/\[MENU_IMAGE_URL\]/g, this.getDefaultMenuImage(ctx.industry))
+      .replace(/\[MENU_IMAGE_URL_1\]/g, this.getDefaultMenuImage(ctx.industry))
+      .replace(/\[MENU_IMAGE_URL_2\]/g, this.getDefaultMenuImage(ctx.industry))
+      .replace(/\[MENU_IMAGE_URL_3\]/g, this.getDefaultMenuImage(ctx.industry))
       .replace(/\[MENU_IMAGE_ALT\]/g, this.getDefaultMenuAlt(ctx.industry))
       .replace(/\[COFFEE_IMAGE_URL\]/g, this.getDefaultCoffeeImage(ctx.industry))
       .replace(/\[COFFEE_IMAGE_ALT\]/g, this.getDefaultCoffeeAlt(ctx.industry))
@@ -198,7 +201,7 @@ export class TemplateReplacer {
       for (const placeholder of placeholders) {
         const key = placeholder.slice(1, -1); // Remove [ and ]
         // Skip image placeholders - let system handle them separately
-        if (key === 'HERO_IMAGE_URL' || key === 'MENU_IMAGE_URL' || key === 'COFFEE_IMAGE_URL' || 
+        if (key === 'HERO_IMAGE_URL' || key === 'MENU_IMAGE_URL' || key === 'MENU_IMAGE_URL_1' || key === 'MENU_IMAGE_URL_2' || key === 'MENU_IMAGE_URL_3' || key === 'COFFEE_IMAGE_URL' || 
             key === 'PRODUCT_IMAGE_URL' || key === 'SERVICE_IMAGE_URL' || key === 'TEAM_IMAGE_URL' || key === 'GALLERY_IMAGE_URL') {
           continue;
         }
@@ -230,7 +233,11 @@ export class TemplateReplacer {
 
       // หากมีการขอรูปเมนู ให้เรียก Images API เพื่อสร้างรูปและแทนที่
       const needMenuImage = placeholders.includes('[MENU_IMAGE_URL]');
+      const needMenuImage1 = placeholders.includes('[MENU_IMAGE_URL_1]');
+      const needMenuImage2 = placeholders.includes('[MENU_IMAGE_URL_2]');
+      const needMenuImage3 = placeholders.includes('[MENU_IMAGE_URL_3]');
       const needMenuAlt = placeholders.includes('[MENU_IMAGE_ALT]');
+      
       if (needMenuImage) {
         try {
           const imageUrl = await this.generateMenuImage(openai, ctx, projectName, userIntent, finalJson);
@@ -242,6 +249,43 @@ export class TemplateReplacer {
           console.warn('[TemplateReplacer] generateMenuImage failed, will fallback to default image', e);
         }
       }
+      
+      if (needMenuImage1) {
+        try {
+          const imageUrl = await this.generateMenuImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_URL_1\]/g, imageUrl);
+            appliedReplacements['MENU_IMAGE_URL_1'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateMenuImage1 failed, will fallback to default image', e);
+        }
+      }
+      
+      if (needMenuImage2) {
+        try {
+          const imageUrl = await this.generateMenuImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_URL_2\]/g, imageUrl);
+            appliedReplacements['MENU_IMAGE_URL_2'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateMenuImage2 failed, will fallback to default image', e);
+        }
+      }
+      
+      if (needMenuImage3) {
+        try {
+          const imageUrl = await this.generateMenuImage(openai, ctx, projectName, userIntent, finalJson);
+          if (imageUrl) {
+            replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_URL_3\]/g, imageUrl);
+            appliedReplacements['MENU_IMAGE_URL_3'] = imageUrl;
+          }
+        } catch (e) {
+          console.warn('[TemplateReplacer] generateMenuImage3 failed, will fallback to default image', e);
+        }
+      }
+      
       if (needMenuAlt) {
         const alt = this.createMenuAlt(ctx, projectName);
         replacedTemplate = replacedTemplate.replace(/\[MENU_IMAGE_ALT\]/g, alt);
@@ -409,7 +453,7 @@ ${placeholders.map(p => `- ${p}`).join('\n')}
 5. Use English for international businesses
 6. Ensure content is relevant to user intent: "${userIntent || 'Create a professional website'}"
 7. If placeholders contain HERO_IMAGE_ALT, provide a concise, descriptive alt text.
-8. IMPORTANT: Do NOT replace image placeholders - leave them as [HERO_IMAGE_URL], [MENU_IMAGE_URL], [COFFEE_IMAGE_URL], [PRODUCT_IMAGE_URL], [SERVICE_IMAGE_URL], [TEAM_IMAGE_URL], [GALLERY_IMAGE_URL] for system processing.
+8. IMPORTANT: Do NOT replace image placeholders - leave them as [HERO_IMAGE_URL], [MENU_IMAGE_URL], [MENU_IMAGE_URL_1], [MENU_IMAGE_URL_2], [MENU_IMAGE_URL_3], [COFFEE_IMAGE_URL], [PRODUCT_IMAGE_URL], [SERVICE_IMAGE_URL], [TEAM_IMAGE_URL], [GALLERY_IMAGE_URL] for system processing.
 
 **Return Format:**
 Return only a JSON object with the placeholder names (without brackets) as keys and the replacement content as values.
@@ -454,10 +498,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'hd',
+        // quality: 'standard',
         n: 1,
       });
 
@@ -510,10 +554,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'hd',
+        // quality: 'hd',
         n: 1,
       });
 
@@ -557,10 +601,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'hd',
+        // quality: 'hd',
         n: 1,
       });
 
@@ -622,10 +666,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'hd',
+        // quality: 'hd',
         n: 1,
       });
 
@@ -669,10 +713,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'hd',
+        // quality: 'hd',
         n: 1,
       });
 
@@ -716,10 +760,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'hd',
+        // quality: 'hd',
         n: 1,
       });
 
@@ -763,10 +807,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'hd',
+        //quality: 'hd',
         n: 1,
       });
 
