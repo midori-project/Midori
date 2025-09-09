@@ -14,6 +14,7 @@ const publicRoutes = [
 const publicApiRoutes = [
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/validate',
 ];
 
 // Admin routes ที่ต้อง admin permission
@@ -74,8 +75,10 @@ export async function middleware(request: NextRequest) {
     console.log('🔐 Checking authentication for protected route:', pathname);
     
     // ตรวจสอบ session จาก cookie (Edge Runtime compatible)
-    const sessionCookie = request.cookies.get('midori-session');
-    console.log('� Session cookie:', sessionCookie ? 'Found' : 'Not found');
+    // ใช้ cookie name ที่ถูกต้องตาม environment
+    const cookieName = process.env.NODE_ENV === "production" ? "__Host-session" : "midori-session";
+    const sessionCookie = request.cookies.get(cookieName);
+    console.log('🍪 Session cookie:', sessionCookie ? 'Found' : 'Not found', `(looking for: ${cookieName})`);
     
     if (!sessionCookie?.value) {
       console.log('❌ No session cookie - redirecting to login');
