@@ -7,7 +7,7 @@ import { BusinessContext } from '../app/api/gensite/business/types';
  */
 export class TemplateReplacer {
   private static templateCache = new Map<string, string>();
-  private static dallEEnabled = true; // เปิด/ปิดการใช้งาน DALL-E API
+  private static dallEEnabled = false; // เปิด/ปิดการใช้งาน DALL-E API
 
   /**
    * เปิด/ปิดการใช้งาน DALL-E API
@@ -564,10 +564,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'standard',
+        // quality: 'standard',
         n: 1,
       });
 
@@ -620,10 +620,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'standard',
+        // quality: 'standard',
         n: 1,
       });
 
@@ -667,10 +667,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'standard',
+        // quality: 'standard',
         n: 1,
       });
 
@@ -732,10 +732,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'standard',
+        // quality: 'standard',
         n: 1,
       });
 
@@ -779,10 +779,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'standard',
+        // quality: 'standard',
         n: 1,
       });
 
@@ -826,10 +826,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-          model: 'dall-e-3',
+          model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'standard',
+        // quality: 'standard',
         n: 1,
       });
 
@@ -873,10 +873,10 @@ Example:
       const imagePrompt = promptParts.join(', ');
 
       const response = await openai.images.generate({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: imagePrompt,
         size: '1024x1024',
-        quality: 'standard',
+        // quality: 'standard',
         n: 1,
       });
 
