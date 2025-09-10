@@ -5,6 +5,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import createProjectAction from '@/app/home/createProject';
+import { useAuth } from '@/contexts/AuthContext';
 
 // --- Utility Function & Radix Primitives (Unchanged) ---
 type ClassValue = string | number | boolean | null | undefined;
@@ -411,10 +412,16 @@ export const PromptBox = React.forwardRef<
 
   const [isSending, setIsSending] = React.useState(false);
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault?.();
     if (isSending) return;
+    // 🔐 ถ้ายังไม่ล็อกอิน ให้พาไปหน้า login ก่อน
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
     if (!value.trim()) return;
 
     setIsSending(true);
