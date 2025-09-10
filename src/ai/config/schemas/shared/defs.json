@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://midori.dev/schemas/shared/defs.json",
+  "title": "Midori AI Shared Definitions",
+  "description": "Common definitions used across all AI agent schemas",
+  
+  "definitions": {
+    "envelope": {
+      "type": "object",
+      "required": ["messageId", "timestamp", "from", "to", "project", "correlationId", "type", "version"],
+      "properties": {
+        "messageId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "description": "Unique message identifier"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp"
+        },
+        "from": {
+          "type": "string",
+          "enum": ["chat-ai", "orchestrator-ai", "blueprint-ai", "copywriter-ai", "visual-ai", "editor-ai", "squasher-ai", "tester-ai", "debug-ai", "spec-store"],
+          "description": "Source agent"
+        },
+        "to": {
+          "type": "string",
+          "enum": ["chat-ai", "orchestrator-ai", "blueprint-ai", "copywriter-ai", "visual-ai", "editor-ai", "squasher-ai", "tester-ai", "debug-ai", "spec-store"],
+          "description": "Target agent or service"
+        },
+        "project": {
+          "type": "object",
+          "required": ["id", "ref"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^proj_[a-zA-Z0-9]+$",
+              "description": "Project identifier"
+            },
+            "ref": {
+              "type": "object",
+              "required": ["type", "value"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["branch", "commit", "tag"],
+                  "description": "Git reference type"
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Git reference value (branch name, commit hash, or tag)"
+                }
+              }
+            }
+          }
+        },
+        "correlationId": {
+          "type": "string",
+          "pattern": "^cmd_[a-zA-Z0-9]+$",
+          "description": "Command correlation ID for tracking"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["command", "event", "result"],
+          "description": "Message type"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Message schema version"
+        }
+      }
+    },
+    
+    "filePatch": {
+      "type": "object",
+      "required": ["file", "diff"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Patch identifier"
+        },
+        "file": {
+          "type": "string",
+          "description": "File path relative to project root"
+        },
+        "diff": {
+          "type": "string",
+          "description": "Unified diff format"
+        },
+        "changeType": {
+          "type": "string",
+          "enum": ["create", "update", "delete"],
+          "default": "update"
+        }
+      }
+    },
+    
+    "qualityGate": {
+      "type": "string",
+      "enum": ["json_schema", "tsc", "lint", "unit", "e2e", "a11y", "security"]
+    },
+    
+    "testResult": {
+      "type": "object",
+      "required": ["passed"],
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "passed": { "type": "integer", "minimum": 0 },
+            "failed": { "type": "integer", "minimum": 0 },
+            "skipped": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    
+    "i18nText": {
+      "type": "object",
+      "properties": {
+        "th": { "type": "string" },
+        "en": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

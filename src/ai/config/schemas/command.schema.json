@@ -1,29 +1,89 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Command",
+  "$id": "https://midori.dev/schemas/command.schema.json",
+  "title": "Midori AI Command Schema",
+  "description": "Schema for commands sent from Chat AI to Orchestrator AI",
+  
   "type": "object",
-  "required": [
-    "commandType",
-    "payload"
-  ],
+  "required": ["envelope", "payload"],
   "properties": {
-    "commandType": {
-      "type": "string"
+    "envelope": {
+      "$ref": "./shared/defs.json#/definitions/envelope"
     },
     "payload": {
-      "type": "object"
-    },
-    "meta": {
-      "type": "object"
-    },
-    "clarifyingQuestions": {
-      "type": "array",
-      "items": {
-        "type": "string"
+      "type": "object",
+      "required": ["userEditRequest", "command"],
+      "properties": {
+        "userEditRequest": {
+          "type": "object",
+          "required": ["naturalText", "intent"],
+          "properties": {
+            "naturalText": {
+              "type": "string",
+              "description": "Original user request in natural language"
+            },
+            "intent": {
+              "type": "string",
+              "enum": ["create_component", "modify_ui", "add_feature", "fix_bug", "refactor", "style_update"],
+              "description": "Classified user intent"
+            },
+            "targets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["component"],
+                "properties": {
+                  "component": {
+                    "type": "string",
+                    "description": "Target component name"
+                  },
+                  "file": {
+                    "type": "string",
+                    "description": "Target file path"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "command": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-z]+\\.[a-z_]+\\.[a-z_]+$",
+              "description": "Command name in format: domain.action.target"
+            },
+            "args": {
+              "type": "object",
+              "description": "Command arguments"
+            }
+          }
+        },
+        "clarifyingQuestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["question", "field"],
+            "properties": {
+              "question": {
+                "type": "string",
+                "description": "Question to ask user"
+              },
+              "field": {
+                "type": "string",
+                "description": "Field that will be filled with answer"
+              },
+              "options": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Multiple choice options"
+              }
+            }
+          }
+        }
       }
-    },
-    "interaction": {
-      "type": "object"
     }
   }
 }

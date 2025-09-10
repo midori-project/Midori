@@ -1,18 +1,44 @@
 {
-  "retriesBeforeEscalate": 1,
-  "map": {
+  "description": "Model escalation policy for handling complex tasks",
+  "strategy": {
+    "retriesBeforeEscalate": 1,
+    "escalationMethod": "model_upgrade",
+    "timeoutBefore": 30000
+  },
+  "escalationMap": {
+    "default": [
+      "gpt-4o-mini",
+      "gpt-4o",
+      "o1-mini"
+    ],
     "editor.modify_component": [
-      "gpt-5-mini",
-      "o4-mini",
-      "gpt-5"
+      "gpt-4o-mini",
+      "gpt-4o", 
+      "o1-mini"
     ],
     "testing.run": [
-      "gpt-5-mini",
-      "o3-pro"
+      "gpt-4o-mini",
+      "gpt-4o"
     ],
     "debug.fix_failure": [
-      "gpt-5-mini",
-      "claude-sonnet-4"
+      "gpt-4o-mini",
+      "gpt-4o",
+      "o1-mini"
+    ],
+    "complex_reasoning": [
+      "gpt-4o",
+      "o1-mini",
+      "o1-pro"
     ]
+  },
+  "costControls": {
+    "maxTokensPerEscalation": 50000,
+    "maxEscalationsPerHour": 10,
+    "requireApprovalFor": ["o1-pro"]
+  },
+  "monitoring": {
+    "logEscalations": true,
+    "trackSuccessRates": true,
+    "alertOnHighEscalationRate": true
   }
 }
