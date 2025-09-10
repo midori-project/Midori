@@ -46,15 +46,15 @@ export function CommunityPagination({ initialData }: CommunityPaginationProps) {
   if (!initialData.success) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-red-600 mb-4">เกิดข้อผิดพลาด</h2>
+        <h2 className="text-xl font-semibold text-red-600 mb-4">error</h2>
         <p className="text-[#0B2604]/60 mb-4">
-          {initialData.error || 'ไม่สามารถโหลดโปรเจคได้ กรุณาลองใหม่อีกครั้ง'}
+          {initialData.error || 'cannot load project, please try again'}
         </p>
         <button 
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          ลองใหม่
+          try again
         </button>
       </div>
     );
@@ -85,13 +85,13 @@ export function CommunityPagination({ initialData }: CommunityPaginationProps) {
       images: [imageUrl], // ✅ เป็น string[] แน่นอน
       variant: 'home' as const,
       primaryButton: {
-        text: "ดูรายละเอียด",
+        text: "detail",
         color: "bg-white/90",
         hoverColor: "hover:bg-white",
         textColor: "text-gray-900"
       },
       secondaryButton: {
-        text: "ดูตัวอย่าง",
+        text: "preview",
         color: "bg-blue-600",
         hoverColor: "hover:bg-blue-700",
         textColor: "text-white"
@@ -119,7 +119,7 @@ export function CommunityPagination({ initialData }: CommunityPaginationProps) {
           <div className="absolute inset-0 bg-white/20 backdrop-blur-sm z-10 flex items-center justify-center">
             <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg shadow-lg">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-              <span className="text-sm text-[#0B2604]">กำลังโหลด...</span>
+              <span className="text-sm text-[#0B2604]">loading...</span>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export function CommunityPagination({ initialData }: CommunityPaginationProps) {
       {/* Projects Grid */}
       {items.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-[#0B2604]/60">ไม่พบโปรเจคที่มีรูป preview</p>
+          <p className="text-[#0B2604]/60">no preview project</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -162,7 +162,7 @@ export function CommunityPagination({ initialData }: CommunityPaginationProps) {
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                กำลังโหลด...
+                loading...
               </>
             ) : (
               <>
@@ -178,7 +178,7 @@ export function CommunityPagination({ initialData }: CommunityPaginationProps) {
 
       {/* Info Text */}
       <div className="text-center text-sm text-gray-400 mt-4">
-        แสดง {allProjects.length} จากทั้งหมด {paginationState.totalItems} โปรเจค
+        show {allProjects.length} from {paginationState.totalItems} projects
       </div>
     </div>
   );

@@ -38,15 +38,15 @@ export function WorkspacePagination({ initialData }: WorkspacePaginationProps) {
   if (!data.success) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-red-600 mb-4">เกิดข้อผิดพลาด</h2>
+        <h2 className="text-xl font-semibold text-red-600 mb-4">error</h2>
         <p className="text-gray-600 mb-4">
-          {data.error || 'ไม่สามารถโหลดโปรเจคได้ กรุณาลองใหม่อีกครั้ง'}
+          {data.error || 'cannot load project, please try again'}
         </p>
         <button 
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          ลองใหม่
+          try again
         </button>
       </div>
     );
@@ -64,7 +64,7 @@ export function WorkspacePagination({ initialData }: WorkspacePaginationProps) {
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm z-10 flex items-center justify-center">
             <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg shadow-lg">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-              <span className="text-sm text-gray-700">กำลังโหลด...</span>
+              <span className="text-sm text-gray-700">loading...</span>
             </div>
           </div>
         </div>
@@ -84,7 +84,7 @@ export function WorkspacePagination({ initialData }: WorkspacePaginationProps) {
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                กำลังโหลด...
+                loading...
               </>
             ) : (
               <>
@@ -100,7 +100,7 @@ export function WorkspacePagination({ initialData }: WorkspacePaginationProps) {
 
       {/* Info Text */}
       <div className="text-center text-sm text-gray-400 mt-4">
-        แสดง {allProjects.length} จากทั้งหมด {pagination.totalItems} โปรเจค
+        show {allProjects.length} from {pagination.totalItems} projects
       </div>
     </div>
   );

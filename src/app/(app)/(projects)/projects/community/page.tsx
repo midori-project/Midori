@@ -4,7 +4,7 @@ import { CommunityPagination } from "./CommunityPagination";
 
 export const metadata: Metadata = {
   title: 'Community Projects - Midori',
-  description: 'สำรวจโปรเจคสร้างสรรค์จากชุมชน Midori ที่น่าสนใจ',
+  description: 'explore creative projects from the Midori community that are interesting',
 };
 
 export default async function CommunityProjectsPage() {
@@ -18,7 +18,7 @@ export default async function CommunityProjectsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#0B2604] mb-2">Community Projects</h1>
           <p className="text-lg text-[#0B2604]/80">
-            สำรวจโปรเจคสร้างสรรค์จากชุมชน Midori
+            explore creative projects from the Midori community
           </p>
         </div>
 

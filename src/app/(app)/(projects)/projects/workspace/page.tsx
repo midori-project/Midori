@@ -10,15 +10,15 @@ export default async function WorkSpacePage() {
             <div className="min-h-screen bg-gradient-to-b from-[#e6fff2]/70 via-[#d4ffe6]/60 to-[#bff6e0]/70">
                 <div className="container mx-auto px-4 py-8">
                     <div className="text-center py-12">
-                        <h1 className="text-2xl font-bold text-white mb-4">เกิดข้อผิดพลาด</h1>
+                        <h1 className="text-2xl font-bold text-white mb-4">error</h1>
                         <p className="text-gray-300 mb-4">
-                            {result.error || 'ไม่สามารถโหลดโปรเจคได้ กรุณาลองใหม่อีกครั้ง'}
+                            {result.error || 'cannot load project, please try again'}
                         </p>
                         <a 
                             href="/login" 
                             className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
-                            เข้าสู่ระบบ
+                            Login
                         </a>
                     </div>
                 </div>
