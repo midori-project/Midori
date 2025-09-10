@@ -7,7 +7,7 @@ import { BusinessContext } from '../app/api/gensite/business/types';
  */
 export class TemplateReplacer {
   private static templateCache = new Map<string, string>();
-  private static dallEEnabled = false; // เปิด/ปิดการใช้งาน DALL-E API
+  private static dallEEnabled = true; // เปิด/ปิดการใช้งาน DALL-E API
 
   /**
    * เปิด/ปิดการใช้งาน DALL-E API

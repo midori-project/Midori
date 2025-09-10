@@ -17,7 +17,7 @@ export const CardCommunityWrapper: React.FC<CardCommunityWrapperProps> = async (
     if (projects.length === 0) {
       return (
         <div className="text-center py-12">
-          <p className="text-gray-500">ไม่พบโปรเจคที่มีรูป preview</p>
+          <p className="text-gray-500">no preview project</p>
         </div>
       );
     }
@@ -28,7 +28,7 @@ export const CardCommunityWrapper: React.FC<CardCommunityWrapperProps> = async (
     return (
       <div className="text-center py-12">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+          <p className="text-red-700">error in loading data</p>
         </div>
       </div>
     );

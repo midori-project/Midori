@@ -27,10 +27,10 @@ export const CardWorkspace: React.FC<CardWorkspaceProps> = async ({ showLimited 
         <div className="p-8 text-center">
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-8">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              ยังไม่มีโปรเจค
+              no project
             </h3>
             <p className="text-gray-600">
-              เริ่มสร้างโปรเจคแรกของคุณได้เลย!
+              start creating your first project!
             </p>
           </div>
         </div>
@@ -43,7 +43,7 @@ export const CardWorkspace: React.FC<CardWorkspaceProps> = async ({ showLimited 
     return (
       <div className="p-8 text-center">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+          <p className="text-red-700">error in loading data</p>
         </div>
       </div>
     );

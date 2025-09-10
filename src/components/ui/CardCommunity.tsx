@@ -77,7 +77,7 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = ({
   if (items.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">ไม่พบโปรเจคที่มีรูป preview</p>
+        <p className="text-gray-500">no preview project</p>
       </div>
     );
   }

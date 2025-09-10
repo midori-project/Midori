@@ -44,13 +44,13 @@ export const CardWorkspaceClient: React.FC<CardWorkspaceClientProps> = ({
       images: hasValidPreviewContent ? [project.preview_file!] : [fallbackImage],
       variant: 'workspace' as const,
       primaryButton: {
-        text: "ดูรายละเอียด",
+        text: "detail",
         color: "bg-white/90",
         hoverColor: "hover:bg-white",
         textColor: "text-gray-900"
       },
       secondaryButton: {
-        text: "ดูตัวอย่าง",
+        text: "preview",
         color: "bg-blue-600",
         hoverColor: "hover:bg-blue-700",
         textColor: "text-white"
@@ -98,7 +98,7 @@ export const CardWorkspaceClient: React.FC<CardWorkspaceClientProps> = ({
   if (items.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">ยังไม่มีโปรเจค</p>
+        <p className="text-gray-500">no project</p>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export const CardWorkspaceClient: React.FC<CardWorkspaceClientProps> = ({
             onClick={handleViewMore}
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            ดูเพิ่มเติม ({items.length - displayItems.length} โปรเจคเหลือ)
+            view more ({items.length - displayItems.length} project left)
             <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
