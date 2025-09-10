@@ -38,13 +38,13 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = ({
       images: hasValidPreviewContent ? [project.previewFile.content] : [fallbackImage],
       variant: 'home' as const,
       primaryButton: {
-        text: "ดูรายละเอียด",
+        text: "detail",
         color: "bg-white/90",
         hoverColor: "hover:bg-white",
         textColor: "text-gray-900"
       },
       secondaryButton: {
-        text: "ดูตัวอย่าง",
+        text: "preview",
         color: "bg-blue-600",
         hoverColor: "hover:bg-blue-700",
         textColor: "text-white"
