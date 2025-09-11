@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://midori.dev/schemas/spec.schema.json",
+  "title": "Spec Bundle Schema",
+  "description": "Schema สำหรับ SpecBundle และ SpecVersion",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the spec"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the spec"
+    },
+    "framework": {
+      "type": "string",
+      "enum": ["next.js", "react", "vue", "angular"],
+      "description": "Framework being used"
+    },
+    "typescript": {
+      "type": "boolean",
+      "description": "Whether TypeScript is enabled"
+    },
+    "styling": {
+      "type": "object",
+      "properties": {
+        "library": {
+          "type": "string",
+          "enum": ["tailwindcss", "styled-components", "css-modules"]
+        },
+        "theme": {
+          "type": "object",
+          "properties": {
+            "colors": { "type": "object" },
+            "spacing": { "type": "object" },
+            "typography": { "type": "object" }
+          }
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "props": { "type": "object" }
+        },
+        "required": ["name", "type"]
+      }
+    },
+    "pages": {
+      "type": "array", 
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "component": { "type": "string" },
+          "layout": { "type": "string" }
+        },
+        "required": ["path", "component"]
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Required npm packages"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "required": ["id", "version", "framework"]
+}

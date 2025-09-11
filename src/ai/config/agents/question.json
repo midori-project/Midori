@@ -1,0 +1,47 @@
+{
+  "name": "question",
+  "description": "สร้างคำถามเพื่อรวบรวมข้อมูลจากผู้ใช้สำหรับ Create Loop",
+  "model": "gpt-5-mini",
+  "temperature": 0.3,
+  "produces": [
+    "QuestionSet",
+    "Question",
+    "UserResponse"
+  ],
+  "consumes": [
+    "Command",
+    "PartialSpec"
+  ],
+  "schemas": {
+    "command": "../schemas/command.schema.json",
+    "question": "../schemas/question.schema.json",
+    "userresponse": "../schemas/userresponse.schema.json"
+  },
+  "policies": {
+    "qualityGates": "../policies/quality-gates.json",
+    "escalation": "../policies/escalation.json",
+    "interaction": "../policies/interaction.json"
+  },
+  "systemPrompt": "../../prompts/question.system.md",
+  "capabilities": [
+    "requirement_gathering",
+    "context_questioning",
+    "progressive_disclosure",
+    "smart_defaults",
+    "conditional_questions"
+  ],
+  "triggers": [
+    "create_new_project",
+    "insufficient_information",
+    "clarification_needed",
+    "requirement_gathering"
+  ],
+  "features": {
+    "languages": ["th", "en"],
+    "questionTypes": ["multiple_choice", "text_input", "boolean", "range", "file_upload"],
+    "adaptiveFlow": true,
+    "smartDefaults": true,
+    "conditionalLogic": true,
+    "progressiveDisclosure": true
+  }
+}

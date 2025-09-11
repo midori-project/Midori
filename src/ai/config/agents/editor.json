@@ -1,17 +1,47 @@
 {
-  "model": "gpt-4o-mini",
+  "name": "editor",
+  "description": "สร้างและแก้ไขโค้ดผ่าน PatchSet pattern",
+  "model": "gpt-5-mini", 
   "temperature": 0.2,
+  "produces": [
+    "PatchSet",
+    "Patch"
+  ],
+  "consumes": [
+    "Command",
+    "SpecBundle",
+    "CopyBlock"
+  ],
   "schemas": {
-    "plan": "../schemas/plan.schema.json",
     "command": "../schemas/command.schema.json",
     "patchset": "../schemas/patchset.schema.json",
-    "copyblock": "../schemas/copyblock.schema.json",
-    "imagebrief": "../schemas/imagebrief.schema.json",
-    "testrun": "../schemas/testrun.schema.json"
+    "spec": "../schemas/spec.schema.json"
   },
   "policies": {
     "qualityGates": "../policies/quality-gates.json",
     "escalation": "../policies/escalation.json",
     "interaction": "../policies/interaction.json"
+  },
+  "systemPrompt": "../../prompts/editor.system.md",
+  "capabilities": [
+    "code_generation",
+    "component_modification",
+    "patch_creation",
+    "typescript_expertise", 
+    "react_patterns",
+    "nextjs_optimization"
+  ],
+  "triggers": [
+    "create_component",
+    "modify_component", 
+    "update_logic",
+    "add_feature"
+  ],
+  "features": {
+    "frameworks": ["next.js", "react", "typescript"],
+    "styleLibraries": ["tailwindcss"],
+    "codePatterns": ["server-components", "client-components", "hybrid"],
+    "safetyChecks": true,
+    "linting": true
   }
 }

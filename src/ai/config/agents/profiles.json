@@ -1,25 +1,27 @@
 {
   "description": "Model profiles for different environments and agents",
   "dev": {
-    "chat": "gpt-4o-mini",
-    "orchestrator": "gpt-4o-mini",
-    "blueprint": "gpt-4o-mini",
-    "copywriter": "gpt-4o-mini",
+    "chat": "gpt-5-mini",
+    "orchestrator": "gpt-5-mini",
+    "blueprint": "gpt-5-nano",
+    "copywriter": "gpt-5-mini",
     "visual": "dall-e-3",
-    "editor": "gpt-4o-mini",
-    "squasher": "gpt-4o-mini",
-    "tester": "gpt-4o-mini",
-    "debug": "gpt-4o-mini"
+    "editor": "gpt-5-mini",
+    "squasher": "gpt-5-nano",
+    "tester": "gpt-5-nano",
+    "debug": "gpt-5-nano",
+    "question": "gpt-5-mini"
   },
   "prod": {
-    "chat": "gpt-4o",
-    "orchestrator": "o1-mini",
-    "blueprint": "gpt-4o",
-    "copywriter": "gpt-4o",
+    "chat": "gpt-5",
+    "orchestrator": "gpt-5",
+    "blueprint": "gpt-5-mini",
+    "copywriter": "gpt-5",
     "visual": "dall-e-3",
-    "editor": "gpt-4o",
-    "squasher": "o1-mini",
-    "tester": "gpt-4o",
-    "debug": "o1-mini"
+    "editor": "gpt-5",
+    "squasher": "gpt-5",
+    "tester": "gpt-5-mini",
+    "debug": "gpt-5-mini",
+    "question": "gpt-5"
   }
 }

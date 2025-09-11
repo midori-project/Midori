@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://midori.dev/schemas/brand.schema.json",
+  "title": "Brand Guide Schema",
+  "description": "Schema สำหรับ brand guidelines และ brand identity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique brand identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Brand name"
+    },
+    "version": {
+      "type": "string",
+      "description": "Brand guide version"
+    },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "mission": { "type": "string" },
+        "vision": { "type": "string" },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "personality": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["professional", "friendly", "innovative", "trustworthy", "creative", "modern", "traditional"]
+          }
+        }
+      }
+    },
+    "visual": {
+      "type": "object",
+      "properties": {
+        "logo": {
+          "type": "object",
+          "properties": {
+            "primary": { "type": "string" },
+            "secondary": { "type": "string" },
+            "icon": { "type": "string" },
+            "variations": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "colors": {
+          "type": "object",
+          "properties": {
+            "primary": { "type": "string" },
+            "secondary": { "type": "string" },
+            "accent": { "type": "string" },
+            "neutral": {
+              "type": "object",
+              "properties": {
+                "light": { "type": "string" },
+                "medium": { "type": "string" },
+                "dark": { "type": "string" }
+              }
+            },
+            "semantic": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "string" },
+                "warning": { "type": "string" },
+                "error": { "type": "string" },
+                "info": { "type": "string" }
+              }
+            }
+          }
+        },
+        "typography": {
+          "type": "object",
+          "properties": {
+            "primary": {
+              "type": "object",
+              "properties": {
+                "family": { "type": "string" },
+                "weights": {
+                  "type": "array",
+                  "items": { "type": "number" }
+                }
+              }
+            },
+            "secondary": {
+              "type": "object",
+              "properties": {
+                "family": { "type": "string" },
+                "weights": {
+                  "type": "array",
+                  "items": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "imagery": {
+          "type": "object",
+          "properties": {
+            "style": {
+              "type": "string",
+              "enum": ["photography", "illustration", "icons", "mixed"]
+            },
+            "treatment": {
+              "type": "string",
+              "enum": ["realistic", "stylized", "minimal", "detailed"]
+            },
+            "mood": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["professional", "friendly", "energetic", "calm", "innovative", "trustworthy"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "voice": {
+      "type": "object",
+      "properties": {
+        "tone": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["professional", "friendly", "casual", "formal", "enthusiastic", "calm", "authoritative"]
+          }
+        },
+        "language": {
+          "type": "object",
+          "properties": {
+            "primary": { "type": "string", "default": "th" },
+            "secondary": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "guidelines": {
+          "type": "object",
+          "properties": {
+            "doUse": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "avoid": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "terminology": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "application": {
+      "type": "object",
+      "properties": {
+        "web": {
+          "type": "object",
+          "properties": {
+            "layout": { "type": "string" },
+            "spacing": { "type": "object" },
+            "components": { "type": "object" }
+          }
+        },
+        "print": {
+          "type": "object",
+          "properties": {
+            "formats": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "author": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "review", "approved", "deprecated"]
+        }
+      }
+    }
+  },
+  "required": ["id", "name", "version"]
+}

@@ -1,17 +1,47 @@
 {
-  "model": "gpt-4o-mini",
-  "temperature": 0.2,
+  "name": "debug",
+  "description": "วิเคราะห์ TestRun ที่ fail และเสนอแก้ไขผ่าน PatchSet",
+  "model": "gpt-5-nano",
+  "temperature": 0.1,
+  "produces": [
+    "PatchSet",
+    "DebugReport",
+    "ErrorAnalysis"
+  ],
+  "consumes": [
+    "TestRun",
+    "TestArtifact",
+    "ErrorLog"
+  ],
   "schemas": {
-    "plan": "../schemas/plan.schema.json",
-    "command": "../schemas/command.schema.json",
+    "testrun": "../schemas/testrun.schema.json",
     "patchset": "../schemas/patchset.schema.json",
-    "copyblock": "../schemas/copyblock.schema.json",
-    "imagebrief": "../schemas/imagebrief.schema.json",
-    "testrun": "../schemas/testrun.schema.json"
+    "debug": "../schemas/debug.schema.json"
   },
   "policies": {
     "qualityGates": "../policies/quality-gates.json",
     "escalation": "../policies/escalation.json",
     "interaction": "../policies/interaction.json"
+  },
+  "systemPrompt": "../../prompts/debug.system.md",
+  "capabilities": [
+    "error_analysis",
+    "bug_fixing",
+    "performance_debugging",
+    "log_analysis",
+    "root_cause_identification"
+  ],
+  "triggers": [
+    "test_failure",
+    "runtime_error",
+    "performance_issue",
+    "compilation_error"
+  ],
+  "features": {
+    "errorTypes": ["runtime", "compile", "logic", "performance", "security"],
+    "analysisDepth": "deep",
+    "suggestedFixes": true,
+    "regressionPrevention": true,
+    "learningFromFailures": true
   }
 }
