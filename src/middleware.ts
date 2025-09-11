@@ -19,6 +19,7 @@ const publicRoutes = [
 const publicApiRoutes = [
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/validate',
 ];
 
 // Admin routes ที่ต้อง admin permission

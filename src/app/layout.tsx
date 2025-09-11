@@ -5,8 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ConditionalNavbar } from "@/components/Layout/ConditionalNavbar";
 import { ConditionalLayout } from "@/components/Layout/ConditionalLayout";
 import { ConditionalFooter } from "@/components/Layout/ConditionalFooter";
-import { SessionExpiredNotification } from "@/components/SessionExpiredNotification";
-import SessionManager from "@/components/SessionManager";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,8 +52,6 @@ export default function RootLayout({
               {children}
             </ConditionalLayout>
             <ConditionalFooter />
-            <SessionExpiredNotification />
-            <SessionManager />
           </div>
         </AuthProvider>
       </body>
