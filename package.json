@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.20.0",
+    "@daytonaio/sdk": "^0.27.1",
     "@monaco-editor/react": "^4.7.0",
     "@prisma/client": "^6.14.0",
     "@radix-ui/react-dialog": "^1.1.15",
