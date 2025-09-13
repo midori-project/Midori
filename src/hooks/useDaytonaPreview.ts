@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface SandboxState {
   sandboxId?: string;
-  status: 'idle' | 'creating' | 'building' | 'running' | 'stopping' | 'error';
+  status: 'idle' | 'creating' | 'building' | 'running' | 'stopping' | 'error' | 'created';
   previewUrl?: string;
+  previewToken?: string;
   logs?: string[];
   error?: string;
   usageToday?: number;
@@ -137,14 +138,15 @@ export function useDaytonaPreview(projectId: string, userId?: string) {
       const res = await fetch('/api/preview/daytona', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          projectId, 
-          promptJson,
-          userId 
-        }),
+        body: JSON.stringify({}), // API ไม่รับ parameters
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        throw new Error('Invalid response from server');
+      }
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to create preview');
@@ -160,43 +162,61 @@ export function useDaytonaPreview(projectId: string, userId?: string) {
       // เริ่มติดตามการใช้งาน
       startUsageTracking(data.sandboxId);
 
-      // เริ่ม polling สถานะ
-      pollSandboxStatus(data.sandboxId);
+      // อัปเดตสถานะเป็น running ถ้ามี preview URL
+      if (data.url && data.token) {
+        setSandboxState(prev => ({
+          ...prev,
+          status: 'running',
+          previewUrl: data.url,
+          previewToken: data.token,
+        }));
+      } else {
+        setSandboxState(prev => ({
+          ...prev,
+          status: 'created',
+        }));
+      }
 
     } catch (error: any) {
+      console.error('Start preview error:', error);
+      
+      // Handle different types of errors
+      let errorMessage = 'Unknown error occurred';
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = 'Network error: Please check your connection';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       setSandboxState(prev => ({
         ...prev,
         status: 'error',
-        error: error.message,
+        error: errorMessage,
       }));
     } finally {
       setIsStarting(false);
     }
   }, [projectId, userId, sandboxState.usageToday, sandboxState.maxUsagePerDay, startUsageTracking]);
 
-  // หยุดพรีวิว
+  // หยุดพรีวิว (simplified - ไม่มี API stop)
   const stopPreview = useCallback(async (silent = false) => {
     if (!sandboxState.sandboxId) return;
 
     if (!silent) setIsStopping(true);
     
     try {
-      // หยุดติดตามการใช้งานก่อน
+      // หยุดติดตามการใช้งาน
       await stopUsageTracking(sandboxState.sandboxId);
 
-      await fetch('/api/preview/daytona/stop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sandboxId: sandboxState.sandboxId }),
-        keepalive: silent, // ใช้ keepalive เมื่อ silent stop
-      });
-
+      // รีเซ็ต state (ไม่มี API stop)
       setSandboxState(prev => ({
         ...prev,
         sandboxId: undefined,
         status: 'idle',
         previewUrl: undefined,
+        previewToken: undefined,
         logs: undefined,
+        error: undefined,
       }));
 
       // โหลดข้อมูลการใช้งานใหม่
@@ -204,6 +224,7 @@ export function useDaytonaPreview(projectId: string, userId?: string) {
 
     } catch (error: any) {
       if (!silent) {
+        console.error('Stop preview error:', error);
         setSandboxState(prev => ({
           ...prev,
           error: `Failed to stop: ${error.message}`,
@@ -214,58 +235,9 @@ export function useDaytonaPreview(projectId: string, userId?: string) {
     }
   }, [sandboxState.sandboxId, stopUsageTracking, loadUsageData]);
 
-  // Polling สถานะ sandbox
-  const pollSandboxStatus = useCallback(async (sandboxId: string) => {
-    const maxAttempts = 30; // 5 นาที
-    let attempts = 0;
+  // ลบ polling function (ไม่มี status API)
 
-    const poll = async () => {
-      if (attempts >= maxAttempts) {
-        setSandboxState(prev => ({
-          ...prev,
-          status: 'error',
-          error: 'Timeout: Preview creation took too long',
-        }));
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/preview/daytona/status?sandboxId=${sandboxId}`);
-        const data = await res.json();
-
-        if (res.ok) {
-          setSandboxState(prev => ({
-            ...prev,
-            status: data.status,
-            previewUrl: data.previewUrl,
-            logs: data.logs || prev.logs,
-          }));
-
-          if (data.status === 'running' && data.previewUrl) {
-            // พรีวิวพร้อมใช้งาน
-            return;
-          } else if (data.status === 'error') {
-            setSandboxState(prev => ({
-              ...prev,
-              error: data.error || 'Sandbox failed',
-            }));
-            return;
-          }
-        }
-
-        // ยังไม่เสร็จ ต่อ polling
-        attempts++;
-        setTimeout(poll, 10000); // 10 วินาที
-      } catch (error) {
-        attempts++;
-        setTimeout(poll, 10000);
-      }
-    };
-
-    poll();
-  }, []);
-
-  // Auto-stop เมื่อผู้ใช้ออกจากหน้า
+  // Auto-stop เมื่อออกจากหน้าเว็บ (simplified)
   useEffect(() => {
     if (!sandboxState.sandboxId || sandboxState.status !== 'running') return;
 
