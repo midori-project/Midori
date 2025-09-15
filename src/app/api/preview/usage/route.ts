@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/libs/auth/session';
 
-// ดึงข้อมูลการใช้งานของผู้ใช้
+// ดึงข้อมูลการใช้งานของผู้ใช้ (สำหรับทดสอบ)
 export async function GET(req: NextRequest) {
   try {
-    // ตรวจสอบ authentication
-    const session = await getCurrentSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId') || session.user?.id || '';
-    
-    // ตรวจสอบสิทธิ์ (ผู้ใช้ดูได้เฉพาะข้อมูลตัวเอง หรือมีสิทธิ์ admin)
-    if (userId !== session.user?.id && !isAdmin(session)) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
+    const userId = searchParams.get('userId') || 'test-user-id';
 
     // ดึงข้อมูลการใช้งานรายวัน
     const usageToday = await getTodayUsageSeconds(userId);
@@ -43,15 +32,9 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// บันทึกการใช้งาน (เรียกจาก heartbeat หรือเมื่อหยุดพรีวิว)
+// บันทึกการใช้งาน (สำหรับทดสอบ)
 export async function POST(req: NextRequest) {
   try {
-    // ตรวจสอบ authentication
-    const session = await getCurrentSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { sandboxId, userId, deltaSeconds } = await req.json();
     
     if (!sandboxId || !deltaSeconds) {
@@ -60,18 +43,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const targetUserId = userId || session.user?.id || '';
-    
-    // ตรวจสอบสิทธิ์
-    if (targetUserId !== session.user?.id && !isAdmin(session)) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
-
-    // ตรวจสอบว่า sandbox นี้เป็นของผู้ใช้คนนี้
-    const sandboxState = await getSandboxState(sandboxId);
-    if (!sandboxState || sandboxState.userId !== targetUserId) {
-      return NextResponse.json({ error: 'Invalid sandbox' }, { status: 403 });
-    }
+    const targetUserId = userId || 'test-user-id';
 
     // บันทึกการใช้งาน (ป้องกันการบันทึกซ้ำด้วย idempotency)
     await recordUsageDelta(targetUserId, sandboxId, deltaSeconds);
@@ -86,11 +58,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ฟังก์ชันตรวจสอบสิทธิ์ admin
-function isAdmin(session: any): boolean {
-  // TODO: ตรวจสอบสิทธิ์จริงตามระบบของคุณ
-  return session.user.role === 'admin';
-}
+// ฟังก์ชันตรวจสอบสิทธิ์ admin (สำหรับทดสอบ - ไม่ใช้งาน)
+// function isAdmin(session: any): boolean {
+//   return session.user.role === 'admin';
+// }
 
 // ฟังก์ชันจัดการข้อมูล (ต้องเชื่อมกับ database จริง)
 async function getTodayUsageSeconds(userId: string): Promise<number> {
