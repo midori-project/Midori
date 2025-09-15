@@ -8,19 +8,23 @@ export default function DaytonaPreviewPage() {
   const {
     sandboxId,
     status,
-    previewUrlWithToken,
+    previewUrlWithToken, // มีโทเคนใน query (เหมาะเปิดในแท็บใหม่)
     error,
     loading,
     startPreview,
     stopPreview,
   } = useDaytonaPreview()
 
+  // ถ้าคุณทำ sandbox เป็น public: ใช้ previewUrlPublic แทน (ไม่มี token)
+  // ณ ที่นี้เราจะใช้ previewUrlWithToken ไปก่อน แต่ **แนะนำ** ให้ฝัง iframe เฉพาะกรณี public
+  const iframeSrc = previewUrlWithToken
+
   return (
     <div className="min-h-screen bg-neutral-50 p-6">
       <div className="max-w-5xl mx-auto space-y-4">
         <h1 className="text-2xl font-bold">Daytona Preview</h1>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={startPreview}
             disabled={loading || status === 'running'}
@@ -28,6 +32,7 @@ export default function DaytonaPreviewPage() {
           >
             {status === 'running' ? 'Running' : loading ? 'Starting...' : 'Start Preview'}
           </button>
+
           <button
             onClick={stopPreview}
             disabled={loading || status !== 'running'}
@@ -35,6 +40,7 @@ export default function DaytonaPreviewPage() {
           >
             Stop Preview
           </button>
+
           <span className="px-3 py-2 rounded-lg bg-neutral-200 text-neutral-700">
             Status: {status}
           </span>
@@ -52,29 +58,44 @@ export default function DaytonaPreviewPage() {
           </div>
         )}
 
-        {previewUrlWithToken && status === 'running' && (
+        {iframeSrc && status === 'running' && (
           <>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* เปิดในแท็บใหม่: เหมาะสำหรับ private เพื่อให้เบราว์เซอร์ตั้งคุกกี้ first-party */}
               <a
-                href={previewUrlWithToken}
+                href={iframeSrc}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white"
               >
                 Open Preview in New Tab
               </a>
-              <code className="text-xs bg-neutral-200 px-2 py-1 rounded">
-                {previewUrlWithToken}
+
+              <code className="text-xs bg-neutral-200 px-2 py-1 rounded break-all">
+                {iframeSrc}
               </code>
             </div>
 
             <div className="mt-4 border rounded-lg overflow-hidden bg-white">
               <iframe
-                src={previewUrlWithToken}
+                key={iframeSrc} // reload เมื่อ URL เปลี่ยน
+                src={iframeSrc}
                 title="Daytona Preview"
                 className="w-full h-[70vh]"
+                // ถ้าเป็น public preview การตั้งค่าด้านล่างก็พอใช้ได้
+                // ถ้าเป็น private + ต้องฝังจริง แนะนำทำ proxy ฝั่งเซิร์ฟเวอร์แทน
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                referrerPolicy="no-referrer"
+                allow="clipboard-read; clipboard-write"
+                loading="lazy"
               />
             </div>
+
+            <p className="text-xs text-amber-600 mt-2">
+              หมายเหตุ: ถ้าพรีวิวเป็น <b>private</b> การฝังใน iframe อาจเจอ redirect/CORS/HMR error
+              แนะนำเปิดในแท็บใหม่ หรือทำ proxy ฝั่งเซิร์ฟเวอร์เพื่อแนบโทเคนทุกรีเควสต์
+              (ไม่สามารถใส่ <code>X-Daytona-Skip-Preview-Warning</code> เป็นแอตทริบิวต์ใน iframe ได้)
+            </p>
           </>
         )}
       </div>
