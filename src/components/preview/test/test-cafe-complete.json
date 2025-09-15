@@ -1,5 +1,9 @@
 {
-  "projectStructure": null,
+  "projectStructure": {
+    "name": "food-delivery-table-reservation",
+    "type": "vite-react-typescript",
+    "description": "Food delivery and table reservation app with Vite + React + TypeScript + Tailwind CSS"
+  },
   "files": [
     {
       "path": "package.json",
@@ -14,6 +18,30 @@
       "language": "html"
     },
     {
+      "path": "vite.config.ts",
+      "content": "import { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react';\nimport path from 'path';\n\nexport default defineConfig({\n  plugins: [react()],\n  server: {\n    host: '0.0.0.0',\n    port: 5173,\n    // สำหรับ Vite 5 ขึ้นไป อาจต้องใช้ allowedHosts:\n    // allowedHosts: ['.proxy.daytona.works', '.daytona.work'],\n  },\n  resolve: {\n    alias: {\n      '@': path.resolve(__dirname, './src'),\n    },\n  },\n  build: {\n    outDir: 'dist',\n    assetsDir: 'assets',\n  },\n});",
+      "type": "config",
+      "language": "typescript"
+    },
+    {
+      "path": "tsconfig.json",
+      "content": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2020\",\n    \"lib\": [\"ES2020\", \"DOM\", \"DOM.Iterable\"],\n    \"jsx\": \"react-jsx\",\n    \"module\": \"ESNext\",\n    \"moduleResolution\": \"Bundler\",\n    \"strict\": true,\n    \"baseUrl\": \".\",\n    \"paths\": { \"@/*\": [\"src/*\"] },\n    \"skipLibCheck\": true,\n    \"resolveJsonModule\": true,\n    \"allowSyntheticDefaultImports\": true\n  },\n  \"include\": [\"src\", \"index.html\", \"vite.config.ts\", \"*.json\"]\n}",
+      "type": "config",
+      "language": "json"
+    },
+    {
+      "path": "postcss.config.cjs",
+      "content": "module.exports = {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {},\n  },\n};",
+      "type": "config",
+      "language": "javascript"
+    },
+    {
+      "path": "tailwind.config.js",
+      "content": "/** @type {import('tailwindcss').Config} */\nmodule.exports = {\n  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],\n  theme: {\n    extend: {\n      colors: {\n        primary: '#FF6347',\n        secondary: '#4CAF50',\n        accent: '#FFC107',\n        background: '#F9F9F9',\n        text: {\n          light: '#FFFFFF',\n          dark: '#333333',\n        },\n      },\n    },\n  },\n  plugins: [],\n  darkMode: 'class',\n};",
+      "type": "config",
+      "language": "javascript"
+    },
+    {
       "path": "src/main.tsx",
       "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App';\nimport './index.css';\n\nconst rootElement = document.getElementById('root');\nif (!rootElement) throw new Error('Failed to find the root element');\n\nconst root = ReactDOM.createRoot(rootElement);\nroot.render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>\n);",
       "type": "page",
@@ -26,21 +54,15 @@
       "language": "typescript"
     },
     {
-      "path": "src/pages/Home.tsx",
-      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Home: React.FC = () => {\n  return (\n    <div className=\"min-h-screen p-8 bg-orange-50\">\n      <div className=\"max-w-4xl mx-auto text-center\">\n        <h1 className=\"text-5xl font-bold mb-6 text-orange-600\">\n          Welcome to Café Delight\n        </h1>\n        <p className=\"text-xl text-gray-700 mb-8\">\n          Experience the finest dining with our delicious menu and warm atmosphere\n        </p>\n        \n        <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8\">\n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-2xl font-semibold mb-4 text-orange-600\">Our Menu</h2>\n            <p className=\"text-gray-600 mb-4\">\n              Discover our carefully crafted dishes made with fresh, local ingredients\n            </p>\n            <Link to=\"/menu\" className=\"btn\">\n              View Menu\n            </Link>\n          </div>\n          \n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-2xl font-semibold mb-4 text-orange-600\">Make a Reservation</h2>\n            <p className=\"text-gray-600 mb-4\">\n              Book your table for a memorable dining experience\n            </p>\n            <Link to=\"/reservation\" className=\"btn\">\n              Reserve Table\n            </Link>\n          </div>\n          \n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-2xl font-semibold mb-4 text-orange-600\">Meet Our Chef</h2>\n            <p className=\"text-gray-600 mb-4\">\n              Learn about our passionate chef and culinary philosophy\n            </p>\n            <Link to=\"/chef-profile\" className=\"btn\">\n              Chef Profile\n            </Link>\n          </div>\n        </div>\n        \n        <div className=\"bg-white p-8 rounded-lg shadow-md\">\n          <h2 className=\"text-3xl font-bold mb-4 text-orange-600\">Special Offers</h2>\n          <p className=\"text-lg text-gray-700 mb-6\">\n            Join us for happy hour every day from 4-6 PM with 20% off on selected drinks\n          </p>\n          <Link to=\"/menu\" className=\"btn text-lg px-8 py-3\">\n            Explore Offers\n          </Link>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default Home;",
-      "type": "page",
-      "language": "typescript"
-    },
-    {
       "path": "src/index.css",
       "content": "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n@layer base {\n  html {\n    font-size: 16px;\n    line-height: 1.5;\n    color: #3a3a3a;\n    background-color: #fffaf0;\n  }\n  body {\n    font-family: 'Inter', sans-serif;\n    margin: 0;\n    padding: 0;\n  }\n  h1, h2, h3, h4, h5, h6 {\n    margin: 0;\n    font-weight: 600;\n  }\n  p {\n    margin: 0;\n  }\n}\n\n@layer components {\n  .btn {\n    @apply px-4 py-2 rounded-lg text-white bg-orange-600 hover:bg-orange-500 transition duration-300 ease-in-out;\n  }\n  .card {\n    @apply bg-white shadow-md rounded-lg p-6 mb-4;\n  }\n  .header {\n    @apply bg-orange-600 text-white p-4;\n  }\n  .footer {\n    @apply bg-gray-200 text-gray-700 p-4 text-center;\n  }\n}\n\n@layer utilities {\n  .text-warm-orange {\n    color: #ff6f20;\n  }\n  .bg-warm-orange {\n    background-color: #ff6f20;\n  }\n  @screen sm {\n    .container {\n      @apply max-w-sm mx-auto;\n    }\n  }\n  @screen md {\n    .container {\n      @apply max-w-md mx-auto;\n    }\n  }\n  @screen lg {\n    .container {\n      @apply max-w-lg mx-auto;\n    }\n  }\n  @screen xl {\n    .container {\n      @apply max-w-xl mx-auto;\n    }\n  }\n}",
       "type": "style",
       "language": "css"
     },
     {
-      "path": "vite.config.ts",
-      "content": "import { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react';\nimport path from 'path';\n\nexport default defineConfig({\n  plugins: [react()],\n  server: {\n    host: '0.0.0.0',\n    port: 5173,\n    // สำหรับ Vite 5 ขึ้นไป อาจต้องใช้ allowedHosts:\n    // allowedHosts: ['.proxy.daytona.works', '.daytona.work'],\n  },\n  resolve: {\n    alias: {\n      '@': path.resolve(__dirname, './src'),\n    },\n  },\n  build: {\n    outDir: 'dist',\n    assetsDir: 'assets',\n  },\n});",
-      "type": "config",
+      "path": "src/pages/Home.tsx",
+      "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Home: React.FC = () => {\n  return (\n    <div className=\"min-h-screen p-8 bg-orange-50\">\n      <div className=\"max-w-4xl mx-auto text-center\">\n        <h1 className=\"text-5xl font-bold mb-6 text-orange-600\">\n          Welcome to Café Delight\n        </h1>\n        <p className=\"text-xl text-gray-700 mb-8\">\n          Experience the finest dining with our delicious menu and warm atmosphere\n        </p>\n        \n        <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8\">\n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-2xl font-semibold mb-4 text-orange-600\">Our Menu</h2>\n            <p className=\"text-gray-600 mb-4\">\n              Discover our carefully crafted dishes made with fresh, local ingredients\n            </p>\n            <Link to=\"/menu\" className=\"btn\">\n              View Menu\n            </Link>\n          </div>\n          \n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-2xl font-semibold mb-4 text-orange-600\">Make a Reservation</h2>\n            <p className=\"text-gray-600 mb-4\">\n              Book your table for a memorable dining experience\n            </p>\n            <Link to=\"/reservation\" className=\"btn\">\n              Reserve Table\n            </Link>\n          </div>\n          \n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-2xl font-semibold mb-4 text-orange-600\">Meet Our Chef</h2>\n            <p className=\"text-gray-600 mb-4\">\n              Learn about our passionate chef and culinary philosophy\n            </p>\n            <Link to=\"/chef-profile\" className=\"btn\">\n              Chef Profile\n            </Link>\n          </div>\n        </div>\n        \n        <div className=\"bg-white p-8 rounded-lg shadow-md\">\n          <h2 className=\"text-3xl font-bold mb-4 text-orange-600\">Special Offers</h2>\n          <p className=\"text-lg text-gray-700 mb-6\">\n            Join us for happy hour every day from 4-6 PM with 20% off on selected drinks\n          </p>\n          <Link to=\"/menu\" className=\"btn text-lg px-8 py-3\">\n            Explore Offers\n          </Link>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default Home;",
+      "type": "page",
       "language": "typescript"
     },
     {
@@ -68,13 +90,6 @@
       "language": "typescript"
     },
     {
-      "path": "style.css",
-      "content": "/* Additional custom styles */\nbody {\n  margin: 0;\n  padding: 0;\n  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;\n}\n\n.text-decoration-none {\n  text-decoration: none;\n}\n\n.text-decoration-none:hover {\n  text-decoration: none;\n}",
-      "type": "style",
-      "language": "css"
-    },
-
-    {
       "path": "src/components/Header.tsx",
       "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface HeaderProps {\n  restaurantName: string;\n  tagline?: string;\n}\n\nconst Header: React.FC<HeaderProps> = ({ restaurantName, tagline }) => {\n  return (\n    <header className=\"bg-orange-600 p-4 shadow-md\">\n      <div className=\"container mx-auto text-center\">\n        <Link to=\"/\" className=\"text-decoration-none\">\n          <h1 className=\"text-3xl font-bold text-white\">{restaurantName}</h1>\n          {tagline && <p className=\"text-lg text-white mt-2\">{tagline}</p>}\n        </Link>\n      </div>\n    </header>\n  );\n};\n\nexport default Header;",
       "type": "component",
@@ -86,16 +101,11 @@
       "type": "component",
       "language": "typescript"
     },
-
-
-
-
-
     {
-      "path": "tailwind.config.js",
-      "content": "/** @type {import('tailwindcss').Config} */\nmodule.exports = {\n  content: [\n    './src/**/*.{js,jsx,ts,tsx}',\n    './index.html',\n  ],\n  theme: {\n    extend: {\n      colors: {\n        primary: '#FF6347',\n        secondary: '#4CAF50',\n        accent: '#FFC107',\n        background: '#F9F9F9',\n        text: {\n          light: '#FFFFFF',\n          dark: '#333333',\n        },\n      },\n      spacing: {\n        '72': '18rem',\n        '84': '21rem',\n        '96': '24rem',\n      },\n      borderRadius: {\n        'xl': '1rem',\n      },\n    },\n  },\n  plugins: [],\n  darkMode: 'class',\n};",
-      "type": "config",
-      "language": "javascript"
+      "path": "style.css",
+      "content": "/* Additional custom styles */\nbody {\n  margin: 0;\n  padding: 0;\n  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;\n}\n\n.text-decoration-none {\n  text-decoration: none;\n}\n\n.text-decoration-none:hover {\n  text-decoration: none;\n}",
+      "type": "style",
+      "language": "css"
     }
   ]
 }
