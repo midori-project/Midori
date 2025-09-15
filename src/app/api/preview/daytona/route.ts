@@ -201,6 +201,7 @@ export async function OPTIONS() {
       'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
+      'X-Daytona-Skip-Preview-Warning': 'true',
     },
   })
 }
@@ -212,6 +213,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result, {
       headers: {
         'Access-Control-Allow-Origin': '*',
+        'X-Daytona-Skip-Preview-Warning': 'true',
       },
     })
   } catch (e: any) {

@@ -12,8 +12,8 @@ export function securityHeadersMiddleware(response: NextResponse) {
     "style-src 'self' 'unsafe-inline' https://*.codesandbox.io",
     "img-src 'self' data: https: https://*.codesandbox.io",
     "font-src 'self' data: https://*.codesandbox.io",
-    "connect-src 'self' https: https://*.codesandbox.io wss://*.codesandbox.io",
-    "frame-src 'self' https://*.codesandbox.io https://codesandbox.io https://*.sandpack.codesandbox.io",
+    "connect-src 'self' https: http: https://*.codesandbox.io wss://*.codesandbox.io https://*.proxy.daytona.works https://*.daytona.work http://*.proxy.daytona.works http://*.daytona.work wss://*.proxy.daytona.works wss://*.daytona.work ws://*.proxy.daytona.works ws://*.daytona.work",
+    "frame-src 'self' https://*.codesandbox.io https://codesandbox.io https://*.sandpack.codesandbox.io https://*.proxy.daytona.works https://*.daytona.work http://*.proxy.daytona.works http://*.daytona.work",
     "frame-ancestors 'none'",
   ].join('; ');
 
