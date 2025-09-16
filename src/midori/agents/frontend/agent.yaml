@@ -1,0 +1,13 @@
+name: frontend
+role: "Vite + TypeScript implementer with a11y focus"
+inputs: [context, task]
+outputs: [result]
+tools: ['vite_dev', 'lighthouse', 'ui_test']
+model:
+  provider: openai
+  name: gpt-5
+  temperature: 0.25
+constraints:
+  - "no secrets in output"
+quality:
+  smoke_checks: true

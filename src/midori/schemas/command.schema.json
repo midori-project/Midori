@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "command.schema.json",
+  "title": "Midori Command Schema",
+  "description": "Schema for commands sent from Chat AI to Orchestrator",
+  "type": "object",
+  "required": ["commandId", "commandType", "payload"],
+  "properties": {
+    "commandId": {
+      "type": "string",
+      "description": "Unique identifier for the command",
+      "pattern": "^cmd-[a-zA-Z0-9-]+$"
+    },
+    "commandType": {
+      "type": "string",
+      "description": "Type of command to execute",
+      "enum": [
+        "create_component",
+        "update_component",
+        "create_page",
+        "create_api_endpoint",
+        "update_database_schema",
+        "create_auth_system",
+        "setup_cicd",
+        "deploy_application",
+        "create_feature",
+        "fix_bug",
+        "optimize_performance",
+        "setup_monitoring"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "description": "Command-specific data and parameters",
+      "additionalProperties": true,
+      "examples": [
+        {
+          "componentName": "UserCard",
+          "props": ["name", "email", "avatar"],
+          "features": ["typescript", "accessibility"]
+        },
+        {
+          "endpoint": "/auth/login",
+          "method": "POST",
+          "authentication": "required"
+        }
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "description": "Command execution priority",
+      "enum": ["low", "medium", "high", "critical"],
+      "default": "medium"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata about the command",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "ID of the user who issued the command"
+        },
+        "projectId": {
+          "type": "string", 
+          "description": "ID of the target project"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the command was created"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the command (chat, api, automation)",
+          "enum": ["chat", "api", "automation", "webhook"]
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Chat session or API session ID"
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Execution constraints and limitations",
+      "properties": {
+        "maxDuration": {
+          "type": "integer",
+          "description": "Maximum execution time in minutes",
+          "minimum": 1,
+          "maximum": 1440
+        },
+        "maxCost": {
+          "type": "number",
+          "description": "Maximum cost in USD",
+          "minimum": 0
+        },
+        "requiredApprovals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of required approvals before execution"
+        },
+        "environment": {
+          "type": "string",
+          "description": "Target environment for execution",
+          "enum": ["development", "staging", "production"]
+        }
+      }
+    },
+    "rollbackPlan": {
+      "type": "object",
+      "description": "Rollback strategy in case of failure",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether rollback is enabled",
+          "default": true
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["test_failure", "security_violation", "performance_degradation", "manual"]
+          },
+          "description": "Conditions that trigger rollback"
+        },
+        "customSteps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Custom rollback steps specific to this command"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "commandId": "cmd-create-login-component-001",
+      "commandType": "create_component",
+      "payload": {
+        "componentName": "LoginForm",
+        "props": ["onSubmit", "loading", "error"],
+        "features": ["typescript", "validation", "accessibility"],
+        "styling": "tailwind"
+      },
+      "priority": "high",
+      "metadata": {
+        "userId": "user-123",
+        "projectId": "midori-main",
+        "timestamp": "2025-09-14T10:30:00Z",
+        "source": "chat",
+        "sessionId": "session-456"
+      }
+    },
+    {
+      "commandId": "cmd-create-auth-api-002",
+      "commandType": "create_api_endpoint",
+      "payload": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "schema": {
+          "request": "LoginRequest",
+          "response": "LoginResponse"
+        },
+        "authentication": "none",
+        "validation": "zod"
+      },
+      "priority": "critical",
+      "constraints": {
+        "maxDuration": 60,
+        "environment": "staging"
+      }
+    }
+  ]
+}

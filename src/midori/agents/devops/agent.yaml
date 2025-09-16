@@ -1,0 +1,13 @@
+name: devops
+role: "CI/CD, previews (Daytona/Vercel), secrets"
+inputs: [context, task]
+outputs: [result]
+tools: ['gh_actions', 'vercel_api', 'daytona_api']
+model:
+  provider: openai
+  name: gpt-5
+  temperature: 0.25
+constraints:
+  - "no secrets in output"
+quality:
+  smoke_checks: true

@@ -1,0 +1,5 @@
+steps:
+  - run: devops.collect_logs
+  - run: backend.run_checks
+  - run: frontend.smoke_preview
+  - run: orchestrator.post_mortem

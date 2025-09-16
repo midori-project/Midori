@@ -1,0 +1,3 @@
+steps:
+  - run: devops.build
+  - run: devops.promote_production

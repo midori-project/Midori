@@ -1,0 +1,10 @@
+hand_off:
+  - from: orchestrator
+    to: frontend
+    via: ticket
+  - from: frontend
+    to: devops
+    via: pr
+  - from: backend
+    to: devops
+    via: pr

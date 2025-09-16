@@ -1,0 +1,11 @@
+{
+  "ts-node": {
+    "esm": true,
+    "compilerOptions": {
+      "module": "ESNext",
+      "moduleResolution": "node",
+      "allowSyntheticDefaultImports": true,
+      "experimentalSpecifierResolution": "node"
+    }
+  }
+}
