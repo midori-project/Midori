@@ -13,8 +13,11 @@
 
 import { LLMAdapter } from './adapters/llmAdapter';
 import { run as legacyOrchestrator } from './runners/run';
-import { chatPromptLoader } from './prompts/chatPromptLoader';
+import { ChatPromptLoader } from './prompts/chatPromptLoader';
 import { randomUUID } from 'crypto';
+
+// Create singleton instance
+const chatPromptLoader = ChatPromptLoader.getInstance();
 
 // Types
 export interface UserMessage {
@@ -218,11 +221,10 @@ export class OrchestratorAI {
     
     const analysisPrompt = this.buildIntentAnalysisPrompt(input, context);
     
-    // สำหรับ GPT-5-nano ต้องใช้ temperature: 1 เท่านั้น
+    // สำหรับ GPT-5-nano ใช้ค่าจาก agent.yaml config
     const llmOptions = this.getModelSpecificOptions({
       useSystemPrompt: false,
-      temperature: 1,  // preferred temperature  
-      maxTokens: 5000  // ใช้ maxTokens แทน max_completion_tokens
+      temperature: undefined,  // ใช้ค่าจาก config
     });
     
     const response = await this.llmAdapter.callLLM(analysisPrompt, llmOptions);
@@ -303,6 +305,34 @@ export class OrchestratorAI {
       };
     }
     
+    const mentionsMidori = lowerInput.includes('midori');
+    const midoriContextKeywords = ['แพลตฟอร์ม', 'platform', 'เว็บ', 'website', 'คือ', 'อะไร', 'ข้อมูล', 'แนะนำ', 'ทำอะไรได้', 'ฟีเจอร์', 'browser'];
+    const isMidoriIdentityRequest = mentionsMidori && midoriContextKeywords.some(keyword => lowerInput.includes(keyword));
+
+    if (isMidoriIdentityRequest) {
+      return {
+        intent: 'chat',
+        confidence: 0.92,
+        taskType: 'midori_identity',
+        requiredAgents: [],
+        complexity: 'low',
+        parameters: { type: 'midori_identity' }
+      };
+    }
+    
+    // ⏰ Time/Date queries
+    const timeKeywords = ['เวลา', 'กี่โมง', 'วันที่', 'วันนี้', 'ตอนนี้', 'เดี๋ยวนี้', 'time', 'date', 'now'];
+    if (timeKeywords.some(keyword => lowerInput.includes(keyword))) {
+      return {
+        intent: 'chat',
+        confidence: 0.95,
+        taskType: 'time_query',
+        requiredAgents: [],
+        complexity: 'low',
+        parameters: { type: 'time_query' }
+      };
+    }
+
     // คำถามเกี่ยวกับชื่อ/ตัวตน
     if (lowerInput.includes('ชื่ออะไร') || 
         lowerInput.includes('คุณคือใคร') || 
@@ -319,11 +349,12 @@ export class OrchestratorAI {
       };
     }
 
-    // คำทักทาย
-    if (lowerInput === 'สวัสดี' || 
-        lowerInput === 'สวัสดีครับ' || 
-        lowerInput === 'hello' || 
-        lowerInput === 'hi') {
+    // คำทักทาย (ปรับให้ทนทานขึ้น)
+    if (lowerInput.includes('สวัสดี') || 
+        lowerInput.includes('hello') || 
+        lowerInput.includes('hi') ||
+        lowerInput === 'ไง' ||
+        lowerInput === 'หวัดดี') {
       return {
         intent: 'chat',
         confidence: 0.9,
@@ -347,13 +378,40 @@ export class OrchestratorAI {
     context: ConversationContext
   ): Promise<OrchestratorResponse> {
     
+    const shortCircuitType = analysis.parameters?.type;
+
+    // ⏰ Time/Date queries - ตอบทันทีไม่ใช้ LLM
+    if (shortCircuitType === 'time_query') {
+      const timeResponse = this.formatCurrentTimeForUser();
+      return {
+        type: 'chat',
+        content: timeResponse,
+        metadata: {
+          executionTime: 0,
+          agentsUsed: [],
+          confidence: analysis.confidence
+        }
+      };
+    }
+
+    if (shortCircuitType === 'security_sensitive') {
+      const securityResponse = await chatPromptLoader.getPrompt('securityDenial');
+      return {
+        type: 'chat',
+        content: securityResponse,
+        metadata: {
+          executionTime: 0,
+          agentsUsed: [],
+          confidence: analysis.confidence
+        }
+      };
+    }
+
     const chatPrompt = await this.buildChatPrompt(message.content, context, analysis);
     
     // ใช้ temperature จาก config หรือ undefined เพื่อให้ใช้ค่าจาก config
     const llmOptions = this.getModelSpecificOptions({
       useSystemPrompt: false,
-      temperature: undefined,  // ให้ใช้ค่าจาก config
-      maxTokens: 8000
     });
     
     const response = await this.llmAdapter.callLLM(chatPrompt, llmOptions);
@@ -589,6 +647,15 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
         return await chatPromptLoader.getPrompt('securityDenial');
       }
       
+      const midoriIdentityKeywords = ['แพลตฟอร์ม', 'platform', 'เว็บ', 'website', 'คือ', 'อะไร', 'ข้อมูล', 'แนะนำ', 'ทำอะไรได้', 'ฟีเจอร์', 'browser'];
+      const shouldUseMidoriIdentity =
+        analysis?.parameters?.type === 'midori_identity' ||
+        (lowerInput.includes('midori') && midoriIdentityKeywords.some(keyword => lowerInput.includes(keyword)));
+
+      if (shouldUseMidoriIdentity) {
+        return await chatPromptLoader.getPrompt('midoriIdentity', { input });
+      }
+
       // Introduction/Self-identification
       if (lowerInput.includes('ชื่ออะไร') || 
           lowerInput.includes('คุณคือใคร') || 
@@ -597,10 +664,12 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
         return await chatPromptLoader.getPrompt('introduction', { input });
       }
       
-      // Greeting
-      if (lowerInput === 'สวัสดี' || 
-          lowerInput === 'สวัสดีครับ' || 
-          lowerInput === 'hello' ||
+      // Greeting (ปรับให้ทนทานขึ้น)
+      if (lowerInput.includes('สวัสดี') || 
+          lowerInput.includes('hello') || 
+          lowerInput.includes('hi') ||
+          lowerInput === 'ไง' ||
+          lowerInput === 'หวัดดี' ||
           (analysis?.parameters?.type === 'greeting')) {
         return await chatPromptLoader.getPrompt('greeting');
       }
@@ -675,8 +744,6 @@ User ขอ: "${input}"
     try {
       const llmOptions = this.getModelSpecificOptions({
         useSystemPrompt: false,
-        temperature: 1,  // preferred temperature
-        maxTokens: 8000  // ใช้ maxTokens แทน max_completion_tokens
       });
       
       const response = await this.llmAdapter.callLLM(summaryPrompt, llmOptions);
@@ -692,6 +759,29 @@ User ขอ: "${input}"
       return ['ทดสอบการทำงาน', 'ปรับแต่งตามต้องการ', 'เผยแพร่เว็บไซต์'];
     }
     return ['ลองใช้งานดู', 'แจ้งถ้ามีปัญหา'];
+  }
+
+  /**
+   * Format current time for user query
+   */
+  private formatCurrentTimeForUser(tz?: string): string {
+    const timezone = tz || process.env.TZ || 'Asia/Bangkok';
+    const now = new Date();
+    
+    const formatter = new Intl.DateTimeFormat('th-TH', {
+      timeZone: timezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short'
+    });
+    
+    const formattedTime = formatter.format(now);
+    return `ตอนนี้คือ ${formattedTime} ครับ`;
   }
 }
 

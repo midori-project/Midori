@@ -48,7 +48,11 @@ export class LLMAdapter {
 
   async loadConfig(): Promise<void> {
     try {
-      const configPath = path.join(process.cwd(), 'src/midori/agents/orchestrator/agent.yaml');
+      // Use absolute path เพื่อแก้ปัญหา path เมื่อรันจาก directory อื่น
+      const projectRoot = process.env.MIDORI_PROJECT_ROOT || process.cwd();
+      console.log('🔍 Loading config from:', { projectRoot, cwd: process.cwd() });
+      const configPath = path.join(projectRoot, 'src/midori/agents/orchestrator/agent.yaml');
+      console.log('📄 Config path:', configPath);
       const configFile = await fs.readFile(configPath, 'utf-8');
       const agentConfig = yaml.load(configFile) as AgentConfig;
       

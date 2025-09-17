@@ -12,11 +12,14 @@ export interface ChatPromptTemplates {
   greeting: string;
   contextAware: string;
   helpGuidance: string;
+  midoriIdentity: string;
   technologyExplanation: string;
+  platformName: string;
   unclearIntent: string;
   errorRecovery: string;
   projectContextAware: string;
   securityDenial: string;
+  offTopic: string;
 }
 
 export class ChatPromptLoader {
@@ -29,7 +32,7 @@ export class ChatPromptLoader {
     const customPath = process.env.CHAT_PROMPTS_PATH;
     this.promptsPath = customPath 
       ? path.resolve(customPath)
-      : path.join(process.cwd(), 'src/midori/agents/orchestrator/prompts/chat-prompts-simple.md');
+      : path.join(process.cwd(), 'src/midori/agents/orchestrator/prompts/chat-prompts.md');
   }
 
   static getInstance(): ChatPromptLoader {
@@ -67,8 +70,8 @@ export class ChatPromptLoader {
     // รายการ template keys ที่รองรับ
     const templateKeys = [
       'base', 'introduction', 'greeting', 'contextAware', 
-      'helpGuidance', 'technologyExplanation', 'unclearIntent', 
-      'errorRecovery', 'projectContextAware', 'securityDenial'
+      'helpGuidance', 'midoriIdentity', 'technologyExplanation', 'unclearIntent', 
+      'errorRecovery', 'projectContextAware', 'securityDenial', 'offTopic'
     ];
 
     const missing: string[] = [];
@@ -163,9 +166,21 @@ Previous: {context}
 
 ตอบแบบเป็นขั้นตอน ชัดเจน`,
 
+      midoriIdentity: `User ถาม: "{input}"
+Midori AI คือแพลตฟอร์มสร้างเว็บไซต์ Full-Stack (React + TypeScript + Supabase) จากข้อความธรรมชาติ
+- ได้โค้ดจริง ปรับแต่งและ deploy ได้
+- ไม่มีส่วนเกี่ยวข้องกับ Midori Browser
+ชวนผู้ใช้บอกประเภทเว็บหรือฟีเจอร์ที่ต้องการ`,
+
       technologyExplanation: `User ถาม: "{input}"
 อธิบายเทคโนโลยีแบบเข้าใจง่าย เน้นประโยชน์และการใช้งานจริง
 ตอบเป็นภาษาไทยแบบเข้าใจง่าย`,
+
+      platformName: `แพลตฟอร์มของเราชื่อ **Midori** 🌿
+
+เป็น AI-powered website generator ที่สร้างเว็บไซต์ตามความต้องการของผู้ใช้ 
+
+คุณต้องการสร้างเว็บไซต์แบบไหนครับ?`,
 
       unclearIntent: `ผมไม่ค่อยแน่ใจว่าคุณต้องการให้ผมช่วยอะไรครับ 🤔
 กรุณาอธิบายเพิ่มเติมนิดหนึ่งครับ แล้วผมจะช่วยให้ได้ดีที่สุด! 😊`,
@@ -193,7 +208,11 @@ Recent work: {recentWork}
 - Deploy บนไหน? (Vercel, AWS, GCP, etc.)
 - ต้องการช่วยเรื่องไหนเฉพาะ?
 
-แล้วผมจะแนะนำให้เหมาะกับโปรเจคของคุณครับ!`
+แล้วผมจะแนะนำให้เหมาะกับโปรเจคของคุณครับ!`,
+
+      offTopic: `ขออภัยครับ ผมเป็นผู้ช่วยเฉพาะเรื่องการสร้างเว็บไซต์ 
+
+ถ้ามีคำถามเกี่ยวกับการทำเว็บ UI/UX หรือการเขียนโปรแกรม บอกผมได้เลยครับ! 🚀`
     };
   }
 

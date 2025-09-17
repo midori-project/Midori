@@ -36,10 +36,8 @@ model:
   provider: openai
   name: gpt-5-nano     # 🧪 Testing gpt-5-nano access  
   temperature: 1       # gpt-5 models only support temperature = 1
-  max_completion_tokens: 8000  # gpt-5 uses max_completion_tokens parameter
+  max_completion_tokens: 2000  # gpt-5 uses max_completion_tokens parameter
   timeout: 120      # Standard timeout for reliable responses
-  # Note: gpt-5 models (gpt-5-mini, gpt-5-nano) require identity verification
-  # To use gpt-5 models, complete verification at https://platform.openai.com
   fallback:
     name: gpt-4o-mini
     temperature: 0.3
