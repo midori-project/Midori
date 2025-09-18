@@ -10,16 +10,19 @@ export interface ChatPromptTemplates {
   base: string;
   introduction: string;
   greeting: string;
-  contextAware: string;
-  helpGuidance: string;
+  securityDenial: string;
   midoriIdentity: string;
   technologyExplanation: string;
-  platformName: string;
+  baseChat: string;
   unclearIntent: string;
-  errorRecovery: string;
-  projectContextAware: string;
-  securityDenial: string;
-  offTopic: string;
+  
+  // Optional fields for backward compatibility
+  contextAware?: string;
+  helpGuidance?: string;
+  platformName?: string;
+  errorRecovery?: string;
+  projectContextAware?: string;
+  offTopic?: string;
 }
 
 export class ChatPromptLoader {
@@ -73,29 +76,37 @@ export class ChatPromptLoader {
   private parsePrompts(content: string): ChatPromptTemplates {
     const prompts: Partial<ChatPromptTemplates> = {};
 
-    // รายการ template keys ที่รองรับ (ตรงกับ chat-prompts.md + orchestratorAI)
+    // รายการ template keys ที่รองรับ (ตรงกับ orchestrator ที่ใช้จริง)
     const templateKeys = [
-      'base', 'introduction', 'greeting', 'contextAware', 
-      'helpGuidance', 'platformName', 'midoriIdentity', 'technologyExplanation', 
-      'unclearIntent', 'errorRecovery', 'projectContextAware', 'securityDenial', 'offTopic'
+      'introduction', 'greeting', 'security_sensitive', 'midori_identity', 
+      'time_query', 'technology_explanation', 'base_chat', 'unclear'
     ];
 
     const missing: string[] = [];
 
+    // Key mapping จาก orchestrator → chatPromptLoader format
+    const keyMapping: Record<string, keyof ChatPromptTemplates> = {
+      'introduction': 'introduction',
+      'greeting': 'greeting', 
+      'security_sensitive': 'securityDenial',
+      'midori_identity': 'midoriIdentity',
+      'time_query': 'base', // time queries ใช้ base prompt
+      'technology_explanation': 'technologyExplanation',
+      'base_chat': 'baseChat',
+      'unclear': 'unclearIntent'
+    };
+
     // ใช้ anchor-based parsing แทน regex pattern matching
     for (const key of templateKeys) {
+      const mappedKey = keyMapping[key];
       const extracted = this.extractByAnchor(content, key);
-      if (extracted) {
-        prompts[key as keyof ChatPromptTemplates] = extracted;
+      
+      if (extracted && mappedKey) {
+        prompts[mappedKey] = extracted;
+        console.log(`✅ Mapped ${key} → ${mappedKey}`);
       } else {
         missing.push(key);
       }
-    }
-
-    // 🎯 Backward compatibility: Map platformName → midoriIdentity
-    if (prompts.platformName && !prompts.midoriIdentity) {
-      prompts.midoriIdentity = prompts.platformName;
-      console.log('🔄 Mapped platformName → midoriIdentity for backward compatibility');
     }
 
     // Log รายการ prompt ที่หายไป
@@ -178,6 +189,27 @@ User พูดว่า: "{input}"
 ผมพร้อมช่วยคุณสร้างเว็บไซต์ที่ยอดเยี่ยม!
 บอกผมได้เลยครับว่าต้องการอะไร 😊`,
 
+      securityDenial: `ขออภัยครับ ผมไม่สามารถแชร์ข้อมูลลับหรือรหัสผ่านได้เพื่อความปลอดภัย 🔒`,
+
+      midoriIdentity: `User ถาม: "{input}"
+Midori AI คือแพลตฟอร์มสร้างเว็บไซต์ Full-Stack (React + TypeScript + Supabase) จากข้อความธรรมชาติ
+- ได้โค้ดจริง ปรับแต่งและ deploy ได้
+- ไม่มีส่วนเกี่ยวข้องกับ Midori Browser
+ชวนผู้ใช้บอกประเภทเว็บหรือฟีเจอร์ที่ต้องการ`,
+
+      technologyExplanation: `User ถาม: "{input}"
+อธิบายเทคโนโลยีแบบเข้าใจง่าย เน้นประโยชน์และการใช้งานจริง
+ตอบเป็นภาษาไทยแบบเข้าใจง่าย`,
+
+      baseChat: `User พูดว่า: "{input}"
+
+ตอบแบบเป็นมิตรและให้ข้อมูลที่เป็นประโยชน์เกี่ยวกับการสร้างเว็บไซต์
+ตอบเป็นภาษาไทยแบบสั้น ๆ กระชับ (ไม่เกิน 100 คำ)`,
+
+      unclearIntent: `ผมไม่ค่อยแน่ใจว่าคุณต้องการให้ผมช่วยอะไรครับ 🤔
+กรุณาอธิบายเพิ่มเติมนิดหนึ่งครับ แล้วผมจะช่วยให้ได้ดีที่สุด! 😊`,
+
+      // Optional backward compatibility fields
       contextAware: `User พูดว่า: "{input}"
 Previous: {context}
 ตอบโดยอ้างอิงถึงบทสนทนาก่อนหน้า
@@ -193,24 +225,11 @@ Previous: {context}
 
 ตอบแบบเป็นขั้นตอน ชัดเจน`,
 
-      midoriIdentity: `User ถาม: "{input}"
-Midori AI คือแพลตฟอร์มสร้างเว็บไซต์ Full-Stack (React + TypeScript + Supabase) จากข้อความธรรมชาติ
-- ได้โค้ดจริง ปรับแต่งและ deploy ได้
-- ไม่มีส่วนเกี่ยวข้องกับ Midori Browser
-ชวนผู้ใช้บอกประเภทเว็บหรือฟีเจอร์ที่ต้องการ`,
-
-      technologyExplanation: `User ถาม: "{input}"
-อธิบายเทคโนโลยีแบบเข้าใจง่าย เน้นประโยชน์และการใช้งานจริง
-ตอบเป็นภาษาไทยแบบเข้าใจง่าย`,
-
       platformName: `แพลตฟอร์มของเราชื่อ **Midori** 🌿
 
 เป็น AI-powered website generator ที่สร้างเว็บไซต์ตามความต้องการของผู้ใช้ 
 
 คุณต้องการสร้างเว็บไซต์แบบไหนครับ?`,
-
-      unclearIntent: `ผมไม่ค่อยแน่ใจว่าคุณต้องการให้ผมช่วยอะไรครับ 🤔
-กรุณาอธิบายเพิ่มเติมนิดหนึ่งครับ แล้วผมจะช่วยให้ได้ดีที่สุด! 😊`,
 
       errorRecovery: `เกิดข้อผิดพลาดเล็กน้อยครับ แต่ไม่ต้องกังวล! 🔧
 ผมพร้อมช่วยแก้ไขและหาทางออกที่ดีที่สุด
@@ -222,9 +241,6 @@ Recent work: {recentWork}
 
 ตอบโดยเชื่อมโยงกับโปรเจคปัจจุบัน ให้คำแนะนำที่สอดคล้องกับงานที่กำลังทำ
 ตอบเป็นภาษาไทยแบบเฉพาะเจาะจง (ไม่เกิน 100 คำ)`,
-
-      securityDenial: `ขออภัยครับ ผมไม่สามารถแชร์ข้อมูลลับหรือรหัสผ่านได้เพื่อความปลอดภัย 🔒
-`,
 
       offTopic: `ขออภัยครับ ผมเป็นผู้ช่วยเฉพาะเรื่องการสร้างเว็บไซต์ 
 
@@ -270,7 +286,7 @@ Recent work: {recentWork}
       // Escape พารามิเตอร์เพื่อป้องกันอักขระพิเศษใน regex
       const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(`{${escapedKey}}`, 'g');
-      const oldTemplate = template;
+      const oldTemplate: string = template;
       template = template.replace(regex, value);
       
       if (oldTemplate !== template) {

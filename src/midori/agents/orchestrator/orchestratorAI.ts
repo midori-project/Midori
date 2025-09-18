@@ -117,6 +117,54 @@ export class OrchestratorAI {
   private conversationHistory: Map<string, ConversationContext>;
   private initialized: boolean = false;
 
+  /**
+   * ✅ Mapping table สำหรับแปลง LLM types เป็น prompt keys
+   */
+  private static readonly TYPE_MAPPING: Record<string, string> = {
+    // LLM อาจตอบแบบ descriptive
+    'self_introduction': 'introduction',
+    'identity_question': 'introduction', 
+    'name_question': 'introduction',
+    'who_are_you': 'introduction',
+    'about_yourself': 'introduction',
+    
+    'hello': 'greeting',
+    'greetings': 'greeting',
+    'hi': 'greeting',
+    'welcome': 'greeting',
+    'salutation': 'greeting',
+    
+    'platform_info': 'midori_identity',
+    'midori_question': 'midori_identity',
+    'about_midori': 'midori_identity',
+    'midori_explanation': 'midori_identity',
+    
+    'tech_question': 'technology_explanation',
+    'explain_technology': 'technology_explanation',
+    'react_question': 'technology_explanation',
+    'supabase_question': 'technology_explanation',
+    'technical_explanation': 'technology_explanation',
+    
+    'general_chat': 'base_chat',
+    'casual_conversation': 'base_chat',
+    'general_question': 'base_chat',
+    'math_calculation': 'base_chat',
+    'calculation': 'base_chat',
+    
+    'security_question': 'security_sensitive',
+    'password_request': 'security_sensitive',
+    'api_key_request': 'security_sensitive',
+    
+    'current_time': 'time_query',
+    'date_question': 'time_query',
+    'time_request': 'time_query',
+    
+    // Fallbacks
+    'unknown': 'unclear',
+    'not_sure': 'unclear',
+    'ambiguous': 'unclear'
+  };
+
   constructor() {
     this.llmAdapter = new LLMAdapter();
     this.conversationHistory = new Map();
@@ -238,7 +286,7 @@ export class OrchestratorAI {
       // ตรวจสอบ empty response
       if (!jsonContent) {
         console.warn('⚠️ Empty response from LLM, using fallback analysis');
-        return this.getFallbackAnalysis();
+        return this.getFallbackAnalysis(input);
       }
       
       // ลบ markdown code blocks ถ้ามี
@@ -256,30 +304,102 @@ export class OrchestratorAI {
       
       // ลอง parse JSON
       const analysis = JSON.parse(jsonContent);
-      return {
-        intent: analysis.intent || 'unclear',
-        confidence: analysis.confidence || 0.5,
-        taskType: analysis.taskType,
-        requiredAgents: analysis.requiredAgents || [],
-        complexity: analysis.complexity || 'medium',
-        parameters: analysis.parameters || {}
-      };
+      
+      // ✅ Validate และ map parameters.type
+      const validatedAnalysis = this.validateAndMapAnalysis(analysis, input);
+      
+      return validatedAnalysis;
     } catch (error) {
       console.error('❌ Failed to parse intent analysis:', error);
       console.error('📄 Raw response content:', response.content);
-      return this.getFallbackAnalysis();
+      return this.getFallbackAnalysis(input);
     }
   }
 
   /**
    * Fallback analysis เมื่อ parse ไม่ได้
    */
-  private getFallbackAnalysis(): IntentAnalysis {
+  private getFallbackAnalysis(input?: string): IntentAnalysis {
+    const lowerInput = input?.toLowerCase().trim() || '';
+    
+    // Smart fallback based on input
+    let fallbackType = 'base_chat';
+    
+    if (lowerInput.includes('คุณคือใคร') || lowerInput.includes('ชื่อ')) {
+      fallbackType = 'introduction';
+    } else if (lowerInput.includes('สวัสดี') || lowerInput.includes('hello')) {
+      fallbackType = 'greeting';
+    } else if (lowerInput.includes('midori')) {
+      fallbackType = 'midori_identity';
+    } else if (lowerInput.includes('react') || lowerInput.includes('supabase')) {
+      fallbackType = 'technology_explanation';
+    }
+    
     return {
-      intent: 'unclear',
+      intent: 'chat',
       confidence: 0.3,
+      taskType: 'คุยทั่วไป',
       requiredAgents: [],
-      complexity: 'medium'
+      complexity: 'low',
+      parameters: { type: fallbackType }
+    };
+  }
+
+  /**
+   * ✅ Map LLM type เป็น valid prompt key
+   */
+  private mapLLMTypeToPromptKey(llmType: string): string {
+    // ถ้า type ตรงกับ prompt key อยู่แล้ว
+    const validKeys = [
+      'introduction', 'greeting', 'security_sensitive', 'midori_identity', 
+      'time_query', 'technology_explanation', 'base_chat', 'unclear'
+    ];
+    
+    if (validKeys.includes(llmType)) {
+      return llmType;
+    }
+    
+    // ใช้ mapping table
+    const mappedType = OrchestratorAI.TYPE_MAPPING[llmType];
+    if (mappedType) {
+      console.log(`🔄 Mapped LLM type '${llmType}' → '${mappedType}'`);
+      return mappedType;
+    }
+    
+    // Fallback
+    console.warn(`⚠️ Unknown LLM type '${llmType}', using 'base_chat'`);
+    return 'base_chat';
+  }
+
+  /**
+   * ✅ Validate และ map LLM analysis ให้ตรงกับ Quick Intent patterns
+   */
+  private validateAndMapAnalysis(analysis: any, input: string): IntentAnalysis {
+    const lowerInput = input.toLowerCase().trim();
+    
+    let mappedType = analysis.parameters?.type;
+    
+    // ✅ ถ้า LLM ตอบ type ที่ไม่ valid → map ใหม่
+    const validChatTypes = [
+      'introduction', 'greeting', 'security_sensitive', 'midori_identity', 
+      'time_query', 'technology_explanation', 'base_chat', 'unclear'
+    ];
+    
+    if (!validChatTypes.includes(mappedType)) {
+      console.warn(`⚠️ Invalid type from LLM: ${mappedType}, mapping to appropriate type`);
+      mappedType = this.mapLLMTypeToPromptKey(mappedType || 'unknown');
+    }
+    
+    return {
+      intent: analysis.intent || 'unclear',
+      confidence: analysis.confidence || 0.5,
+      taskType: analysis.taskType,
+      requiredAgents: analysis.requiredAgents || [],
+      complexity: analysis.complexity || 'medium',
+      parameters: {
+        ...analysis.parameters,
+        type: mappedType  // ✅ ใช้ mapped type
+      }
     };
   }
 
@@ -367,7 +487,7 @@ export class OrchestratorAI {
       };
     }
 
-    // ไม่พบ quick intent
+    
     return null;
   }
 
@@ -662,22 +782,34 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
   "requiredAgents": ["frontend", "backend", "devops"],
   "complexity": "low|medium|high",
   "parameters": {
-    "key": "value"
+    "type": "introduction|greeting|security_sensitive|midori_identity|time_query|technology_explanation|base_chat|unclear"
   }
 }
 
-**Guidelines:**
-- **chat**: ทักทาย, ถามคำถาม, ขอคำแนะนำ, ถามชื่อ, คุยธรรมดา, คำนวณคณิตศาสตร์ (เช่น 1+1), อธิบายคำศัพท์, ถามเกี่ยวกับข้อมูล
-- **simple_task**: แก้ไข component เดียว, สร้าง API เดียว, เพิ่ม/ลบ feature เล็กๆ
-- **complex_task**: สร้างเว็บไซต์ใหม่, ระบบซับซ้อน, โปรเจคใหม่ทั้งหมด
-- **unclear**: ไม่ชัดเจนว่าต้องการอะไร
+**CRITICAL: parameters.type ต้องเป็นค่าใดค่าหนึ่งเท่านั้น:**
 
-**Chat Examples (ใช้ chat เท่านั้น):**
-- "1+1 เท่ากับเท่าไหร่", "5*3 เท่าไหร่"
-- "สวัสดี", "hello", "คุณคือใคร"
-- "React คืออะไร", "Supabase ทำอะไรได้"
-- "คำแนะนำในการเรียนโปรแกรม"
-- "อธิบายให้ฟัง", "หมายความว่าอะไร"`;
+**🎭 Chat Types (สำหรับ intent: "chat"):**
+- **"introduction"**: คำถามเกี่ยวกับชื่อ/ตัวตน (คุณคือใคร, ชื่ออะไร, แนะนำตัว)
+- **"greeting"**: การทักทาย (สวัสดี, hello, hi)
+- **"security_sensitive"**: คำถามเกี่ยวกับข้อมูลลับ (API key, password, .env)
+- **"midori_identity"**: คำถามเกี่ยวกับ Midori platform (Midori คืออะไร, ทำอะไรได้)
+- **"time_query"**: คำถามเกี่ยวกับเวลา/วันที่ (กี่โมง, วันนี้)
+- **"technology_explanation"**: อธิบายเทคโนโลยี (React คืออะไร, Supabase ใช้ยังไง)
+- **"base_chat"**: คำถามทั่วไป/คุยธรรมดา, คำนวณคณิตศาสตร์ (เช่น 1+1)
+- **"unclear"**: ไม่ชัดเจน
+
+**📝 Task Types (สำหรับ intent: "simple_task" หรือ "complex_task"):**
+- **"frontend_task"**: งานเกี่ยวกับ UI/UX
+- **"backend_task"**: งานเกี่ยวกับ API/Database  
+- **"devops_task"**: งานเกี่ยวกับ deployment
+- **"full_stack_task"**: งานแบบครบ stack
+
+**Examples:**
+- "คุณคือใครครับ" → {"intent": "chat", "parameters": {"type": "introduction"}}
+- "สวัสดี" → {"intent": "chat", "parameters": {"type": "greeting"}}
+- "1+1 เท่าไหร่" → {"intent": "chat", "parameters": {"type": "base_chat"}}
+- "React คืออะไร" → {"intent": "chat", "parameters": {"type": "technology_explanation"}}
+- "สร้างเว็บไซต์" → {"intent": "simple_task", "parameters": {"type": "frontend_task"}}`;
   }
 
   /**
