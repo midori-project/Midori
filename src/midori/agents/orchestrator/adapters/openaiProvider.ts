@@ -51,7 +51,10 @@ export class OpenAIProvider implements LLMProvider {
           const responsesReq: any = {
             model: modelName,
             input,
-            ...(request.maxTokens !== undefined && { max_output_tokens: request.maxTokens || 8000 })
+            ...(request.maxCompletionTokens !== undefined && { max_output_tokens: request.maxCompletionTokens }),
+            ...(request.maxTokens !== undefined && !request.maxCompletionTokens && { max_output_tokens: request.maxTokens }),
+            ...(request.reasoning && { reasoning: request.reasoning }),
+            ...(request.text && { text: request.text })
           };
 
           console.log('🧪 Trying GPT-5 via Responses API...', { model: modelName });
@@ -103,11 +106,13 @@ export class OpenAIProvider implements LLMProvider {
           { role: 'user', content: request.prompt }
         ],
         ...(request.temperature !== undefined && { temperature: request.temperature }),
+        ...(request.reasoning && { reasoning: request.reasoning }),
+        ...(request.text && { text: request.text })
       };
 
       // Set token limits based on model
       if (isGpt5) {
-        requestConfig.max_completion_tokens = request.maxTokens || 8000;
+        requestConfig.max_completion_tokens = request.maxCompletionTokens || request.maxTokens || 8000;
       } else {
         requestConfig.max_tokens = request.maxTokens || 4000;
       }

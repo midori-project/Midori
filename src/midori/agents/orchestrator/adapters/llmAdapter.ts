@@ -101,6 +101,13 @@ export class LLMAdapter {
       model?: string;
       temperature?: number;
       maxTokens?: number;
+      maxCompletionTokens?: number;
+      reasoning?: {
+        effort: 'minimal' | 'low' | 'medium' | 'high';
+      };
+      text?: {
+        verbosity: 'low' | 'medium' | 'high';
+      };
     } = {}
   ): Promise<LLMResponse> {
     if (!this.config) {
@@ -123,7 +130,10 @@ export class LLMAdapter {
       systemPrompt: systemPrompt || undefined,
       model: options.model || config.name,
       temperature: options.temperature ?? config.temperature,
-      maxTokens: options.maxTokens || config.max_completion_tokens || config.max_tokens
+      maxTokens: options.maxTokens || config.max_completion_tokens || config.max_tokens,
+      maxCompletionTokens: options.maxCompletionTokens,
+      reasoning: options.reasoning,
+      text: options.text
     };
 
     // Check if model is blacklisted

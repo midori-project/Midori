@@ -20,6 +20,14 @@ export interface LLMRequest {
   model?: string;
   temperature?: number;
   maxTokens?: number;
+  // 🎯 Response Configuration
+  maxCompletionTokens?: number;
+  reasoning?: {
+    effort: 'minimal' | 'low' | 'medium' | 'high';
+  };
+  text?: {
+    verbosity: 'low' | 'medium' | 'high';
+  };
 }
 
 export interface LLMResponse {

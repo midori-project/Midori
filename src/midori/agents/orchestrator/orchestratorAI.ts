@@ -14,6 +14,7 @@
 import { LLMAdapter } from './adapters/llmAdapter';
 import { run as legacyOrchestrator } from './runners/run';
 import { ChatPromptLoader } from './prompts/chatPromptLoader';
+import { getResponseConfig, toLLMOptions } from './configs/responseConfig';
 import { randomUUID } from 'crypto';
 
 // Create singleton instance
@@ -221,10 +222,11 @@ export class OrchestratorAI {
     
     const analysisPrompt = this.buildIntentAnalysisPrompt(input, context);
     
-    // สำหรับ GPT-5-nano ใช้ค่าจาก agent.yaml config
+    // ใช้ response config สำหรับ intent analysis
+    const analysisConfig = getResponseConfig('intentAnalysis');
     const llmOptions = this.getModelSpecificOptions({
       useSystemPrompt: false,
-      temperature: undefined,  // ใช้ค่าจาก config
+      ...toLLMOptions(analysisConfig)
     });
     
     const response = await this.llmAdapter.callLLM(analysisPrompt, llmOptions);
@@ -407,14 +409,43 @@ export class OrchestratorAI {
       };
     }
 
+    // 🎯 กำหนด response config ตามประเภทการตอบ
+    let responseConfigType: string;
+    
+    if (shortCircuitType === 'greeting') {
+      responseConfigType = 'greeting';
+    } else if (shortCircuitType === 'introduction') {
+      responseConfigType = 'introduction';
+    } else if (shortCircuitType === 'midori_identity') {
+      responseConfigType = 'midoriIdentity';
+    } else if (analysis.taskType === 'ทักทาย') {
+      responseConfigType = 'greeting';
+    } else if (analysis.taskType === 'แนะนำตัว') {
+      responseConfigType = 'introduction';
+    } else if (context.currentProject && context.lastTaskResult) {
+      responseConfigType = 'projectContextAware';
+    } else if (context.previousMessages.length > 0) {
+      responseConfigType = 'contextAware';
+    } else {
+      responseConfigType = 'baseChat';
+    }
+
     const chatPrompt = await this.buildChatPrompt(message.content, context, analysis);
     
-    // ใช้ temperature จาก config หรือ undefined เพื่อให้ใช้ค่าจาก config
+    // ใช้ response configuration ที่เหมาะสม
+    const responseConfig = getResponseConfig(responseConfigType);
     const llmOptions = this.getModelSpecificOptions({
       useSystemPrompt: false,
+      ...toLLMOptions(responseConfig)
     });
     
     const response = await this.llmAdapter.callLLM(chatPrompt, llmOptions);
+
+    console.log(`✅ Chat response generated using '${responseConfigType}' config:`, {
+      tokens: responseConfig.maxCompletionTokens,
+      reasoning: responseConfig.reasoning?.effort,
+      verbosity: responseConfig.text?.verbosity
+    });
 
     return {
       type: 'chat',
@@ -553,6 +584,13 @@ export class OrchestratorAI {
     useSystemPrompt?: boolean;
     temperature?: number;
     maxTokens?: number;
+    maxCompletionTokens?: number;
+    reasoning?: {
+      effort: 'minimal' | 'low' | 'medium' | 'high';
+    };
+    text?: {
+      verbosity: 'low' | 'medium' | 'high';
+    };
     model?: string;
   }) {
     // ใช้ model จาก LLMAdapter จริง ๆ
@@ -742,8 +780,11 @@ User ขอ: "${input}"
 สรุปเป็นภาษาไทยแบบสั้น ๆ บอกว่าทำอะไรเสร็จแล้วบ้าง (ไม่เกิน 80 คำ)`;
 
     try {
+      // ใช้ task summary config
+      const summaryConfig = getResponseConfig('taskSummary');
       const llmOptions = this.getModelSpecificOptions({
         useSystemPrompt: false,
+        ...toLLMOptions(summaryConfig)
       });
       
       const response = await this.llmAdapter.callLLM(summaryPrompt, llmOptions);
