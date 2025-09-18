@@ -483,6 +483,9 @@ model ProjectContext {
   @@index([specBundleId])
 }
 
+// ============================
+// TEMPLATE CORE
+// ============================
 model UiTemplate {
   id        String              @id @default(uuid())
   key       String              @unique
@@ -491,6 +494,7 @@ model UiTemplate {
   createdAt DateTime            @default(now())
   meta      UiTemplateMeta?
   versions  UiTemplateVersion[]
+  meta      UiTemplateMeta?               // 1:1 meta (normalized)
 }
 
 model UiTemplateVersion {
