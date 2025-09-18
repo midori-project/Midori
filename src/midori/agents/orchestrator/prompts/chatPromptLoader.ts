@@ -79,7 +79,7 @@ export class ChatPromptLoader {
     // รายการ template keys ที่รองรับ (ตรงกับ orchestrator ที่ใช้จริง)
     const templateKeys = [
       'introduction', 'greeting', 'security_sensitive', 'midori_identity', 
-      'time_query', 'technology_explanation', 'base_chat', 'unclear'
+      'technology_explanation', 'base_chat', 'unclear'
     ];
 
     const missing: string[] = [];
@@ -90,7 +90,6 @@ export class ChatPromptLoader {
       'greeting': 'greeting', 
       'security_sensitive': 'securityDenial',
       'midori_identity': 'midoriIdentity',
-      'time_query': 'base', // time queries ใช้ base prompt
       'technology_explanation': 'technologyExplanation',
       'base_chat': 'baseChat',
       'unclear': 'unclearIntent'

@@ -779,10 +779,10 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
   "intent": "chat|simple_task|complex_task|unclear",
   "confidence": 0.8,
   "taskType": "สรุปงานที่ต้องทำ",
-  "requiredAgents": ["frontend", "backend", "devops"],
+  "requiredAgents": ["frontend" | "backend" | "devops"],
   "complexity": "low|medium|high",
   "parameters": {
-    "type": "introduction|greeting|security_sensitive|midori_identity|time_query|technology_explanation|base_chat|unclear"
+    "type": "introduction|greeting|security_sensitive|midori_identity|technology_explanation|base_chat|unclear"
   }
 }
 
@@ -793,7 +793,6 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
 - **"greeting"**: การทักทาย (สวัสดี, hello, hi)
 - **"security_sensitive"**: คำถามเกี่ยวกับข้อมูลลับ (API key, password, .env)
 - **"midori_identity"**: คำถามเกี่ยวกับ Midori platform (Midori คืออะไร, ทำอะไรได้)
-- **"time_query"**: คำถามเกี่ยวกับเวลา/วันที่ (กี่โมง, วันนี้)
 - **"technology_explanation"**: อธิบายเทคโนโลยี (React คืออะไร, Supabase ใช้ยังไง)
 - **"base_chat"**: คำถามทั่วไป/คุยธรรมดา, คำนวณคณิตศาสตร์ (เช่น 1+1)
 - **"unclear"**: ไม่ชัดเจน
@@ -880,26 +879,9 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
         return await chatPromptLoader.getPrompt('technologyExplanation', { input });
       }
       
-      // Project context aware (ถ้ามี project context)
-      if (context.currentProject && context.lastTaskResult) {
-        return await chatPromptLoader.getPrompt('projectContextAware', { 
-          input, 
-          projectName: context.currentProject,
-          recentWork: JSON.stringify(context.lastTaskResult).substring(0, 200) + '...'
-        });
-      }
-      
-      // Context-aware (ถ้ามี conversation history)
-      if (context.previousMessages.length > 0) {
-        const recentMessages = context.previousMessages.slice(-3).join(', ');
-        return await chatPromptLoader.getPrompt('contextAware', { 
-          input, 
-          context: recentMessages 
-        });
-      }
       
       // Default base chat prompt
-      return await chatPromptLoader.getPrompt('base', { input });
+      return await chatPromptLoader.getPrompt('baseChat', { input });
       
     } catch (error) {
       console.error('❌ Failed to load chat prompt, using fallback:', error);
