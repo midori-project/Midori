@@ -628,33 +628,105 @@ model SpecVersion {
 }
 
 // ============================
-// 7) TEMPLATE / BLUEPRINT
+// ENUMS
 // ============================
+enum TemplateStatus {
+  draft
+  published
+  deprecated
+}
 
+// ============================
+// TEMPLATE CORE
+// ============================
 model UiTemplate {
   id        String   @id @default(uuid())
-  key       String   @unique
-  label     String
-  category  String?
-  meta      Json?
+  key       String   @unique              // e.g. "restaurant-basic"
+  label     String                        // human-friendly name
+  category  String?                       // e.g. "restaurant" | "landing" | "portfolio"
   createdAt DateTime @default(now())
+
+  // relations
   versions  UiTemplateVersion[]
+  meta      UiTemplateMeta?               // 1:1 meta (normalized)
 }
 
 model UiTemplateVersion {
   id          String   @id @default(uuid())
   templateId  String
-  version     Int
-  files       Json?
-  slots       Json?
-  constraints Json?
+  version     Int                              // numeric version
+  semver      String?                          // optional semantic version (e.g. "1.0.0")
+  files       Json?                            // manifest or pointers to objects
+  slots       Json?                            // slot schema
+  constraints Json?                            // constraints schema
+  checksum    String?                          // hash for reproducible builds
+  sizeBytes   Int?                             
+  status      TemplateStatus @default(published)
+  compat      Json?
+  publishedAt DateTime?
+  deprecatedAt DateTime?
   createdAt   DateTime @default(now())
 
   template    UiTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@unique([templateId, version])
   @@index([templateId])
+  @@index([status])
+  @@index([createdAt])
 }
+
+// ============================
+// TEMPLATE META (normalized 1:1)
+// ============================
+model UiTemplateMeta {
+  id                String          @id @default(uuid())
+  templateId        String          @unique
+  description       String?
+  engine            String?         // "nextjs", "astro", ...
+  status            TemplateStatus? @default(draft) // publishing lifecycle
+  versioningPolicy  String?         // e.g. "immutable-after-publish"
+  previewScreenshot String?         // URL to preview image
+  compat            Json?           // { breakpoints: [...], node: ">=18", ... }
+  postProcess       Json?           // ["mapThemeTokens", "injectSEOHead", ...]
+  author            String?         // "midori-core-team"
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // relations
+  template          UiTemplate      @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  tags              UiTemplateMetaTag[]
+
+  @@index([engine])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================
+// TAGS (many-to-many)
+// ============================
+model Tag {
+  id        String   @id @default(uuid())
+  key       String   @unique          // slug e.g. "food", "localbiz", "thai-font"
+  label     String
+  createdAt DateTime @default(now())
+
+  metaLinks UiTemplateMetaTag[]
+}
+
+model UiTemplateMetaTag {
+  id        String        @id @default(uuid())
+  metaId    String
+  tagId     String
+  createdAt DateTime      @default(now())
+
+  meta      UiTemplateMeta @relation(fields: [metaId], references: [id], onDelete: Cascade)
+  tag       Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([metaId, tagId])
+  @@index([metaId])
+  @@index([tagId])
+}
+
 
 // ============================
 // 8) COPYWRITER (i18n/versions)
