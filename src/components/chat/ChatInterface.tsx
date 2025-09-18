@@ -17,7 +17,10 @@ interface ChatInterfaceProps {
   initialMessage?: string;
 }
 
+
+
 export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',

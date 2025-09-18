@@ -9,7 +9,8 @@ export const authPages: AuthPageEntry[] = [
   '/register',
   '/forgot-password',
   '/info',
-  '/chat'
+  '/chat',
+  
   // info pages: allow scroll in some cases; default not set (false)
 ];
 
