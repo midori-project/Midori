@@ -47,16 +47,22 @@ export class ChatPromptLoader {
    */
   async loadPrompts(): Promise<ChatPromptTemplates> {
     if (this.prompts) {
+      console.log(`✅ Prompts already loaded, returning cached version`);
       return this.prompts;
     }
 
     try {
+      console.log(`📁 Loading prompts from: ${this.promptsPath}`);
       const content = await fs.readFile(this.promptsPath, 'utf-8');
+      console.log(`📄 Loaded file content: ${content.length} characters`);
+      
       this.prompts = this.parsePrompts(content);
+      console.log(`🎯 Parsed prompts:`, Object.keys(this.prompts));
       console.log('✅ Chat prompts loaded successfully');
       return this.prompts;
     } catch (error) {
-      console.error('❌ Failed to load chat prompts:', error);
+      console.error(`❌ Failed to load prompts from ${this.promptsPath}:`, error);
+      console.log(`🔄 Using fallback prompts instead`);
       return this.getFallbackPrompts();
     }
   }
@@ -67,11 +73,11 @@ export class ChatPromptLoader {
   private parsePrompts(content: string): ChatPromptTemplates {
     const prompts: Partial<ChatPromptTemplates> = {};
 
-    // รายการ template keys ที่รองรับ
+    // รายการ template keys ที่รองรับ (ตรงกับ chat-prompts.md + orchestratorAI)
     const templateKeys = [
       'base', 'introduction', 'greeting', 'contextAware', 
-      'helpGuidance', 'midoriIdentity', 'technologyExplanation', 'unclearIntent', 
-      'errorRecovery', 'projectContextAware', 'securityDenial', 'offTopic'
+      'helpGuidance', 'platformName', 'midoriIdentity', 'technologyExplanation', 
+      'unclearIntent', 'errorRecovery', 'projectContextAware', 'securityDenial', 'offTopic'
     ];
 
     const missing: string[] = [];
@@ -84,6 +90,12 @@ export class ChatPromptLoader {
       } else {
         missing.push(key);
       }
+    }
+
+    // 🎯 Backward compatibility: Map platformName → midoriIdentity
+    if (prompts.platformName && !prompts.midoriIdentity) {
+      prompts.midoriIdentity = prompts.platformName;
+      console.log('🔄 Mapped platformName → midoriIdentity for backward compatibility');
     }
 
     // Log รายการ prompt ที่หายไป
@@ -103,15 +115,30 @@ export class ChatPromptLoader {
     const startAnchor = `<!-- prompt:${key}:start -->`;
     const endAnchor = `<!-- prompt:${key}:end -->`;
     
+    console.log(`🔍 Looking for prompt: ${key}`);
+    
     const startIndex = content.indexOf(startAnchor);
     const endIndex = content.indexOf(endAnchor);
     
-    if (startIndex === -1 || endIndex === -1 || startIndex >= endIndex) {
+    if (startIndex === -1) {
+      console.warn(`❌ Start anchor not found for: ${key} (looking for: ${startAnchor})`);
+      return null;
+    }
+    
+    if (endIndex === -1) {
+      console.warn(`❌ End anchor not found for: ${key} (looking for: ${endAnchor})`);
+      return null;
+    }
+    
+    if (startIndex >= endIndex) {
+      console.warn(`❌ Invalid anchor positions for: ${key}`);
       return null;
     }
     
     const startPos = startIndex + startAnchor.length;
     const extracted = content.substring(startPos, endIndex).trim();
+    
+    console.log(`✅ Found prompt: ${key} (${extracted.length} chars)`);
     
     // ลบ markdown code blocks ถ้ามี
     if (extracted.startsWith('```') && extracted.endsWith('```')) {
@@ -197,18 +224,7 @@ Recent work: {recentWork}
 ตอบเป็นภาษาไทยแบบเฉพาะเจาะจง (ไม่เกิน 100 คำ)`,
 
       securityDenial: `ขออภัยครับ ผมไม่สามารถแชร์ข้อมูลลับหรือรหัสผ่านได้เพื่อความปลอดภัย 🔒
-
-แต่ผมช่วยได้:
-🛡️ แนะนำวิธีตั้งค่า environment variables อย่างปลอดภัย
-🔐 Security best practices สำหรับเว็บแอป
-⚙️ การจัดการ API keys และ secrets
-
-บอกผมหน่อยครับว่า:
-- ใช้เทคโนโลยีอะไร? (React, Node.js, Supabase, etc.)
-- Deploy บนไหน? (Vercel, AWS, GCP, etc.)
-- ต้องการช่วยเรื่องไหนเฉพาะ?
-
-แล้วผมจะแนะนำให้เหมาะกับโปรเจคของคุณครับ!`,
+`,
 
       offTopic: `ขออภัยครับ ผมเป็นผู้ช่วยเฉพาะเรื่องการสร้างเว็บไซต์ 
 
@@ -223,12 +239,15 @@ Recent work: {recentWork}
     type: keyof ChatPromptTemplates, 
     params: Record<string, string> = {}
   ): Promise<string> {
+    console.log(`📋 ChatPromptLoader.getPrompt called with key: ${type}`);
+    
     const prompts = await this.loadPrompts();
     let template = prompts[type];
 
     // Guard: ตรวจสอบว่า template มีอยู่จริง
     if (!template || template.trim() === '') {
       console.warn(`⚠️ Template '${type}' not found or empty, using fallback`);
+      console.error(`❌ Available templates:`, Object.keys(prompts));
       
       // คืน fallback เฉพาะกรณี หรือ empty string
       const fallbackPrompts = this.getFallbackPrompts();
@@ -238,16 +257,28 @@ Recent work: {recentWork}
         console.error(`❌ No fallback available for template '${type}'`);
         return '';
       }
+    } else {
+      console.log(`✅ Template '${type}' found: ${template.substring(0, 100)}...`);
     }
 
     // Substitute parameters with escaped regex
+    if (Object.keys(params).length > 0) {
+      console.log(`🔧 Replacing variables:`, params);
+    }
+    
     for (const [key, value] of Object.entries(params)) {
       // Escape พารามิเตอร์เพื่อป้องกันอักขระพิเศษใน regex
       const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(`{${escapedKey}}`, 'g');
+      const oldTemplate = template;
       template = template.replace(regex, value);
+      
+      if (oldTemplate !== template) {
+        console.log(`✅ Replaced {${key}} with: ${String(value).substring(0, 50)}...`);
+      }
     }
 
+    console.log(`📤 Final prompt result: ${template.substring(0, 150)}...`);
     return template;
   }
 

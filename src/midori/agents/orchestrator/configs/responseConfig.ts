@@ -56,9 +56,9 @@ export const RESPONSE_CONFIGS: Record<string, ResponseConfig> = {
   },
 
   contextAware: {
-    maxCompletionTokens: 2000,        // คำนึงถึง context
+    maxCompletionTokens: 8000,        // คำนึงถึง context
     reasoning: { effort: 'medium' },
-    text: { verbosity: 'medium' },
+    text: { verbosity: 'low' },
     description: 'การตอบที่คำนึงถึง context'
   },
 

@@ -432,6 +432,11 @@ export class OrchestratorAI {
 
     const chatPrompt = await this.buildChatPrompt(message.content, context, analysis);
     
+    // 🔍 Debug: เช็คว่า chatPrompt ที่ได้มาถูกต้องไหม
+    console.log(`🔍 Generated chatPrompt preview:`, chatPrompt.substring(0, 200));
+    console.log(`🎯 Expected introduction prompt should contain: "Midori AI Agent"`);
+    console.log(`✅ Does prompt contain expected text?`, chatPrompt.includes('Midori AI Agent'));
+    
     // ใช้ response configuration ที่เหมาะสม
     const responseConfig = getResponseConfig(responseConfigType);
     const llmOptions = this.getModelSpecificOptions({
@@ -662,10 +667,17 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
 }
 
 **Guidelines:**
-- **chat**: ทักทาย, ถามคำถาม, ขอคำแนะนำ, ถามชื่อ, คุยธรรมดา
-- **simple_task**: แก้ไข component เดียว, สร้าง API เดียว
-- **complex_task**: สร้างเว็บไซต์ใหม่, ระบบซับซ้อน
-- **unclear**: ไม่ชัดเจนว่าต้องการอะไร`;
+- **chat**: ทักทาย, ถามคำถาม, ขอคำแนะนำ, ถามชื่อ, คุยธรรมดา, คำนวณคณิตศาสตร์ (เช่น 1+1), อธิบายคำศัพท์, ถามเกี่ยวกับข้อมูล
+- **simple_task**: แก้ไข component เดียว, สร้าง API เดียว, เพิ่ม/ลบ feature เล็กๆ
+- **complex_task**: สร้างเว็บไซต์ใหม่, ระบบซับซ้อน, โปรเจคใหม่ทั้งหมด
+- **unclear**: ไม่ชัดเจนว่าต้องการอะไร
+
+**Chat Examples (ใช้ chat เท่านั้น):**
+- "1+1 เท่ากับเท่าไหร่", "5*3 เท่าไหร่"
+- "สวัสดี", "hello", "คุณคือใคร"
+- "React คืออะไร", "Supabase ทำอะไรได้"
+- "คำแนะนำในการเรียนโปรแกรม"
+- "อธิบายให้ฟัง", "หมายความว่าอะไร"`;
   }
 
   /**
@@ -677,11 +689,15 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
     analysis?: IntentAnalysis
   ): Promise<string> {
     try {
+      console.log(`🎭 buildChatPrompt called with analysis:`, analysis?.parameters);
+      
       // ตรวจสอบประเภทคำถาม
       const lowerInput = input.toLowerCase();
+      const shortCircuitType = analysis?.parameters?.type;
       
       // 🛡️ Security-sensitive requests
       if (analysis?.parameters?.type === 'security_sensitive') {
+        console.log(`🛡️ Using security denial prompt`);
         return await chatPromptLoader.getPrompt('securityDenial');
       }
       
@@ -691,6 +707,7 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
         (lowerInput.includes('midori') && midoriIdentityKeywords.some(keyword => lowerInput.includes(keyword)));
 
       if (shouldUseMidoriIdentity) {
+        console.log(`🌿 Using midori identity prompt`);
         return await chatPromptLoader.getPrompt('midoriIdentity', { input });
       }
 
@@ -698,8 +715,19 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
       if (lowerInput.includes('ชื่ออะไร') || 
           lowerInput.includes('คุณคือใคร') || 
           lowerInput.includes('แนะนำตัว') ||
+          lowerInput.includes('คุณเป็นใคร') ||
+          lowerInput.includes('คือใคร') ||
           (analysis?.parameters?.type === 'introduction')) {
-        return await chatPromptLoader.getPrompt('introduction', { input });
+        
+        console.log(`🎯 Using introduction prompt for input: "${input}"`);
+        try {
+          const prompt = await chatPromptLoader.getPrompt('introduction', { input });
+          console.log(`📝 Introduction prompt loaded: ${prompt.substring(0, 100)}...`);
+          return prompt;
+        } catch (error) {
+          console.error(`❌ Failed to load introduction prompt:`, error);
+          return this.getFallbackChatPrompt(input);
+        }
       }
       
       // Greeting (ปรับให้ทนทานขึ้น)
