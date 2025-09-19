@@ -1,0 +1,642 @@
+{
+  "info": {
+    "name": "Midori Template API",
+    "description": "API สำหรับจัดการ UI Templates และ Versions",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Create Template (Basic)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"restaurant-basic\",\n  \"label\": \"Restaurant Basic Template\",\n  \"category\": \"restaurant\",\n  \"meta\": {\n    \"description\": \"Template สำหรับร้านอาหารทั่วไป\",\n    \"engine\": \"nextjs\",\n    \"author\": \"midori-team\",\n    \"previewScreenshot\": \"https://example.com/preview.jpg\"\n  },\n  \"tags\": [\"food\", \"restaurant\", \"business\"]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/template",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// เก็บ template_id สำหรับใช้ใน requests อื่น",
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    if (response.success && response.data.template.id) {",
+              "        pm.environment.set('template_id', response.data.template.id);",
+              "        console.log('✅ Template ID saved:', response.data.template.id);",
+              "    }",
+              "}",
+              "",
+              "// ทดสอบ response structure",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "});",
+              "",
+              "pm.test('Response has template data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.have.property('template');",
+              "    pm.expect(jsonData.data.template).to.have.property('id');",
+              "    pm.expect(jsonData.data.template).to.have.property('key', 'restaurant-basic');",
+              "});",
+              "",
+              "pm.test('Response has meta data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.have.property('meta');",
+              "    pm.expect(jsonData.data.meta).to.have.property('status', 'draft');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Create Template with Initial Version",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"cafe-modern\",\n  \"label\": \"Modern Cafe Template\",\n  \"category\": \"cafe\",\n  \"meta\": {\n    \"description\": \"Template สำหรับร้านกาแฟสไตล์โมเดิร์น\",\n    \"engine\": \"nextjs\",\n    \"author\": \"midori-team\",\n    \"versioningPolicy\": \"immutable-after-publish\",\n    \"compat\": {\n      \"breakpoints\": [\"mobile\", \"tablet\", \"desktop\"],\n      \"node\": \">=18\"\n    },\n    \"postProcess\": [\"mapThemeTokens\", \"injectSEOHead\"]\n  },\n  \"tags\": [\"cafe\", \"modern\", \"coffee\"],\n  \"initialVersion\": {\n    \"semver\": \"1.0.0\",\n    \"files\": {\n      \"components\": [\"Header\", \"Menu\", \"Footer\"],\n      \"pages\": [\"index\", \"about\", \"contact\"],\n      \"styles\": [\"globals.css\", \"components.css\"]\n    },\n    \"slots\": {\n      \"header\": \"Main navigation and logo area\",\n      \"hero\": \"Hero section with call-to-action\",\n      \"menu\": \"Menu items display area\",\n      \"footer\": \"Footer with contact info\"\n    },\n    \"constraints\": {\n      \"minWidth\": 320,\n      \"maxWidth\": 1920,\n      \"requiredSlots\": [\"header\", \"footer\"]\n    },\n    \"status\": \"draft\",\n    \"sourceFiles\": [\n      {\n        \"path\": \"package.json\",\n        \"type\": \"config\",\n        \"encoding\": \"utf8\",\n        \"content\": \"{\\n  \\\"name\\\": \\\"cafe-modern\\\",\\n  \\\"private\\\": true,\\n  \\\"scripts\\\": {\\\"dev\\\":\\\"next dev\\\",\\\"build\\\":\\\"next build\\\",\\\"start\\\":\\\"next start\\\"},\\n  \\\"dependencies\\\": {\\\"next\\\":\\\"14.2.0\\\",\\\"react\\\":\\\"18.3.1\\\",\\\"react-dom\\\":\\\"18.3.1\\\"}\\n}\"\n      },\n      {\n        \"path\": \"src/pages/index.tsx\",\n        \"type\": \"code\",\n        \"encoding\": \"utf8\",\n        \"content\": \"export default function Home(){return (<main>Hello Cafe</main>)}\"\n      },\n      {\n        \"path\": \"public/og.jpg\",\n        \"type\": \"asset\",\n        \"encoding\": \"base64\",\n        \"content\": \"iVBORw0KGgoAAAANSUhEUgAA...\"\n      }\n    ]\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/template",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// ทดสอบ response structure",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "});",
+              "",
+              "pm.test('Response has template data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.have.property('template');",
+              "    pm.expect(jsonData.data.template).to.have.property('key', 'cafe-modern');",
+              "});",
+              "",
+              "pm.test('Response has initial version', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.have.property('initialVersion');",
+              "    pm.expect(jsonData.data.initialVersion).to.have.property('version', 1);",
+              "});",
+              "",
+              "pm.test('Initial version has correct status', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.initialVersion).to.equal(1);",
+              "});",
+              "",
+              "pm.test('Initial source summary exists', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.have.property('initialSourceSummary');",
+              "    if (jsonData.data.initialSourceSummary) {",
+              "        pm.expect(jsonData.data.initialSourceSummary).to.have.property('filesCount');",
+              "        pm.expect(jsonData.data.initialSourceSummary).to.have.property('sizeBytes');",
+              "        pm.expect(jsonData.data.initialSourceSummary).to.have.property('checksum');",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Create Template Version (Thai Restaurant)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"templateId\": \"{{template_id}}\",\n  \"semver\": \"1.1.0\",\n  \"files\": {\n    \"components\": [\"ThaiHeader\", \"ThaiMenu\", \"ThaiFooter\"],\n    \"pages\": [\"thai-restaurant-page\"],\n    \"styles\": [\"thai-theme.css\"]\n  },\n  \"slots\": {\n    \"header\": \"Thai restaurant header with Thai fonts\",\n    \"menu\": \"Thai food menu with prices in THB\",\n    \"footer\": \"Footer with Thai contact info\"\n  },\n  \"constraints\": {\n    \"language\": \"thai\",\n    \"currency\": \"THB\",\n    \"fontFamily\": \"Sarabun, Noto Sans Thai\"\n  },\n  \"status\": \"published\",\n  \"publishedAt\": \"2024-01-15T10:00:00Z\",\n  \"sourceFiles\": [\n    { \n      \"path\": \"src/components/ThaiHeader.tsx\",\n      \"type\": \"code\",\n      \"encoding\": \"utf8\",\n      \"content\": \"export default function ThaiHeader(){return (<header>Thai</header>)}\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/template?action=version",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"],
+          "query": [
+            {
+              "key": "action",
+              "value": "version"
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// ทดสอบ response structure",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "});",
+              "",
+              "pm.test('Response has version data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.have.property('id');",
+              "    pm.expect(jsonData.data).to.have.property('templateId');",
+              "    pm.expect(jsonData.data).to.have.property('version');",
+              "});",
+              "",
+              "pm.test('Version number is correct', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.version).to.be.oneOf([1, 2]);",
+              "});",
+              "",
+              "pm.test('Version status is published', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.status).to.equal('published');",
+              "});",
+              "",
+              "pm.test('Template ID matches environment', function () {",
+              "    const jsonData = pm.response.json();",
+              "    const templateId = pm.environment.get('template_id');",
+              "    pm.expect(jsonData.data.templateId).to.equal(templateId);",
+              "});",
+              "",
+              "pm.test('Source summary exists for version', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.have.property('sourceSummary');",
+              "    if (jsonData.data.sourceSummary) {",
+              "        pm.expect(jsonData.data.sourceSummary).to.have.property('filesCount');",
+              "        pm.expect(jsonData.data.sourceSummary).to.have.property('sizeBytes');",
+              "        pm.expect(jsonData.data.sourceSummary).to.have.property('checksum');",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Create Template Version (Japanese Restaurant)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"templateId\": \"{{template_id}}\",\n  \"semver\": \"1.2.0\",\n  \"files\": {\n    \"components\": [\"JapaneseHeader\", \"JapaneseMenu\", \"JapaneseFooter\"],\n    \"pages\": [\"japanese-restaurant-page\"],\n    \"styles\": [\"japanese-theme.css\"]\n  },\n  \"slots\": {\n    \"header\": \"Japanese restaurant header with Japanese fonts\",\n    \"menu\": \"Japanese food menu with prices in JPY\",\n    \"footer\": \"Footer with Japanese contact info\"\n  },\n  \"constraints\": {\n    \"language\": \"japanese\",\n    \"currency\": \"JPY\",\n    \"fontFamily\": \"Noto Sans JP, Hiragino Sans\"\n  },\n  \"checksum\": \"sha256:ghi789...\",\n  \"sizeBytes\": 1100000,\n  \"status\": \"published\",\n  \"publishedAt\": \"2024-01-20T14:30:00Z\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/template?action=version",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"],
+          "query": [
+            {
+              "key": "action",
+              "value": "version"
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// ทดสอบ response structure",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "});",
+              "",
+              "pm.test('Response has version data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.have.property('id');",
+              "    pm.expect(jsonData.data).to.have.property('templateId');",
+              "    pm.expect(jsonData.data).to.have.property('version');",
+              "});",
+              "",
+              "pm.test('Version number is correct', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.version).to.be.oneOf([2, 3]);",
+              "});",
+              "",
+              "pm.test('Version status is published', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.status).to.equal('published');",
+              "});",
+              "",
+              "pm.test('Template ID matches environment', function () {",
+              "    const jsonData = pm.response.json();",
+              "    const templateId = pm.environment.get('template_id');",
+              "    pm.expect(jsonData.data.templateId).to.equal(templateId);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Get All Templates",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/template",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// ทดสอบ response structure",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "});",
+              "",
+              "pm.test('Response has data array', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Response has pagination info', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('limit');",
+              "    pm.expect(jsonData.pagination).to.have.property('offset');",
+              "    pm.expect(jsonData.pagination).to.have.property('count');",
+              "});",
+              "",
+              "pm.test('Templates have required fields', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.data.length > 0) {",
+              "        const template = jsonData.data[0];",
+              "        pm.expect(template).to.have.property('id');",
+              "        pm.expect(template).to.have.property('key');",
+              "        pm.expect(template).to.have.property('label');",
+              "        pm.expect(template).to.have.property('createdAt');",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Get Templates by Category",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/template?category=restaurant&limit=5",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"],
+          "query": [
+            {
+              "key": "category",
+              "value": "restaurant"
+            },
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// ทดสอบ response structure",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "});",
+              "",
+              "pm.test('Response has data array', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('All templates have restaurant category', function () {",
+              "    const jsonData = pm.response.json();",
+              "    jsonData.data.forEach(template => {",
+              "        pm.expect(template.category).to.equal('restaurant');",
+              "    });",
+              "});",
+              "",
+              "pm.test('Response has pagination info', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('limit', 5);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Get Published Templates",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/template?status=published&statusScope=meta&limit=10&offset=0",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"],
+          "query": [
+            {
+              "key": "status",
+              "value": "published"
+            },
+            {
+              "key": "statusScope",
+              "value": "meta"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "offset",
+              "value": "0"
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// ทดสอบ response structure",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "});",
+              "",
+              "pm.test('Response has data array', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Response has pagination info', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('limit', 10);",
+              "    pm.expect(jsonData.pagination).to.have.property('offset', 0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Get Templates with Published Versions",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/template?status=published&statusScope=version&limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"],
+          "query": [
+            {
+              "key": "status",
+              "value": "published"
+            },
+            {
+              "key": "statusScope",
+              "value": "version"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// ทดสอบ response structure",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "});",
+              "",
+              "pm.test('Response has data array', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Response has pagination info', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('limit', 10);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Error Test - Duplicate Template Key",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"restaurant-basic\",\n  \"label\": \"Duplicate Restaurant Template\",\n  \"category\": \"restaurant\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/template",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// ทดสอบ error response",
+              "pm.test('Status code is 409 (Conflict)', function () {",
+              "    pm.response.to.have.status(409);",
+              "});",
+              "",
+              "pm.test('Response has error message', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('error');",
+              "    pm.expect(jsonData.error).to.equal('Template key already exists');",
+              "});",
+              "",
+              "pm.test('Response time is less than 2000ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Error Test - Invalid Template ID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"templateId\": \"invalid-uuid-here\",\n  \"semver\": \"1.0.0\",\n  \"files\": {}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/template?action=version",
+          "host": ["{{base_url}}"],
+          "path": ["api", "template"],
+          "query": [
+            {
+              "key": "action",
+              "value": "version"
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// ทดสอบ error response",
+              "pm.test('Status code is 400 (Bad Request)', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response has error message', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('error');",
+              "    pm.expect(jsonData.error).to.equal('Validation failed');",
+              "});",
+              "",
+              "pm.test('Response has validation details', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('details');",
+              "    pm.expect(jsonData.details).to.be.an('array');",
+              "    pm.expect(jsonData.details.length).to.be.greaterThan(0);",
+              "});",
+              "",
+              "pm.test('Response time is less than 2000ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "description": "Base URL สำหรับ API"
+    },
+    {
+      "key": "template_id",
+      "value": "",
+      "description": "Template ID ที่ได้จากการสร้าง template (ใส่ใน Tests tab)"
+    }
+  ]
+}
