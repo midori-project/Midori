@@ -768,7 +768,7 @@ export class OrchestratorAI {
 
   private buildIntentAnalysisPrompt(input: string, context: ConversationContext): string {
     const contextInfo = context.previousMessages.length > 0 
-      ? `**Previous Messages:** ${context.previousMessages.slice(-10).join(' | ')}`
+      ? `**Previous Messages:** ${context.previousMessages.join(' | ')}`
       : '**Previous Messages:** (none)';
     
     return `คุณเป็น AI ที่วิเคราะห์ intent ของ user input สำหรับระบบสร้างเว็บไซต์
@@ -856,8 +856,11 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
       'คำถามก่อนหน้า', 'แชทก่อนหน้า', 'ข้อความก่อนหน้า', 'ที่ถามไป', 'ที่พูดไป',
       'ก่อนหน้านี้', 'เมื่อกี้', 'เมื่อสักครู่', 'เมื่อก่อน', 'ที่แล้ว',
       'ถามอะไร', 'พูดอะไร', 'บอกอะไร', 'ถามคุณว่า', 'ถามผมว่า',
+      'ข้อความแรก', 'ข้อความที่สอง', 'ข้อความสุดท้าย', 'ข้อความที่',
+      'ในบทสนทนา', 'ในแชทนี้', 'ในแชท', 'บทสนทนา',
       'previous', 'before', 'earlier', 'last time', 'what did i ask',
-      'what did i say', 'what did we talk about', 'conversation history'
+      'what did i say', 'what did we talk about', 'conversation history',
+      'first message', 'second message', 'last message'
     ];
     
     return chatHistoryKeywords.some(keyword => input.includes(keyword));
@@ -1008,7 +1011,7 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
       // Context-aware (ถ้ามี conversation history และ context เกี่ยวข้อง)
       if (context.previousMessages.length > 0 && this.isContextRelevant(input, context.previousMessages)) {
         console.log(`💬 Using context-aware prompt`);
-        const recentMessages = context.previousMessages.slice(-10).join(' | ');
+        const recentMessages = context.previousMessages.join(' | ');
         return await chatPromptLoader.getPrompt('contextAware', { 
           input, 
           context: recentMessages 
