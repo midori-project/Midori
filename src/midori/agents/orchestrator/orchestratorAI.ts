@@ -767,11 +767,15 @@ export class OrchestratorAI {
   }
 
   private buildIntentAnalysisPrompt(input: string, context: ConversationContext): string {
+    const contextInfo = context.previousMessages.length > 0 
+      ? `**Previous Messages:** ${context.previousMessages.slice(-10).join(' | ')}`
+      : '**Previous Messages:** (none)';
+    
     return `คุณเป็น AI ที่วิเคราะห์ intent ของ user input สำหรับระบบสร้างเว็บไซต์
 
 **User Input:** "${input}"
 
-**Context:** ${context.previousMessages.slice(-3).join(', ')}
+${contextInfo}
 
 IMPORTANT: ตอบกลับเป็น JSON object เท่านั้น ไม่ต้องใช้ markdown หรือ \`\`\`
 
@@ -812,6 +816,117 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
   }
 
   /**
+   * ตรวจสอบว่า context เกี่ยวข้องกับคำถามปัจจุบันหรือไม่
+   */
+  private isContextRelevant(input: string, previousMessages: string[]): boolean {
+    const lowerInput = input.toLowerCase();
+    
+    // ✅ Special case: คำถามเกี่ยวกับ chat history
+    if (this.isChatHistoryQuestion(lowerInput)) {
+      console.log('💬 Chat history question detected, using context');
+      return true;
+    }
+    
+    // ถ้าเป็นคำถามทั่วไปที่ไม่เกี่ยวข้องกับเว็บไซต์
+    if (this.isGeneralQuestion(lowerInput)) {
+      console.log('🔍 General question detected, not using context');
+      return false;
+    }
+    
+    // ถ้าเป็นคำถามใหม่ที่เปลี่ยนเรื่อง
+    if (this.isTopicChange(lowerInput, previousMessages)) {
+      console.log('🔄 Topic change detected, not using context');
+      return false;
+    }
+    
+    // ถ้าเป็นคำถามเกี่ยวกับเว็บไซต์และมี context ที่เกี่ยวข้อง
+    if (this.isWebRelatedQuestion(lowerInput) && this.hasRelevantContext(previousMessages)) {
+      console.log('✅ Web-related question with relevant context, using context');
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * ตรวจสอบว่าเป็นคำถามเกี่ยวกับ chat history หรือไม่
+   */
+  private isChatHistoryQuestion(input: string): boolean {
+    const chatHistoryKeywords = [
+      'คำถามก่อนหน้า', 'แชทก่อนหน้า', 'ข้อความก่อนหน้า', 'ที่ถามไป', 'ที่พูดไป',
+      'ก่อนหน้านี้', 'เมื่อกี้', 'เมื่อสักครู่', 'เมื่อก่อน', 'ที่แล้ว',
+      'ถามอะไร', 'พูดอะไร', 'บอกอะไร', 'ถามคุณว่า', 'ถามผมว่า',
+      'previous', 'before', 'earlier', 'last time', 'what did i ask',
+      'what did i say', 'what did we talk about', 'conversation history'
+    ];
+    
+    return chatHistoryKeywords.some(keyword => input.includes(keyword));
+  }
+
+  /**
+   * ตรวจสอบว่าเป็นคำถามทั่วไปที่ไม่เกี่ยวข้องกับเว็บไซต์
+   */
+  private isGeneralQuestion(input: string): boolean {
+    const generalKeywords = [
+      'แมว', 'สุนัข', 'สัตว์', 'อาหาร', 'อากาศ', 'ข่าว', 'กีฬา', 
+      'หนัง', 'เพลง', 'หนังสือ', 'การเมือง', 'เศรษฐกิจ', 'สุขภาพ',
+      'การเรียน', 'มหาวิทยาลัย', 'โรงเรียน', 'งาน', 'เงิน', 'ธนาคาร'
+    ];
+    
+    return generalKeywords.some(keyword => input.includes(keyword));
+  }
+
+  /**
+   * ตรวจสอบว่าเปลี่ยนเรื่องหรือไม่
+   */
+  private isTopicChange(input: string, previousMessages: string[]): boolean {
+    if (previousMessages.length === 0) return false;
+    
+    const lastMessage = previousMessages[previousMessages.length - 1].toLowerCase();
+    
+    // ถ้าคำถามปัจจุบันไม่เกี่ยวข้องกับข้อความล่าสุด
+    const webKeywords = ['เว็บ', 'website', 'react', 'supabase', 'สร้าง', 'ออกแบบ', 'พัฒนา'];
+    const currentIsWebRelated = webKeywords.some(keyword => input.includes(keyword));
+    const lastIsWebRelated = webKeywords.some(keyword => lastMessage.includes(keyword));
+    
+    // ถ้าจากเว็บไซต์เป็นเรื่องอื่น หรือจากเรื่องอื่นเป็นเว็บไซต์
+    if (currentIsWebRelated !== lastIsWebRelated) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * ตรวจสอบว่าเป็นคำถามเกี่ยวกับเว็บไซต์
+   */
+  private isWebRelatedQuestion(input: string): boolean {
+    const webKeywords = [
+      'เว็บ', 'website', 'react', 'supabase', 'สร้าง', 'ออกแบบ', 'พัฒนา',
+      'component', 'api', 'database', 'deploy', 'hosting', 'domain',
+      'frontend', 'backend', 'fullstack', 'ui', 'ux', 'design'
+    ];
+    
+    return webKeywords.some(keyword => input.includes(keyword));
+  }
+
+  /**
+   * ตรวจสอบว่า context มีความเกี่ยวข้องหรือไม่
+   */
+  private hasRelevantContext(previousMessages: string[]): boolean {
+    if (previousMessages.length === 0) return false;
+    
+    const webKeywords = [
+      'เว็บ', 'website', 'react', 'supabase', 'สร้าง', 'ออกแบบ', 'พัฒนา',
+      'component', 'api', 'database', 'deploy', 'hosting', 'domain'
+    ];
+    
+    return previousMessages.some(message => 
+      webKeywords.some(keyword => message.toLowerCase().includes(keyword))
+    );
+  }
+
+  /**
    * Build chat prompt using prompt loader
    */
   private async buildChatPrompt(
@@ -821,6 +936,7 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
   ): Promise<string> {
     try {
       console.log(`🎭 buildChatPrompt called with analysis:`, analysis?.parameters);
+      console.log(`📚 Context has ${context.previousMessages.length} previous messages`);
       
       // ตรวจสอบประเภทคำถาม
       const lowerInput = input.toLowerCase();
@@ -879,6 +995,25 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
         return await chatPromptLoader.getPrompt('technologyExplanation', { input });
       }
       
+      // Project context aware (ถ้ามี project context)
+      if (context.currentProject && context.lastTaskResult) {
+        console.log(`🏗️ Using project context aware prompt`);
+        return await chatPromptLoader.getPrompt('projectContextAware', { 
+          input, 
+          projectName: context.currentProject,
+          recentWork: JSON.stringify(context.lastTaskResult).substring(0, 200) + '...'
+        });
+      }
+      
+      // Context-aware (ถ้ามี conversation history และ context เกี่ยวข้อง)
+      if (context.previousMessages.length > 0 && this.isContextRelevant(input, context.previousMessages)) {
+        console.log(`💬 Using context-aware prompt`);
+        const recentMessages = context.previousMessages.slice(-10).join(' | ');
+        return await chatPromptLoader.getPrompt('contextAware', { 
+          input, 
+          context: recentMessages 
+        });
+      }
       
       // Default base chat prompt
       return await chatPromptLoader.getPrompt('baseChat', { input });
