@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Test Result",
+  "description": "Schema for test execution results",
+  "type": "object",
+  "required": ["success", "coverage", "tests"],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "Whether all tests passed"
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["percentage", "lines", "functions", "branches"],
+      "properties": {
+        "percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Overall test coverage percentage"
+        },
+        "lines": {
+          "type": "object",
+          "properties": {
+            "covered": {
+              "type": "number"
+            },
+            "total": {
+              "type": "number"
+            },
+            "percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        },
+        "functions": {
+          "type": "object",
+          "properties": {
+            "covered": {
+              "type": "number"
+            },
+            "total": {
+              "type": "number"
+            },
+            "percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        },
+        "branches": {
+          "type": "object",
+          "properties": {
+            "covered": {
+              "type": "number"
+            },
+            "total": {
+              "type": "number"
+            },
+            "percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        }
+      }
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status", "duration"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Test name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "failed", "skipped", "pending"]
+          },
+          "duration": {
+            "type": "number",
+            "description": "Test duration in milliseconds"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "stack": {
+                "type": "string"
+              }
+            }
+          },
+          "type": {
+            "type": "string",
+            "enum": ["unit", "integration", "accessibility", "performance", "e2e"]
+          }
+        }
+      }
+    },
+    "frameworks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Testing frameworks used"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Test files generated or executed"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "executionTime": {
+          "type": "number",
+          "description": "Total execution time in milliseconds"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "environment": {
+          "type": "string",
+          "description": "Test environment (e.g., 'jest', 'cypress')"
+        }
+      }
+    }
+  }
+}

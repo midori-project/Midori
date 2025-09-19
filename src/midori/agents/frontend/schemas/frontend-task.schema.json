@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Frontend Task",
+  "description": "Schema for frontend development tasks",
+  "type": "object",
+  "required": ["taskId", "taskType", "componentName", "requirements"],
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "description": "Unique identifier for the task",
+      "pattern": "^[a-zA-Z0-9-_]+$"
+    },
+    "taskType": {
+      "type": "string",
+      "enum": [
+        "create_component",
+        "update_component", 
+        "create_page",
+        "update_styling",
+        "create_tests",
+        "performance_audit",
+        "accessibility_check",
+        "responsive_design"
+      ],
+      "description": "Type of frontend task to execute"
+    },
+    "componentName": {
+      "type": "string",
+      "description": "Name of the component to create or modify",
+      "pattern": "^[A-Z][a-zA-Z0-9]*$"
+    },
+    "requirements": {
+      "type": "object",
+      "required": ["type", "props", "features"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["functional", "class"],
+          "description": "Type of React component"
+        },
+        "props": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of component props"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "typescript",
+              "accessibility", 
+              "responsive",
+              "testing",
+              "styling",
+              "animation",
+              "state_management"
+            ]
+          },
+          "description": "Required features for the component"
+        },
+        "styling": {
+          "type": "string",
+          "enum": ["tailwind", "css", "styled-components", "emotion"],
+          "default": "tailwind",
+          "description": "Styling approach to use"
+        },
+        "tests": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to generate tests"
+        },
+        "accessibility": {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": ["A", "AA", "AAA"],
+              "default": "AA"
+            },
+            "keyboardNavigation": {
+              "type": "boolean",
+              "default": true
+            },
+            "screenReader": {
+              "type": "boolean", 
+              "default": true
+            }
+          }
+        },
+        "responsive": {
+          "type": "object",
+          "properties": {
+            "breakpoints": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["sm", "md", "lg", "xl", "2xl"]
+              },
+              "default": ["sm", "md", "lg"]
+            }
+          }
+        }
+      }
+    },
+    "target": {
+      "type": "string",
+      "description": "Target file or directory for the task"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "default": "medium"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

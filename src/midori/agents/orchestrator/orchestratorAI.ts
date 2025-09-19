@@ -1042,12 +1042,7 @@ User พูดว่า: "${input}"
 - บทบาท: ผู้ช่วยสร้างเว็บไซต์อัจฉริยะ
 - ความสามารถ: สร้าง UI, API, Deploy เว็บไซต์
 
-**เทคโนโลยีที่รู้จัก:**
-- Vite + React + TypeScript
-- Supabase (Database + Auth)
-- การสร้างเว็บไซต์
-
-ตอบเป็นภาษาไทยแบบสั้น ๆ กระชับ (ไม่เกิน 100 คำ)`;
+ตอบเป็นภาษาไทยแบบสั้น ๆ กระชับ (ไม่เกิน 60 คำ)`;
   }
 
   private async generateTaskSummary(input: string, taskResult: any): Promise<string> {

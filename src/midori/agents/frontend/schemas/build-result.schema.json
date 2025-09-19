@@ -1,0 +1,216 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Build Result",
+  "description": "Schema for build execution results",
+  "type": "object",
+  "required": ["success", "build"],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "Whether the build was successful"
+    },
+    "build": {
+      "type": "object",
+      "required": ["size", "files"],
+      "properties": {
+        "size": {
+          "type": "object",
+          "required": ["total", "gzipped"],
+          "properties": {
+            "total": {
+              "type": "string",
+              "description": "Total bundle size (e.g., '245KB')"
+            },
+            "gzipped": {
+              "type": "string",
+              "description": "Gzipped bundle size (e.g., '67KB')"
+            },
+            "chunks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "size"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "File path"
+              },
+              "size": {
+                "type": "string",
+                "description": "File size"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["js", "css", "html", "asset", "map"]
+              }
+            }
+          }
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "size": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "properties": {
+        "lighthouse": {
+          "type": "object",
+          "properties": {
+            "performance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "accessibility": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "bestPractices": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "seo": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "firstContentfulPaint": {
+              "type": "string",
+              "description": "FCP time (e.g., '1.2s')"
+            },
+            "largestContentfulPaint": {
+              "type": "string",
+              "description": "LCP time (e.g., '2.1s')"
+            },
+            "cumulativeLayoutShift": {
+              "type": "string",
+              "description": "CLS score (e.g., '0.05')"
+            },
+            "firstInputDelay": {
+              "type": "string",
+              "description": "FID time (e.g., '45ms')"
+            }
+          }
+        }
+      }
+    },
+    "optimization": {
+      "type": "object",
+      "properties": {
+        "treeShaking": {
+          "type": "boolean",
+          "description": "Whether tree shaking was applied"
+        },
+        "codeSplitting": {
+          "type": "boolean",
+          "description": "Whether code splitting was applied"
+        },
+        "minification": {
+          "type": "boolean",
+          "description": "Whether code was minified"
+        },
+        "compression": {
+          "type": "boolean",
+          "description": "Whether assets were compressed"
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": ["info", "warning", "error"]
+          },
+          "file": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "line": {
+            "type": "number"
+          },
+          "column": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "executionTime": {
+          "type": "number",
+          "description": "Build execution time in milliseconds"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "environment": {
+          "type": "string",
+          "description": "Build environment (e.g., 'production', 'development')"
+        },
+        "version": {
+          "type": "string",
+          "description": "Build version or hash"
+        }
+      }
+    }
+  }
+}

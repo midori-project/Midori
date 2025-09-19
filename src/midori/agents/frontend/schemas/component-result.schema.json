@@ -1,0 +1,235 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Component Result",
+  "description": "Schema for component creation results",
+  "type": "object",
+  "required": ["success", "component", "files"],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "Whether the component creation was successful"
+    },
+    "component": {
+      "type": "object",
+      "required": ["name", "type", "code"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the created component"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["functional", "class"],
+          "description": "Type of React component"
+        },
+        "code": {
+          "type": "string",
+          "description": "Generated component code"
+        },
+        "interface": {
+          "type": "string",
+          "description": "TypeScript interface definition"
+        },
+        "props": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "defaultValue": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Implemented features"
+        },
+        "accessibility": {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": ["A", "AA", "AAA"]
+            },
+            "attributes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "keyboardSupport": {
+              "type": "boolean"
+            },
+            "screenReaderSupport": {
+              "type": "boolean"
+            }
+          }
+        },
+        "styling": {
+          "type": "object",
+          "properties": {
+            "approach": {
+              "type": "string",
+              "enum": ["tailwind", "css", "styled-components", "emotion"]
+            },
+            "classes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "responsive": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "content", "type"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path relative to project root"
+          },
+          "content": {
+            "type": "string",
+            "description": "File content"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["component", "test", "interface", "style", "story", "documentation"]
+          },
+          "size": {
+            "type": "number",
+            "description": "File size in bytes"
+          }
+        }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "properties": {
+        "generated": {
+          "type": "boolean"
+        },
+        "coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Test coverage percentage"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "frameworks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "properties": {
+        "bundleSize": {
+          "type": "string",
+          "description": "Bundle size (e.g., '15.2KB')"
+        },
+        "lighthouseScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "firstContentfulPaint": {
+              "type": "string"
+            },
+            "largestContentfulPaint": {
+              "type": "string"
+            },
+            "cumulativeLayoutShift": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "properties": {
+        "typescriptErrors": {
+          "type": "number"
+        },
+        "eslintWarnings": {
+          "type": "number"
+        },
+        "accessibilityScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "codeQuality": {
+          "type": "string",
+          "enum": ["excellent", "good", "fair", "poor"]
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "executionTime": {
+          "type": "number",
+          "description": "Execution time in milliseconds"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "agent": {
+          "type": "string",
+          "default": "frontend"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "details": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
