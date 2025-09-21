@@ -27,7 +27,7 @@ model:
   provider: openai
   name: gpt-5-nano
   temperature: 1
-  max_completion_tokens: 4000
+  max_completion_tokens: 8000
   timeout: 120
   fallback:
     name: gpt-4o-mini

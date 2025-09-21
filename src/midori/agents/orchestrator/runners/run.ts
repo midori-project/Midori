@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import crypto from 'crypto';
 import { LLMAdapter } from '../adapters/llmAdapter';
+import { dispatchTask, dispatchExecutionPlan } from '../tools/agent_dispatcher';
 
 // ============================================================================
 // ENUMS & CONSTANTS
@@ -540,31 +541,47 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
       console.log('✅ AI generated plan successfully');
       const aiPlan = aiResult.aiResponse.plan;
       
+      // Create execution plan from AI response
+      let tasks = aiPlan.tasks || [];
+      
+      // If AI didn't provide tasks, create them from command
+      if (tasks.length === 0) {
+        console.log('⚠️ AI plan has no tasks, creating tasks from command');
+        tasks = breakdownCommand(command);
+      }
+      
+      const plan: ExecutionPlan = {
+        planId: aiPlan.planId || crypto.randomUUID(),
+        commandId: command.commandId,
+        tasks,
+        executionStages: [],
+        qualityGates: aiPlan.qualityGates || [],
+        estimatedTotalDuration: aiPlan.estimatedTotalDuration || 30,
+        totalResourceRequirements: {
+          maxParallelTasks: 1,
+          totalCpuUnits: 1,
+          totalMemoryUnits: 1
+        },
+        metadata: {
+          createdAt: new Date().toISOString(),
+          aiGenerated: true,
+          model: 'gpt-5-nano'
+        }
+      };
+      
+      // Execute tasks with real agents
+      console.log('🚀 Starting task execution from AI plan...');
+      const executionResult = await executeTasks(plan);
+      
       return {
         success: true,
-        plan: {
-          planId: aiPlan.planId || crypto.randomUUID(),
-          commandId: command.commandId,
-          tasks: aiPlan.tasks || [],
-          executionStages: [],
-          qualityGates: aiPlan.qualityGates || [],
-          estimatedTotalDuration: aiPlan.estimatedTotalDuration || 30,
-          totalResourceRequirements: {
-            maxParallelTasks: 1,
-            totalCpuUnits: 1,
-            totalMemoryUnits: 1
-          },
-          metadata: {
-            createdAt: new Date().toISOString(),
-            aiGenerated: true,
-            model: 'gpt-5-nano'
-          }
-        },
+        plan,
         chatResponse: aiResult.chatResponse,
         warnings: aiResult.aiResponse.warnings || [],
         metadata: {
           processingTimeMs: performance.now() - startTime,
-          validationErrors
+          validationErrors,
+          executionResult
         }
       };
     }
@@ -612,6 +629,10 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
     
     console.log('📋 Execution plan created:', JSON.stringify(validatedPlan, null, 2));
     
+    // 9. Execute tasks with real agents
+    console.log('🚀 Starting task execution...');
+    const executionResult = await executeTasks(validatedPlan);
+    
     const processingTimeMs = performance.now() - startTime;
     
     return {
@@ -620,7 +641,8 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
       warnings,
       metadata: {
         processingTimeMs,
-        validationErrors
+        validationErrors,
+        executionResult
       }
     };
     
@@ -636,6 +658,89 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
         processingTimeMs,
         validationErrors
       }
+    };
+  }
+}
+
+// ============================================================================
+// TASK EXECUTION
+// ============================================================================
+
+/**
+ * Execute tasks using real agents
+ */
+async function executeTasks(plan: ExecutionPlan): Promise<{
+  success: boolean;
+  results: any[];
+  errors: string[];
+  executionTime: number;
+}> {
+  const startTime = Date.now();
+  const results: any[] = [];
+  const errors: string[] = [];
+  
+  try {
+    console.log(`🎯 Executing ${plan.tasks.length} tasks...`);
+    
+    // Execute tasks in parallel for now (can be enhanced with dependency management)
+    const taskPromises = plan.tasks.map(async (task) => {
+      try {
+        console.log(`📤 Dispatching task: ${task.taskId} to ${task.agent}`);
+        const result = await dispatchTask(task);
+        
+        if (result.success) {
+          console.log(`✅ Task ${task.taskId} completed successfully`);
+          results.push({
+            taskId: task.taskId,
+            agent: task.agent,
+            success: true,
+            result: result.result,
+            dispatchId: result.dispatchId
+          });
+        } else {
+          console.error(`❌ Task ${task.taskId} failed:`, result.error);
+          errors.push(`Task ${task.taskId}: ${result.error}`);
+          results.push({
+            taskId: task.taskId,
+            agent: task.agent,
+            success: false,
+            error: result.error
+          });
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`❌ Task ${task.taskId} execution error:`, errorMsg);
+        errors.push(`Task ${task.taskId}: ${errorMsg}`);
+        results.push({
+          taskId: task.taskId,
+          agent: task.agent,
+          success: false,
+          error: errorMsg
+        });
+      }
+    });
+    
+    await Promise.all(taskPromises);
+    
+    const executionTime = Date.now() - startTime;
+    const success = errors.length === 0;
+    
+    console.log(`🏁 Task execution completed in ${executionTime}ms. Success: ${success}`);
+    
+    return {
+      success,
+      results,
+      errors,
+      executionTime
+    };
+    
+  } catch (error) {
+    console.error('❌ Task execution failed:', error);
+    return {
+      success: false,
+      results,
+      errors: [...errors, error instanceof Error ? error.message : 'Unknown error'],
+      executionTime: Date.now() - startTime
     };
   }
 }

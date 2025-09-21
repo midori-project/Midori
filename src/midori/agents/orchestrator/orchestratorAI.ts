@@ -409,7 +409,7 @@ export class OrchestratorAI {
   private detectQuickIntent(input: string): IntentAnalysis | null {
     const lowerInput = input.toLowerCase().trim();
     
-    // 🛡️ Security-sensitive requests
+    //️ Security-sensitive requests
     const securityKeywords = [
       'รหัส env', 'env key', 'environment variable', 'api key', 'secret key',
       'password', 'รหัสผ่าน', 'token', 'credential', 'database password',
@@ -487,6 +487,32 @@ export class OrchestratorAI {
       };
     }
 
+    // Website creation patterns
+    if (lowerInput.includes('สร้างเว็บไซต์') || 
+        lowerInput.includes('สร้างร้าน') ||
+        lowerInput.includes('create website') ||
+        lowerInput.includes('build website')) {
+      return {
+        intent: 'simple_task',
+        confidence: 0.9,
+        requiredAgents: ['frontend'],
+        complexity: 'medium',
+        taskType: 'Website creation request detected'
+      };
+    }
+    
+    // Component creation patterns
+    if (lowerInput.includes('สร้าง component') || 
+        lowerInput.includes('สร้าง') && lowerInput.includes('ใหม่') ||
+        lowerInput.includes('create component')) {
+      return {
+        intent: 'simple_task',
+        confidence: 0.8,
+        requiredAgents: ['frontend'],
+        complexity: 'low',
+        taskType: 'Component creation request detected'
+      };
+    }
     
     return null;
   }
@@ -595,10 +621,12 @@ export class OrchestratorAI {
     // Create structured command
     const command = this.createCommand(message, analysis);
     
-    // Execute via legacy orchestrator
+    console.log('🎯 Executing simple task with real orchestrator:', command.commandType);
+    
+    // Execute via legacy orchestrator (now with real task execution)
     const taskResult = await legacyOrchestrator(command);
     
-    // Generate user-friendly response
+    // Generate user-friendly response based on execution results
     const chatResponse = await this.generateTaskSummary(message.content, taskResult);
     
     return {
@@ -625,6 +653,9 @@ export class OrchestratorAI {
     
     // For complex tasks, use the full orchestrator
     const command = this.createCommand(message, analysis);
+    
+    console.log('🎯 Executing complex task with real orchestrator:', command.commandType);
+    
     const taskResult = await legacyOrchestrator(command);
     
     // Generate comprehensive response
@@ -739,8 +770,16 @@ export class OrchestratorAI {
     // Map intent to command type
     let commandType: CommandType;
     
-    if (analysis.requiredAgents.includes('frontend')) {
-      commandType = CommandType.UPDATE_COMPONENT;
+    // Check for specific task types first
+    if (analysis.taskType?.includes('Website creation') || 
+        message.content.includes('สร้างเว็บไซต์') || 
+        message.content.includes('สร้างร้าน')) {
+      commandType = CommandType.CREATE_COMPLETE_WEBSITE;
+    } else if (analysis.taskType?.includes('Component creation') || 
+               message.content.includes('สร้าง component')) {
+      commandType = CommandType.CREATE_COMPONENT;
+    } else if (analysis.requiredAgents.includes('frontend')) {
+      commandType = CommandType.CREATE_COMPONENT;
     } else if (analysis.requiredAgents.includes('backend')) {
       commandType = CommandType.CREATE_API_ENDPOINT;
     } else if (analysis.requiredAgents.includes('devops')) {
@@ -1046,11 +1085,26 @@ User พูดว่า: "${input}"
   }
 
   private async generateTaskSummary(input: string, taskResult: any): Promise<string> {
-    const summaryPrompt = `สรุปผลการทำงานให้ user ฟังแบบเข้าใจง่าย:
+    // Check if we have execution results
+    const hasExecutionResults = taskResult?.metadata?.executionResult?.results?.length > 0;
+    const executionResults = hasExecutionResults ? taskResult.metadata.executionResult.results : [];
+    
+    let summaryPrompt = `สรุปผลการทำงานให้ user ฟังแบบเข้าใจง่าย:
 
 User ขอ: "${input}"
 
-ผลการทำงาน: ${JSON.stringify(taskResult, null, 2)}
+ผลการทำงาน: ${JSON.stringify(taskResult, null, 2)}`;
+
+    if (hasExecutionResults) {
+      summaryPrompt += `
+
+ผลการทำงานจริง:
+${executionResults.map((result: any) => 
+  `- ${result.agent} agent: ${result.success ? 'สำเร็จ' : 'ล้มเหลว'} ${result.error ? `(${result.error})` : ''}`
+).join('\n')}`;
+    }
+
+    summaryPrompt += `
 
 สรุปเป็นภาษาไทยแบบสั้น ๆ บอกว่าทำอะไรเสร็จแล้วบ้าง (ไม่เกิน 80 คำ)`;
 
@@ -1065,6 +1119,11 @@ User ขอ: "${input}"
       const response = await this.llmAdapter.callLLM(summaryPrompt, llmOptions);
       return response.content;
     } catch (error) {
+      if (hasExecutionResults) {
+        const successCount = executionResults.filter((r: any) => r.success).length;
+        const totalCount = executionResults.length;
+        return `✅ เสร็จแล้วครับ! ได้ทำงาน ${successCount}/${totalCount} งานสำเร็จ`;
+      }
       return `✅ เสร็จแล้วครับ! ได้ทำตามที่คุณขอแล้ว`;
     }
   }

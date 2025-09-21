@@ -10,6 +10,7 @@ interface DispatchResult {
   dispatchId?: string;
   estimatedCompletion?: number; // timestamp
   error?: string;
+  result?: any; // Add result field for agent response
 }
 
 interface TaskProgress {
@@ -33,30 +34,47 @@ interface ExecutionStatus {
   estimatedCompletion?: number;
 }
 
-// Mock agent clients - In real implementation, these would be actual agent connections
-class AgentClient {
+// Real agent clients - Call actual agent implementations
+import { run as frontendAgent } from '../../frontend/runners/run';
+import { transformCommandToFrontendTask } from './taskTransformer';
+
+class RealAgentClient {
   constructor(private agentName: string) {}
 
   async dispatchTask(task: Task): Promise<DispatchResult> {
     console.log(`📤 Dispatching task ${task.taskId} to ${this.agentName} agent`);
     
     try {
-      // Simulate task dispatch
       const dispatchId = `${this.agentName}-${task.taskId}-${Date.now()}`;
-      const estimatedCompletion = Date.now() + (task.estimatedDuration * 60 * 1000);
+      let result: any = null;
       
-      // Simulate different response times for different agents
-      const delay = this.agentName === 'frontend' ? 100 : 
-                   this.agentName === 'backend' ? 200 : 300;
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      console.log(`✅ Task dispatched successfully: ${dispatchId}`);
+      // Call real agent based on agent name
+      if (this.agentName === 'frontend') {
+        console.log('🎨 Calling Frontend Agent...');
+        
+        // Transform task to frontend format if needed
+        const frontendTask = this.transformToFrontendTask(task);
+        result = await frontendAgent(frontendTask);
+        
+        console.log(`✅ Frontend Agent completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+        
+      } else if (this.agentName === 'backend') {
+        console.log('⚙️ Backend Agent not implemented yet');
+        result = { success: false, error: 'Backend Agent not implemented' };
+        
+      } else if (this.agentName === 'devops') {
+        console.log('🚀 DevOps Agent not implemented yet');
+        result = { success: false, error: 'DevOps Agent not implemented' };
+        
+      } else {
+        throw new Error(`Unknown agent: ${this.agentName}`);
+      }
       
       return {
-        success: true,
+        success: result.success || false,
         dispatchId,
-        estimatedCompletion
+        result: result,
+        estimatedCompletion: Date.now() + (task.estimatedDuration * 60 * 1000)
       };
       
     } catch (error) {
@@ -67,6 +85,56 @@ class AgentClient {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+  
+  /**
+   * Transform Task to FrontendTask format
+   */
+  private transformToFrontendTask(task: Task): any {
+    return {
+      taskId: task.taskId,
+      taskType: task.action,
+      componentName: this.extractComponentName(task),
+      requirements: {
+        type: 'functional',
+        props: [],
+        features: ['typescript', 'accessibility'],
+        styling: 'tailwind',
+        tests: true
+      }
+    };
+  }
+  
+  /**
+   * Extract component name from task
+   */
+  private extractComponentName(task: Task): string {
+    const description = task.description || '';
+    const userInput = task.payload?.userInput || '';
+    
+    // Try to extract component name from description or user input
+    const patterns = [
+      /create\s+(\w+)/i,
+      /สร้าง\s+(\w+)/i,
+      /component\s+(\w+)/i,
+      /(\w+)\s+component/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = (description + ' ' + userInput).match(pattern);
+      if (match && match[1]) {
+        return this.capitalizeFirstLetter(match[1]);
+      }
+    }
+    
+    return 'NewComponent';
+  }
+  
+  /**
+   * Capitalize first letter
+   */
+  private capitalizeFirstLetter(string: string): string {
+    return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
   async getTaskStatus(taskId: string): Promise<TaskProgress> {
@@ -86,11 +154,11 @@ class AgentClient {
   }
 }
 
-// Agent registry
+// Agent registry - using real agent clients
 const agents = {
-  frontend: new AgentClient('frontend'),
-  backend: new AgentClient('backend'),
-  devops: new AgentClient('devops')
+  frontend: new RealAgentClient('frontend'),
+  backend: new RealAgentClient('backend'),
+  devops: new RealAgentClient('devops')
 };
 
 /**
