@@ -15,6 +15,8 @@ import { LLMAdapter } from './adapters/llmAdapter';
 import { run as legacyOrchestrator } from './runners/run';
 import { ChatPromptLoader } from './prompts/chatPromptLoader';
 import { getResponseConfig, toLLMOptions } from './configs/responseConfig';
+import { ProjectContextOrchestratorService } from './services/projectContextOrchestratorService';
+import type { ProjectContextData } from './types/projectContext';
 import { randomUUID } from 'crypto';
 
 // Create singleton instance
@@ -115,6 +117,7 @@ export interface Command {
 export class OrchestratorAI {
   private llmAdapter: LLMAdapter;
   private conversationHistory: Map<string, ConversationContext>;
+  private projectContexts: Map<string, ProjectContextData>;
   private initialized: boolean = false;
 
   /**
@@ -168,6 +171,7 @@ export class OrchestratorAI {
   constructor() {
     this.llmAdapter = new LLMAdapter();
     this.conversationHistory = new Map();
+    this.projectContexts = new Map();
   }
 
   /**
@@ -1134,6 +1138,233 @@ ${executionResults.map((result: any) =>
       return ['ทดสอบการทำงาน', 'ปรับแต่งตามต้องการ', 'เผยแพร่เว็บไซต์'];
     }
     return ['ลองใช้งานดู', 'แจ้งถ้ามีปัญหา'];
+  }
+
+  // ============================
+  // Project Context Management
+  // ============================
+
+  /**
+   * Initialize project with Project Context
+   */
+  async initializeProject(
+    projectId: string,
+    specBundleId: string,
+    projectType: string,
+    name: string,
+    userInput?: string
+  ): Promise<ProjectContextData> {
+    const projectContext = await ProjectContextOrchestratorService.initializeProject(
+      projectId,
+      specBundleId,
+      projectType,
+      name,
+      userInput
+    );
+
+    // เก็บใน memory cache
+    this.projectContexts.set(projectId, projectContext);
+
+    // อัปเดต conversation context
+    const sessionId = `${projectId}_${Date.now()}`;
+    this.conversationHistory.set(sessionId, {
+      previousMessages: [],
+      currentProject: projectId,
+      activeAgents: ['orchestrator'],
+      lastTaskResult: { projectContext }
+    });
+
+    return projectContext;
+  }
+
+  /**
+   * Get project context
+   */
+  async getProjectContext(projectId: string): Promise<ProjectContextData | null> {
+    // ตรวจสอบใน memory cache ก่อน
+    let projectContext = this.projectContexts.get(projectId);
+    
+    if (!projectContext) {
+      // ถ้าไม่มีใน cache ให้ดึงจาก database
+      const dbProjectContext = await ProjectContextOrchestratorService.getProjectContext(projectId);
+      if (dbProjectContext) {
+        this.projectContexts.set(projectId, dbProjectContext);
+        projectContext = dbProjectContext;
+      }
+    }
+
+    return projectContext || null;
+  }
+
+  /**
+   * Update project context
+   */
+  async updateProjectContext(
+    projectId: string,
+    updates: {
+      status?: string;
+      components?: any[];
+      pages?: any[];
+      styling?: any;
+      conversationHistory?: any;
+      userPreferences?: any;
+    }
+  ): Promise<ProjectContextData> {
+    const projectContext = await ProjectContextOrchestratorService.updateProjectContext(
+      projectId,
+      updates
+    );
+
+    // อัปเดต memory cache
+    this.projectContexts.set(projectId, projectContext);
+
+    return projectContext;
+  }
+
+  /**
+   * Add component to project
+   */
+  async addComponent(
+    projectId: string,
+    componentType: string,
+    name: string,
+    page: string,
+    section: string = 'main',
+    position: number = 0,
+    customProps?: Record<string, any>
+  ): Promise<any> {
+    const component = await ProjectContextOrchestratorService.addComponent(
+      projectId,
+      componentType,
+      name,
+      page,
+      section,
+      position,
+      customProps
+    );
+
+    // อัปเดต memory cache
+    const projectContext = await this.getProjectContext(projectId);
+    if (projectContext) {
+      this.projectContexts.set(projectId, projectContext);
+    }
+
+    return component;
+  }
+
+  /**
+   * Update component in project
+   */
+  async updateComponent(
+    projectId: string,
+    componentId: string,
+    updates: {
+      name?: string;
+      location?: any;
+      props?: Record<string, any>;
+      styling?: any;
+      metadata?: any;
+    }
+  ): Promise<any> {
+    const component = await ProjectContextOrchestratorService.updateComponent(
+      projectId,
+      componentId,
+      updates
+    );
+
+    // อัปเดต memory cache
+    const projectContext = await this.getProjectContext(projectId);
+    if (projectContext) {
+      this.projectContexts.set(projectId, projectContext);
+    }
+
+    return component;
+  }
+
+  /**
+   * Add page to project
+   */
+  async addPage(
+    projectId: string,
+    pageType: string,
+    name: string,
+    path: string,
+    customLayout?: any
+  ): Promise<any> {
+    const page = await ProjectContextOrchestratorService.addPage(
+      projectId,
+      pageType,
+      name,
+      path,
+      customLayout
+    );
+
+    // อัปเดต memory cache
+    const projectContext = await this.getProjectContext(projectId);
+    if (projectContext) {
+      this.projectContexts.set(projectId, projectContext);
+    }
+
+    return page;
+  }
+
+  /**
+   * Update styling in project
+   */
+  async updateStyling(
+    projectId: string,
+    updates: {
+      theme?: any;
+      colors?: any;
+      fonts?: any;
+      spacing?: any;
+      breakpoints?: any;
+      metadata?: any;
+    }
+  ): Promise<any> {
+    const styling = await ProjectContextOrchestratorService.updateStyling(
+      projectId,
+      updates
+    );
+
+    // อัปเดต memory cache
+    const projectContext = await this.getProjectContext(projectId);
+    if (projectContext) {
+      this.projectContexts.set(projectId, projectContext);
+    }
+
+    return styling;
+  }
+
+  /**
+   * Add message to conversation history
+   */
+  async addMessage(
+    projectId: string,
+    message: {
+      role: 'user' | 'assistant' | 'system';
+      content: string;
+      metadata?: Record<string, any>;
+    }
+  ): Promise<void> {
+    await ProjectContextOrchestratorService.addMessage(projectId, message);
+  }
+
+  /**
+   * Update conversation context
+   */
+  async updateConversationContext(
+    projectId: string,
+    context: string,
+    intent?: string,
+    action?: string
+  ): Promise<void> {
+    await ProjectContextOrchestratorService.updateConversationContext(
+      projectId,
+      context,
+      intent,
+      action
+    );
   }
 
   /**

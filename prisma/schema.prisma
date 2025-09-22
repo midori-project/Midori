@@ -194,6 +194,9 @@ model Project {
   // Social
   likes ProjectLike[]
 
+  // Project Context
+  projectContext ProjectContext?
+
   @@index([ownerId])
 }
 
@@ -625,6 +628,33 @@ model SpecVersion {
 
   @@unique([bundleId, version])
   @@index([bundleId])
+}
+
+// ============================
+// PROJECT CONTEXT (Single Source of Truth) - Project State Management
+// ============================
+
+model ProjectContext {
+  id                  String   @id @default(uuid())
+  projectId           String   @unique
+  specBundleId        String   // โยงกับ SpecBundle
+  projectType         ProjectType
+  status              ProjectStatus @default(created)
+  components          Json     // ComponentStateData[]
+  pages               Json     // PageStateData[]
+  styling             Json     // StylingStateData
+  conversationHistory Json     // ConversationHistoryData
+  userPreferences     Json     // UserPreferencesData
+  lastModified        DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([projectId])
+  @@index([specBundleId])
+  @@index([projectType])
+  @@index([status])
 }
 
 // ============================
