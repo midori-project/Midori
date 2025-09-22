@@ -505,6 +505,85 @@ async function processWithAI(command: Command): Promise<{
 }
 
 // ============================================================================
+// TEMPLATE-FIRST HANDLERS
+// ============================================================================
+
+/**
+ * Handle template-first commands (SELECT_TEMPLATE, CUSTOMIZE_TEMPLATE)
+ */
+async function handleTemplateCommand(
+  command: Command, 
+  startTime: number, 
+  warnings: string[], 
+  validationErrors: string[]
+): Promise<OrchestratorResult> {
+  console.log('🎯 Handling template command:', command.commandType);
+  
+  // Create simple template task
+  const task = {
+    taskId: crypto.randomUUID(),
+    agent: TaskType.FRONTEND,
+    action: command.commandType,
+    description: command.commandType === CommandType.SELECT_TEMPLATE 
+      ? 'Select appropriate template for the project'
+      : 'Customize template according to requirements',
+    payload: command.payload,
+    dependencies: [],
+    estimatedDuration: command.commandType === CommandType.SELECT_TEMPLATE ? 45 : 30,
+    priority: command.priority,
+    status: 'pending' as const,
+    resourceRequirements: { cpu: 1, memory: 2 }
+  };
+  
+  // Create execution plan
+  const plan: ExecutionPlan = {
+    planId: crypto.randomUUID(),
+    commandId: command.commandId,
+    tasks: [task],
+    executionStages: [{
+      stageId: crypto.randomUUID(),
+      parallelTasks: [task.taskId],
+      estimatedDuration: task.estimatedDuration,
+      dependencies: [],
+      resourceRequirements: { maxCpu: 1, maxMemory: 2, maxConcurrency: 1 }
+    }],
+    qualityGates: [],
+    estimatedTotalDuration: task.estimatedDuration,
+    totalResourceRequirements: {
+      maxParallelTasks: 1,
+      totalCpuUnits: 1,
+      totalMemoryUnits: 2
+    },
+    metadata: {
+      createdAt: new Date().toISOString(),
+      aiGenerated: false
+    }
+  };
+  
+  // Execute template task
+  console.log('🚀 Executing template task...');
+  const executionResult = await executeTasks(plan);
+  
+  return {
+    success: true,
+    plan,
+    chatResponse: {
+      message: command.commandType === CommandType.SELECT_TEMPLATE 
+        ? '🎯 กำลังเลือกเทมเพลตที่เหมาะสมสำหรับโปรเจคของคุณ...'
+        : '🎨 กำลังปรับแต่งเทมเพลตตามความต้องการ...',
+      tone: 'helpful',
+      suggestions: ['ตรวจสอบผลลัพธ์', 'ปรับแต่งเพิ่มเติม', 'ขอความช่วยเหลือ'],
+      timestamp: new Date().toISOString()
+    },
+    warnings,
+    metadata: {
+      processingTimeMs: performance.now() - startTime,
+      validationErrors
+    }
+  };
+}
+
+// ============================================================================
 // MAIN ORCHESTRATOR FUNCTION
 // ============================================================================
 
@@ -519,7 +598,14 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
     // 1. Validate input command
     const command = validateCommand(rawCommand);
     
-    // 2. Process with AI for intelligent planning
+    // 2. Template-First: Use simple planning for template commands
+    if (command.commandType === CommandType.SELECT_TEMPLATE || 
+        command.commandType === CommandType.CUSTOMIZE_TEMPLATE) {
+      console.log('🎯 Using Template-First approach for:', command.commandType);
+      return await handleTemplateCommand(command, startTime, warnings, validationErrors);
+    }
+    
+    // 2. Process with AI for intelligent planning (for other commands)
     console.log('🤖 Processing with AI...');
     const aiResult = await processWithAI(command);
     

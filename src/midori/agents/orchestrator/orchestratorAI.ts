@@ -1,18 +1,17 @@
 /**
  * 🎭 Unified Orchestrator AI
- * รวม Chat AI + Multi-Agent Orchestrator ในตัวเดียว
+ * รวม Chat AI + Template-First Orchestrator ในตัวเดียว
  * 
  * Capabilities:
  * - Natural language processing
  * - Intent detection (chat vs task)
- * - Command translation
- * - Multi-agent coordination
+ * - Template selection & customization
  * - Task planning & execution
  * - Real-time communication
  */
 
 import { LLMAdapter } from './adapters/llmAdapter';
-import { run as legacyOrchestrator } from './runners/run';
+import { run as orchestrator } from './runners/run';
 import { ChatPromptLoader } from './prompts/chatPromptLoader';
 import { getResponseConfig, toLLMOptions } from './configs/responseConfig';
 import { ProjectContextOrchestratorService } from './services/projectContextOrchestratorService';
@@ -60,17 +59,19 @@ export interface IntentAnalysis {
 }
 
 export enum CommandType {
-  // Frontend Commands
+  // Template-First Commands (NEW!)
   SELECT_TEMPLATE = 'select_template',
   CUSTOMIZE_TEMPLATE = 'customize_template',
+  
+  // Frontend Commands
   CREATE_COMPONENT = 'create_component',
-  UPDATE_COMPONENT = 'update_component',
+  UPDATE_COMPONENT = 'update_component', 
   CREATE_PAGE = 'create_page',
   UPDATE_STYLING = 'update_styling',
   PERFORMANCE_AUDIT = 'performance_audit',
   ACCESSIBILITY_CHECK = 'accessibility_check',
   RESPONSIVE_DESIGN = 'responsive_design',
-
+  
   // Backend Commands
   CREATE_API_ENDPOINT = 'create_api_endpoint',
   UPDATE_DATABASE_SCHEMA = 'update_database_schema',
@@ -78,19 +79,14 @@ export enum CommandType {
   OPTIMIZE_DATABASE_QUERIES = 'optimize_database_queries',
   IMPLEMENT_BUSINESS_LOGIC = 'implement_business_logic',
   DATA_VALIDATION = 'data_validation',
-
+  
   // DevOps Commands
   SETUP_CICD = 'setup_cicd',
   DEPLOY_APPLICATION = 'deploy_application',
   SETUP_MONITORING = 'setup_monitoring',
   OPTIMIZE_INFRASTRUCTURE = 'optimize_infrastructure',
   SECURITY_SCAN = 'security_scan',
-  BACKUP_RESTORE = 'backup_restore',
-
-  // Multi-Agent Commands
-  CREATE_COMPLETE_WEBSITE = 'create_complete_website',
-  IMPLEMENT_FULL_FEATURE = 'implement_full_feature',
-  SETUP_FULL_STACK = 'setup_full_stack'
+  BACKUP_RESTORE = 'backup_restore'
 }
 
 export interface Command {
@@ -101,16 +97,19 @@ export interface Command {
     target?: string;
     parameters: Record<string, any>;
     userInput?: string;
-    // ✅ เพิ่ม project context ใน payload
+    // ✅ Minimal project context สำหรับ template selection
     projectContext?: {
       projectId: string;
       projectType: string;
       status: string;
-      components: any[];
-      pages: any[];
-      styling: any;
-      conversationHistory: any;
-      userPreferences: any;
+      userPreferences: {
+        theme: string;
+        language: string;
+      };
+      conversationHistory: {
+        currentContext: string;
+        lastIntent: string;
+      };
     } | null;
   };
   priority: 'low' | 'medium' | 'high';
@@ -235,11 +234,9 @@ export class OrchestratorAI {
           break;
           
         case 'simple_task':
-          response = await this.handleSimpleTask(message, analysis, context);
-          break;
-          
         case 'complex_task':
-          response = await this.handleComplexTask(message, analysis, context);
+          // Template-first approach: ทั้ง simple และ complex tasks ใช้ handler เดียวกัน
+          response = await this.handleTask(message, analysis, context);
           break;
           
         default:
@@ -502,9 +499,41 @@ export class OrchestratorAI {
       };
     }
 
-    // Website creation patterns
+    // Template selection patterns (NEW!)
+    if (lowerInput.includes('เลือกเทมเพลต') || 
+        lowerInput.includes('เลือก template') ||
+        lowerInput.includes('เลือกแบบ') ||
+        lowerInput.includes('template') ||
+        lowerInput.includes('เทมเพลต')) {
+      return {
+        intent: 'simple_task',
+        confidence: 0.95,
+        requiredAgents: ['frontend'],
+        complexity: 'low',
+        taskType: 'Template selection request detected',
+        parameters: { type: 'template_selection' }
+      };
+    }
+    
+    // Template customization patterns (NEW!)
+    if (lowerInput.includes('ปรับแต่งเทมเพลต') || 
+        lowerInput.includes('customize template') ||
+        lowerInput.includes('แก้ไขเทมเพลต') ||
+        lowerInput.includes('ปรับแต่งแบบ')) {
+      return {
+        intent: 'simple_task',
+        confidence: 0.9,
+        requiredAgents: ['frontend'],
+        complexity: 'medium',
+        taskType: 'Template customization request detected',
+        parameters: { type: 'template_customization' }
+      };
+    }
+    
+    // Website creation patterns - now use template selection
     if (lowerInput.includes('สร้างเว็บไซต์') || 
         lowerInput.includes('สร้างร้าน') ||
+        lowerInput.includes('สร้างเว็บ') ||
         lowerInput.includes('create website') ||
         lowerInput.includes('build website')) {
       return {
@@ -512,7 +541,8 @@ export class OrchestratorAI {
         confidence: 0.9,
         requiredAgents: ['frontend'],
         complexity: 'medium',
-        taskType: 'Website creation request detected'
+        taskType: 'Website creation request detected - will use template selection',
+        parameters: { type: 'website_creation' }
       };
     }
     
@@ -625,9 +655,9 @@ export class OrchestratorAI {
   }
 
   /**
-   * Handle simple tasks (single agent)
+   * Handle tasks (both simple and complex) - Template-First approach
    */
-  private async handleSimpleTask(
+  private async handleTask(
     message: UserMessage,
     analysis: IntentAnalysis,
     context: ConversationContext
@@ -636,10 +666,10 @@ export class OrchestratorAI {
     // Create structured command with project context
     const command = await this.createCommand(message, analysis);
     
-    console.log('🎯 Executing simple task with real orchestrator:', command.commandType);
+    console.log('🎯 Executing task with template-first orchestrator:', command.commandType);
     
-    // Execute via legacy orchestrator (now with real task execution)
-    const taskResult = await legacyOrchestrator(command);
+    // Execute via orchestrator (template-first approach)
+    const taskResult = await orchestrator(command);
     
     // Update project context if task was successful and we have project context
     if (taskResult.success && command.payload.projectContext) {
@@ -649,45 +679,11 @@ export class OrchestratorAI {
     // Generate user-friendly response based on execution results
     const chatResponse = await this.generateTaskSummary(message.content, taskResult);
     
-    return {
-      type: 'task',
-      content: chatResponse,
-      taskResults: taskResult,
-      nextSteps: this.generateNextSteps(taskResult),
-      metadata: {
-        executionTime: 0, // Will be set by caller
-        agentsUsed: analysis.requiredAgents,
-        confidence: analysis.confidence
-      }
-    };
-  }
-
-  /**
-   * Handle complex tasks (multi-agent)
-   */
-  private async handleComplexTask(
-    message: UserMessage,
-    analysis: IntentAnalysis,
-    context: ConversationContext
-  ): Promise<OrchestratorResponse> {
-    
-    // For complex tasks, use the full orchestrator
-    const command = await this.createCommand(message, analysis);
-    
-    console.log('🎯 Executing complex task with real orchestrator:', command.commandType);
-    
-    const taskResult = await legacyOrchestrator(command);
-    
-    // Update project context if task was successful and we have project context
-    if (taskResult.success && command.payload.projectContext) {
-      await this.updateProjectContextAfterTask(command.payload.projectContext.projectId, taskResult);
-    }
-    
-    // Generate comprehensive response
-    const chatResponse = await this.generateTaskSummary(message.content, taskResult);
+    // Determine response type based on task complexity
+    const responseType = analysis.complexity === 'high' ? 'mixed' : 'task';
     
     return {
-      type: 'mixed',
+      type: responseType,
       content: chatResponse,
       taskResults: taskResult,
       nextSteps: this.generateNextSteps(taskResult),
@@ -792,25 +788,47 @@ export class OrchestratorAI {
   }
 
   private async createCommand(message: UserMessage, analysis: IntentAnalysis): Promise<Command> {
-    // Map intent to command type
+    // Map intent to command type - Template-First Approach
     let commandType: CommandType;
     
-    // Check for specific task types first
-    if (analysis.taskType?.includes('Website creation') || 
+    // Template selection patterns (NEW!)
+    if (message.content.includes('เลือกเทมเพลต') || 
+        message.content.includes('เลือก template') ||
+        message.content.includes('เลือกแบบ') ||
+        message.content.includes('template') ||
+        analysis.taskType?.includes('template selection')) {
+      commandType = CommandType.SELECT_TEMPLATE;
+    } 
+    // Template customization patterns (NEW!)
+    else if (message.content.includes('ปรับแต่งเทมเพลต') || 
+             message.content.includes('customize template') ||
+             message.content.includes('แก้ไขเทมเพลต') ||
+             analysis.taskType?.includes('template customization')) {
+      commandType = CommandType.CUSTOMIZE_TEMPLATE;
+    }
+    // Website creation patterns - now use template selection
+    else if (analysis.taskType?.includes('Website creation') || 
         message.content.includes('สร้างเว็บไซต์') || 
-        message.content.includes('สร้างร้าน')) {
-      commandType = CommandType.CREATE_COMPLETE_WEBSITE;
-    } else if (analysis.taskType?.includes('Component creation') || 
+        message.content.includes('สร้างร้าน') ||
+        message.content.includes('สร้างเว็บ')) {
+      commandType = CommandType.SELECT_TEMPLATE; // ✅ เปลี่ยนเป็น template selection
+    } 
+    // Component creation patterns
+    else if (analysis.taskType?.includes('Component creation') || 
                message.content.includes('สร้าง component')) {
       commandType = CommandType.CREATE_COMPONENT;
-    } else if (analysis.requiredAgents.includes('frontend')) {
+    } 
+    // Agent-based mapping
+    else if (analysis.requiredAgents.includes('frontend')) {
       commandType = CommandType.CREATE_COMPONENT;
     } else if (analysis.requiredAgents.includes('backend')) {
       commandType = CommandType.CREATE_API_ENDPOINT;
     } else if (analysis.requiredAgents.includes('devops')) {
       commandType = CommandType.DEPLOY_APPLICATION;
-    } else {
-      commandType = CommandType.CREATE_COMPLETE_WEBSITE;
+    } 
+    // Default to template selection for new projects
+    else {
+      commandType = CommandType.SELECT_TEMPLATE; // ✅ เปลี่ยน default เป็น template selection
     }
 
     // Get project context if available
@@ -847,16 +865,19 @@ export class OrchestratorAI {
         target: analysis.parameters?.target,
         parameters: analysis.parameters || {},
         userInput: message.content,
-        // ✅ เพิ่ม project context data
+        // ✅ ส่งเฉพาะข้อมูลที่จำเป็นสำหรับ template selection
         projectContext: projectContext ? {
           projectId: projectContext.projectId,
           projectType: projectContext.projectType,
           status: projectContext.status,
-          components: projectContext.components,
-          pages: projectContext.pages,
-          styling: projectContext.styling,
-          conversationHistory: projectContext.conversationHistory,
-          userPreferences: projectContext.userPreferences
+          userPreferences: {
+            theme: projectContext.userPreferences.theme,
+            language: projectContext.userPreferences.language
+          },
+          conversationHistory: {
+            currentContext: projectContext.conversationHistory.currentContext,
+            lastIntent: projectContext.conversationHistory.lastIntent
+          }
         } : null
       },
       priority: analysis.complexity === 'high' ? 'high' : 'medium',
@@ -1280,120 +1301,6 @@ ${executionResults.map((result: any) =>
     return projectContext;
   }
 
-  /**
-   * Add component to project
-   */
-  async addComponent(
-    projectId: string,
-    componentType: string,
-    name: string,
-    page: string,
-    section: string = 'main',
-    position: number = 0,
-    customProps?: Record<string, any>
-  ): Promise<any> {
-    const component = await ProjectContextOrchestratorService.addComponent(
-      projectId,
-      componentType,
-      name,
-      page,
-      section,
-      position,
-      customProps
-    );
-
-    // อัปเดต memory cache
-    const projectContext = await this.getProjectContext(projectId);
-    if (projectContext) {
-      this.projectContexts.set(projectId, projectContext);
-    }
-
-    return component;
-  }
-
-  /**
-   * Update component in project
-   */
-  async updateComponent(
-    projectId: string,
-    componentId: string,
-    updates: {
-      name?: string;
-      location?: any;
-      props?: Record<string, any>;
-      styling?: any;
-      metadata?: any;
-    }
-  ): Promise<any> {
-    const component = await ProjectContextOrchestratorService.updateComponent(
-      projectId,
-      componentId,
-      updates
-    );
-
-    // อัปเดต memory cache
-    const projectContext = await this.getProjectContext(projectId);
-    if (projectContext) {
-      this.projectContexts.set(projectId, projectContext);
-    }
-
-    return component;
-  }
-
-  /**
-   * Add page to project
-   */
-  async addPage(
-    projectId: string,
-    pageType: string,
-    name: string,
-    path: string,
-    customLayout?: any
-  ): Promise<any> {
-    const page = await ProjectContextOrchestratorService.addPage(
-      projectId,
-      pageType,
-      name,
-      path,
-      customLayout
-    );
-
-    // อัปเดต memory cache
-    const projectContext = await this.getProjectContext(projectId);
-    if (projectContext) {
-      this.projectContexts.set(projectId, projectContext);
-    }
-
-    return page;
-  }
-
-  /**
-   * Update styling in project
-   */
-  async updateStyling(
-    projectId: string,
-    updates: {
-      theme?: any;
-      colors?: any;
-      fonts?: any;
-      spacing?: any;
-      breakpoints?: any;
-      metadata?: any;
-    }
-  ): Promise<any> {
-    const styling = await ProjectContextOrchestratorService.updateStyling(
-      projectId,
-      updates
-    );
-
-    // อัปเดต memory cache
-    const projectContext = await this.getProjectContext(projectId);
-    if (projectContext) {
-      this.projectContexts.set(projectId, projectContext);
-    }
-
-    return styling;
-  }
 
   /**
    * Add message to conversation history
@@ -1676,54 +1583,6 @@ ${executionResults.map((result: any) =>
     }
   }
 
-  /**
-   * Extract new components from task result
-   */
-  private extractNewComponentsFromTaskResult(taskResult: any): any[] {
-    const components: any[] = [];
-    
-    if (taskResult?.metadata?.executionResult?.results) {
-      for (const result of taskResult.metadata.executionResult.results) {
-        if (result.success && result.result?.components) {
-          components.push(...result.result.components);
-        }
-      }
-    }
-    
-    return components;
-  }
-
-  /**
-   * Extract new pages from task result
-   */
-  private extractNewPagesFromTaskResult(taskResult: any): any[] {
-    const pages: any[] = [];
-    
-    if (taskResult?.metadata?.executionResult?.results) {
-      for (const result of taskResult.metadata.executionResult.results) {
-        if (result.success && result.result?.pages) {
-          pages.push(...result.result.pages);
-        }
-      }
-    }
-    
-    return pages;
-  }
-
-  /**
-   * Extract updated styling from task result
-   */
-  private extractUpdatedStylingFromTaskResult(taskResult: any): any | null {
-    if (taskResult?.metadata?.executionResult?.results) {
-      for (const result of taskResult.metadata.executionResult.results) {
-        if (result.success && result.result?.styling) {
-          return result.result.styling;
-        }
-      }
-    }
-    
-    return null;
-  }
 
   /**
    * Detect project type from user input

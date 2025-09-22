@@ -97,22 +97,47 @@ class RealAgentClient {
   }
   
   /**
-   * Transform Task to FrontendTask format with project context
+   * Transform Task to FrontendTask format with minimal data for template-based approach
    */
   private transformToFrontendTask(task: Task): any {
+    const projectContext = task.payload.projectContext || null;
+    
+    // Generate component name based on task type and project context
+    let componentName = '';
+    if (task.action === 'select_template') {
+      componentName = `${projectContext?.projectType || 'default'}Template`;
+    } else if (task.action === 'customize_template') {
+      componentName = `${projectContext?.projectType || 'default'}CustomizedTemplate`;
+    } else {
+      componentName = task.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    
     return {
       taskId: task.taskId,
       taskType: task.action,
-      componentName: this.extractComponentName(task),
+      action: this.extractAction(task),
+      componentName: componentName, // ✅ เพิ่ม componentName
       requirements: {
-        type: 'functional',
-        props: [],
-        features: ['typescript', 'accessibility'],
-        styling: 'tailwind',
-        tests: true
+        templateType: projectContext?.projectType || 'default',
+        features: ['responsive', 'seo', 'accessibility'],
+        customizations: this.extractCustomizations(projectContext)
       },
-      // ✅ เพิ่ม project context data
-      projectContext: task.payload.projectContext || null
+      // ✅ ส่งเฉพาะข้อมูลที่จำเป็นสำหรับ template selection
+      projectContext: projectContext ? {
+        projectId: projectContext.projectId,
+        projectType: projectContext.projectType,
+        category: projectContext.projectType, // ใช้ projectType เป็น category
+        templateCategory: projectContext.projectType,
+        status: projectContext.status,
+        userPreferences: {
+          theme: projectContext.userPreferences?.theme || 'light',
+          language: projectContext.userPreferences?.language || 'th'
+        },
+        conversationHistory: {
+          currentContext: projectContext.conversationHistory?.currentContext || '',
+          lastIntent: projectContext.conversationHistory?.lastIntent || ''
+        }
+      } : null
     };
   }
 
@@ -193,7 +218,100 @@ class RealAgentClient {
   }
   
   /**
-   * Extract component name from task
+   * Extract action from task - Updated for Template-First approach
+   */
+  private extractAction(task: Task): string {
+    // Map task actions to frontend actions - Template-First approach
+    const actionMap: Record<string, string> = {
+      // Template-First Commands
+      'select_template': 'select_template',
+      'customize_template': 'customize_template',
+      
+      // Legacy website creation now maps to template selection
+      'create_complete_website': 'select_template',
+      'create_website': 'select_template',
+      
+      // Component commands
+      'create_component': 'create_component',
+      'update_component': 'update_component',
+      'create_page': 'create_page',
+      'update_styling': 'update_styling',
+      'responsive_design': 'responsive_design',
+      
+      // Performance commands
+      'performance_audit': 'performance_audit',
+      'accessibility_check': 'accessibility_check'
+    };
+    
+    return actionMap[task.action] || task.action;
+  }
+
+  /**
+   * Extract customizations from project context - Minimal approach
+   */
+  private extractCustomizations(projectContext: any): any {
+    if (!projectContext) return {};
+    
+    return {
+      brandName: this.extractBrandName(projectContext),
+      colorScheme: this.extractColorScheme(projectContext),
+      layout: this.extractLayout(projectContext),
+      language: projectContext.userPreferences?.language || 'th',
+      theme: projectContext.userPreferences?.theme || 'light'
+    };
+  }
+
+  /**
+   * Extract brand name from project context - Minimal approach
+   */
+  private extractBrandName(projectContext: any): string {
+    // Try to extract from conversation history
+    const context = projectContext.conversationHistory?.currentContext || '';
+    const match = context.match(/ร้าน(.+?)(?:\s|$)/);
+    if (match) {
+      return match[1];
+    }
+    
+    // Default based on project type
+    const typeMap: Record<string, string> = {
+      'coffee_shop': 'ร้านกาแฟ',
+      'restaurant': 'ร้านอาหาร',
+      'e_commerce': 'ร้านค้าออนไลน์'
+    };
+    
+    return typeMap[projectContext.projectType] || 'เว็บไซต์';
+  }
+
+  /**
+   * Extract color scheme from project context
+   */
+  private extractColorScheme(projectContext: any): string {
+    const typeMap: Record<string, string> = {
+      'coffee_shop': 'warm',
+      'restaurant': 'warm',
+      'e_commerce': 'modern',
+      'portfolio': 'minimal'
+    };
+    
+    return typeMap[projectContext.projectType] || 'default';
+  }
+
+  /**
+   * Extract layout from project context
+   */
+  private extractLayout(projectContext: any): string {
+    const typeMap: Record<string, string> = {
+      'coffee_shop': 'modern',
+      'restaurant': 'classic',
+      'e_commerce': 'grid',
+      'portfolio': 'minimal'
+    };
+    
+    return typeMap[projectContext.projectType] || 'modern';
+  }
+
+  /**
+   * Extract component name from task (legacy method)
    */
   private extractComponentName(task: Task): string {
     const description = task.description || '';
