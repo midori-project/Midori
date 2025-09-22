@@ -36,44 +36,60 @@ model User {
 }
 
 model Project {
-  id             String             @id @default(uuid())
-  ownerId        String
-  name           String
-  description    String?
-  visibility     Visibility         @default(private)
-  options        Json               @default("{}")
-  likeCount      Int                @default(0)
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  deletedAt      DateTime?
-  previewFileId  String?            @unique
-  tenantId       String?
-  agents         Agent[]
-  Artifact       Artifact[]
-  runs           ChatRun[]
-  commands       Command[]
-  conversations  Conversation[]
-  copyBlocks     CopyBlock[]
-  deployments    Deployment[]
-  files          File[]
-  generations    Generation[]
-  imageAssets    ImageAsset[]
-  imageBriefs    ImageBrief[]
-  plans          OrchestratorPlan[]
-  patchSets      PatchSet[]
-  previews       PreviewSession[]
-  owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  previewFile    File?              @relation("ProjectPreviewFile", fields: [previewFileId], references: [id])
-  tenant         Tenant?            @relation(fields: [tenantId], references: [id])
-  categories     ProjectCategory[]
-  projectContext ProjectContext?
-  likes          ProjectLike[]
-  snapshots      Snapshot[]
-  specBundles    SpecBundle[]
-  testRuns       TestRun[]
-  testSuites     TestSuite[]
+  id          String     @id @default(uuid())
+  ownerId     String
+  name        String
+  description String?
+  visibility  Visibility @default(private)
+  options     Json       @default("{}")
+  likeCount   Int        @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Tenant linkage
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Files & state
+  files       File[]
+  snapshots   Snapshot[]
+  deployments Deployment[]
+  previews    PreviewSession[]
+
+  // Taxonomy
+  categories    ProjectCategory[]
+  previewFileId String?           @unique
+  previewFile   File?             @relation("ProjectPreviewFile", fields: [previewFileId], references: [id], onDelete: SetNull)
+
+  // AI/Chat
+  agents        Agent[]
+  conversations Conversation[]
+  runs          ChatRun[]
+
+  // Gen history
+  generations Generation[]
+
+  // Orchestration / Spec / Templates / Copy / Visuals / Patches / Tests
+  plans       OrchestratorPlan[]
+  commands    Command[]
+  specBundles SpecBundle[]
+  copyBlocks  CopyBlock[]
+  imageBriefs ImageBrief[]
+  imageAssets ImageAsset[]
+  patchSets   PatchSet[]
+  testSuites  TestSuite[]
+  testRuns    TestRun[]
+
+  // Social
+  likes    ProjectLike[]
+  Artifact Artifact[]
 
   @@index([ownerId])
+  @@index([tenantId])
   @@index([tenantId])
 }
 
@@ -103,13 +119,17 @@ model Snapshot {
   label            String?
   files            Json
   fromGenerationId String?
-  createdAt        DateTime         @default(now())
-  Artifact         Artifact[]
-  patchSetsFrom    PatchSet[]       @relation("PatchSetFrom")
-  patchSetsTo      PatchSet[]       @relation("PatchSetTo")
-  previews         PreviewSession[]
-  fromGeneration   Generation?      @relation(fields: [fromGenerationId], references: [id])
-  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+
+  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fromGeneration Generation? @relation(fields: [fromGenerationId], references: [id])
+
+  // Patch traversal
+  patchSetsFrom PatchSet[] @relation("PatchSetFrom")
+  patchSetsTo   PatchSet[] @relation("PatchSetTo")
+
+  previews PreviewSession[]
+  Artifact Artifact[]
 
   @@index([projectId])
 }
@@ -797,51 +817,85 @@ model ProjectLike {
   @@index([userId])
 }
 
+// ============================
+// 14) Tenant
+// ============================
 model Tenant {
-  id        String    @id @default(uuid())
-  key       String    @unique
+  id        String   @id @default(uuid())
+  key       String   @unique // ใช้จาก URL เช่น "tenantA"
   name      String?
-  createdAt DateTime  @default(now())
-  projects  Project[]
+  createdAt DateTime @default(now())
+
+  projects Project[]
 }
 
+// ============================
+// 14) Artifact
+// ============================
+// ============================
+// ENUMS (reuse ที่มีอยู่เดิม + เพิ่มเฉพาะจำเป็น)
+// ============================
+
+enum GateStatus {
+  pass
+  fail
+}
+
+// ============================
+// ARTIFACT CORE
+// ============================
+
 model Artifact {
-  id                String          @id @default(cuid())
+  id                String   @id @default(cuid())
   projectId         String
   snapshotId        String?
   specBundleVersion Int?
-  createdAt         DateTime        @default(now())
-  buildFramework    String
-  buildEngine       String?
-  buildNode         String
-  buildCli          String?
-  buildHash         String
-  buildRunner       String?
-  buildDurationMs   Int?
-  storageProvider   String?
-  storageBucket     String?
-  storagePrefix     String?
-  storageRegion     String?
-  gateStatus        GateStatus?
-  failingGates      Json?
-  coverage          Decimal?        @db.Decimal(3, 2)
-  testSummary       String?
-  previewEnabled    Boolean         @default(false)
-  previewTtl        Int?
-  previewToken      String?
-  previewUrl        String?
-  deployProvider    DeployProvider?
-  deployState       DeployState?
-  deployUrl         String?
-  deployCacheKey    String?
-  deployMeta        Json?
-  manifestHash      String?
-  signature         String?
-  signedBy          String?
-  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  snapshot          Snapshot?       @relation(fields: [snapshotId], references: [id])
-  files             ArtifactFile[]
-  links             ArtifactLink[]
+  createdAt         DateTime @default(now())
+
+  // Build metadata
+  buildFramework  String
+  buildEngine     String?
+  buildNode       String
+  buildCli        String?
+  buildHash       String // SHA-256 ของ concat(file hashes)
+  buildRunner     String? // เช่น daytona/ci-id
+  buildDurationMs Int?
+
+  // Storage (ถ้าเก็บไฟล์จริงไว้ใน S3/R2)
+  storageProvider String? // s3|r2|gcs|...
+  storageBucket   String?
+  storagePrefix   String?
+  storageRegion   String?
+
+  // Tests summary (สำหรับ policy gate ก่อน preview/deploy)
+  gateStatus   GateStatus? // pass|fail
+  failingGates Json? // ["tsc","lint",...]
+  coverage     Decimal?    @db.Decimal(3, 2) // 0.00 - 1.00
+  testSummary  String?
+
+  // Preview linkage (ช่วยให้ระบบสร้าง/ยืนยันลิงก์พรีวิว)
+  previewEnabled Boolean @default(false)
+  previewTtl     Int?
+  previewToken   String?
+  previewUrl     String?
+
+  // Deploy linkage (cache key/URL/state เพื่อ CDN)
+  deployProvider DeployProvider? // vercel|netlify|github_pages|custom
+  deployState    DeployState? // queued|building|ready|failed
+  deployUrl      String?
+  deployCacheKey String?
+  deployMeta     Json?
+
+  // Integrity / Signature
+  manifestHash String? // สำเนา buildHash หรือต่างกันได้
+  signature    String?
+  signedBy     String?
+
+  // Relations
+  project  Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  snapshot Snapshot?      @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+  files    ArtifactFile[]
+  links    ArtifactLink[] // อ้างอิงไฟล์เทส/รายงาน/โลจิกอื่น ๆ
 
   @@index([projectId, createdAt])
   @@index([snapshotId])
@@ -850,34 +904,42 @@ model Artifact {
 }
 
 model ArtifactFile {
-  id                String    @id @default(cuid())
-  artifactId        String
-  path              String
-  mimeType          String
-  hash              String
-  size              Int?
-  cacheTtl          Int?
-  cacheImmutable    Boolean?
-  cacheHeaders      Json?
-  content           String?
-  externalUrl       String?
+  id             String   @id @default(cuid())
+  artifactId     String
+  path           String
+  mimeType       String
+  hash           String // SHA-1/256 ของเนื้อหา
+  size           Int?
+  // Cache hint สำหรับ CDN
+  cacheTtl       Int? // วินาที
+  cacheImmutable Boolean? // true สำหรับ JS/CSS เวอร์ชันนิ่ง
+  cacheHeaders   Json?
+
+  // เนื้อหา (ตัวเลือก): เก็บ inline เฉพาะ text เล็ก ๆ
+  content String? // TEXT ONLY
+
+  // ถ้าไฟล์จริงอยู่ storage ภายนอก
+  externalUrl       String? // s3:// หรือ https:// (signed/un-signed)
   externalSigned    Boolean?
   externalExpiresAt DateTime?
-  artifact          Artifact  @relation(fields: [artifactId], references: [id], onDelete: Cascade)
 
-  @@unique([artifactId, path])
+  // Relations
+  artifact Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  @@unique([artifactId, path]) // ไฟล์หนึ่งพาธต่ออาร์ติแฟกต์
   @@index([hash])
 }
 
 model ArtifactLink {
   id         String   @id @default(cuid())
   artifactId String
-  kind       String
+  kind       String // junit|coverage|a11y|logs|image|report|other
   url        String?
-  filePath   String?
+  filePath   String? // หากไฟล์อยู่ใน ArtifactFile
   meta       Json?
   createdAt  DateTime @default(now())
-  artifact   Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  artifact Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
 
   @@index([artifactId, kind])
 }
