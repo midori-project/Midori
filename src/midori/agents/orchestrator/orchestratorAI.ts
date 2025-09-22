@@ -101,6 +101,17 @@ export interface Command {
     target?: string;
     parameters: Record<string, any>;
     userInput?: string;
+    // ✅ เพิ่ม project context ใน payload
+    projectContext?: {
+      projectId: string;
+      projectType: string;
+      status: string;
+      components: any[];
+      pages: any[];
+      styling: any;
+      conversationHistory: any;
+      userPreferences: any;
+    } | null;
   };
   priority: 'low' | 'medium' | 'high';
   metadata: {
@@ -622,13 +633,18 @@ export class OrchestratorAI {
     context: ConversationContext
   ): Promise<OrchestratorResponse> {
     
-    // Create structured command
-    const command = this.createCommand(message, analysis);
+    // Create structured command with project context
+    const command = await this.createCommand(message, analysis);
     
     console.log('🎯 Executing simple task with real orchestrator:', command.commandType);
     
     // Execute via legacy orchestrator (now with real task execution)
     const taskResult = await legacyOrchestrator(command);
+    
+    // Update project context if task was successful and we have project context
+    if (taskResult.success && command.payload.projectContext) {
+      await this.updateProjectContextAfterTask(command.payload.projectContext.projectId, taskResult);
+    }
     
     // Generate user-friendly response based on execution results
     const chatResponse = await this.generateTaskSummary(message.content, taskResult);
@@ -656,11 +672,16 @@ export class OrchestratorAI {
   ): Promise<OrchestratorResponse> {
     
     // For complex tasks, use the full orchestrator
-    const command = this.createCommand(message, analysis);
+    const command = await this.createCommand(message, analysis);
     
     console.log('🎯 Executing complex task with real orchestrator:', command.commandType);
     
     const taskResult = await legacyOrchestrator(command);
+    
+    // Update project context if task was successful and we have project context
+    if (taskResult.success && command.payload.projectContext) {
+      await this.updateProjectContextAfterTask(command.payload.projectContext.projectId, taskResult);
+    }
     
     // Generate comprehensive response
     const chatResponse = await this.generateTaskSummary(message.content, taskResult);
@@ -770,7 +791,7 @@ export class OrchestratorAI {
     return options;
   }
 
-  private createCommand(message: UserMessage, analysis: IntentAnalysis): Command {
+  private async createCommand(message: UserMessage, analysis: IntentAnalysis): Promise<Command> {
     // Map intent to command type
     let commandType: CommandType;
     
@@ -792,6 +813,32 @@ export class OrchestratorAI {
       commandType = CommandType.CREATE_COMPLETE_WEBSITE;
     }
 
+    // Get project context if available
+    let projectContext: ProjectContextData | null = null;
+    if (message.context?.currentProject) {
+      projectContext = await this.getProjectContext(message.context.currentProject);
+      console.log(`🔍 Looking for existing project context: ${message.context.currentProject}`);
+    }
+    
+    // ถ้าไม่มี project context และเป็น task ให้สร้างใหม่
+    if (!projectContext && (analysis.intent === 'simple_task' || analysis.intent === 'complex_task')) {
+      console.log('🏗️ Creating new project context for task');
+      const projectId = `project_${Date.now()}`;
+      const projectType = this.detectProjectTypeFromInput(message.content);
+      
+      // สร้าง Project record ก่อน
+      await this.createProjectRecord(projectId, this.extractProjectName(message.content));
+      
+      projectContext = await this.initializeProject(
+        projectId,
+        'default_spec',
+        projectType,
+        this.extractProjectName(message.content),
+        message.content
+      );
+      console.log(`✅ Created new project context: ${projectId}`);
+    }
+
     return {
       commandId: randomUUID(),
       commandType,
@@ -799,12 +846,24 @@ export class OrchestratorAI {
         description: analysis.taskType || message.content,
         target: analysis.parameters?.target,
         parameters: analysis.parameters || {},
-        userInput: message.content
+        userInput: message.content,
+        // ✅ เพิ่ม project context data
+        projectContext: projectContext ? {
+          projectId: projectContext.projectId,
+          projectType: projectContext.projectType,
+          status: projectContext.status,
+          components: projectContext.components,
+          pages: projectContext.pages,
+          styling: projectContext.styling,
+          conversationHistory: projectContext.conversationHistory,
+          userPreferences: projectContext.userPreferences
+        } : null
       },
       priority: analysis.complexity === 'high' ? 'high' : 'medium',
       metadata: {
         timestamp: new Date().toISOString(),
-        userId: message.userId
+        userId: message.userId,
+        projectId: projectContext?.projectId
       }
     };
   }
@@ -1368,6 +1427,418 @@ ${executionResults.map((result: any) =>
   }
 
   /**
+   * Get real-time project state updates
+   */
+  async getProjectStateUpdates(projectId: string): Promise<{
+    hasUpdates: boolean;
+    lastModified: Date;
+    changes: any;
+  }> {
+    try {
+      const projectContext = await this.getProjectContext(projectId);
+      if (!projectContext) {
+        return {
+          hasUpdates: false,
+          lastModified: new Date(),
+          changes: {}
+        };
+      }
+
+      // Check if there are recent changes
+      const now = new Date();
+      const lastModified = projectContext.lastModified;
+      const timeDiff = now.getTime() - lastModified.getTime();
+      const hasRecentUpdates = timeDiff < 60000; // Within last minute
+
+      return {
+        hasUpdates: hasRecentUpdates,
+        lastModified,
+        changes: {
+          components: projectContext.components,
+          pages: projectContext.pages,
+          styling: projectContext.styling,
+          conversationHistory: projectContext.conversationHistory
+        }
+      };
+    } catch (error) {
+      console.error(`❌ Failed to get project state updates:`, error);
+      return {
+        hasUpdates: false,
+        lastModified: new Date(),
+        changes: {}
+      };
+    }
+  }
+
+  /**
+   * Subscribe to project state changes (WebSocket/SSE ready)
+   */
+  async subscribeToProjectUpdates(
+    projectId: string,
+    callback: (updates: any) => void
+  ): Promise<() => void> {
+    console.log(`📡 Subscribing to project updates for ${projectId}`);
+    
+    // Simulate real-time updates (in real implementation, use WebSocket/SSE)
+    const interval = setInterval(async () => {
+      try {
+        const updates = await this.getProjectStateUpdates(projectId);
+        if (updates.hasUpdates) {
+          callback(updates);
+        }
+      } catch (error) {
+        console.error(`❌ Error in project update subscription:`, error);
+      }
+    }, 5000); // Check every 5 seconds
+
+    // Return unsubscribe function
+    return () => {
+      console.log(`📡 Unsubscribing from project updates for ${projectId}`);
+      clearInterval(interval);
+    };
+  }
+
+  /**
+   * Broadcast project state change to all subscribers
+   */
+  private async broadcastProjectStateChange(projectId: string, changes: any): Promise<void> {
+    try {
+      console.log(`📢 Broadcasting project state change for ${projectId}`);
+      
+      // In real implementation, this would use WebSocket/SSE to notify clients
+      // For now, we'll just log the change
+      console.log(`📢 Project ${projectId} updated:`, {
+        timestamp: new Date().toISOString(),
+        changes: Object.keys(changes)
+      });
+      
+    } catch (error) {
+      console.error(`❌ Failed to broadcast project state change:`, error);
+    }
+  }
+
+  /**
+   * Update project context after task execution with comprehensive state sync
+   */
+  private async updateProjectContextAfterTask(projectId: string, taskResult: any): Promise<void> {
+    try {
+      console.log(`🔄 Syncing project context for project ${projectId} after task execution`);
+      
+      // Get current project context
+      const currentContext = await this.getProjectContext(projectId);
+      if (!currentContext) {
+        console.warn(`⚠️ No project context found for project ${projectId}`);
+        return;
+      }
+
+      // Extract changes from task results
+      const changes = this.extractChangesFromTaskResult(taskResult);
+      
+      if (changes.hasChanges) {
+        // Update project context with changes
+        await this.applyProjectContextChanges(projectId, currentContext, changes);
+        
+        // Update memory cache
+        const updatedContext = await this.getProjectContext(projectId);
+        if (updatedContext) {
+          this.projectContexts.set(projectId, updatedContext);
+        }
+        
+        // Update conversation context
+        await this.updateConversationContextAfterTask(projectId, changes);
+        
+        // Broadcast changes to subscribers
+        await this.broadcastProjectStateChange(projectId, changes);
+        
+        console.log(`✅ Project context synced successfully for project ${projectId}`);
+      } else {
+        console.log(`ℹ️ No changes detected for project ${projectId}`);
+      }
+
+    } catch (error) {
+      console.error(`❌ Failed to sync project context for project ${projectId}:`, error);
+    }
+  }
+
+  /**
+   * Extract comprehensive changes from task result
+   */
+  private extractChangesFromTaskResult(taskResult: any): {
+    hasChanges: boolean;
+    components: any[];
+    pages: any[];
+    styling: any | null;
+    metadata: any;
+  } {
+    const changes = {
+      hasChanges: false,
+      components: [] as any[],
+      pages: [] as any[],
+      styling: null as any,
+      metadata: {}
+    };
+
+    if (taskResult?.metadata?.executionResult?.results) {
+      for (const result of taskResult.metadata.executionResult.results) {
+        if (result.success && result.result) {
+          // Extract components
+          if (result.result.components && Array.isArray(result.result.components)) {
+            changes.components.push(...result.result.components);
+            changes.hasChanges = true;
+          }
+          
+          // Extract pages
+          if (result.result.pages && Array.isArray(result.result.pages)) {
+            changes.pages.push(...result.result.pages);
+            changes.hasChanges = true;
+          }
+          
+          // Extract styling updates
+          if (result.result.styling) {
+            changes.styling = { ...changes.styling, ...result.result.styling };
+            changes.hasChanges = true;
+          }
+          
+          // Extract metadata
+          if (result.result.metadata) {
+            changes.metadata = { ...changes.metadata, ...result.result.metadata };
+          }
+        }
+      }
+    }
+
+    return changes;
+  }
+
+  /**
+   * Apply project context changes to database
+   */
+  private async applyProjectContextChanges(
+    projectId: string, 
+    currentContext: ProjectContextData, 
+    changes: any
+  ): Promise<void> {
+    const updates: any = {};
+    
+    // Update components
+    if (changes.components.length > 0) {
+      updates.components = [...currentContext.components, ...changes.components];
+    }
+    
+    // Update pages
+    if (changes.pages.length > 0) {
+      updates.pages = [...currentContext.pages, ...changes.pages];
+    }
+    
+    // Update styling
+    if (changes.styling) {
+      updates.styling = { ...currentContext.styling, ...changes.styling };
+    }
+    
+    // Update conversation history
+    updates.conversationHistory = {
+      ...currentContext.conversationHistory,
+      lastAction: 'task_execution_completed',
+      lastIntent: 'task_completion',
+      updatedAt: new Date()
+    };
+
+    // Apply updates to database
+    await this.updateProjectContext(projectId, updates);
+  }
+
+  /**
+   * Update conversation context after task execution
+   */
+  private async updateConversationContextAfterTask(projectId: string, changes: any): Promise<void> {
+    try {
+      // Find conversation context for this project
+      for (const [sessionId, context] of this.conversationHistory.entries()) {
+        if (context.currentProject === projectId) {
+          // Update last task result
+          context.lastTaskResult = {
+            ...context.lastTaskResult,
+            changes,
+            timestamp: new Date().toISOString()
+          };
+          
+          // Update active agents if needed
+          if (changes.metadata?.agentsUsed) {
+            context.activeAgents = [...new Set([...context.activeAgents, ...changes.metadata.agentsUsed])];
+          }
+          
+          console.log(`✅ Conversation context updated for session ${sessionId}`);
+          break;
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Failed to update conversation context:`, error);
+    }
+  }
+
+  /**
+   * Extract new components from task result
+   */
+  private extractNewComponentsFromTaskResult(taskResult: any): any[] {
+    const components: any[] = [];
+    
+    if (taskResult?.metadata?.executionResult?.results) {
+      for (const result of taskResult.metadata.executionResult.results) {
+        if (result.success && result.result?.components) {
+          components.push(...result.result.components);
+        }
+      }
+    }
+    
+    return components;
+  }
+
+  /**
+   * Extract new pages from task result
+   */
+  private extractNewPagesFromTaskResult(taskResult: any): any[] {
+    const pages: any[] = [];
+    
+    if (taskResult?.metadata?.executionResult?.results) {
+      for (const result of taskResult.metadata.executionResult.results) {
+        if (result.success && result.result?.pages) {
+          pages.push(...result.result.pages);
+        }
+      }
+    }
+    
+    return pages;
+  }
+
+  /**
+   * Extract updated styling from task result
+   */
+  private extractUpdatedStylingFromTaskResult(taskResult: any): any | null {
+    if (taskResult?.metadata?.executionResult?.results) {
+      for (const result of taskResult.metadata.executionResult.results) {
+        if (result.success && result.result?.styling) {
+          return result.result.styling;
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Detect project type from user input
+   */
+  private detectProjectTypeFromInput(input: string): string {
+    const lowerInput = input.toLowerCase();
+    
+    if (lowerInput.includes('ร้านกาแฟ') || lowerInput.includes('coffee')) {
+      return 'coffee_shop';
+    } else if (lowerInput.includes('ร้านอาหาร') || lowerInput.includes('restaurant')) {
+      return 'restaurant';
+    } else if (lowerInput.includes('ขายของ') || lowerInput.includes('ecommerce')) {
+      return 'e_commerce';
+    } else if (lowerInput.includes('portfolio') || lowerInput.includes('ผลงาน')) {
+      return 'portfolio';
+    } else if (lowerInput.includes('blog') || lowerInput.includes('บล็อก')) {
+      return 'blog';
+    } else if (lowerInput.includes('landing') || lowerInput.includes('หน้าแรก')) {
+      return 'landing_page';
+    } else if (lowerInput.includes('ธุรกิจ') || lowerInput.includes('business')) {
+      return 'business';
+    } else if (lowerInput.includes('ส่วนตัว') || lowerInput.includes('personal')) {
+      return 'personal';
+    }
+    
+    return 'coffee_shop'; // default
+  }
+
+  /**
+   * Create Project record in database
+   */
+  private async createProjectRecord(projectId: string, name: string): Promise<void> {
+    try {
+      console.log(`📝 Creating Project record: ${projectId}`);
+      
+      // Import prisma here to avoid circular dependency
+      const { prisma } = await import('@/libs/prisma/prisma');
+      
+      // สร้าง User record ก่อน (ถ้ายังไม่มี)
+      await this.ensureDefaultUserExists();
+      
+      await prisma.project.create({
+        data: {
+          id: projectId,
+          ownerId: 'default-user',
+          name: name,
+          description: `Project created for: ${name}`,
+          visibility: 'private',
+          options: {},
+          likeCount: 0
+        }
+      });
+      
+      console.log(`✅ Project record created: ${projectId}`);
+    } catch (error) {
+      console.error(`❌ Failed to create Project record:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Ensure default user exists in database
+   */
+  private async ensureDefaultUserExists(): Promise<void> {
+    try {
+      const { prisma } = await import('@/libs/prisma/prisma');
+      
+      // Check if default user exists
+      const existingUser = await prisma.user.findUnique({
+        where: { id: 'default-user' }
+      });
+      
+      if (!existingUser) {
+        console.log(`👤 Creating default user: default-user`);
+        await prisma.user.create({
+          data: {
+            id: 'default-user',
+            email: 'default@midori.ai',
+            displayName: 'Default User',
+            isActive: true,
+            locale: 'th'
+          }
+        });
+        console.log(`✅ Default user created: default-user`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to ensure default user exists:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract project name from user input
+   */
+  private extractProjectName(input: string): string {
+    // Extract name from input patterns
+    const patterns = [
+      /สร้างเว็บไซต์(.+)/i,
+      /สร้างร้าน(.+)/i,
+      /สร้าง(.+)เว็บไซต์/i,
+      /create website (.+)/i,
+      /build (.+) website/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = input.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    
+    return 'เว็บไซต์ใหม่'; // default
+  }
+
+  /**
    * Format current time for user query
    */
   private formatCurrentTimeForUser(tz?: string): string {
@@ -1400,7 +1871,8 @@ let globalOrchestrator: OrchestratorAI | null = null;
 export async function processUserMessage(
   content: string,
   userId: string = 'default-user',
-  sessionId?: string
+  sessionId?: string,
+  context?: ConversationContext
 ): Promise<OrchestratorResponse> {
   // ใช้ global instance หรือสร้างใหม่ถ้ายังไม่มี
   if (!globalOrchestrator) {
@@ -1412,7 +1884,8 @@ export async function processUserMessage(
     content,
     userId,
     sessionId: sessionId || userId,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    context // ✅ เพิ่ม context
   };
 
   return await globalOrchestrator.processUserInput(message);

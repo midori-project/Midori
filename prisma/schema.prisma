@@ -106,6 +106,60 @@ enum TestStatus {
   errored
 }
 
+enum ProjectType {
+  coffee_shop
+  restaurant
+  e_commerce
+  portfolio
+  blog
+  landing_page
+  business
+  personal
+}
+
+enum ProjectStatus {
+  created
+  in_progress
+  completed
+  paused
+  cancelled
+}
+
+enum ComponentType {
+  header
+  hero
+  menu
+  card
+  footer
+  content
+  sidebar
+  navigation
+  button
+  form
+  modal
+  gallery
+  testimonial
+  pricing
+  contact
+  about
+  services
+  products
+  blog
+  custom
+}
+
+enum PageType {
+  home
+  about
+  contact
+  menu
+  products
+  services
+  blog
+  gallery
+  custom
+}
+
 // ============================
 // 2) CORE: User / Project / File / Snapshot / Deployment / Preview
 // ============================
@@ -653,8 +707,6 @@ model ProjectContext {
   
   @@index([projectId])
   @@index([specBundleId])
-  @@index([projectType])
-  @@index([status])
 }
 
 // ============================

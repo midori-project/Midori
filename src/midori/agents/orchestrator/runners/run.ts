@@ -548,6 +548,16 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
       if (tasks.length === 0) {
         console.log('⚠️ AI plan has no tasks, creating tasks from command');
         tasks = breakdownCommand(command);
+      } else {
+        // ✅ แก้ไข: เพิ่ม projectContext ให้ AI plan tasks
+        console.log('🔧 Adding projectContext to AI plan tasks');
+        tasks = tasks.map((task: any) => ({
+          ...task,
+          payload: {
+            ...task.payload,
+            projectContext: command.payload.projectContext
+          }
+        }));
       }
       
       const plan: ExecutionPlan = {
@@ -580,8 +590,7 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
         warnings: aiResult.aiResponse.warnings || [],
         metadata: {
           processingTimeMs: performance.now() - startTime,
-          validationErrors,
-          executionResult
+          validationErrors
         }
       };
     }
@@ -641,8 +650,7 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
       warnings,
       metadata: {
         processingTimeMs,
-        validationErrors,
-        executionResult
+        validationErrors
       }
     };
     

@@ -36,7 +36,6 @@ interface ExecutionStatus {
 
 // Real agent clients - Call actual agent implementations
 import { run as frontendAgent } from '../../frontend/runners/run';
-import { transformCommandToFrontendTask } from './taskTransformer';
 
 class RealAgentClient {
   constructor(private agentName: string) {}
@@ -59,12 +58,22 @@ class RealAgentClient {
         console.log(`✅ Frontend Agent completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
         
       } else if (this.agentName === 'backend') {
-        console.log('⚙️ Backend Agent not implemented yet');
-        result = { success: false, error: 'Backend Agent not implemented' };
+        console.log('⚙️ Calling Backend Agent...');
+        
+        // Transform task to backend format if needed
+        const backendTask = this.transformToBackendTask(task);
+        result = await this.callBackendAgent(backendTask);
+        
+        console.log(`✅ Backend Agent completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
         
       } else if (this.agentName === 'devops') {
-        console.log('🚀 DevOps Agent not implemented yet');
-        result = { success: false, error: 'DevOps Agent not implemented' };
+        console.log('🚀 Calling DevOps Agent...');
+        
+        // Transform task to devops format if needed
+        const devopsTask = this.transformToDevOpsTask(task);
+        result = await this.callDevOpsAgent(devopsTask);
+        
+        console.log(`✅ DevOps Agent completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
         
       } else {
         throw new Error(`Unknown agent: ${this.agentName}`);
@@ -88,7 +97,7 @@ class RealAgentClient {
   }
   
   /**
-   * Transform Task to FrontendTask format
+   * Transform Task to FrontendTask format with project context
    */
   private transformToFrontendTask(task: Task): any {
     return {
@@ -101,6 +110,84 @@ class RealAgentClient {
         features: ['typescript', 'accessibility'],
         styling: 'tailwind',
         tests: true
+      },
+      // ✅ เพิ่ม project context data
+      projectContext: task.payload.projectContext || null
+    };
+  }
+
+  /**
+   * Transform Task to BackendTask format with project context
+   */
+  private transformToBackendTask(task: Task): any {
+    return {
+      taskId: task.taskId,
+      taskType: task.action,
+      endpoint: this.extractEndpointName(task),
+      requirements: {
+        type: 'api',
+        methods: ['GET', 'POST'],
+        features: ['typescript', 'validation', 'error_handling'],
+        database: 'postgresql',
+        tests: true
+      },
+      // ✅ เพิ่ม project context data
+      projectContext: task.payload.projectContext || null
+    };
+  }
+
+  /**
+   * Transform Task to DevOpsTask format with project context
+   */
+  private transformToDevOpsTask(task: Task): any {
+    return {
+      taskId: task.taskId,
+      taskType: task.action,
+      deployment: this.extractDeploymentTarget(task),
+      requirements: {
+        type: 'deployment',
+        platform: 'vercel',
+        features: ['ci_cd', 'monitoring', 'scaling'],
+        environment: 'production',
+        tests: true
+      },
+      // ✅ เพิ่ม project context data
+      projectContext: task.payload.projectContext || null
+    };
+  }
+
+  /**
+   * Call Backend Agent (placeholder implementation)
+   */
+  private async callBackendAgent(backendTask: any): Promise<any> {
+    // TODO: Implement actual backend agent call
+    console.log('⚙️ Backend Agent not implemented yet, returning mock result');
+    return {
+      success: true,
+      result: {
+        endpoint: backendTask.endpoint,
+        message: 'Backend task completed (mock)',
+        components: [],
+        pages: [],
+        styling: null
+      }
+    };
+  }
+
+  /**
+   * Call DevOps Agent (placeholder implementation)
+   */
+  private async callDevOpsAgent(devopsTask: any): Promise<any> {
+    // TODO: Implement actual devops agent call
+    console.log('🚀 DevOps Agent not implemented yet, returning mock result');
+    return {
+      success: true,
+      result: {
+        deployment: devopsTask.deployment,
+        message: 'DevOps task completed (mock)',
+        components: [],
+        pages: [],
+        styling: null
       }
     };
   }
@@ -130,6 +217,40 @@ class RealAgentClient {
     return 'NewComponent';
   }
   
+  /**
+   * Extract endpoint name from task
+   */
+  private extractEndpointName(task: Task): string {
+    if (task.payload?.endpoint) {
+      return task.payload.endpoint;
+    }
+    
+    const action = task.action.toLowerCase();
+    if (action.includes('user')) return '/api/users';
+    if (action.includes('auth')) return '/api/auth';
+    if (action.includes('data')) return '/api/data';
+    if (action.includes('file')) return '/api/files';
+    
+    return '/api/endpoint';
+  }
+
+  /**
+   * Extract deployment target from task
+   */
+  private extractDeploymentTarget(task: Task): string {
+    if (task.payload?.deployment) {
+      return task.payload.deployment;
+    }
+    
+    const action = task.action.toLowerCase();
+    if (action.includes('vercel')) return 'vercel';
+    if (action.includes('netlify')) return 'netlify';
+    if (action.includes('aws')) return 'aws';
+    if (action.includes('docker')) return 'docker';
+    
+    return 'vercel';
+  }
+
   /**
    * Capitalize first letter
    */

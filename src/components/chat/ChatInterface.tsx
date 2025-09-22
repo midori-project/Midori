@@ -84,7 +84,8 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         body: JSON.stringify({
           message: messageContent,
           userId: 'user-123', // TODO: get real user ID
-          sessionId: 'session-456' // TODO: get real session ID
+          sessionId: 'session-456', // TODO: get real session ID
+          context: { currentProject: 'project_123' } // ✅ เพิ่ม project context
         }),
       });
 

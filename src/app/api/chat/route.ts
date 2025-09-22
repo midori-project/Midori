@@ -4,7 +4,7 @@ import { processUserMessage } from '@/midori/agents/orchestrator/orchestratorAI'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message, userId = 'default-user', sessionId } = body;
+    const { message, userId = 'default-user', sessionId, context } = body;
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -13,10 +13,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🎭 API Chat endpoint received:', { message, userId, sessionId });
+    console.log('🎭 API Chat endpoint received:', { message, userId, sessionId, context });
 
     // Process with Orchestrator AI
-    const response = await processUserMessage(message, userId, sessionId);
+    const response = await processUserMessage(message, userId, sessionId, context);
 
     console.log('✅ API Chat response:', {
       type: response.type,

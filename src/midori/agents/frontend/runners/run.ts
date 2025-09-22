@@ -73,8 +73,9 @@ let llmAdapter: LLMAdapter | null = null;
 async function initializeLLM(): Promise<LLMAdapter> {
   if (!llmAdapter) {
     llmAdapter = new LLMAdapter();
-    await llmAdapter.initialize();
   }
+  // Always initialize to ensure config is loaded
+  await llmAdapter.initialize();
   return llmAdapter;
 }
 
