@@ -1,0 +1,147 @@
+{
+  "templateId": "{{template_id}}",
+  "semver": "1.1.0",
+  "files": {},
+  "sourceFiles": [
+    { "path": "package.json", "type": "config", "encoding": "utf8", "content": "{\n  \"name\": \"food-delivery-table-reservation\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"dev\": \"vite --host 0.0.0.0 --port 5173\",\n    \"build\": \"vite build\",\n    \"preview\": \"vite preview --host 0.0.0.0 --port 5173\"\n  },\n  \"dependencies\": {\n    \"react\": \"^18.2.0\",\n    \"react-dom\": \"^18.2.0\",\n    \"react-router-dom\": \"^6.14.0\",\n    \"axios\": \"^1.3.0\"\n  },\n  \"devDependencies\": {\n    \"vite\": \"^4.5.0\",\n    \"@vitejs/plugin-react\": \"^3.1.0\",\n    \"typescript\": \"^5.0.0\",\n    \"tailwindcss\": \"^3.4.0\",\n    \"postcss\": \"^8.4.0\",\n    \"autoprefixer\": \"^10.4.0\",\n    \"eslint\": \"^8.30.0\",\n    \"eslint-plugin-react\": \"^7.32.0\"\n  }\n}" },
+    { "path": "src/main.tsx", "type": "code", "encoding": "utf8", "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App';\nimport './index.css';\n\nconst rootElement = document.getElementById('root');\nif (!rootElement) throw new Error('Failed to find the root element');\n\nconst root = ReactDOM.createRoot(rootElement);\nroot.render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>\n);" },
+    { "path": "src/App.tsx", "type": "code", "encoding": "utf8", "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Header from './components/Header';\nimport Footer from './components/Footer';\nimport Home from './pages/Home';\nimport Menu from './pages/Menu';\nimport Reservation from './pages/Reservation';\nimport ChefProfile from './pages/ChefProfile';\nimport DishGallery from './pages/DishGallery';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"min-h-screen flex flex-col bg-orange-50\">\n      <Header restaurantName=\"{{header.restaurantName}}\" tagline=\"{{header.tagline}}\" />\n      <main className=\"flex-1\">\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/menu\" element={<Menu />} />\n          <Route path=\"/reservation\" element={<Reservation availableSlots={{reservation.availableSlots}} />} />\n          <Route path=\"/chef-profile\" element={<ChefProfile name=\"{{chef.name}}\" photo=\"{{chef.photo}}\" biography=\"{{chef.biography}}\" specialties={{chef.specialties}} philosophy=\"{{chef.philosophy}}\" awards={{chef.awards}} signatureDishes={{chef.signatureDishes}} />} />\n          <Route path=\"/dish-gallery\" element={<DishGallery />} />\n        </Routes>\n      </main>\n      <Footer restaurantName=\"{{footer.restaurantName}}\" address=\"{{footer.address}}\" phone=\"{{footer.phone}}\" socialLinks={{footer.socialLinks}} />\n    </div>\n  );\n};\n\nexport default App;" },
+    { "path": "src/index.css", "type": "code", "encoding": "utf8", "content": "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n@layer base {\n  html { font-size: 16px; line-height: 1.5; color: #3a3a3a; background-color: #fffaf0; }\n  body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }\n  h1, h2, h3, h4, h5, h6 { margin: 0; font-weight: 600; }\n  p { margin: 0; }\n}\n\n@layer components {\n  .btn { @apply px-4 py-2 rounded-lg text-white bg-orange-600 hover:bg-orange-500 transition duration-300 ease-in-out; }\n  .card { @apply bg-white shadow-md rounded-lg p-6 mb-4; }\n  .header { @apply bg-orange-600 text-white p-4; }\n  .footer { @apply bg-gray-200 text-gray-700 p-4 text-center; }\n}" },
+    { "path": "src/pages/Home.tsx", "type": "code", "encoding": "utf8", "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Home: React.FC = () => {\n  return (\n    <div className=\"min-h-screen p-8 bg-orange-50\">\n      <div className=\"max-w-4xl mx-auto text-center\">\n        <h1 className=\"text-5xl font-bold mb-6 text-orange-600\">{{home.title}}</h1>\n        <p className=\"text-xl text-gray-700 mb-8\">{{home.subtitle}}</p>\n        <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8\">\n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-2xl font-semibold mb-4 text-orange-600\">Our Menu</h2>\n            <p className=\"text-gray-600 mb-4\">Discover our carefully crafted dishes made with fresh, local ingredients</p>\n            <Link to=\"/menu\" className=\"btn\">View Menu</Link>\n          </div>\n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-2xl font-semibold mb-4 text-orange-600\">Make a Reservation</h2>\n            <p className=\"text-gray-600 mb-4\">Book your table for a memorable dining experience</p>\n            <Link to=\"/reservation\" className=\"btn\">Reserve Table</Link>\n          </div>\n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-2xl font-semibold mb-4 text-orange-600\">Meet Our Chef</h2>\n            <p className=\"text-gray-600 mb-4\">Learn about our passionate chef and culinary philosophy</p>\n            <Link to=\"/chef-profile\" className=\"btn\">Chef Profile</Link>\n          </div>\n        </div>\n        <div className=\"bg-white p-8 rounded-lg shadow-md\">\n          <h2 className=\"text-3xl font-bold mb-4 text-orange-600\">{{home.specialTitle}}</h2>\n          <p className=\"text-lg text-gray-700 mb-6\">{{home.specialText}}</p>\n          <Link to=\"/menu\" className=\"btn text-lg px-8 py-3\">{{home.specialCta}}</Link>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default Home;" },
+    { "path": "src/pages/Menu.tsx", "type": "code", "encoding": "utf8", "content": "import React, { useState } from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface MenuItem { id: number; name: string; description: string; price: string; imageUrl: string; dietaryInfo: string[]; }\n\nconst menuItems: MenuItem[] = {{menu.items}};\n\nconst Menu: React.FC = () => {\n  const [searchTerm, setSearchTerm] = useState('');\n  const filteredItems = menuItems.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));\n\n  return (\n    <div className=\"min-h-screen p-8 bg-gray-100\">\n      <div className=\"max-w-4xl mx-auto\">\n        <h1 className=\"text-4xl font-bold mb-6 text-center\">{{menu.title}}</h1>\n        <input type=\"text\" placeholder=\"Search menu items...\" className=\"mb-6 p-2 border border-gray-300 rounded w-full\" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />\n        <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6\">\n          {filteredItems.map(item => (\n            <div key={item.id} className=\"bg-white p-4 rounded shadow-md\">\n              <img src={item.imageUrl} alt={item.name} className=\"w-full h-48 object-cover rounded\" />\n              <h2 className=\"text-xl font-semibold mt-4\">{item.name}</h2>\n              <p className=\"text-gray-600\">{item.description}</p>\n              <p className=\"font-bold text-lg mt-2\">{item.price}</p>\n              <p className=\"text-sm text-gray-500 mt-1\">{item.dietaryInfo.length > 0 ? `Dietary: ${item.dietaryInfo.join(', ')}` : '—'}</p>\n            </div>\n          ))}\n        </div>\n        <Link to=\"/\" className=\"block mt-8 text-blue-500 hover:underline text-center\">Back to Home</Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Menu;" },
+    { "path": "src/pages/Reservation.tsx", "type": "code", "encoding": "utf8", "content": "import React, { useState } from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface ReservationFormProps { availableSlots: string[]; }\n\nconst Reservation: React.FC<ReservationFormProps> = ({ availableSlots }) => {\n  const [date, setDate] = useState('');\n  const [time, setTime] = useState('');\n  const [guests, setGuests] = useState(1);\n  const [table, setTable] = useState('');\n  const [specialRequests, setSpecialRequests] = useState('');\n  const [bookingStatus, setBookingStatus] = useState('');\n\n  const handleReservation = (e: React.FormEvent) => {\n    e.preventDefault();\n    setBookingStatus(`Reservation confirmed for ${guests} guests on ${date} at ${time}`);\n  };\n\n  return (\n    <div className=\"min-h-screen p-8 bg-orange-100\">\n      <div className=\"max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md\">\n        <h1 className=\"text-4xl font-bold mb-6 text-orange-600\">{{reservation.title}}</h1>\n        <form onSubmit={handleReservation} className=\"space-y-4\">\n          <input type=\"date\" value={date} onChange={(e) => setDate(e.target.value)} className=\"w-full p-2 border border-gray-300 rounded\" required />\n          <select value={time} onChange={(e) => setTime(e.target.value)} className=\"w-full p-2 border border-gray-300 rounded\" required>\n            <option value=\"\" disabled>Select Time</option>\n            {availableSlots.map((slot, index) => (<option key={index} value={slot}>{slot}</option>))}\n          </select>\n          <input type=\"number\" value={guests} onChange={(e) => setGuests(Number(e.target.value))} min={1} className=\"w-full p-2 border border-gray-300 rounded\" required />\n          <input type=\"text\" value={table} onChange={(e) => setTable(e.target.value)} placeholder=\"Preferred Table\" className=\"w-full p-2 border border-gray-300 rounded\" />\n          <textarea value={specialRequests} onChange={(e) => setSpecialRequests(e.target.value)} placeholder=\"Special Requests\" className=\"w-full p-2 border border-gray-300 rounded\" />\n          <button type=\"submit\" className=\"w-full p-2 bg-orange-600 text-white rounded hover:bg-orange-500\">{{reservation.cta}}</button>\n        </form>\n        {bookingStatus && <p className=\"mt-4 text-green-600\">{bookingStatus}</p>}\n        <Link to=\"/\" className=\"mt-4 inline-block text-blue-500 hover:underline\">Back to Home</Link>\n      </div>\n    </div>\n  );\n};\n\nexport default Reservation;" },
+    { "path": "src/pages/ChefProfile.tsx", "type": "code", "encoding": "utf8", "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface ChefProfileProps {\n  name: string; photo: string; biography: string; specialties: string[];\n  philosophy: string; awards: string[]; signatureDishes: string[];\n}\n\nconst ChefProfile: React.FC<ChefProfileProps> = ({ name, photo, biography, specialties, philosophy, awards, signatureDishes }) => {\n  return (\n    <div className=\"min-h-screen p-8 bg-orange-100\">\n      <div className=\"max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6\">\n        <h1 className=\"text-4xl font-bold text-orange-600 mb-4\">{name}</h1>\n        <img src={photo} alt={`${name}'s profile`} className=\"w-full h-64 object-cover rounded-lg mb-4\" />\n        <p className=\"text-gray-700 mb-4\">{biography}</p>\n        <h2 className=\"text-2xl font-semibold text-orange-500 mb-2\">Specialties</h2>\n        <ul className=\"list-disc list-inside mb-4\">{specialties.map((s, i) => (<li key={i} className=\"text-gray-600\">{s}</li>))}</ul>\n        <h2 className=\"text-2xl font-semibold text-orange-500 mb-2\">Cooking Philosophy</h2>\n        <p className=\"text-gray-700 mb-4\">{philosophy}</p>\n        <h2 className=\"text-2xl font-semibold text-orange-500 mb-2\">Awards & Recognition</h2>\n        <ul className=\"list-disc list-inside mb-4\">{awards.map((a, i) => (<li key={i} className=\"text-gray-600\">{a}</li>))}</ul>\n        <h2 className=\"text-2xl font-semibold text-orange-500 mb-2\">Signature Dishes</h2>\n        <ul className=\"list-disc list-inside mb-4\">{signatureDishes.map((d, i) => (<li key={i} className=\"text-gray-600\">{d}</li>))}</ul>\n        <Link to=\"/\" className=\"text-blue-500 hover:underline\">Back to Home</Link>\n      </div>\n    </div>\n  );\n};\n\nexport default ChefProfile;" },
+    { "path": "src/pages/DishGallery.tsx", "type": "code", "encoding": "utf8", "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface Dish { id: number; name: string; description: string; ingredients: string[]; category: string; imageUrl: string; }\n\nconst DishGallery: React.FC = () => {\n  const dishes: Dish[] = {{gallery.dishes}};\n  return (\n    <div className=\"min-h-screen p-8 bg-white\">\n      <div className=\"max-w-6xl mx-auto\">\n        <h1 className=\"text-4xl font-bold mb-6 text-center text-blue-600\">{{gallery.title}}</h1>\n        <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6\">\n          {dishes.map((dish) => (\n            <div key={dish.id} className=\"border rounded-lg shadow-lg overflow-hidden\">\n              <img src={dish.imageUrl} alt={dish.name} className=\"w-full h-48 object-cover\" />\n              <div className=\"p-4\">\n                <h2 className=\"text-2xl font-semibold mb-2\">{dish.name}</h2>\n                <p className=\"text-gray-700 mb-2\">{dish.description}</p>\n                <p className=\"text-gray-500\">Ingredients: {dish.ingredients.join(', ')}\n                </p>\n                <Link to={`/dishes/${dish.id}`} className=\"text-blue-500 hover:underline mt-4 inline-block\">View Details</Link>\n              </div>\n            </div>\n          ))}\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default DishGallery;" },
+    { "path": "src/components/Header.tsx", "type": "code", "encoding": "utf8", "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface HeaderProps { restaurantName: string; tagline?: string; }\n\nconst Header: React.FC<HeaderProps> = ({ restaurantName, tagline }) => {\n  return (\n    <header className=\"bg-orange-600 p-4 shadow-md\">\n      <div className=\"container mx-auto text-center\">\n        <Link to=\"/\" className=\"text-decoration-none\">\n          <h1 className=\"text-3xl font-bold text-white\">{restaurantName}</h1>\n          {tagline && <p className=\"text-lg text-white mt-2\">{tagline}</p>}\n        </Link>\n      </div>\n    </header>\n  );\n};\n\nexport default Header;" },
+    { "path": "src/components/Footer.tsx", "type": "code", "encoding": "utf8", "content": "import React from 'react';\n\ninterface FooterProps { restaurantName: string; address: string; phone: string; socialLinks: { platform: string; url: string }[]; }\n\nconst Footer: React.FC<FooterProps> = ({ restaurantName, address, phone, socialLinks }) => {\n  return (\n    <footer className=\"bg-orange-600 text-white p-6\">\n      <div className=\"container mx-auto text-center\">\n        <h2 className=\"text-2xl font-bold mb-2\">{restaurantName}</h2>\n        <p className=\"mb-2\">{address}</p>\n        <p className=\"mb-4\">{phone}</p>\n        <div className=\"flex justify-center space-x-4\">\n          {socialLinks.map((link) => (\n            <a key={link.platform} href={link.url} className=\"text-white hover:text-orange-300\" target=\"_blank\" rel=\"noopener noreferrer\">{link.platform}</a>\n          ))}\n        </div>\n        <p className=\"mt-4 text-sm\">© {new Date().getFullYear()} {restaurantName}. All rights reserved.</p>\n      </div>\n    </footer>\n  );\n};\n\nexport default Footer;" }
+  ],
+  "slots": {
+    "header": {
+      "type": "object",
+      "component": "Header",
+      "fields": [
+        { "key": "restaurantName", "type": "text", "required": true, "validators": [{ "kind": "maxLength", "value": 40 }] },
+        { "key": "tagline", "type": "text", "validators": [{ "kind": "maxLength", "value": 80 }] }
+      ],
+      "style": {
+        "allowedClasses": {
+          "header": ["bg-orange-600","bg-orange-700","bg-white","bg-slate-900","bg-slate-800","p-4","p-6","py-3","py-6","shadow","shadow-md","shadow-lg","border-b","border-orange-200","dark:bg-slate-900"],
+          "title": ["text-2xl","text-3xl","text-4xl","font-bold","text-white","text-slate-900","dark:text-white","tracking-tight"],
+          "tagline": ["text-sm","text-base","text-lg","text-white","text-slate-600","mt-1","mt-2","dark:text-slate-300"]
+        }
+      }
+    },
+    "footer": {
+      "type": "object",
+      "component": "Footer",
+      "fields": [
+        { "key": "restaurantName", "type": "text", "required": true },
+        { "key": "address", "type": "text", "required": true },
+        { "key": "phone", "type": "text", "required": true },
+        { "key": "socialLinks", "type": "list", "itemShape": { "platform": { "type": "text" }, "url": { "type": "url" } } }
+      ],
+      "style": {
+        "allowedClasses": {
+          "footer": ["bg-orange-600","bg-orange-700","bg-white","bg-slate-900","text-white","text-slate-900","p-6","p-8","border-t","dark:bg-slate-900","dark:text-slate-200"],
+          "link": ["text-sm","text-base","underline","no-underline","hover:text-orange-300","hover:text-orange-400"]
+        }
+      }
+    },
+    "home": {
+      "type": "object",
+      "component": "Home",
+      "fields": [
+        { "key": "title", "type": "text", "required": true, "validators": [{ "kind": "maxLength", "value": 60 }] },
+        { "key": "subtitle", "type": "richtext", "validators": [{ "kind": "maxLength", "value": 160 }] },
+        { "key": "specialTitle", "type": "text" },
+        { "key": "specialText", "type": "text" },
+        { "key": "specialCta", "type": "text" }
+      ],
+      "style": {
+        "allowedClasses": {
+          "title": ["text-3xl","text-4xl","text-5xl","font-bold","text-orange-600","text-slate-900","dark:text-white"],
+          "cta": ["btn","text-base","text-lg","px-6","px-8","py-2","py-3","bg-orange-600","bg-slate-900","hover:bg-orange-500","hover:bg-slate-800"]
+        }
+      }
+    },
+    "menu": {
+      "type": "object",
+      "component": "MenuList",
+      "fields": [
+        { "key": "title", "type": "text", "required": true, "validators": [{ "kind": "maxLength", "value": 40 }] },
+        { "key": "items", "type": "list", "itemShape": { "id": { "type": "number" }, "name": { "type": "text", "validators": [{ "kind": "maxLength", "value": 40 }] }, "description": { "type": "text", "validators": [{ "kind": "maxLength", "value": 140 }] }, "price": { "type": "text" }, "imageUrl": { "type": "image", "minWidth": 400, "aspectRatio": "4:3" }, "dietaryInfo": { "type": "list", "itemShape": { "value": { "type": "text" } } } }, "validators": [{ "kind": "maxItems", "value": 100 }] }
+      ],
+      "style": {
+        "allowedClasses": {
+          "card": ["bg-white","p-4","p-6","rounded","rounded-lg","shadow","shadow-md","hover:shadow-lg","transition","duration-300","md:p-4","lg:p-6"],
+          "image": ["w-full","h-40","h-48","h-56","h-64","h-72","h-80","object-cover","object-contain","object-center","rounded","rounded-lg","rounded-none","transition","duration-300","hover:scale-105"],
+          "grid": ["grid","grid-cols-1","sm:grid-cols-2","md:grid-cols-2","lg:grid-cols-3","xl:grid-cols-4","gap-4","gap-6","gap-8"]
+        }
+      }
+    },
+    "reservation": {
+      "type": "object",
+      "component": "Reservation",
+      "fields": [
+        { "key": "title", "type": "text", "required": true },
+        { "key": "availableSlots", "type": "list", "itemShape": { "value": { "type": "text" } } },
+        { "key": "cta", "type": "text", "default": "Confirm Reservation" }
+      ],
+      "style": {
+        "allowedClasses": {
+          "button": ["w-full","p-2","p-3","rounded","bg-orange-600","bg-slate-900","text-white","hover:bg-orange-500","hover:bg-slate-800","transition","duration-200"]
+        }
+      }
+    },
+    "chef": {
+      "type": "object",
+      "component": "ChefProfile",
+      "fields": [
+        { "key": "name", "type": "text", "required": true },
+        { "key": "photo", "type": "image", "minWidth": 1200, "aspectRatio": "16:9" },
+        { "key": "biography", "type": "text" },
+        { "key": "specialties", "type": "list", "itemShape": { "value": { "type": "text" } } },
+        { "key": "philosophy", "type": "text" },
+        { "key": "awards", "type": "list", "itemShape": { "value": { "type": "text" } } },
+        { "key": "signatureDishes", "type": "list", "itemShape": { "value": { "type": "text" } } }
+      ]
+    },
+    "gallery": {
+      "type": "object",
+      "component": "DishGallery",
+      "fields": [
+        { "key": "title", "type": "text", "required": true },
+        { "key": "layoutMode", "type": "text", "default": "grid" },
+        { "key": "filterEnabled", "type": "boolean", "default": true },
+        { "key": "filterCategories", "type": "list", "itemShape": { "value": { "type": "text" } } },
+        { "key": "dishes", "type": "list", "itemShape": { "id": { "type": "number" }, "name": { "type": "text" }, "description": { "type": "text", "validators": [{ "kind": "maxLength", "value": 160 }] }, "ingredients": { "type": "list", "itemShape": { "value": { "type": "text" } } }, "category": { "type": "text" }, "imageUrl": { "type": "image", "minWidth": 800, "aspectRatio": "4:3" } }, "validators": [{ "kind": "maxItems", "value": 60 }] }
+      ],
+      "style": {
+        "allowedClasses": {
+          "grid": ["grid","grid-cols-1","sm:grid-cols-2","md:grid-cols-3","lg:grid-cols-4","xl:grid-cols-5","2xl:grid-cols-6","gap-4","gap-6","gap-8","gap-10"],
+          "masonry": ["columns-1","sm:columns-2","md:columns-3","lg:columns-4","xl:columns-5","2xl:columns-6","gap-4","gap-6","gap-8","gap-10"],
+          "card": ["bg-white","dark:bg-slate-900","text-slate-900","dark:text-slate-100","border","rounded-lg","shadow","shadow-lg","overflow-hidden","transition","duration-300","ease-out","hover:shadow-xl","hover:translate-y-0.5","group","break-inside-avoid","mb-6"],
+          "title": ["text-2xl","text-3xl","text-4xl","font-bold","text-blue-600","text-slate-900","dark:text-white","text-left","text-center","tracking-tight"],
+          "image": ["w-full","h-40","h-48","h-56","h-64","h-72","h-80","h-96","object-cover","object-contain","object-center","rounded-none","rounded","rounded-md","rounded-lg","transition","duration-300","ease-out","hover:scale-105","hover:brightness-110","hover:saturate-150","grayscale","hover:grayscale-0"],
+          "filters": ["flex","flex-wrap","items-center","gap-2","gap-3","mb-6","justify-center","justify-start"],
+          "filterButton": ["px-3","py-1.5","rounded-full","text-sm","bg-slate-100","text-slate-700","hover:bg-slate-200","dark:bg-slate-800","dark:text-slate-200","dark:hover:bg-slate-700","border","border-slate-200","dark:border-slate-700","data-[active=true]:bg-orange-600","data-[active=true]:text-white","data-[active=true]:border-orange-600"]
+        }
+      }
+    }
+  },
+  "constraints": {
+    "a11y": { "contrast": "AA", "minFontSizePx": 14, "ariaRequired": true, "keyboardNavigable": true },
+    "layout": { "breakpoints": ["sm","md","lg"], "containerMaxWidth": 1200, "minTapTargetPx": 44 },
+    "content": { "seo": { "titleMaxLen": 60, "descMaxLen": 160, "requireH1": true, "metaTags": ["og:title","og:description"] } },
+    "assets": {
+      "chef.photo": { "minWidth": 1200, "aspectRatio": "16:9" },
+      "menu.items.imageUrl": { "minWidth": 400, "aspectRatio": "4:3" },
+      "gallery.dishes.imageUrl": { "minWidth": 800, "aspectRatio": "4:3" }
+    },
+    "performance": { "maxImageKb": 600, "maxCriticalCssKb": 160 },
+    "security": { "disallowInlineScript": true },
+    "i18n": { "noHardcodedText": false },
+    "code": { "tsc": true }
+  }
+}
+
