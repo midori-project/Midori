@@ -197,7 +197,7 @@ User input: "${userInput}"
           { role: 'system', content: fullSystemPrompt },
           { role: 'user', content: userInput }
         ],
-        temperature: 0.3, // ความสร้างสรรค์ต่ำ เน้นความถูกต้อง
+        temperature: 1, // GPT-5 models only support temperature = 1
         max_tokens: 2000,
         response_format: { type: "json_object" } // บังคับให้ตอบเป็น JSON
       });

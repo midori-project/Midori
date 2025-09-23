@@ -42,6 +42,11 @@ class RealAgentClient {
 
   async dispatchTask(task: Task): Promise<DispatchResult> {
     console.log(`📤 Dispatching task ${task.taskId} to ${this.agentName} agent`);
+    console.log(`📤 Task payload:`, {
+      hasProjectContext: !!task.payload?.projectContext,
+      projectId: task.payload?.projectContext?.projectId,
+      projectType: task.payload?.projectContext?.projectType
+    });
     
     try {
       const dispatchId = `${this.agentName}-${task.taskId}-${Date.now()}`;
@@ -53,6 +58,13 @@ class RealAgentClient {
         
         // Transform task to frontend format if needed
         const frontendTask = this.transformToFrontendTask(task);
+        console.log('🎨 Transformed frontend task:', {
+          taskId: frontendTask.taskId,
+          taskType: frontendTask.taskType,
+          hasProjectContext: !!frontendTask.projectContext,
+          projectId: frontendTask.projectContext?.projectId,
+          projectType: frontendTask.projectContext?.projectType
+        });
         result = await frontendAgent(frontendTask);
         
         console.log(`✅ Frontend Agent completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);

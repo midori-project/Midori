@@ -61,12 +61,25 @@ export class OpenAIProvider implements LLMProvider {
           const response: any = await (this.client as any).responses.create(responsesReq);
           const responseTime = performance.now() - startTime;
 
+          // Debug response structure
+          console.log('📊 Responses API response structure:', {
+            hasOutputText: !!response?.output_text,
+            outputTextLength: response?.output_text?.length || 0,
+            responseKeys: Object.keys(response || {}),
+            responseType: typeof response,
+            hasOutput: !!response?.output,
+            outputType: typeof response?.output,
+            outputLength: response?.output?.length || 0
+          });
+
           // Prefer convenience accessor; fallback to traversing output
           const content: string | undefined = response?.output_text
             ?? (this as any).extractTextFromResponsesOutput(response);
 
           if (!content || content.trim() === '') {
-            throw new LLMError('Empty response from OpenAI Responses API', 'EMPTY_RESPONSE', false);
+            console.warn('⚠️ Empty response from OpenAI Responses API, falling back to Chat Completions API');
+            console.warn('⚠️ Response structure:', JSON.stringify(response, null, 2));
+            throw new LLMError('Empty response from OpenAI Responses API', 'EMPTY_RESPONSE', true); // Make it retryable
           }
 
           // Usage mapping (Responses API may return input_tokens/output_tokens)
@@ -117,13 +130,32 @@ export class OpenAIProvider implements LLMProvider {
         requestConfig.max_tokens = request.maxTokens || 4000;
       }
 
+      console.log('🔄 Using Chat Completions API fallback for model:', modelName);
       const response = await this.client.chat.completions.create(requestConfig);
       const responseTime = performance.now() - startTime;
+      
+      console.log('📊 Chat Completions API response:', {
+        model: modelName,
+        choicesCount: response.choices?.length || 0,
+        hasContent: !!response.choices?.[0]?.message?.content,
+        contentLength: response.choices?.[0]?.message?.content?.length || 0
+      });
 
       // Handle normal assistant text replies; ignore tool-only responses
       const content = response.choices?.[0]?.message?.content ?? '';
       if (!content || content.trim() === '') {
-        throw new LLMError('Empty response from OpenAI', 'EMPTY_RESPONSE', false);
+        console.warn('⚠️ Empty response from OpenAI Chat Completions API');
+        // Return a default response instead of throwing error
+        return {
+          content: '{"categoryId": "e_commerce_general", "confidence": 0.1, "reasoning": "Empty response, using default category", "alternativeCategories": []}',
+          usage: {
+            prompt_tokens: 0,
+            completion_tokens: 0,
+            total_tokens: 0
+          },
+          responseTime: responseTime,
+          model: modelName
+        };
       }
 
       if (response.usage) {

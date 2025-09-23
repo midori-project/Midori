@@ -16,6 +16,8 @@ import { ChatPromptLoader } from './prompts/chatPromptLoader';
 import { getResponseConfig, toLLMOptions } from './configs/responseConfig';
 import { ProjectContextOrchestratorService } from './services/projectContextOrchestratorService';
 import type { ProjectContextData } from './types/projectContext';
+import { projectContextStore } from './stores/projectContextStore';
+import { projectContextSync } from './sync/projectContextSync';
 import { randomUUID } from 'crypto';
 
 // Create singleton instance
@@ -127,7 +129,6 @@ export interface Command {
 export class OrchestratorAI {
   private llmAdapter: LLMAdapter;
   private conversationHistory: Map<string, ConversationContext>;
-  private projectContexts: Map<string, ProjectContextData>;
   private initialized: boolean = false;
 
   /**
@@ -181,7 +182,6 @@ export class OrchestratorAI {
   constructor() {
     this.llmAdapter = new LLMAdapter();
     this.conversationHistory = new Map();
-    this.projectContexts = new Map();
   }
 
   /**
@@ -842,7 +842,7 @@ export class OrchestratorAI {
     if (!projectContext && (analysis.intent === 'simple_task' || analysis.intent === 'complex_task')) {
       console.log('🏗️ Creating new project context for task');
       const projectId = `project_${Date.now()}`;
-      const projectType = this.detectProjectTypeFromInput(message.content);
+      const projectType = await this.detectProjectTypeFromInput(message.content);
       
       // สร้าง Project record ก่อน
       await this.createProjectRecord(projectId, this.extractProjectName(message.content));
@@ -1242,8 +1242,7 @@ ${executionResults.map((result: any) =>
       userInput
     );
 
-    // เก็บใน memory cache
-    this.projectContexts.set(projectId, projectContext);
+    // Project context is now managed by ProjectContextStore (SSOT)
 
     // อัปเดต conversation context
     const sessionId = `${projectId}_${Date.now()}`;
@@ -1258,22 +1257,10 @@ ${executionResults.map((result: any) =>
   }
 
   /**
-   * Get project context
+   * Get project context from SSOT
    */
   async getProjectContext(projectId: string): Promise<ProjectContextData | null> {
-    // ตรวจสอบใน memory cache ก่อน
-    let projectContext = this.projectContexts.get(projectId);
-    
-    if (!projectContext) {
-      // ถ้าไม่มีใน cache ให้ดึงจาก database
-      const dbProjectContext = await ProjectContextOrchestratorService.getProjectContext(projectId);
-      if (dbProjectContext) {
-        this.projectContexts.set(projectId, dbProjectContext);
-        projectContext = dbProjectContext;
-      }
-    }
-
-    return projectContext || null;
+    return await projectContextStore.getProjectContext(projectId);
   }
 
   /**
@@ -1289,16 +1276,15 @@ ${executionResults.map((result: any) =>
       conversationHistory?: any;
       userPreferences?: any;
     }
-  ): Promise<ProjectContextData> {
-    const projectContext = await ProjectContextOrchestratorService.updateProjectContext(
-      projectId,
-      updates
-    );
-
-    // อัปเดต memory cache
-    this.projectContexts.set(projectId, projectContext);
-
-    return projectContext;
+  ): Promise<ProjectContextData | null> {
+    const updatedContext = await projectContextStore.updateProjectContext(projectId, updates);
+    
+    if (updatedContext) {
+      // Broadcast update to all subscribers
+      await projectContextSync.broadcastUpdate(projectId, updatedContext);
+    }
+    
+    return updatedContext;
   }
 
 
@@ -1405,24 +1391,6 @@ ${executionResults.map((result: any) =>
     };
   }
 
-  /**
-   * Broadcast project state change to all subscribers
-   */
-  private async broadcastProjectStateChange(projectId: string, changes: any): Promise<void> {
-    try {
-      console.log(`📢 Broadcasting project state change for ${projectId}`);
-      
-      // In real implementation, this would use WebSocket/SSE to notify clients
-      // For now, we'll just log the change
-      console.log(`📢 Project ${projectId} updated:`, {
-        timestamp: new Date().toISOString(),
-        changes: Object.keys(changes)
-      });
-      
-    } catch (error) {
-      console.error(`❌ Failed to broadcast project state change:`, error);
-    }
-  }
 
   /**
    * Update project context after task execution with comprehensive state sync
@@ -1442,22 +1410,19 @@ ${executionResults.map((result: any) =>
       const changes = this.extractChangesFromTaskResult(taskResult);
       
       if (changes.hasChanges) {
-        // Update project context with changes
-        await this.applyProjectContextChanges(projectId, currentContext, changes);
+        // Update project context with changes using SSOT
+        const updates = this.buildProjectContextUpdates(changes);
+        const updatedContext = await projectContextStore.updateProjectContext(projectId, updates);
         
-        // Update memory cache
-        const updatedContext = await this.getProjectContext(projectId);
         if (updatedContext) {
-          this.projectContexts.set(projectId, updatedContext);
+          // Update conversation context
+          await this.updateConversationContextAfterTask(projectId, changes);
+          
+          // Broadcast changes to all subscribers
+          await projectContextSync.broadcastUpdate(projectId, updatedContext);
+          
+          console.log(`✅ Project context synced successfully for project ${projectId}`);
         }
-        
-        // Update conversation context
-        await this.updateConversationContextAfterTask(projectId, changes);
-        
-        // Broadcast changes to subscribers
-        await this.broadcastProjectStateChange(projectId, changes);
-        
-        console.log(`✅ Project context synced successfully for project ${projectId}`);
       } else {
         console.log(`ℹ️ No changes detected for project ${projectId}`);
       }
@@ -1465,6 +1430,38 @@ ${executionResults.map((result: any) =>
     } catch (error) {
       console.error(`❌ Failed to sync project context for project ${projectId}:`, error);
     }
+  }
+
+  /**
+   * Build project context updates from changes
+   */
+  private buildProjectContextUpdates(changes: {
+    hasChanges: boolean;
+    components: any[];
+    pages: any[];
+    styling: any | null;
+    metadata: any;
+  }): any {
+    const updates: any = {};
+    
+    if (changes.components.length > 0) {
+      updates.components = changes.components;
+    }
+    
+    if (changes.pages.length > 0) {
+      updates.pages = changes.pages;
+    }
+    
+    if (changes.styling) {
+      updates.styling = changes.styling;
+    }
+    
+    // Update status based on changes
+    if (changes.hasChanges) {
+      updates.status = 'in_progress';
+    }
+    
+    return updates;
   }
 
   /**
@@ -1517,42 +1514,6 @@ ${executionResults.map((result: any) =>
     return changes;
   }
 
-  /**
-   * Apply project context changes to database
-   */
-  private async applyProjectContextChanges(
-    projectId: string, 
-    currentContext: ProjectContextData, 
-    changes: any
-  ): Promise<void> {
-    const updates: any = {};
-    
-    // Update components
-    if (changes.components.length > 0) {
-      updates.components = [...currentContext.components, ...changes.components];
-    }
-    
-    // Update pages
-    if (changes.pages.length > 0) {
-      updates.pages = [...currentContext.pages, ...changes.pages];
-    }
-    
-    // Update styling
-    if (changes.styling) {
-      updates.styling = { ...currentContext.styling, ...changes.styling };
-    }
-    
-    // Update conversation history
-    updates.conversationHistory = {
-      ...currentContext.conversationHistory,
-      lastAction: 'task_execution_completed',
-      lastIntent: 'task_completion',
-      updatedAt: new Date()
-    };
-
-    // Apply updates to database
-    await this.updateProjectContext(projectId, updates);
-  }
 
   /**
    * Update conversation context after task execution
@@ -1585,30 +1546,66 @@ ${executionResults.map((result: any) =>
 
 
   /**
-   * Detect project type from user input
+   * Detect project type from user input using AI-powered category detection
    */
-  private detectProjectTypeFromInput(input: string): string {
-    const lowerInput = input.toLowerCase();
-    
-    if (lowerInput.includes('ร้านกาแฟ') || lowerInput.includes('coffee')) {
-      return 'coffee_shop';
-    } else if (lowerInput.includes('ร้านอาหาร') || lowerInput.includes('restaurant')) {
-      return 'restaurant';
-    } else if (lowerInput.includes('ขายของ') || lowerInput.includes('ecommerce')) {
-      return 'e_commerce';
-    } else if (lowerInput.includes('portfolio') || lowerInput.includes('ผลงาน')) {
-      return 'portfolio';
-    } else if (lowerInput.includes('blog') || lowerInput.includes('บล็อก')) {
-      return 'blog';
-    } else if (lowerInput.includes('landing') || lowerInput.includes('หน้าแรก')) {
-      return 'landing_page';
-    } else if (lowerInput.includes('ธุรกิจ') || lowerInput.includes('business')) {
-      return 'business';
-    } else if (lowerInput.includes('ส่วนตัว') || lowerInput.includes('personal')) {
-      return 'personal';
+  private async detectProjectTypeFromInput(input: string): Promise<string> {
+    try {
+      // Import category detection service
+      const { categoryDetectionService } = await import('./services/categoryDetectionService');
+      
+      console.log('🔍 Detecting project type for:', input);
+      
+      // Use AI-powered category detection
+      const result = await categoryDetectionService.detectCategory(input);
+      
+      console.log('🎯 Category detection result:', {
+        category: result.category.name,
+        confidence: result.confidence,
+        reasoning: result.reasoning
+      });
+      
+      // Map category ID to project type
+      const projectTypeMapping: Record<string, string> = {
+        'e_commerce_food': 'e_commerce',
+        'e_commerce_fashion': 'e_commerce', 
+        'e_commerce_general': 'e_commerce',
+        'restaurant': 'restaurant',
+        'coffee_shop': 'coffee_shop',
+        'business': 'business',
+        'portfolio': 'portfolio',
+        'blog': 'blog',
+        'landing_page': 'landing_page',
+        'education': 'education',
+        'healthcare': 'healthcare'
+      };
+      
+      const projectType = projectTypeMapping[result.category.id] || 'e_commerce';
+      
+      console.log('✅ Project type detected:', projectType);
+      return projectType;
+      
+    } catch (error) {
+      console.error('❌ Category detection failed, using fallback:', error);
+      
+      // Fallback to simple keyword matching
+      const lowerInput = input.toLowerCase();
+      
+      if (lowerInput.includes('ร้านกาแฟ') || lowerInput.includes('coffee')) {
+        return 'coffee_shop';
+      } else if (lowerInput.includes('ร้านอาหาร') || lowerInput.includes('restaurant')) {
+        return 'restaurant';
+      } else if (lowerInput.includes('ขาย') || lowerInput.includes('shop') || lowerInput.includes('store')) {
+        return 'e_commerce';
+      } else if (lowerInput.includes('portfolio') || lowerInput.includes('ผลงาน')) {
+        return 'portfolio';
+      } else if (lowerInput.includes('blog') || lowerInput.includes('บล็อก')) {
+        return 'blog';
+      } else if (lowerInput.includes('ธุรกิจ') || lowerInput.includes('business')) {
+        return 'business';
+      }
+      
+      return 'e_commerce'; // Default to e_commerce for selling businesses
     }
-    
-    return 'coffee_shop'; // default
   }
 
   /**

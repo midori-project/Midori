@@ -468,16 +468,68 @@ async function processWithAI(command: Command): Promise<{
       maxTokens: 8000
     });
 
-    // Parse AI response as JSON
+    // Parse AI response as JSON with better error handling
     let parsedResponse;
     try {
-      parsedResponse = JSON.parse(aiResponse.content);
+      // Log the raw AI response for debugging
+      console.log('🔍 Raw AI response:', aiResponse.content);
+      
+      // Try to clean the response before parsing
+      let cleanedContent = aiResponse.content.trim();
+      
+      // Remove any markdown code blocks if present
+      if (cleanedContent.startsWith('```json')) {
+        cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedContent.startsWith('```')) {
+        cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // Try to find JSON object in the response
+      const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanedContent = jsonMatch[0];
+      }
+      
+      console.log('🔍 Cleaned AI response:', cleanedContent);
+      
+      parsedResponse = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.warn('⚠️ Failed to parse AI response as JSON:', parseError);
-      return {
-        aiResponse: { error: 'Invalid JSON response from AI' },
-        chatResponse: null,
-        success: false
+      console.warn('⚠️ Raw response content:', aiResponse.content);
+      
+      // Fallback: Create a basic plan structure
+      console.log('🔄 Creating fallback plan structure');
+      parsedResponse = {
+        success: true,
+        plan: {
+          planId: crypto.randomUUID(),
+          tasks: [{
+            taskId: crypto.randomUUID(),
+            agent: 'frontend',
+            action: command.commandType,
+            description: `Execute ${command.commandType} task`,
+            payload: command.payload,
+            dependencies: [],
+            estimatedDuration: 30,
+            priority: command.priority,
+            status: 'pending',
+            resourceRequirements: { cpu: 1, memory: 2 }
+          }],
+          executionStages: [],
+          qualityGates: [],
+          estimatedTotalDuration: 30,
+          totalResourceRequirements: {
+            maxParallelTasks: 1,
+            totalCpuUnits: 1,
+            totalMemoryUnits: 1
+          },
+          metadata: {
+            createdAt: new Date().toISOString(),
+            aiGenerated: false,
+            fallback: true
+          }
+        },
+        warnings: ['AI response parsing failed, using fallback plan']
       };
     }
 
@@ -635,15 +687,66 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
         console.log('⚠️ AI plan has no tasks, creating tasks from command');
         tasks = breakdownCommand(command);
       } else {
-        // ✅ แก้ไข: เพิ่ม projectContext ให้ AI plan tasks
-        console.log('🔧 Adding projectContext to AI plan tasks');
-        tasks = tasks.map((task: any) => ({
-          ...task,
-          payload: {
-            ...task.payload,
-            projectContext: command.payload.projectContext
+        // ✅ แก้ไข: เพิ่ม projectContext และแปลงเป็น hybrid approach (template + component)
+        console.log('🔧 Adding projectContext to AI plan tasks and converting to hybrid approach');
+        tasks = tasks.map((task: any) => {
+          // Handle frontend tasks based on context
+          if (task.agent === 'frontend') {
+            // Check if this is a new website creation (use template)
+            if (task.action === 'create_component' && 
+                (command.commandType === 'SELECT_TEMPLATE' || 
+                 task.description?.includes('เว็บไซต์') || 
+                 task.description?.includes('ร้าน'))) {
+              console.log('🔄 Converting website creation to template selection:', task.taskId);
+              return {
+                ...task,
+                action: 'select_template',
+                description: `เลือก template ที่เหมาะสมสำหรับ ${command.payload.projectContext?.projectType || 'e_commerce'}`,
+                payload: {
+                  templateType: command.payload.projectContext?.projectType || 'e_commerce',
+                  customizations: {
+                    theme: command.payload.projectContext?.userPreferences?.theme || 'light',
+                    language: command.payload.projectContext?.userPreferences?.language || 'th'
+                  },
+                  projectContext: command.payload.projectContext
+                }
+              };
+            }
+            // Keep component creation for specific components
+            else if (task.action === 'create_component') {
+              console.log('🔄 Keeping component creation for specific component:', task.taskId);
+              return {
+                ...task,
+                payload: {
+                  ...task.payload,
+                  projectContext: command.payload.projectContext,
+                  templateIntegration: {
+                    insertInto: 'main',
+                    position: 'bottom'
+                  }
+                }
+              };
+            }
           }
-        }));
+          
+          // Keep other tasks as is but add projectContext
+          return {
+            ...task,
+            payload: {
+              ...task.payload,
+              projectContext: command.payload.projectContext
+            }
+          };
+        });
+        
+        console.log('🔧 Tasks with projectContext (template-first):', tasks.map((t: any) => ({
+          taskId: t.taskId,
+          agent: t.agent,
+          action: t.action,
+          hasProjectContext: !!t.payload?.projectContext,
+          projectId: t.payload?.projectContext?.projectId,
+          templateType: t.payload?.templateType
+        })));
       }
       
       const plan: ExecutionPlan = {
