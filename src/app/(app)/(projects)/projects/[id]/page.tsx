@@ -2,7 +2,7 @@ import { getCurrentSession } from '@/libs/auth/session';
 import { redirect } from 'next/navigation';
 import { NextPage } from 'next';
 import ChatInterface from '@/components/chat/ChatInterface';
-
+import ProjectPreview from '@/components/projects/ProjectPreview';
 
 interface ProjectPageProps {
   params: Promise<{
@@ -21,14 +21,21 @@ const ProjectPage: NextPage<ProjectPageProps> = async ({ params }) => {
   // ดึง projectId จาก params
   const { id: projectId } = await params;
   const initialMessage = `สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭`;
-  // ใช้ projectId เพื่อดึง promptJson
-
 
   return (
-    <div className="container mx-auto px-4 py-32">
-      <h1>Project Page</h1>
-      <h1>{projectId}</h1>
-      <ChatInterface initialMessage={initialMessage} />
+    <div className="h-screen flex flex-col lg:flex-row bg-gray-100">
+      {/* Chat Section - Left Side (25%) */}
+      <div className="w-full lg:w-1/4 border-r border-gray-300 bg-white flex flex-col">
+        {/* Chat Interface */}
+        <div className="flex-1 overflow-hidden">
+          <ChatInterface initialMessage={initialMessage} />
+        </div>
+      </div>
+
+      {/* Preview Section - Right Side (75%) */}
+      <div className="w-full lg:w-3/4 bg-gray-50">
+        <ProjectPreview projectId={projectId} />
+      </div>
     </div>
   );
 };

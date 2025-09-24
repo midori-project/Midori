@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Zap } from 'lucide-react';
+import { Send, Bot, User, Loader2, Zap, RefreshCw, Code } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -170,16 +170,29 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-600">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-            <Bot className="w-6 h-6 text-white" />
+    <div className="flex flex-col h-full bg-white">
+      {/* Chat Header */}
+      <div className="bg-white border-b border-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+              <Bot className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Midori AI</h2>
+              <p className="text-sm text-gray-500">AI Assistant for Web Development</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Midori AI Chat</h1>
-            <p className="text-sm text-gray-500">Orchestrator AI Testing Interface</p>
+          
+          <div className="flex items-center space-x-2">
+            <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
+              <RefreshCw className="w-4 h-4" />
+              <span>Restore</span>
+            </button>
+            <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
+              <Code className="w-4 h-4" />
+              <span>Code</span>
+            </button>
           </div>
         </div>
       </div>
@@ -246,7 +259,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="พิมพ์ข้อความหรือสั่งงาน Midori AI..."
+                placeholder="Ask Midori AI..."
                 disabled={isLoading}
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 rows={1}
@@ -271,25 +284,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             </div>
           </div>
           
-          {/* Quick actions */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {[
-              'สวัสดีครับ',
-              'สร้าง button component',
-              'แก้สี navbar เป็นสีน้ำเงิน',
-              'สร้างเว็บไซต์ร้านกาแฟ',
-              'ช่วยอธิบาย React hooks'
-            ].map((suggestion) => (
-              <button
-                key={suggestion}
-                onClick={() => setInput(suggestion)}
-                disabled={isLoading}
-                className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     </div>
