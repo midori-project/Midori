@@ -348,6 +348,7 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const category = url.searchParams.get('category') ?? undefined;
+    const type = url.searchParams.get('type') ?? undefined;
     const status = url.searchParams.get('status') as z.infer<typeof TemplateStatusEnum> | null;
     const statusScope = (url.searchParams.get('statusScope') ?? 'meta') as 'meta' | 'version';
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '10', 10), 50);
@@ -375,10 +376,24 @@ export async function GET(req: NextRequest) {
       ? items.filter((t) => t.meta?.status === status)
       : items;
 
+    // Optional filter by `type` against category or tag key/label (case-insensitive)
+    const filteredByType = type
+      ? filtered.filter((t) => {
+          const typeLc = type.toLowerCase();
+          const inCategory = t.category ? t.category.toLowerCase() === typeLc : false;
+          const inTags = (t.meta?.tags ?? []).some((mt: any) => {
+            const keyLc = mt?.tag?.key ? String(mt.tag.key).toLowerCase() : '';
+            const labelLc = mt?.tag?.label ? String(mt.tag.label).toLowerCase() : '';
+            return keyLc === typeLc || labelLc === typeLc;
+          });
+          return inCategory || inTags;
+        })
+      : filtered;
+
     return NextResponse.json({
       success: true,
-      data: filtered,
-      pagination: { limit, offset, count: filtered.length },
+      data: filteredByType,
+      pagination: { limit, offset, count: filteredByType.length },
     });
   } catch (e: any) {
     console.error('Template GET error:', e);
