@@ -15,11 +15,21 @@ interface Message {
 
 interface ChatInterfaceProps {
   initialMessage?: string;
+  projectId?: string;
+  userId?: string;
+  sessionId?: string;
+  userEmail?: string;
 }
 
 
 
-export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
+export default function ChatInterface({ 
+  initialMessage, 
+  projectId, 
+  userId, 
+  sessionId,
+  userEmail
+}: ChatInterfaceProps) {
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -75,7 +85,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
       };
       setMessages(prev => [...prev, loadingMessage]);
 
-      // Call API endpoint instead of direct orchestrator
+      // Call API endpoint with real data
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -83,9 +93,13 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         },
         body: JSON.stringify({
           message: messageContent,
-          userId: 'user-123', // TODO: get real user ID
-          sessionId: 'session-456', // TODO: get real session ID
-          context: { currentProject: 'project_123' } // ✅ เพิ่ม project context
+          userId: userId || 'anonymous',
+          sessionId: sessionId || `session-${Date.now()}`,
+          context: { 
+            currentProject: projectId || null,
+            userEmail: userEmail || null,
+            timestamp: new Date().toISOString()
+          }
         }),
       });
 

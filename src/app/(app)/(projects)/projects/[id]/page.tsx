@@ -14,7 +14,7 @@ const ProjectPage: NextPage<ProjectPageProps> = async ({ params }) => {
   // ตรวจสอบ authentication
   const session = await getCurrentSession();
   
-  if (!session) {
+  if (!session || !session.user) {
     redirect('/login');
   }
 
@@ -28,7 +28,12 @@ const ProjectPage: NextPage<ProjectPageProps> = async ({ params }) => {
       <div className="w-full lg:w-1/4 border-r border-gray-300 bg-white flex flex-col">
         {/* Chat Interface */}
         <div className="flex-1 overflow-hidden">
-          <ChatInterface initialMessage={initialMessage} />
+          <ChatInterface 
+            initialMessage={initialMessage}
+            projectId={projectId}
+            userId={session.user.id}
+            userEmail={session.user.email || undefined}
+          />
         </div>
       </div>
 

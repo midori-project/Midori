@@ -425,7 +425,7 @@ export const PromptBox = React.forwardRef<
         setValue('');
         // redirect to project page
         if (result.projectId) {
-          router.push(`/info/${result.projectId}`);
+          router.push(`/projects/${result.projectId}`);
           return;
         }
         // fallback log if id missing
