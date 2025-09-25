@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Daytona } from '@daytonaio/sdk'
 import { daytonaConfig } from '@/config/daytona'
-import testCafeComplete from '@/components/preview/test/test-cafe-complete.json'
+import testJson from '@/components/preview/test/test.json'
 
 // ใช้ Node APIs ได้
 export const runtime = 'nodejs'
@@ -170,7 +170,7 @@ async function createDaytonaSandbox(): Promise<{ sandboxId: string; url?: string
   await updateSandboxStatus(sandboxId, 'creating')
 
   // 1) สร้างไฟล์ทั้งหมดจาก JSON
-  const files = (testCafeComplete as any).files as ProjectFile[]
+  const files = (testJson as any).files as ProjectFile[]
   if (!Array.isArray(files) || files.length === 0) throw new Error('No files in test-cafe-complete.json')
   await createAllFiles(sandbox, files)
 
