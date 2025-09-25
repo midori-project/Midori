@@ -215,11 +215,6 @@ export default function DaytonaPreviewPage() {
               />
             </div>
 
-            <p className="text-xs text-amber-600 mt-2">
-              หมายเหตุ: ถ้าพรีวิวเป็น <b>private</b> การฝังใน iframe อาจเจอ redirect/CORS/HMR error
-              แนะนำเปิดในแท็บใหม่ หรือทำ proxy ฝั่งเซิร์ฟเวอร์เพื่อแนบโทเคนทุกรีเควสต์
-              (ไม่สามารถใส่ <code>X-Daytona-Skip-Preview-Warning</code> เป็นแอตทริบิวต์ใน iframe ได้)
-            </p>
           </>
         )}
       </div>
