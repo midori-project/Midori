@@ -36,7 +36,7 @@ export class LLMAdapter {
       if (apiKey) {
         const openaiProvider = new OpenAIProvider(apiKey);
         this.providers.set('openai', openaiProvider);
-        console.log('✅ OpenAI provider initialized');
+        // console.log('✅ OpenAI provider initialized'); // Reduced logging
       } else {
         console.warn('⚠️ OpenAI API key not found');
       }
@@ -56,11 +56,11 @@ export class LLMAdapter {
       const agentConfig = yaml.load(configFile) as AgentConfig;
       
       this.config = agentConfig.model;
-      console.log('⚙️ LLM config loaded:', {
-        model: this.config.name,
-        temperature: this.config.temperature,
-        fallback: this.config.fallback?.name
-      });
+      // console.log('⚙️ LLM config loaded:', { // Reduced logging
+      //   model: this.config.name,
+      //   temperature: this.config.temperature,
+      //   fallback: this.config.fallback?.name
+      // });
     } catch (error) {
       console.error('❌ Failed to load LLM config:', error);
       throw error;
@@ -86,7 +86,7 @@ export class LLMAdapter {
         }
       }
 
-      console.log('✅ System prompts loaded:', Array.from(this.systemPrompts.keys()));
+      // console.log('✅ System prompts loaded:', Array.from(this.systemPrompts.keys())); // Reduced logging
     } catch (error) {
       console.error('❌ Failed to load system prompts:', error);
       throw error;

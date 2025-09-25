@@ -987,6 +987,8 @@ enum ProjectType {
   landing_page
   business
   personal
+  healthcare
+  hotel
 }
 
 enum ProjectStatus {

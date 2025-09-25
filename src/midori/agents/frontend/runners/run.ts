@@ -4,6 +4,7 @@
  */
 
 import { projectContextStore } from '../../orchestrator/stores/projectContextStore';
+// Style Detection moved to Orchestrator
 
 // Types
 interface FrontendTask {
@@ -18,6 +19,17 @@ interface FrontendTask {
     features: string[];
     styling: string;
     tests: boolean;
+    stylePreferences?: {
+      style: string;
+      colorTone: string;
+      colors: string[];
+      mood: string;
+      theme: string;
+      confidence: number;
+      reasoning: string;
+    };
+    templateType?: string;
+    customizations?: any;
   };
 }
 
@@ -72,40 +84,369 @@ interface ComponentResult {
 // Template selection functions
 
 /**
+ * Get supported template categories and their mappings
+ */
+function getSupportedTemplateCategories(): { projectType: string; category: string; available: boolean }[] {
+  const categoryMapping: Record<string, string> = {
+    'e_commerce': 'Ecommerce',
+    'coffee_shop': 'Restaurant', 
+    'restaurant': 'Restaurant',
+    'portfolio': 'Portfolio',
+    'blog': 'Blog',
+    'landing_page': 'Landing',
+    'business': 'Business',
+    'personal': 'Personal',
+    'hotel': 'Hotel',
+    'healthcare': 'Healthcare'
+  };
+  
+  // This would be dynamic based on actual database content
+  const availableCategories = ['Ecommerce', 'Restaurant', 'Landing']; // From your database
+  
+  return Object.entries(categoryMapping).map(([projectType, category]) => ({
+    projectType,
+    category,
+    available: availableCategories.includes(category)
+  }));
+}
+
+/**
+ * Get available templates from database
+ */
+async function getAvailableTemplates(): Promise<any[]> {
+  try {
+    const { prisma } = await import('@/libs/prisma/prisma');
+    
+    const templates = await prisma.uiTemplate.findMany({
+      include: {
+        meta: true,
+        versions: {
+          where: { status: 'published' },
+          orderBy: { version: 'desc' },
+          take: 1
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    return templates.map(template => ({
+      id: template.id,
+      key: template.key,
+      name: template.label,
+      category: template.category,
+      version: template.versions[0]?.version || 1,
+      isActive: true,
+      meta: template.meta
+    }));
+    
+  } catch (error) {
+    console.error('❌ Failed to get available templates:', error);
+    return [];
+  }
+}
+
+/**
  * Select template from database
  */
 async function selectTemplateFromDatabase(templateType: string, customizations: any): Promise<any> {
-  // TODO: Implement database integration
-  // const template = await prisma.uiTemplate.findFirst({
-  //   where: { category: templateType, isActive: true }
-  // });
-  // return template;
-  
-  // Mock implementation for now
-  return {
-    id: `template_${templateType}`,
-    name: `${templateType} Template`,
-    category: templateType,
-    version: '1.0.0',
-    files: [],
-    isActive: true
-  };
+  try {
+    // Import prisma here to avoid circular dependency
+    const { prisma } = await import('@/libs/prisma/prisma');
+    
+    console.log('🔍 Searching for template with category:', templateType);
+    
+           // Map projectType to template category
+           const categoryMapping: Record<string, string> = {
+             'e_commerce': 'Ecommerce',
+             'coffee_shop': 'Restaurant',
+             'restaurant': 'Restaurant',
+             'portfolio': 'Portfolio',
+             'blog': 'Blog',
+             'landing_page': 'Landing',
+             'business': 'Business',
+             'personal': 'Personal',
+             'hotel': 'Hotel',
+             'healthcare': 'Healthcare'
+           };
+    
+    const templateCategory = categoryMapping[templateType] || templateType;
+    
+    // Find template by category
+    const template = await prisma.uiTemplate.findFirst({
+      where: { 
+        category: templateCategory
+      },
+      include: {
+        meta: true,
+        versions: {
+          where: { status: 'published' },
+          orderBy: { version: 'desc' },
+          take: 1,
+          include: {
+            sourceFiles: true,
+            sourceSummary: true
+          }
+        }
+      }
+    });
+    
+    if (!template) {
+      console.warn(`⚠️ No template found for category: ${templateCategory}`);
+      
+      // Smart fallback: try to find closest available template
+      const availableTemplates = await getAvailableTemplates();
+      console.log('🔍 Available templates for fallback:', availableTemplates.map(t => t.category));
+      
+      let fallbackTemplate = null;
+      
+             // Try to find a suitable fallback based on project type
+             if (templateType === 'portfolio' || templateType === 'blog' || templateType === 'personal') {
+               // For content-focused sites, try to use e_commerce template as base
+               fallbackTemplate = availableTemplates.find(t => t.category === 'Ecommerce');
+               console.log('🎯 Using Ecommerce template as fallback for content site');
+             } else if (templateType === 'business' || templateType === 'landing_page') {
+               // For business sites, try to use e_commerce template as base
+               fallbackTemplate = availableTemplates.find(t => t.category === 'Ecommerce');
+               console.log('🎯 Using Ecommerce template as fallback for business site');
+             } else if (templateType === 'hotel') {
+               // For hotel sites, try to use restaurant template as base (similar hospitality)
+               fallbackTemplate = availableTemplates.find(t => t.category === 'Restaurant');
+               console.log('🎯 Using Restaurant template as fallback for hotel site');
+             } else {
+               // For other types, use any available template
+               fallbackTemplate = availableTemplates[0];
+               console.log('🎯 Using first available template as fallback');
+             }
+      
+      if (fallbackTemplate) {
+        console.log(`✅ Using fallback template: ${fallbackTemplate.name} (${fallbackTemplate.category})`);
+        return {
+          ...fallbackTemplate,
+          isFallback: true,
+          originalRequestedType: templateType,
+          fallbackReason: `No template found for ${templateCategory}, using ${fallbackTemplate.category} as base`
+        };
+      }
+      
+      // Ultimate fallback: create mock template
+      console.log('⚠️ No templates available, creating mock template');
+      return {
+        id: `template_${templateType}`,
+        name: `${templateType} Template (Mock)`,
+        category: templateCategory,
+        version: '1.0.0',
+        files: [],
+        isActive: true,
+        isMock: true,
+        fallbackReason: 'No templates available in database'
+      };
+    }
+    
+    console.log('✅ Found template:', {
+      id: template.id,
+      key: template.key,
+      label: template.label,
+      category: template.category,
+      hasVersions: template.versions.length > 0
+    });
+    
+    // Get the latest published version
+    const latestVersion = template.versions[0];
+    
+    return {
+      id: template.id,
+      key: template.key,
+      name: template.label,
+      category: template.category,
+      version: latestVersion?.version || 1,
+      files: latestVersion?.sourceFiles || [],
+      isActive: true,
+      meta: template.meta,
+      slots: latestVersion?.slots,
+      constraints: latestVersion?.constraints
+    };
+    
+  } catch (error) {
+    console.error('❌ Failed to select template from database:', error);
+    
+    // Fallback to mock implementation
+    return {
+      id: `template_${templateType}`,
+      name: `${templateType} Template`,
+      category: templateType,
+      version: '1.0.0',
+      files: [],
+      isActive: true
+    };
+  }
 }
 
 /**
  * Customize template based on requirements
  */
 async function customizeTemplate(template: any, customizations: any): Promise<any> {
-  // TODO: Implement template customization
-  // Apply customizations to template
-  // Return customized template
+  console.log('🎨 Customizing template:', template.name);
+  console.log('🎨 Customizations:', customizations);
   
-  return {
+  // Apply style preferences to template
+  const enhancedTemplate = {
     ...template,
-    customizations,
+    customizations: {
+      ...customizations,
+      // Apply style-based color schemes
+      colorScheme: generateColorScheme(customizations),
+      // Apply mood-based styling
+      styling: generateStyling(customizations),
+      // Apply theme-based styling
+      theme: customizations.theme || 'light',
+      // Apply style preferences
+      style: customizations.style || 'default',
+      colorTone: customizations.colorTone || 'default',
+      colors: customizations.colors || [],
+      mood: customizations.mood || 'default'
+    },
     customizedAt: new Date().toISOString()
   };
+  
+  console.log('🎨 Enhanced template:', enhancedTemplate.customizations);
+  return enhancedTemplate;
 }
+
+/**
+ * Generate color scheme based on style preferences
+ */
+function generateColorScheme(customizations: any): any {
+  const { style, colorTone, colors, mood, theme } = customizations;
+  
+  // Default color scheme
+  let colorScheme = {
+    primary: '#3B82F6',
+    secondary: '#6B7280',
+    accent: '#F59E0B',
+    background: '#FFFFFF',
+    text: '#000000'
+  };
+
+  // Apply theme-based colors
+  if (theme === 'dark') {
+    colorScheme = {
+      primary: '#8B5CF6',
+      secondary: '#6B7280',
+      accent: '#F59E0B',
+      background: '#1F2937',
+      text: '#FFFFFF'
+    };
+  } else if (theme === 'light') {
+    colorScheme = {
+      primary: '#3B82F6',
+      secondary: '#6B7280',
+      accent: '#F59E0B',
+      background: '#FFFFFF',
+      text: '#000000'
+    };
+  }
+  
+  // Apply color tone
+  if (colorTone === 'cool') {
+    colorScheme = {
+      primary: '#3B82F6',    // Blue
+      secondary: '#10B981',  // Green
+      accent: '#06B6D4',     // Cyan
+      background: theme === 'dark' ? '#1F2937' : '#F8FAFC',
+      text: theme === 'dark' ? '#FFFFFF' : '#1E293B'
+    };
+  } else if (colorTone === 'warm') {
+    colorScheme = {
+      primary: '#DC2626',    // Red
+      secondary: '#F59E0B',  // Orange
+      accent: '#F59E0B',     // Yellow
+      background: theme === 'dark' ? '#1F2937' : '#FEF3C7',
+      text: theme === 'dark' ? '#FFFFFF' : '#92400E'
+    };
+  }
+  
+  // Apply custom colors if provided
+  if (colors && colors.length > 0) {
+    colorScheme.primary = colors[0] || colorScheme.primary;
+    if (colors.length > 1) {
+      colorScheme.secondary = colors[1] || colorScheme.secondary;
+    }
+    if (colors.length > 2) {
+      colorScheme.accent = colors[2] || colorScheme.accent;
+    }
+  }
+  
+  return colorScheme;
+}
+
+/**
+ * Generate styling based on mood and style
+ */
+function generateStyling(customizations: any): any {
+  const { style, mood, theme } = customizations;
+  
+  let styling = {
+    borderRadius: '0.5rem',
+    shadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+    spacing: '1rem',
+    typography: 'Inter'
+  };
+
+  // Apply theme-based styling
+  if (theme === 'dark') {
+    styling = {
+      ...styling,
+      shadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+      borderRadius: '0.75rem'
+    };
+  } else if (theme === 'light') {
+    styling = {
+      ...styling,
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+      borderRadius: '0.5rem'
+    };
+  }
+  
+  // Apply style-based styling
+  if (style === 'modern') {
+    styling = {
+      ...styling,
+      borderRadius: '0.75rem',
+      shadow: theme === 'dark' ? '0 4px 6px rgba(0, 0, 0, 0.3)' : '0 4px 6px rgba(0, 0, 0, 0.1)',
+      spacing: '1.5rem',
+      typography: 'Inter'
+    };
+  } else if (style === 'minimal') {
+    styling = {
+      ...styling,
+      borderRadius: '0.25rem',
+      shadow: theme === 'dark' ? '0 1px 2px rgba(0, 0, 0, 0.3)' : '0 1px 2px rgba(0, 0, 0, 0.05)',
+      spacing: '0.75rem',
+      typography: 'Inter'
+    };
+  } else if (style === 'elegant') {
+    styling = {
+      ...styling,
+      borderRadius: '0.5rem',
+      shadow: theme === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.12)',
+      spacing: '1.25rem',
+      typography: 'Inter'
+    };
+  }
+  
+  // Apply mood-based styling
+  if (mood === 'playful') {
+    styling.borderRadius = '1rem';
+    styling.shadow = theme === 'dark' ? '0 8px 16px rgba(0, 0, 0, 0.3)' : '0 8px 16px rgba(0, 0, 0, 0.15)';
+  } else if (mood === 'elegant') {
+    styling.borderRadius = '0.5rem';
+    styling.shadow = theme === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.12)';
+  }
+  
+  return styling;
+}
+
+// Style preferences extraction moved to Orchestrator
 
 /**
  * Process template selection task
@@ -123,24 +464,73 @@ async function processTemplateSelection(task: any, startTime: number): Promise<C
     const templateType = projectContext.projectType || task.requirements?.templateType || 'default';
     const customizations = task.requirements?.customizations || {};
     
+    // ✅ Style preferences should come from Orchestrator
+    console.log('🎨 Frontend received full task:', task);
+    console.log('🎨 Frontend received requirements:', task.requirements);
+    const stylePreferences = task.requirements?.stylePreferences || {
+      style: 'default',
+      colorTone: 'default',
+      colors: [],
+      mood: 'default',
+      theme: 'default',
+      confidence: 0.1,
+      reasoning: 'No style preferences provided'
+    };
+    
+    
+    console.log('🎨 Style preferences from Orchestrator:', stylePreferences);
+    
+    // ✅ Merge style preferences with customizations
+    const enhancedCustomizations = {
+      ...customizations,
+      style: stylePreferences.style,
+      colorTone: stylePreferences.colorTone,
+      colors: stylePreferences.colors,
+      mood: stylePreferences.mood,
+      theme: stylePreferences.theme
+    };
+    
     console.log('🎨 Template requirements (from SSOT):', {
       templateType,
-      customizations,
+      customizations: enhancedCustomizations,
       projectId: projectContext.projectId,
       status: projectContext.status,
-      userPreferences: projectContext.userPreferences
+      userPreferences: projectContext.userPreferences,
+      stylePreferences
     });
     
-    // Select template from database
-    const template = await selectTemplateFromDatabase(templateType, customizations);
-    console.log('🎨 Selected template:', template.name);
+    // Get available templates first
+    const availableTemplates = await getAvailableTemplates();
+    const supportedCategories = getSupportedTemplateCategories();
     
-    // Customize template
-    const customizedTemplate = await customizeTemplate(template, customizations);
+    console.log('📋 Available templates:', availableTemplates.map(t => ({ key: t.key, category: t.category })));
+    console.log('📊 Supported categories:', supportedCategories);
+    console.log('🎯 Requested template type:', templateType, '→', supportedCategories.find(c => c.projectType === templateType));
+    
+    // Select template from database with enhanced customizations
+    const template = await selectTemplateFromDatabase(templateType, enhancedCustomizations);
+    console.log('🎨 Selected template:', {
+      name: template.name,
+      key: template.key,
+      category: template.category,
+      version: template.version
+    });
+    
+    // Customize template with enhanced customizations
+    const customizedTemplate = await customizeTemplate(template, enhancedCustomizations);
     console.log('🎨 Customized template:', customizedTemplate.customizations);
     
-    // Generate result
-    const result = generateTemplateSelectionResult(task, startTime, customizedTemplate);
+    // Add fallback information if applicable
+    if (template.isFallback) {
+      console.log('⚠️ Using fallback template:', {
+        originalType: template.originalRequestedType,
+        fallbackReason: template.fallbackReason,
+        actualTemplate: template.name
+      });
+    }
+    
+    // Generate result with enhanced customizations
+    const result = generateTemplateSelectionResult(task, startTime, customizedTemplate, enhancedCustomizations);
     
     // ✅ Update project context back to database (SSOT)
     if (projectContext?.projectId) {
@@ -157,7 +547,7 @@ async function processTemplateSelection(task: any, startTime: number): Promise<C
             id: `template_${templateType}`,
             componentId: `template_${templateType}`,
             name: customizedTemplate.name,
-            type: 'template',
+            type: 'template' as any,
             props: [],
             styling: customizedTemplate.customizations,
             location: 'templates' as any,
@@ -218,7 +608,7 @@ async function processTemplateSelection(task: any, startTime: number): Promise<C
 /**
  * Generate template selection result
  */
-function generateTemplateSelectionResult(task: any, startTime: number, template?: any): ComponentResult {
+function generateTemplateSelectionResult(task: any, startTime: number, template?: any, enhancedCustomizations?: any): ComponentResult {
   // ✅ Use projectContext from SSOT
   const projectContext = task.projectContext;
   if (!projectContext) {
@@ -226,14 +616,15 @@ function generateTemplateSelectionResult(task: any, startTime: number, template?
   }
   
   const templateType = projectContext.projectType || task.requirements?.templateType || 'default';
-  const customizations = task.requirements?.customizations || {};
+  const customizations = enhancedCustomizations || task.requirements?.customizations || {};
   const templateName = template?.name || `${templateType}Template`;
   
   console.log('🎨 Generating template result (SSOT):', {
     templateName,
     templateType,
     projectId: projectContext.projectId,
-    userPreferences: projectContext.userPreferences
+    userPreferences: projectContext.userPreferences,
+    stylePreferences: customizations
   });
   
   return {
@@ -241,7 +632,7 @@ function generateTemplateSelectionResult(task: any, startTime: number, template?
     component: {
       name: templateName,
       type: 'template',
-      code: `// Template: ${templateName}\n// Customizations: ${JSON.stringify(customizations)}`,
+      code: `// Template: ${templateName}\n// Customizations: ${JSON.stringify(customizations)}\n// Style Preferences: ${JSON.stringify(customizations)}`,
       interface: `interface ${templateName}Props {\n  // Template props\n}`,
       props: [],
       features: ['responsive', 'seo', 'accessibility'],
@@ -254,19 +645,20 @@ function generateTemplateSelectionResult(task: any, startTime: number, template?
       styling: {
         approach: 'template',
         classes: ['template', templateType],
-        responsive: true
+        responsive: true,
+        customizations: customizations
       }
     },
     files: [
       {
         path: `src/templates/${templateType}Template.tsx`,
-        content: `// Template: ${templateType}\n// Customizations: ${JSON.stringify(customizations)}`,
+        content: `// Template: ${templateType}\n// Customizations: ${JSON.stringify(customizations)}\n// Style Preferences: ${JSON.stringify(customizations)}`,
         type: 'template',
         size: 200
       },
       {
         path: `src/templates/${templateType}Template.types.ts`,
-        content: `interface ${templateType}TemplateProps {\n  // Template props\n}`,
+        content: `interface ${templateType}TemplateProps {\n  // Template props\n  customizations?: ${JSON.stringify(customizations)}\n}`,
         type: 'interface',
         size: 50
       }
@@ -320,6 +712,12 @@ export async function run(task: any): Promise<ComponentResult> {
     const validatedTask = validateTask(task);
     
     // Handle different task types with hybrid approach
+    console.log('🎨 Task type routing:', {
+      taskType: validatedTask.taskType,
+      action: validatedTask.action,
+      projectType: validatedTask.projectContext?.projectType
+    });
+    
     if (validatedTask.taskType === 'select_template' || validatedTask.action === 'select_template') {
       console.log('🎨 Processing template selection task');
       return await processTemplateSelection(validatedTask, startTime);
@@ -331,7 +729,7 @@ export async function run(task: any): Promise<ComponentResult> {
       return await processComponentCreation(validatedTask, startTime);
     } else {
       console.log('🎨 Processing unknown task type, defaulting to template selection');
-    return await processTemplateSelection(validatedTask, startTime);
+      return await processTemplateSelection(validatedTask, startTime);
     }
     
   } catch (error) {
@@ -414,7 +812,18 @@ function validateTask(task: any): FrontendTask {
       props: task.requirements?.props || [],
       features: task.requirements?.features || ['typescript'],
       styling: task.requirements?.styling || 'tailwind',
-      tests: task.requirements?.tests || true
+      tests: task.requirements?.tests || true,
+      stylePreferences: task.requirements?.stylePreferences || {
+        style: 'default',
+        colorTone: 'default',
+        colors: [],
+        mood: 'default',
+        theme: 'default',
+        confidence: 0.1,
+        reasoning: 'No style preferences provided'
+      },
+      templateType: task.requirements?.templateType || 'default',
+      customizations: task.requirements?.customizations || {}
     }
   };
 }
@@ -500,13 +909,14 @@ async function processComponentCreation(task: any, startTime: number): Promise<C
         name: component.name,
         type: component.type,
         code: component.code,
-        styling: component.styling,
-        tests: component.tests,
-        metadata: {
-          processingTimeMs: processingTime,
-          createdAt: new Date().toISOString(),
-          createdBy: 'frontend-agent'
-        }
+        styling: component.styling
+      },
+      files: [],
+      metadata: {
+        executionTime: processingTime,
+        timestamp: new Date().toISOString(),
+        agent: 'frontend',
+        version: '1.0.0'
       }
     };
 
@@ -518,12 +928,14 @@ async function processComponentCreation(task: any, startTime: number): Promise<C
         name: task.componentName || 'Unknown',
         type: 'functional',
         code: '',
-        styling: '',
-        tests: false,
-        metadata: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          processingTimeMs: Date.now() - startTime
-        }
+        styling: ''
+      },
+      files: [],
+      metadata: {
+        executionTime: Date.now() - startTime,
+        timestamp: new Date().toISOString(),
+        agent: 'frontend',
+        version: '1.0.0'
       }
     };
   }
@@ -664,13 +1076,14 @@ async function processTemplateCustomization(task: any, startTime: number): Promi
         name: 'TemplateCustomization',
         type: 'template',
         code: customizedTemplate.code,
-        styling: customizedTemplate.styling,
-        tests: false,
-        metadata: {
-          processingTimeMs: processingTime,
-          customizations,
-          createdAt: new Date().toISOString()
-        }
+        styling: customizedTemplate.styling
+      },
+      files: [],
+      metadata: {
+        executionTime: processingTime,
+        timestamp: new Date().toISOString(),
+        agent: 'frontend',
+        version: '1.0.0'
       }
     };
 
@@ -682,12 +1095,14 @@ async function processTemplateCustomization(task: any, startTime: number): Promi
         name: 'TemplateCustomization',
         type: 'template',
         code: '',
-        styling: '',
-        tests: false,
-        metadata: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          processingTimeMs: Date.now() - startTime
-        }
+        styling: ''
+      },
+      files: [],
+      metadata: {
+        executionTime: Date.now() - startTime,
+        timestamp: new Date().toISOString(),
+        agent: 'frontend',
+        version: '1.0.0'
       }
     };
   }

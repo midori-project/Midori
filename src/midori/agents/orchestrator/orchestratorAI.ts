@@ -59,6 +59,12 @@ export interface IntentAnalysis {
   requiredAgents: ('frontend' | 'backend' | 'devops')[];
   complexity: 'low' | 'medium' | 'high';
   parameters?: Record<string, any>;
+  designPreferences?: {
+    style: 'modern' | 'classic' | 'minimal' | 'vintage' | 'default';
+    colorTone: 'warm' | 'cool' | 'neutral' | 'default';
+    colors: string[];
+    mood: 'professional' | 'friendly' | 'elegant' | 'playful' | 'default';
+  };
 }
 
 export enum CommandType {
@@ -815,6 +821,13 @@ export class OrchestratorAI {
     // Map intent to command type - Template-First Approach
     let commandType: CommandType;
     
+    console.log('🔍 Command creation analysis:', {
+      message: message.content,
+      taskType: analysis.taskType,
+      requiredAgents: analysis.requiredAgents,
+      intent: analysis.intent
+    });
+    
     // Template selection patterns (NEW!)
     if (message.content.includes('เลือกเทมเพลต') || 
         message.content.includes('เลือก template') ||
@@ -843,7 +856,11 @@ export class OrchestratorAI {
     else if (analysis.taskType?.includes('Website creation') || 
         message.content.includes('สร้างเว็บไซต์') || 
         message.content.includes('สร้างร้าน') ||
-        message.content.includes('สร้างเว็บ')) {
+        message.content.includes('สร้างเว็บ') ||
+        message.content.includes('เว็บขาย') ||
+        message.content.includes('เว็บไซต์ขาย') ||
+        message.content.includes('ขายเครื่องบิน') ||
+        message.content.includes('ขาย') && message.content.includes('เว็บ')) {
       commandType = CommandType.SELECT_TEMPLATE; // ✅ เปลี่ยนเป็น template selection
     } 
     // Component creation patterns
@@ -851,8 +868,13 @@ export class OrchestratorAI {
                message.content.includes('สร้าง component')) {
       commandType = CommandType.CREATE_COMPONENT;
     } 
-    // Agent-based mapping
-    else if (analysis.requiredAgents.includes('frontend')) {
+    // Agent-based mapping (ONLY if not website creation)
+    else if (analysis.requiredAgents.includes('frontend') && 
+             !message.content.includes('สร้างเว็บ') &&
+             !message.content.includes('เว็บขาย') &&
+             !message.content.includes('เว็บไซต์ขาย') &&
+             !message.content.includes('ขายเครื่องบิน') &&
+             !message.content.includes('ขาย') && !message.content.includes('เว็บ')) {
       commandType = CommandType.CREATE_COMPONENT;
     } else if (analysis.requiredAgents.includes('backend')) {
       commandType = CommandType.CREATE_API_ENDPOINT;
@@ -863,6 +885,8 @@ export class OrchestratorAI {
     else {
       commandType = CommandType.SELECT_TEMPLATE; // ✅ เปลี่ยน default เป็น template selection
     }
+    
+    console.log('🎯 Selected command type:', commandType, 'for message:', message.content);
 
     // Get project context if available
     let projectContext: ProjectContextData | null = null;
@@ -956,6 +980,12 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
   "complexity": "low|medium|high",
   "parameters": {
     "type": "introduction|greeting|security_sensitive|midori_identity|technology_explanation|base_chat|unclear"
+  },
+  "designPreferences": {
+    "style": "modern|classic|minimal|vintage|default",
+    "colorTone": "warm|cool|neutral|default",
+    "colors": ["#3B82F6", "#10B981"],
+    "mood": "professional|friendly|elegant|playful|default"
   }
 }
 
@@ -971,7 +1001,8 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
 - **"unclear"**: ไม่ชัดเจน
 
 **📝 Task Types (สำหรับ intent: "simple_task" หรือ "complex_task"):**
-- **"frontend_task"**: งานเกี่ยวกับ UI/UX
+- **"Website creation"**: การสร้างเว็บไซต์ใหม่ (สร้างเว็บ, สร้างเว็บไซต์, สร้างร้าน, เว็บขาย)
+- **"frontend_task"**: งานเกี่ยวกับ UI/UX (สร้าง component, แก้ไขหน้าเว็บ)
 - **"backend_task"**: งานเกี่ยวกับ API/Database  
 - **"devops_task"**: งานเกี่ยวกับ deployment
 - **"full_stack_task"**: งานแบบครบ stack
@@ -981,7 +1012,9 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
 - "สวัสดี" → {"intent": "chat", "parameters": {"type": "greeting"}}
 - "1+1 เท่าไหร่" → {"intent": "chat", "parameters": {"type": "base_chat"}}
 - "React คืออะไร" → {"intent": "chat", "parameters": {"type": "technology_explanation"}}
-- "สร้างเว็บไซต์" → {"intent": "simple_task", "parameters": {"type": "frontend_task"}}`;
+- "สร้างเว็บไซต์" → {"intent": "simple_task", "taskType": "Website creation", "parameters": {"type": "frontend_task"}}
+- "สร้างเว็บขาย" → {"intent": "simple_task", "taskType": "Website creation", "parameters": {"type": "frontend_task"}}
+- "สร้างร้าน" → {"intent": "simple_task", "taskType": "Website creation", "parameters": {"type": "frontend_task"}}`;
   }
 
   /**
@@ -1632,10 +1665,13 @@ ${executionResults.map((result: any) =>
         'blog': 'blog',
         'landing_page': 'landing_page',
         'education': 'education',
-        'healthcare': 'healthcare'
+        'healthcare': 'healthcare',
+        'hotel': 'hotel',
+        'accommodation': 'hotel',
+        'travel': 'hotel'
       };
       
-      const projectType = (projectTypeMapping[result.category.id] || 'e_commerce') as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
+      const projectType = (projectTypeMapping[result.category.id] || 'e_commerce') as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal' | 'healthcare' | 'hotel';
       
       console.log('✅ Project type detected:', projectType);
       return projectType;

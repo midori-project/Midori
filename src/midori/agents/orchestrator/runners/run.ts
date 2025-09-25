@@ -882,7 +882,7 @@ async function executeTasks(plan: ExecutionPlan): Promise<{
     // Execute tasks in parallel for now (can be enhanced with dependency management)
     const taskPromises = plan.tasks.map(async (task) => {
       try {
-        console.log(`📤 Dispatching task: ${task.taskId} to ${task.agent}`);
+        // Task dispatching logged in agent_dispatcher.ts
         const result = await dispatchTask(task);
         
         if (result.success) {
