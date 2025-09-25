@@ -19,29 +19,7 @@ model User {
   lastLoginAt        DateTime?
   agents             Agent[]
   authCredentials    AuthCredential[]
-  id                 String                  @id @default(uuid())
-  email              String?                 @unique
-  displayName        String?
-  avatarUrl          String?
-  locale             String?                 @default("th")
-  isActive           Boolean                 @default(true)
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
-  lastLoginAt        DateTime?
-  agents             Agent[]
-  authCredentials    AuthCredential[]
   emailVerifications AuthEmailVerification[]
-  passwordResets     AuthPasswordReset[]
-  runs               ChatRun[]
-  commands           Command[]
-  conversations      Conversation[]
-  generations        Generation[]
-  loginLogs          LoginAttempt[]
-  messages           Message[]
-  oauths             OAuthConnection[]
-  projects           Project[]
-  likes              ProjectLike[]
-  sessions           Session[]
   passwordResets     AuthPasswordReset[]
   runs               ChatRun[]
   commands           Command[]
@@ -86,9 +64,9 @@ model Project {
   previews       PreviewSession[]
   owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   previewFile    File?              @relation("ProjectPreviewFile", fields: [previewFileId], references: [id])
-  Tenant         Tenant?            @relation(fields: [tenantId], references: [id])
+  tenant         Tenant?            @relation(fields: [tenantId], references: [id])
   categories     ProjectCategory[]
-  ProjectContext ProjectContext?
+  projectContext ProjectContext?
   likes          ProjectLike[]
   snapshots      Snapshot[]
   specBundles    SpecBundle[]
@@ -96,7 +74,6 @@ model Project {
   testSuites     TestSuite[]
 
   @@index([ownerId])
-  @@index([tenantId])
   @@index([tenantId])
 }
 
@@ -112,19 +89,7 @@ model File {
   updatedAt          DateTime            @updatedAt
   project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   imageAssets        ImageAsset[]
-  id                 String              @id @default(uuid())
-  projectId          String
-  path               String
-  type               FileType            @default(code)
-  isBinary           Boolean             @default(false)
-  content            String?
-  blob               Bytes?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  imageAssets        ImageAsset[]
   messageAttachments MessageAttachment[]
-  previewForProject  Project?            @relation("ProjectPreviewFile")
   previewForProject  Project?            @relation("ProjectPreviewFile")
   artifacts          TestArtifact[]
 
@@ -134,23 +99,15 @@ model File {
 
 model Snapshot {
   id               String           @id @default(uuid())
-  id               String           @id @default(uuid())
   projectId        String
   label            String?
-  files            Json
   files            Json
   fromGenerationId String?
   createdAt        DateTime         @default(now())
   Artifact         Artifact[]
   patchSetsFrom    PatchSet[]       @relation("PatchSetFrom")
   patchSetsTo      PatchSet[]       @relation("PatchSetTo")
-  createdAt        DateTime         @default(now())
-  Artifact         Artifact[]
-  patchSetsFrom    PatchSet[]       @relation("PatchSetFrom")
-  patchSetsTo      PatchSet[]       @relation("PatchSetTo")
   previews         PreviewSession[]
-  fromGeneration   Generation?      @relation(fields: [fromGenerationId], references: [id])
-  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   fromGeneration   Generation?      @relation(fields: [fromGenerationId], references: [id])
   project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -159,15 +116,11 @@ model Snapshot {
 
 model Deployment {
   id        String         @id @default(uuid())
-  id        String         @id @default(uuid())
   projectId String
   provider  DeployProvider
   state     DeployState    @default(queued)
-  state     DeployState    @default(queued)
   url       String?
   meta      Json?
-  createdAt DateTime       @default(now())
-  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdAt DateTime       @default(now())
   project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -176,16 +129,11 @@ model Deployment {
 
 model PreviewSession {
   id         String    @id @default(uuid())
-  id         String    @id @default(uuid())
   projectId  String
   snapshotId String?
   url        String?
   state      String?
-  state      String?
   meta       Json?
-  createdAt  DateTime  @default(now())
-  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  snapshot   Snapshot? @relation(fields: [snapshotId], references: [id])
   createdAt  DateTime  @default(now())
   project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   snapshot   Snapshot? @relation(fields: [snapshotId], references: [id])
@@ -207,18 +155,6 @@ model AuthCredential {
   updatedAt      DateTime                @updatedAt
   user           User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailVerifs    AuthEmailVerification[]
-  id             String                  @id @default(uuid())
-  userId         String
-  type           String
-  identifier     String
-  secret         String?
-  metadata       Json?
-  isVerified     Boolean                 @default(false)
-  expiresAt      DateTime?
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
-  user           User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  emailVerifs    AuthEmailVerification[]
   passwordResets AuthPasswordReset[]
 
   @@unique([userId, type, identifier])
@@ -228,16 +164,13 @@ model AuthCredential {
 
 model AuthEmailVerification {
   id           String          @id @default(uuid())
-  id           String          @id @default(uuid())
   userId       String
   credentialId String?
   tokenHash    String
   expiresAt    DateTime
   usedAt       DateTime?
   createdAt    DateTime        @default(now())
-  createdAt    DateTime        @default(now())
   credential   AuthCredential? @relation(fields: [credentialId], references: [id])
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -246,16 +179,13 @@ model AuthEmailVerification {
 
 model AuthPasswordReset {
   id           String          @id @default(uuid())
-  id           String          @id @default(uuid())
   userId       String
   credentialId String?
   tokenHash    String
   expiresAt    DateTime
   usedAt       DateTime?
   createdAt    DateTime        @default(now())
-  createdAt    DateTime        @default(now())
   credential   AuthCredential? @relation(fields: [credentialId], references: [id])
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -280,18 +210,14 @@ model OAuthConnection {
 
 model Session {
   id               String    @id @default(uuid())
-  id               String    @id @default(uuid())
   userId           String
-  sessionTokenHash String    @unique
   sessionTokenHash String    @unique
   ip               String?
   userAgent        String?
   createdAt        DateTime  @default(now())
-  createdAt        DateTime  @default(now())
   expiresAt        DateTime
   lastActiveAt     DateTime? @default(now())
   terminatedAt     DateTime?
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -331,26 +257,7 @@ model Agent {
   project        Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user           User?          @relation(fields: [userId], references: [id])
   runs           ChatRun[]
-  id             String         @id @default(uuid())
-  projectId      String?
-  userId         String?
-  name           String
-  description    String?
-  kind           AgentKind      @default(chat)
-  model          String
-  systemPrompt   String?
-  tools          Json?
-  config         Json?
-  temperature    Float?         @default(0.7)
-  topP           Float?         @default(1)
-  isActive       Boolean        @default(true)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  project        Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user           User?          @relation(fields: [userId], references: [id])
-  runs           ChatRun[]
   sourceCommands Command[]
-  conversations  Conversation[]
   conversations  Conversation[]
 
   @@index([projectId])
@@ -374,10 +281,6 @@ model Conversation {
   project    Project?   @relation(fields: [projectId], references: [id])
   user       User?      @relation(fields: [userId], references: [id])
   messages   Message[]
-  agent      Agent?     @relation(fields: [agentId], references: [id])
-  project    Project?   @relation(fields: [projectId], references: [id])
-  user       User?      @relation(fields: [userId], references: [id])
-  messages   Message[]
 
   @@index([projectId])
   @@index([userId])
@@ -385,7 +288,6 @@ model Conversation {
 }
 
 model Message {
-  id             String              @id @default(uuid())
   id             String              @id @default(uuid())
   conversationId String
   userId         String?
@@ -397,10 +299,6 @@ model Message {
   toolInput      Json?
   toolOutput     Json?
   messageIndex   Int
-  createdAt      DateTime            @default(now())
-  conversation   Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  run            ChatRun?            @relation(fields: [runId], references: [id])
-  user           User?               @relation(fields: [userId], references: [id])
   createdAt      DateTime            @default(now())
   conversation   Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   run            ChatRun?            @relation(fields: [runId], references: [id])
@@ -421,7 +319,6 @@ model MessageAttachment {
   meta      Json?
   createdAt DateTime @default(now())
   file      File?    @relation(fields: [fileId], references: [id])
-  file      File?    @relation(fields: [fileId], references: [id])
   message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
@@ -429,27 +326,6 @@ model MessageAttachment {
 }
 
 model ChatRun {
-  id               String       @id @default(uuid())
-  conversationId   String
-  userId           String?
-  projectId        String?
-  agentId          String?
-  model            String
-  tokensInput      Int          @default(0)
-  tokensOutput     Int          @default(0)
-  costUsd          Decimal      @default(0)
-  latencyMs        Int?
-  status           String?
-  error            String?
-  rawRequest       Json?
-  rawResponse      Json?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  agent            Agent?       @relation(fields: [agentId], references: [id])
-  conversation     Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  project          Project?     @relation(fields: [projectId], references: [id])
-  user             User?        @relation(fields: [userId], references: [id])
-  messages         Message[]
   id               String       @id @default(uuid())
   conversationId   String
   userId           String?
@@ -499,25 +375,6 @@ model Command {
   user           User?              @relation(fields: [userId], references: [id])
   events         CommandEvent[]
   plans          OrchestratorPlan[]
-  id             String             @id @default(uuid())
-  projectId      String?
-  userId         String?
-  conversationId String?
-  sourceAgentId  String?
-  target         String?
-  commandType    String
-  commandJson    Json
-  status         CommandStatus      @default(queued)
-  error          String?
-  createdAt      DateTime           @default(now())
-  startedAt      DateTime?
-  finishedAt     DateTime?
-  conversation   Conversation?      @relation(fields: [conversationId], references: [id])
-  project        Project?           @relation(fields: [projectId], references: [id])
-  sourceAgent    Agent?             @relation(fields: [sourceAgentId], references: [id])
-  user           User?              @relation(fields: [userId], references: [id])
-  events         CommandEvent[]
-  plans          OrchestratorPlan[]
 
   @@index([projectId])
   @@index([userId])
@@ -531,27 +388,11 @@ model CommandEvent {
   data      Json?
   createdAt DateTime @default(now())
   command   Command  @relation(fields: [commandId], references: [id], onDelete: Cascade)
-  id        String   @id @default(uuid())
-  commandId String
-  kind      String
-  data      Json?
-  createdAt DateTime @default(now())
-  command   Command  @relation(fields: [commandId], references: [id], onDelete: Cascade)
 
   @@index([commandId])
 }
 
 model OrchestratorPlan {
-  id        String             @id @default(uuid())
-  projectId String
-  commandId String?
-  title     String?
-  decision  Json?
-  createdAt DateTime           @default(now())
-  edges     OrchestratorEdge[]
-  command   Command?           @relation(fields: [commandId], references: [id])
-  project   Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tasks     OrchestratorTask[]
   id        String             @id @default(uuid())
   projectId String
   commandId String?
@@ -580,26 +421,12 @@ model OrchestratorTask {
   finishedAt DateTime?
   createdAt  DateTime         @default(now())
   plan       OrchestratorPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  id         String           @id @default(uuid())
-  planId     String
-  taskKey    String
-  to         String
-  action     String
-  payload    Json?
-  status     TaskStatus       @default(pending)
-  error      String?
-  startedAt  DateTime?
-  finishedAt DateTime?
-  createdAt  DateTime         @default(now())
-  plan       OrchestratorPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   @@unique([planId, taskKey])
-  @@index([planId])
   @@index([planId])
 }
 
 model OrchestratorEdge {
-  id         String           @id @default(uuid())
   id         String           @id @default(uuid())
   planId     String
   fromTaskId String
@@ -611,15 +438,10 @@ model OrchestratorEdge {
 
 model SpecBundle {
   id        String        @id @default(uuid())
-  id        String        @id @default(uuid())
   projectId String
   label     String?
   version   Int           @default(1)
-  version   Int           @default(1)
   data      Json
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -630,12 +452,10 @@ model SpecBundle {
 
 model SpecVersion {
   id        String     @id @default(uuid())
-  id        String     @id @default(uuid())
   bundleId  String
   version   Int
   diff      Json?
   snapshot  Json
-  createdAt DateTime   @default(now())
   createdAt DateTime   @default(now())
   bundle    SpecBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
 
@@ -643,13 +463,27 @@ model SpecVersion {
   @@index([bundleId])
 }
 
+model ProjectContext {
+  id                  String        @id @default(uuid())
+  projectId           String        @unique
+  specBundleId        String
+  projectType         ProjectType
+  status              ProjectStatus @default(created)
+  components          Json
+  pages               Json
+  styling             Json
+  conversationHistory Json
+  userPreferences     Json
+  lastModified        DateTime      @default(now())
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  project             Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([specBundleId])
+}
+
 model UiTemplate {
-  id        String              @id @default(uuid())
-  key       String              @unique
-  label     String
-  category  String?
-  createdAt DateTime            @default(now())
-  meta      UiTemplateMeta?
   id        String              @id @default(uuid())
   key       String              @unique
   label     String
@@ -660,23 +494,23 @@ model UiTemplate {
 }
 
 model UiTemplateVersion {
-  id                    String                 @id @default(uuid())
-  templateId            String
-  version               Int
-  files                 Json?
-  slots                 Json?
-  constraints           Json?
-  createdAt             DateTime               @default(now())
-  checksum              String?
-  compat                Json?
-  deprecatedAt          DateTime?
-  publishedAt           DateTime?
-  semver                String?
-  sizeBytes             Int?
-  status                TemplateStatus         @default(published)
-  TemplateSourceFile    TemplateSourceFile[]
-  TemplateSourceSummary TemplateSourceSummary?
-  template              UiTemplate             @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  id            String                 @id @default(uuid())
+  templateId    String
+  version       Int
+  files         Json?
+  slots         Json?
+  constraints   Json?
+  createdAt     DateTime               @default(now())
+  checksum      String?
+  compat        Json?
+  deprecatedAt  DateTime?
+  publishedAt   DateTime?
+  semver        String?
+  sizeBytes     Int?
+  status        TemplateStatus         @default(published)
+  sourceFiles   TemplateSourceFile[]   @relation("Version_SourceFiles")
+  sourceSummary TemplateSourceSummary? @relation("Version_SourceSummary")
+  template      UiTemplate             @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@unique([templateId, version])
   @@index([templateId])
@@ -687,19 +521,7 @@ model UiTemplateVersion {
 model UiTemplateMeta {
   id                String              @id @default(uuid())
   templateId        String              @unique
-  id                String              @id @default(uuid())
-  templateId        String              @unique
   description       String?
-  engine            String?
-  status            TemplateStatus?     @default(draft)
-  versioningPolicy  String?
-  previewScreenshot String?
-  compat            Json?
-  postProcess       Json?
-  author            String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  template          UiTemplate          @relation(fields: [templateId], references: [id], onDelete: Cascade)
   engine            String?
   status            TemplateStatus?     @default(draft)
   versioningPolicy  String?
@@ -720,20 +542,15 @@ model UiTemplateMeta {
 model Tag {
   id        String              @id @default(uuid())
   key       String              @unique
-  id        String              @id @default(uuid())
-  key       String              @unique
   label     String
-  createdAt DateTime            @default(now())
   createdAt DateTime            @default(now())
   metaLinks UiTemplateMetaTag[]
 }
 
 model UiTemplateMetaTag {
   id        String         @id @default(uuid())
-  id        String         @id @default(uuid())
   metaId    String
   tagId     String
-  createdAt DateTime       @default(now())
   createdAt DateTime       @default(now())
   meta      UiTemplateMeta @relation(fields: [metaId], references: [id], onDelete: Cascade)
   tag       Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
@@ -743,12 +560,35 @@ model UiTemplateMetaTag {
   @@index([tagId])
 }
 
+model TemplateSourceFile {
+  id          String            @id @default(uuid())
+  versionId   String
+  path        String
+  type        String?
+  content     String
+  encoding    String
+  contentType String?
+  size        Int
+  sha256      String
+  createdAt   DateTime          @default(now())
+  version     UiTemplateVersion @relation("Version_SourceFiles", fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@unique([versionId, path])
+  @@index([versionId])
+  @@index([sha256])
+}
+
+model TemplateSourceSummary {
+  id         String            @id @default(uuid())
+  versionId  String            @unique
+  filesCount Int
+  sizeBytes  Int
+  checksum   String
+  createdAt  DateTime          @default(now())
+  version    UiTemplateVersion @relation("Version_SourceSummary", fields: [versionId], references: [id], onDelete: Cascade)
+}
+
 model CopyBlock {
-  id          String   @id @default(uuid())
-  projectId   String
-  key         String
-  locale      String   @default("th")
-  content     String?
   id          String   @id @default(uuid())
   projectId   String
   key         String
@@ -759,28 +599,15 @@ model CopyBlock {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  version     Int      @default(1)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, key, locale, version])
-  @@index([projectId])
   @@index([projectId])
 }
 
 model ImageBrief {
   id              String       @id @default(uuid())
   projectId       String
-  id              String       @id @default(uuid())
-  projectId       String
   sourceMessageId String?
-  prompt          String?
-  promptJson      Json?
-  styleHints      Json?
-  createdAt       DateTime     @default(now())
-  assets          ImageAsset[]
-  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   prompt          String?
   promptJson      Json?
   styleHints      Json?
@@ -793,16 +620,11 @@ model ImageBrief {
 
 model ImageAsset {
   id        String      @id @default(uuid())
-  id        String      @id @default(uuid())
   projectId String
   briefId   String?
   fileId    String?
   provider  String?
   meta      Json?
-  createdAt DateTime    @default(now())
-  brief     ImageBrief? @relation(fields: [briefId], references: [id])
-  file      File?       @relation(fields: [fileId], references: [id])
-  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdAt DateTime    @default(now())
   brief     ImageBrief? @relation(fields: [briefId], references: [id])
   file      File?       @relation(fields: [fileId], references: [id])
@@ -815,7 +637,6 @@ model ImageAsset {
 
 model PatchSet {
   id             String    @id @default(uuid())
-  id             String    @id @default(uuid())
   projectId      String
   fromSnapshotId String?
   toSnapshotId   String?
@@ -824,11 +645,7 @@ model PatchSet {
   createdAt      DateTime  @default(now())
   patches        Patch[]
   createdByRun   ChatRun?  @relation(fields: [createdByRunId], references: [id])
-  createdAt      DateTime  @default(now())
-  patches        Patch[]
-  createdByRun   ChatRun?  @relation(fields: [createdByRunId], references: [id])
   fromSnapshot   Snapshot? @relation("PatchSetFrom", fields: [fromSnapshotId], references: [id])
-  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   toSnapshot     Snapshot? @relation("PatchSetTo", fields: [toSnapshotId], references: [id])
 
@@ -838,17 +655,13 @@ model PatchSet {
 
 model Patch {
   id         String               @id @default(uuid())
-  id         String               @id @default(uuid())
   patchSetId String
   filePath   String
   changeType GenerationChangeType @default(update)
   hunks      Json?
   createdAt  DateTime             @default(now())
   patchSet   PatchSet             @relation(fields: [patchSetId], references: [id], onDelete: Cascade)
-  createdAt  DateTime             @default(now())
-  patchSet   PatchSet             @relation(fields: [patchSetId], references: [id], onDelete: Cascade)
 
-  @@unique([patchSetId, filePath])
   @@unique([patchSetId, filePath])
   @@index([patchSetId])
   @@index([filePath])
@@ -864,26 +677,15 @@ model TestSuite {
   cases     TestCase[]
   runs      TestRun[]
   project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  id        String     @id @default(uuid())
-  projectId String
-  name      String
-  kind      String
-  meta      Json?
-  createdAt DateTime   @default(now())
-  cases     TestCase[]
-  runs      TestRun[]
-  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
 }
 
 model TestCase {
   id         String    @id @default(uuid())
-  id         String    @id @default(uuid())
   suiteId    String
   name       String
   definition Json?
-  createdAt  DateTime  @default(now())
   createdAt  DateTime  @default(now())
   suite      TestSuite @relation(fields: [suiteId], references: [id], onDelete: Cascade)
   runs       TestRun[]
@@ -896,20 +698,7 @@ model TestRun {
   projectId         String
   suiteId           String?
   caseId            String?
-  id                String         @id @default(uuid())
-  projectId         String
-  suiteId           String?
-  caseId            String?
   triggeredByTaskId String?
-  status            TestStatus     @default(queued)
-  stats             Json?
-  startedAt         DateTime?
-  finishedAt        DateTime?
-  createdAt         DateTime       @default(now())
-  artifacts         TestArtifact[]
-  case              TestCase?      @relation(fields: [caseId], references: [id])
-  project           Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  suite             TestSuite?     @relation(fields: [suiteId], references: [id])
   status            TestStatus     @default(queued)
   stats             Json?
   startedAt         DateTime?
@@ -929,12 +718,10 @@ model TestArtifact {
   id        String   @id @default(uuid())
   runId     String
   kind      String
-  kind      String
   url       String?
   fileId    String?
   meta      Json?
   createdAt DateTime @default(now())
-  file      File?    @relation(fields: [fileId], references: [id])
   file      File?    @relation(fields: [fileId], references: [id])
   run       TestRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
 
@@ -944,12 +731,10 @@ model TestArtifact {
 
 model Generation {
   id           String           @id @default(uuid())
-  id           String           @id @default(uuid())
   projectId    String
   userId       String
   prompt       Json?
   promptJson   Json?
-  options      Json             @default("{}")
   options      Json             @default("{}")
   model        String
   tokensInput  Int              @default(0)
@@ -958,14 +743,7 @@ model Generation {
   createdAt    DateTime         @default(now())
   project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokensInput  Int              @default(0)
-  tokensOutput Int              @default(0)
-  costUsd      Decimal          @default(0)
-  createdAt    DateTime         @default(now())
-  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   changes      GenerationFile[]
-  snapshots    Snapshot[]
   snapshots    Snapshot[]
 
   @@index([projectId])
@@ -986,11 +764,8 @@ model GenerationFile {
 model Category {
   id        String            @id @default(uuid())
   key       String            @unique
-  id        String            @id @default(uuid())
-  key       String            @unique
   label     String
   meta      Json?
-  createdAt DateTime          @default(now())
   createdAt DateTime          @default(now())
   projects  ProjectCategory[]
 }
@@ -1002,7 +777,6 @@ model ProjectCategory {
   order      Int?
   createdAt  DateTime @default(now())
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, categoryId])
@@ -1023,8 +797,16 @@ model ProjectLike {
   @@index([userId])
 }
 
+model Tenant {
+  id        String    @id @default(uuid())
+  key       String    @unique
+  name      String?
+  createdAt DateTime  @default(now())
+  projects  Project[]
+}
+
 model Artifact {
-  id                String          @id
+  id                String          @id @default(cuid())
   projectId         String
   snapshotId        String?
   specBundleVersion Int?
@@ -1056,19 +838,19 @@ model Artifact {
   manifestHash      String?
   signature         String?
   signedBy          String?
-  Project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  Snapshot          Snapshot?       @relation(fields: [snapshotId], references: [id])
-  ArtifactFile      ArtifactFile[]
-  ArtifactLink      ArtifactLink[]
+  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  snapshot          Snapshot?       @relation(fields: [snapshotId], references: [id])
+  files             ArtifactFile[]
+  links             ArtifactLink[]
 
-  @@index([deployState, createdAt])
-  @@index([gateStatus, createdAt])
   @@index([projectId, createdAt])
   @@index([snapshotId])
+  @@index([deployState, createdAt])
+  @@index([gateStatus, createdAt])
 }
 
 model ArtifactFile {
-  id                String    @id
+  id                String    @id @default(cuid())
   artifactId        String
   path              String
   mimeType          String
@@ -1081,79 +863,23 @@ model ArtifactFile {
   externalUrl       String?
   externalSigned    Boolean?
   externalExpiresAt DateTime?
-  Artifact          Artifact  @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  artifact          Artifact  @relation(fields: [artifactId], references: [id], onDelete: Cascade)
 
   @@unique([artifactId, path])
   @@index([hash])
 }
 
 model ArtifactLink {
-  id         String   @id
+  id         String   @id @default(cuid())
   artifactId String
   kind       String
   url        String?
   filePath   String?
   meta       Json?
   createdAt  DateTime @default(now())
-  Artifact   Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  artifact   Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
 
   @@index([artifactId, kind])
-}
-
-model ProjectContext {
-  id                  String        @id
-  projectId           String        @unique
-  specBundleId        String
-  projectType         ProjectType
-  status              ProjectStatus @default(created)
-  components          Json
-  pages               Json
-  styling             Json
-  conversationHistory Json
-  userPreferences     Json
-  lastModified        DateTime      @default(now())
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime
-  Project             Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@index([specBundleId])
-}
-
-model TemplateSourceFile {
-  id                String            @id
-  versionId         String
-  path              String
-  type              String?
-  content           String
-  encoding          String
-  contentType       String?
-  size              Int
-  sha256            String
-  createdAt         DateTime          @default(now())
-  UiTemplateVersion UiTemplateVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
-
-  @@unique([versionId, path])
-  @@index([sha256])
-  @@index([versionId])
-}
-
-model TemplateSourceSummary {
-  id                String            @id
-  versionId         String            @unique
-  filesCount        Int
-  sizeBytes         Int
-  checksum          String
-  createdAt         DateTime          @default(now())
-  UiTemplateVersion UiTemplateVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
-}
-
-model Tenant {
-  id        String    @id
-  key       String    @unique
-  name      String?
-  createdAt DateTime  @default(now())
-  Project   Project[]
 }
 
 enum Visibility {
@@ -1297,11 +1023,6 @@ enum ComponentType {
   custom
 }
 
-enum GateStatus {
-  pass
-  fail
-}
-
 enum PageType {
   home
   about
@@ -1314,22 +1035,8 @@ enum PageType {
   custom
 }
 
-enum ProjectStatus {
-  created
-  in_progress
-  completed
-  paused
-  cancelled
-  template_selected
-}
-
-enum ProjectType {
-  coffee_shop
-  restaurant
-  e_commerce
-  portfolio
-  blog
-  landing_page
-  business
-  personal
+enum TemplateStatus {
+  draft
+  published
+  deprecated
 }
