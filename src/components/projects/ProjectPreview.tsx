@@ -1,6 +1,35 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+
+// Client-side only time display component
+function TimeDisplay() {
+  const [time, setTime] = useState<string>('--:--:--');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const updateTime = () => {
+      setTime(new Date().toLocaleTimeString('th-TH', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit'
+      }));
+    };
+    
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Show placeholder during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return <span>--:--:--</span>;
+  }
+
+  return <span>{time}</span>;
+}
 import { Monitor, Smartphone, Tablet, RefreshCw, Code, Eye, Settings } from 'lucide-react';
 
 interface ProjectPreviewProps {
@@ -287,7 +316,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
             <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
               Live
             </span>
-            <span>Last updated: {new Date().toLocaleTimeString('th-TH')}</span>
+            <span>Last updated: <TimeDisplay /></span>
           </div>
         </div>
       </div>

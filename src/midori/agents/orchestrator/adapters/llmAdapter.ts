@@ -18,7 +18,6 @@ export class LLMAdapter {
   private providers: Map<string, LLMProvider> = new Map();
   private config: LLMConfig | null = null;
   private systemPrompts: Map<string, string> = new Map();
-  private unreliableModels: Set<string> = new Set(); // ติดตาม models ที่มีปัญหา
 
   constructor() {
     // ไม่ auto-initialize ใน constructor - ให้เรียก init methods แยก
@@ -136,31 +135,33 @@ export class LLMAdapter {
       text: options.text
     };
 
-    // Check if model is blacklisted
+    // Try primary provider with retry logic
     const modelName = request.model || 'gpt-4o-mini';
-    if (this.unreliableModels.has(modelName)) {
-      console.warn(`⚠️ Model ${modelName} is blacklisted, skipping to fallback`);
-    } else {
-      // Try primary provider
-      const primaryProvider = this.getProvider(modelName);
-      if (primaryProvider && await primaryProvider.isAvailable()) {
-        try {
-          console.log(`🚀 Calling ${modelName}...`);
-          const response = await primaryProvider.call(request);
-          
-          // Check for empty or invalid response
-          if (!response?.content || response.content.trim() === '') {
-            console.warn(`⚠️ Empty response from ${modelName}, marking as unreliable`);
-            this.markModelAsUnreliable(modelName);
-          } else {
-            console.log(`✅ ${modelName} responded successfully`);
-            return response;
+    const primaryProvider = this.getProvider(modelName);
+    
+    if (primaryProvider && await primaryProvider.isAvailable()) {
+      try {
+        console.log(`🚀 Calling ${modelName}...`);
+        const response = await this.executeWithRetry(
+          () => primaryProvider.call(request),
+          {
+            maxRetries: 3,
+            baseDelay: 1000,
+            maxDelay: 10000,
+            retryableErrors: ['timeout', 'rate_limit', 'api_error', 'network_error']
           }
-        } catch (error) {
-          console.warn(`⚠️ Primary provider failed:`, error);
-          this.markModelAsUnreliable(modelName);
-          // Continue to fallback logic instead of re-throwing
+        );
+        
+        // Check for empty or invalid response
+        if (!response?.content || response.content.trim() === '') {
+          console.warn(`⚠️ Empty response from ${modelName}, trying fallback`);
+        } else {
+          console.log(`✅ ${modelName} responded successfully`);
+          return response;
         }
+      } catch (error) {
+        console.warn(`⚠️ Primary provider failed after retries:`, error);
+        // Continue to fallback logic instead of re-throwing
       }
     }
 
@@ -168,47 +169,66 @@ export class LLMAdapter {
     if (config.fallback) {
       const fallbackModelName = config.fallback.name;
       
-      // Check if fallback model is also blacklisted
-      if (this.unreliableModels.has(fallbackModelName)) {
-        console.warn(`⚠️ Fallback model ${fallbackModelName} is also blacklisted, trying alternative`);
-        
-        // Try gpt-4o-mini as last resort if it's not the current fallback
-        if (fallbackModelName !== 'gpt-4o-mini' && !this.unreliableModels.has('gpt-4o-mini')) {
-          const alternativeProvider = this.getProvider('gpt-4o-mini');
-          if (alternativeProvider && await alternativeProvider.isAvailable()) {
-            console.log(`🔄 Using alternative model: gpt-4o-mini`);
-            const alternativeRequest = {
-              ...request,
-              model: 'gpt-4o-mini',
-              // ใช้ temperature จาก fallback config หรือ default
-              temperature: config.fallback?.temperature
-            };
-            return await alternativeProvider.call(alternativeRequest);
-          }
-        }
-      } else {
-        const fallbackProvider = this.getProvider(fallbackModelName);
-        if (fallbackProvider && await fallbackProvider.isAvailable()) {
+      const fallbackProvider = this.getProvider(fallbackModelName);
+      if (fallbackProvider && await fallbackProvider.isAvailable()) {
+        try {
           console.log(`🔄 Falling back to ${fallbackModelName}...`);
           const fallbackRequest = {
             ...request,
             model: fallbackModelName,
             temperature: config.fallback.temperature
           };
+          
+          const response = await this.executeWithRetry(
+            () => fallbackProvider.call(fallbackRequest),
+            {
+              maxRetries: 2,
+              baseDelay: 2000,
+              maxDelay: 8000,
+              retryableErrors: ['timeout', 'rate_limit', 'api_error', 'network_error']
+            }
+          );
+          
+          // Check fallback response quality
+          if (!response?.content || response.content.trim() === '') {
+            console.warn(`⚠️ Empty response from fallback ${fallbackModelName}, trying alternative`);
+          } else {
+            console.log(`✅ Fallback ${fallbackModelName} responded successfully`);
+            return response;
+          }
+        } catch (error) {
+          console.warn(`⚠️ Fallback provider failed after retries:`, error);
+        }
+      }
+      
+      // Try alternative model as last resort
+      if (fallbackModelName !== 'gpt-4o-mini') {
+        console.log(`🔄 Trying alternative model: gpt-4o-mini`);
+        const alternativeProvider = this.getProvider('gpt-4o-mini');
+        if (alternativeProvider && await alternativeProvider.isAvailable()) {
           try {
-            const response = await fallbackProvider.call(fallbackRequest);
+            const alternativeRequest = {
+              ...request,
+              model: 'gpt-4o-mini',
+              temperature: 0.3
+            };
             
-            // Check fallback response quality too
-            if (!response?.content || response.content.trim() === '') {
-              console.warn(`⚠️ Empty response from fallback ${fallbackModelName}, marking as unreliable`);
-              this.markModelAsUnreliable(fallbackModelName);
-            } else {
-              console.log(`✅ Fallback ${fallbackModelName} responded successfully`);
+            const response = await this.executeWithRetry(
+              () => alternativeProvider.call(alternativeRequest),
+              {
+                maxRetries: 1,
+                baseDelay: 3000,
+                maxDelay: 5000,
+                retryableErrors: ['timeout', 'rate_limit', 'api_error', 'network_error']
+              }
+            );
+            
+            if (response?.content && response.content.trim() !== '') {
+              console.log(`✅ Alternative gpt-4o-mini responded successfully`);
               return response;
             }
           } catch (error) {
-            console.warn(`⚠️ Fallback provider failed:`, error);
-            this.markModelAsUnreliable(fallbackModelName);
+            console.warn(`⚠️ Alternative provider failed:`, error);
           }
         }
       }
@@ -241,26 +261,58 @@ export class LLMAdapter {
   }
 
   /**
-   * Mark a model as unreliable and blacklist it
+   * Execute operation with retry logic
    */
-  private markModelAsUnreliable(modelName: string): void {
-    this.unreliableModels.add(modelName);
-    console.warn(`🚫 Model ${modelName} marked as unreliable and blacklisted`);
+  private async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    options: {
+      maxRetries: number;
+      baseDelay: number;
+      maxDelay: number;
+      retryableErrors: string[];
+    }
+  ): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt <= options.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        
+        // Check if error is retryable
+        if (!this.isRetryableError(error, options.retryableErrors)) {
+          throw error;
+        }
+        
+        if (attempt === options.maxRetries) {
+          throw error;
+        }
+        
+        // Calculate delay with exponential backoff and jitter
+        const delay = Math.min(
+          options.baseDelay * Math.pow(2, attempt),
+          options.maxDelay
+        );
+        const jitter = Math.random() * 0.1 * delay;
+        const finalDelay = delay + jitter;
+        
+        console.log(`🔄 Retry ${attempt + 1}/${options.maxRetries} in ${Math.round(finalDelay)}ms`);
+        await new Promise(resolve => setTimeout(resolve, finalDelay));
+      }
+    }
+    
+    throw lastError;
   }
-
+  
   /**
-   * Check if a model is blacklisted
+   * Check if error is retryable
    */
-  private isModelReliable(modelName: string): boolean {
-    return !this.unreliableModels.has(modelName);
-  }
-
-  /**
-   * Reset model reliability tracking (for testing or recovery)
-   */
-  public resetModelReliability(): void {
-    this.unreliableModels.clear();
-    console.log('🔄 Model reliability tracking reset');
+  private isRetryableError(error: any, retryableErrors: string[]): boolean {
+    const errorMessage = error.message?.toLowerCase() || '';
+    return retryableErrors.some(retryableError => 
+      errorMessage.includes(retryableError.toLowerCase())
+    );
   }
 
   getUsage(): Record<string, TokenUsage> {

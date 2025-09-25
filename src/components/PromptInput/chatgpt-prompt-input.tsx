@@ -422,6 +422,8 @@ export const PromptBox = React.forwardRef<
       const payload = { name: value.slice(0, 256), description: undefined };
       const result = await createProjectAction(payload as any);
       if (result?.ok) {
+        // Store the user input in localStorage for the project page
+        localStorage.setItem(`pendingMessage_${result.projectId}`, value.trim());
         setValue('');
         // redirect to project page
         if (result.projectId) {
