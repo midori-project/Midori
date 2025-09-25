@@ -189,7 +189,7 @@ async function createTemplate(raw: unknown) {
       // 1) template
       const template = await tx.uiTemplate.create({
         data: { key: data.key, label: data.label, category: data.category },
-      });
+      } as any);
 
       // 2) meta
       const meta = await tx.uiTemplateMeta.create({
@@ -204,7 +204,7 @@ async function createTemplate(raw: unknown) {
           postProcess: data.meta?.postProcess,
           author: data.meta?.author,
         },
-      });
+      } as any);
 
       // 3) tags
       if (data.tags?.length) {
@@ -213,8 +213,8 @@ async function createTemplate(raw: unknown) {
             where: { key: tagKey },
             update: {},
             create: { key: tagKey, label: tagKey.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()) },
-          });
-          await tx.uiTemplateMetaTag.create({ data: { metaId: meta.id, tagId: tag.id } });
+          } as any);
+          await tx.uiTemplateMetaTag.create({ data: { metaId: meta.id, tagId: tag.id } } as any);
         }
       }
 
@@ -243,7 +243,7 @@ async function createTemplate(raw: unknown) {
             publishedAt: data.initialVersion.publishedAt ? new Date(data.initialVersion.publishedAt) : null,
             deprecatedAt: data.initialVersion.deprecatedAt ? new Date(data.initialVersion.deprecatedAt) : null,
           },
-        });
+        } as any);
 
         const src = data.initialVersion.sourceFiles ?? [];
         let initialSummary: { filesCount: number; sizeBytes: number; checksum: string } | null = null;
@@ -312,7 +312,7 @@ async function createTemplateVersion(raw: unknown) {
           publishedAt: data.publishedAt ? new Date(data.publishedAt) : null,
           deprecatedAt: data.deprecatedAt ? new Date(data.deprecatedAt) : null,
         },
-      });
+      } as any);
 
       const src = data.sourceFiles ?? [];
       let summary: { filesCount: number; sizeBytes: number; checksum: string } | null = null;
@@ -347,15 +347,32 @@ async function createTemplateVersion(raw: unknown) {
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const category = url.searchParams.get('category') ?? undefined;
-    const type = url.searchParams.get('type') ?? undefined;
-    const status = url.searchParams.get('status') as z.infer<typeof TemplateStatusEnum> | null;
-    const statusScope = (url.searchParams.get('statusScope') ?? 'meta') as 'meta' | 'version';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10', 10), 50);
-    const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+    const action = url.searchParams.get('action');
+    
+    // Handle different GET actions
+    if (action === 'source') {
+      return await getTemplateSource(req);
+    }
+    
+    // Default: get templates list
+    return await getTemplatesList(req);
+  } catch (e: any) {
+    console.error('Template GET error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 
-    const whereTemplate: any = {};
-    if (category) whereTemplate.category = category;
+async function getTemplatesList(req: NextRequest) {
+  const url = new URL(req.url);
+  const category = url.searchParams.get('category') ?? undefined;
+  const type = url.searchParams.get('type') ?? undefined;
+  const status = url.searchParams.get('status') as z.infer<typeof TemplateStatusEnum> | null;
+  const statusScope = (url.searchParams.get('statusScope') ?? 'meta') as 'meta' | 'version';
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '10', 10), 50);
+  const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+
+  const whereTemplate: any = {};
+  if (category) whereTemplate.category = category;
 
     const items = await prisma.uiTemplate.findMany({
       where: whereTemplate,
@@ -370,33 +387,139 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
+    }) as any;
+
+  const filtered = status && statusScope === 'meta'
+    ? items.filter((t: any) => t.meta?.status === status)
+    : items;
+
+  // Optional filter by `type` against category or tag key/label (case-insensitive)
+  const filteredByType = type
+    ? filtered.filter((t: any) => {
+        const typeLc = type.toLowerCase();
+        const inCategory = t.category ? t.category.toLowerCase() === typeLc : false;
+        const inTags = (t.meta?.tags ?? []).some((mt: any) => {
+          const keyLc = mt?.tag?.key ? String(mt.tag.key).toLowerCase() : '';
+          const labelLc = mt?.tag?.label ? String(mt.tag.label).toLowerCase() : '';
+          return keyLc === typeLc || labelLc === typeLc;
+        });
+        return inCategory || inTags;
+      })
+    : filtered;
+
+  return NextResponse.json({
+    success: true,
+    data: filteredByType,
+    pagination: { limit, offset, count: filteredByType.length },
+  });
+}
+
+async function getTemplateSource(req: NextRequest) {
+  const url = new URL(req.url);
+  const label = url.searchParams.get('label');
+  const category = url.searchParams.get('category');
+  const version = url.searchParams.get('version'); // optional: specific version number
+
+  if (!label && !category) {
+    return NextResponse.json({ 
+      error: 'Either label or category parameter is required' 
+    }, { status: 400 });
+  }
+
+  try {
+    // Build where condition
+    const whereTemplate: any = {};
+    if (label) whereTemplate.label = { contains: label, mode: 'insensitive' };
+    if (category) whereTemplate.category = { contains: category, mode: 'insensitive' };
+
+    // Find templates matching criteria
+    const templates = await prisma.uiTemplate.findMany({
+      where: whereTemplate,
+      include: {
+        meta: true,
+        versions: {
+          orderBy: { version: 'desc' },
+          include: {
+            sourceFiles: true,
+            sourceSummary: true,
+          },
+        },
+      },
+    }) as any;
+
+    if (templates.length === 0) {
+      return NextResponse.json({ 
+        error: 'No templates found matching the criteria' 
+      }, { status: 404 });
+    }
+
+    // Process results to include source files
+    const results = templates.map((template: any) => {
+      const targetVersion = version 
+        ? template.versions.find((v: any) => v.version === parseInt(version))
+        : template.versions[0]; // latest version if no version specified
+
+      if (!targetVersion) {
+        return {
+          template: {
+            id: template.id,
+            key: template.key,
+            label: template.label,
+            category: template.category,
+          },
+          meta: template.meta,
+          version: null,
+          sourceFiles: [],
+          sourceSummary: null,
+        };
+      }
+
+      return {
+        template: {
+          id: template.id,
+          key: template.key,
+          label: template.label,
+          category: template.category,
+        },
+        meta: template.meta,
+        version: {
+          id: targetVersion.id,
+          version: targetVersion.version,
+          semver: targetVersion.semver,
+          status: targetVersion.status,
+          createdAt: targetVersion.createdAt,
+          files: targetVersion.files,
+          slots: targetVersion.slots,
+          constraints: targetVersion.constraints,
+          checksum: targetVersion.checksum,
+          sizeBytes: targetVersion.sizeBytes,
+        },
+        sourceFiles: targetVersion.sourceFiles.map((file: any) => ({
+          id: file.id,
+          path: file.path,
+          type: file.type,
+          encoding: file.encoding,
+          contentType: file.contentType,
+          size: file.size,
+          sha256: file.sha256,
+          content: file.content, // Include actual content for source files
+        })),
+        sourceSummary: targetVersion.sourceSummary ? {
+          filesCount: targetVersion.sourceSummary.filesCount,
+          sizeBytes: targetVersion.sourceSummary.sizeBytes,
+          checksum: targetVersion.sourceSummary.checksum,
+        } : null,
+      };
     });
-
-    const filtered = status && statusScope === 'meta'
-      ? items.filter((t) => t.meta?.status === status)
-      : items;
-
-    // Optional filter by `type` against category or tag key/label (case-insensitive)
-    const filteredByType = type
-      ? filtered.filter((t) => {
-          const typeLc = type.toLowerCase();
-          const inCategory = t.category ? t.category.toLowerCase() === typeLc : false;
-          const inTags = (t.meta?.tags ?? []).some((mt: any) => {
-            const keyLc = mt?.tag?.key ? String(mt.tag.key).toLowerCase() : '';
-            const labelLc = mt?.tag?.label ? String(mt.tag.label).toLowerCase() : '';
-            return keyLc === typeLc || labelLc === typeLc;
-          });
-          return inCategory || inTags;
-        })
-      : filtered;
 
     return NextResponse.json({
       success: true,
-      data: filteredByType,
-      pagination: { limit, offset, count: filteredByType.length },
+      data: results,
+      count: results.length,
     });
+
   } catch (e: any) {
-    console.error('Template GET error:', e);
+    console.error('getTemplateSource error:', e);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
