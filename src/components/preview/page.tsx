@@ -19,17 +19,20 @@ export default function DaytonaPreviewPage({
   className = '' 
 }: DaytonaPreviewPageProps) {
   const {
-    sandboxState,
-    isStarting,
-    isStopping,
+    sandboxId,
+    status,
+    previewUrl,
+    previewToken,
+    previewUrlWithToken,
+    error,
+    loading,
     startPreview,
     stopPreview,
-  } = useDaytonaPreview(projectId, userId);
+  } = useDaytonaPreview();
 
   const getStatusIcon = () => {
-    switch (sandboxState.status) {
+    switch (status) {
       case 'creating':
-      case 'building':
         return <Loader2 className="h-4 w-4 animate-spin" />;
       case 'running':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
@@ -41,19 +44,18 @@ export default function DaytonaPreviewPage({
   };
 
   const getStatusText = () => {
-    switch (sandboxState.status) {
+    switch (status) {
       case 'creating': return 'กำลังสร้าง Sandbox...';
-      case 'building': return 'กำลัง Build โปรเจกต์...';
       case 'running': return 'พรีวิวพร้อมใช้งาน';
-      case 'stopping': return 'กำลังหยุด...';
+      case 'stopped': return 'หยุดแล้ว';
       case 'error': return 'เกิดข้อผิดพลาด';
       default: return 'ยังไม่ได้เริ่มพรีวิว';
     }
   };
 
-  const usagePercent = ((sandboxState.usageToday ?? 0) / (sandboxState.maxUsagePerDay ?? 3600)) * 100;
-  const usageMinutes = Math.round((sandboxState.usageToday ?? 0) / 60);
-  const maxMinutes = Math.round((sandboxState.maxUsagePerDay ?? 3600) / 60);
+  const usagePercent = 0; // Mock data
+  const usageMinutes = 0; // Mock data
+  const maxMinutes = 60; // Mock data
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -72,47 +74,47 @@ export default function DaytonaPreviewPage({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                sandboxState.status === 'running' 
+                status === 'running' 
                   ? 'bg-green-100 text-green-800' 
                   : 'bg-gray-100 text-gray-800'
               }`}>
                 {getStatusText()}
               </span>
-              {sandboxState.sandboxId && (
+              {sandboxId && (
                 <span className="text-sm text-gray-500">
-                  ID: {sandboxState.sandboxId.slice(0, 8)}...
+                  ID: {sandboxId.slice(0, 8)}...
                 </span>
               )}
             </div>
             
             <div className="flex gap-2">
-              {sandboxState.status === 'idle' && (
+              {status === 'idle' && (
                 <Button 
-                  onClick={() => startPreview(promptJson)}
-                  disabled={isStarting || usagePercent >= 100}
+                  onClick={() => startPreview()}
+                  disabled={loading || usagePercent >= 100}
                   className="flex items-center gap-2"
                 >
                   <Play className="h-4 w-4" />
-                  {isStarting ? 'กำลังเริ่ม...' : 'เริ่มพรีวิว'}
+                  {loading ? 'กำลังเริ่ม...' : 'เริ่มพรีวิว'}
                 </Button>
               )}
               
-              {(sandboxState.status === 'running' || sandboxState.status === 'building') && (
+              {(status === 'running' || status === 'creating') && (
                 <Button 
                   variant="outline" 
                   onClick={() => stopPreview()}
-                  disabled={isStopping}
+                  disabled={loading}
                   className="flex items-center gap-2"
                 >
                   <Square className="h-4 w-4" />
-                  {isStopping ? 'กำลังหยุด...' : 'หยุดพรีวิว'}
+                  {loading ? 'กำลังหยุด...' : 'หยุดพรีวิว'}
                 </Button>
               )}
             </div>
           </div>
 
           {/* ลิงก์พรีวิว */}
-          {sandboxState.previewUrl && (
+            {previewUrl && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-md">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-green-800">
@@ -121,7 +123,7 @@ export default function DaytonaPreviewPage({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(sandboxState.previewUrl, '_blank')}
+                  onClick={() => window.open(previewUrl, '_blank')}
                   className="flex items-center gap-2"
                 >
                   <ExternalLink className="h-4 w-4" />
@@ -129,15 +131,15 @@ export default function DaytonaPreviewPage({
                 </Button>
               </div>
               <p className="text-xs text-green-600 mt-1 break-all">
-                {sandboxState.previewUrl}
+                {previewUrl}
               </p>
             </div>
           )}
 
           {/* ข้อผิดพลาด */}
-          {sandboxState.error && (
+          {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-800">{sandboxState.error}</p>
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
@@ -166,14 +168,14 @@ export default function DaytonaPreviewPage({
           )}
 
           {/* Logs (ถ้ามี) */}
-          {sandboxState.logs && sandboxState.logs.length > 0 && (
+          {false && (
             <details className="space-y-2">
               <summary className="text-sm font-medium cursor-pointer">
-                ดู Logs ({sandboxState.logs.length} รายการ)
+                ดู Logs (0 รายการ)
               </summary>
               <div className="bg-gray-50 border rounded-md p-3 max-h-40 overflow-y-auto">
                 <pre className="text-xs text-gray-700 whitespace-pre-wrap">
-                  {sandboxState.logs.join('\n')}
+                  {''}
                 </pre>
               </div>
             </details>
