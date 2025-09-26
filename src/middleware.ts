@@ -22,6 +22,7 @@ const publicApiRoutes = [
   '/api/auth/validate',
   '/api/preview/daytona', // เพิ่ม Daytona preview API
   '/api/projects', // เพิ่ม projects API (สำหรับ preview)
+  '/api/mock-website',
 ];
 
 // Admin routes ที่ต้อง admin permission
