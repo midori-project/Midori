@@ -20,6 +20,8 @@ const publicApiRoutes = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/validate',
+  '/api/preview/daytona', // เพิ่ม Daytona preview API
+  '/api/projects', // เพิ่ม projects API (สำหรับ preview)
 ];
 
 // Admin routes ที่ต้อง admin permission
@@ -65,9 +67,16 @@ export async function middleware(request: NextRequest) {
                          return pathname.startsWith(route);
                        });
   
-  const isPublicApiRoute = publicApiRoutes.some(route => pathname.startsWith(route));
+  const isPublicApiRoute = publicApiRoutes.some(route => {
+    if (route === '/api/projects') {
+      const matches = pathname.startsWith('/api/projects/') && pathname.endsWith('/preview');
+      console.log('🔍 Projects API check:', { pathname, route, matches });
+      return matches;
+    }
+    return pathname.startsWith(route);
+  });
 
-  console.log('🔍 Path analysis:', { pathname, isPublicRoute, isPublicApiRoute, publicRoutes });
+  console.log('🔍 Path analysis:', { pathname, isPublicRoute, isPublicApiRoute, publicRoutes, publicApiRoutes });
 
   // Allow public routes
   if (isPublicRoute || isPublicApiRoute) {

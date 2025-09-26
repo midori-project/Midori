@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Daytona } from '@daytonaio/sdk'
 import { daytonaConfig } from '@/config/daytona'
-import testJson from '@/components/preview/test/test.json'
+// import testJson from '@/components/preview/test/test.json' // ✅ Remove hardcoded import
 
 // ใช้ Node APIs ได้
 export const runtime = 'nodejs'
@@ -385,8 +385,17 @@ async function waitForReady(sandbox: any, maxAttempts = 20, delayMs = 2000) {
 }
 
 // ---------- Core ----------
-async function createDaytonaSandbox(): Promise<{ sandboxId: string; url?: string; token?: string; status: string }> {
+async function createDaytonaSandbox(projectFiles?: ProjectFile[]): Promise<{ sandboxId: string; url?: string; token?: string; status: string }> {
   if (!daytonaConfig?.apiKey) throw new Error('Missing DAYTONA_API_KEY')
+  
+  // ✅ Validate input files
+  if (!projectFiles || !Array.isArray(projectFiles) || projectFiles.length === 0) {
+    throw new Error('No project files provided for preview')
+  }
+  
+  console.log(`🏗️ Creating Daytona sandbox with ${projectFiles.length} files`);
+  
+  const daytona = new Daytona({ apiKey: daytonaConfig.apiKey })
   const daytona = new Daytona({ apiKey: daytonaConfig.apiKey, baseUrl: daytonaConfig.baseUrl })
   const sandbox = await daytona.create({
     ...daytonaConfig.defaultSandboxConfig,
@@ -397,10 +406,10 @@ async function createDaytonaSandbox(): Promise<{ sandboxId: string; url?: string
 
   console.log(`🚀 Creating Daytona sandbox: ${sandboxId}`)
 
-  // 1) สร้างไฟล์ทั้งหมดจาก JSON
-  const files = (testJson as any).files as ProjectFile[]
-  if (!Array.isArray(files) || files.length === 0) throw new Error('No files in test-cafe-complete.json')
-  await createAllFiles(sandbox, files)
+  console.log(`🚀 Creating Daytona sandbox: ${sandboxId}`)
+
+  // 1) สร้างไฟล์ทั้งหมดจาก dynamic files
+  await createAllFiles(sandbox, projectFiles)
 
   // 2) แก้ dependency React plugin (กันเคสพลาด)
   await ensureReactPlugin(sandbox)
@@ -441,21 +450,71 @@ export async function OPTIONS() {
 export async function POST(req: NextRequest) {
   try {
     console.log('🚀 POST /api/preview/daytona - Creating new sandbox')
-    const result = await createDaytonaSandbox()
+    // ✅ Parse request body to get dynamic files
+    const body = await req.json()
+    const { files, projectId } = body
+    
+    console.log(`📦 Received preview request for project: ${projectId}`)
+    console.log(`📁 Files count: ${files?.length || 0}`)
+    
+    // ✅ Log file structure for debugging
+    if (files?.length > 0) {
+      console.log(`📋 Files structure:`)
+      files.slice(0, 5).forEach((file: any, index: number) => {
+        console.log(`  ${index + 1}. ${file.path} (${file.content?.length || 0} chars)`)
+      })
+      if (files.length > 5) {
+        console.log(`  ... and ${files.length - 5} more files`)
+      }
+    }
+    
+    // ✅ Validate request
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      return NextResponse.json(
+        { error: 'No files provided. Please include a "files" array in request body.' }, 
+        { status: 400 }
+      )
+    }
+    
+    // ✅ Validate file structure
+    const invalidFiles = files.filter((file: any) => !file.path || !file.content)
+    if (invalidFiles.length > 0) {
+      return NextResponse.json(
+        { error: `Invalid file structure. All files must have "path" and "content" properties.` }, 
+        { status: 400 }
+      )
+    }
+    
+    // ✅ Create sandbox with dynamic files
+    const result = await createDaytonaSandbox(files)
     
     // แสดงสถิติปัจจุบัน
     const stats = DaytonaCleanupService.getStats()
     console.log(`📊 Current sandbox stats:`, stats)
     
-    return NextResponse.json(result, {
+    
+    console.log(`✅ Sandbox created for project ${projectId}:`, {
+      sandboxId: result.sandboxId,
+      status: result.status,
+      hasUrl: !!result.url
+    })
+    
+    return NextResponse.json({
+      ...result,
+      projectId
+    }, {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'X-Daytona-Skip-Preview-Warning': 'true',
       },
     })
+    
   } catch (e: any) {
     console.error('[POST error]', e)
-    return NextResponse.json({ error: e?.message || 'Failed to create sandbox' }, { status: 500 })
+    return NextResponse.json({ 
+      error: e?.message || 'Failed to create sandbox',
+      details: e?.stack || 'No additional details'
+    }, { status: 500 })
   }
 }
 

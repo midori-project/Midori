@@ -5,7 +5,11 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 
 type Status = 'idle' | 'creating' | 'running' | 'stopped' | 'error'
 
-export function useDaytonaPreview() {
+interface UseDaytonaPreviewProps {
+  projectId?: string
+}
+
+export function useDaytonaPreview({ projectId }: UseDaytonaPreviewProps = {}) {
   const [sandboxId, setSandboxId] = useState<string>()
   const [status, setStatus] = useState<Status>('idle')
   const [previewUrl, setPreviewUrl] = useState<string>()
@@ -118,7 +122,69 @@ export function useDaytonaPreview() {
     }
   }, [status, sandboxId, sendHeartbeat])
 
+  // ✅ Load existing preview data when projectId changes
+  useEffect(() => {
+    if (!projectId) return
+
+    const loadExistingPreview = async () => {
+      try {
+        setLoading(true)
+        // ดึงข้อมูล preview ที่มีอยู่แล้วจากฐานข้อมูล
+        const res = await fetch(`/api/projects/${projectId}/preview`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.previewUrl) {
+            setSandboxId(data.sandboxId)
+            setPreviewUrl(data.previewUrl)
+            setPreviewToken(data.previewToken)
+            setStatus(data.status || 'running')
+          }
+        }
+      } catch (e) {
+        console.log('No existing preview found for project:', projectId)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadExistingPreview()
+  }, [projectId])
+
+  // ✅ Load existing preview data when projectId changes
+  useEffect(() => {
+    if (!projectId) return
+
+    const loadExistingPreview = async () => {
+      try {
+        setLoading(true)
+        // ดึงข้อมูล preview ที่มีอยู่แล้วจากฐานข้อมูล
+        const res = await fetch(`/api/projects/${projectId}/preview`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.previewUrl) {
+            setSandboxId(data.sandboxId)
+            setPreviewUrl(data.previewUrl)
+            setPreviewToken(data.previewToken)
+            setStatus(data.status || 'running')
+          }
+        }
+      } catch (e) {
+        console.log('No existing preview found for project:', projectId)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadExistingPreview()
+  }, [projectId])
+
   const startPreview = useCallback(async () => {
+    if (!projectId) {
+      setError('Project ID is required')
+      setStatus('error')
+      return
+    }
+
     setLoading(true)
     setStatus('creating')
     setError(undefined)
@@ -126,7 +192,13 @@ export function useDaytonaPreview() {
     console.log('🚀 [FRONTEND] Starting preview creation...')
     
     try {
-      const res = await fetch('/api/preview/daytona', { method: 'POST' })
+      const res = await fetch('/api/preview/daytona', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ projectId })
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Failed to create sandbox')
 
@@ -144,7 +216,7 @@ export function useDaytonaPreview() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [projectId])
 
   const stopPreview = useCallback(async () => {
     if (!sandboxId) {

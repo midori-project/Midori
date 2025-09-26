@@ -694,7 +694,7 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
           if (task.agent === 'frontend') {
             // Check if this is a new website creation (use template)
             if (task.action === 'create_component' && 
-                (command.commandType === 'SELECT_TEMPLATE' || 
+                (command.commandType === CommandType.SELECT_TEMPLATE || 
                  task.description?.includes('เว็บไซต์') || 
                  task.description?.includes('ร้าน'))) {
               console.log('🔄 Converting website creation to template selection:', task.taskId);
