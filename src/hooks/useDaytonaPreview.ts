@@ -16,6 +16,7 @@ export function useDaytonaPreview() {
   // Heartbeat tracking
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const lastHeartbeatRef = useRef<number>(0)
+  const heartbeatAbortControllerRef = useRef<AbortController | null>(null)
 
   const previewUrlWithToken =
     previewUrl && previewToken
@@ -24,11 +25,22 @@ export function useDaytonaPreview() {
 
   // Heartbeat function
   const sendHeartbeat = useCallback(async () => {
-    if (!sandboxId || status !== 'running') return
+    // ป้องกันการยิง heartbeat ถ้าไม่ได้รันอยู่ หรือ interval ถูกยกเลิกแล้ว
+    if (!sandboxId || status !== 'running' || !heartbeatIntervalRef.current) return
 
     try {
       console.log(`💓 [FRONTEND] Sending heartbeat for sandbox: ${sandboxId}`)
-      const res = await fetch(`/api/preview/daytona?sandboxId=${encodeURIComponent(sandboxId)}`)
+      // ยกเลิก request เก่าถ้ายังค้างอยู่
+      if (heartbeatAbortControllerRef.current) {
+        try { heartbeatAbortControllerRef.current.abort() } catch {}
+      }
+      const controller = new AbortController()
+      heartbeatAbortControllerRef.current = controller
+
+      const res = await fetch(
+        `/api/preview/daytona?sandboxId=${encodeURIComponent(sandboxId)}`,
+        { signal: controller.signal }
+      )
       if (res.ok) {
         lastHeartbeatRef.current = Date.now()
         console.log(`✅ [FRONTEND] Heartbeat successful for sandbox: ${sandboxId}`)
@@ -37,6 +49,9 @@ export function useDaytonaPreview() {
       }
     } catch (error) {
       console.error(`❌ [FRONTEND] Heartbeat error for sandbox: ${sandboxId}:`, error)
+    } finally {
+      // เคลียร์ controller หลังจบ
+      heartbeatAbortControllerRef.current = null
     }
   }, [sandboxId, status])
 
@@ -59,6 +74,12 @@ export function useDaytonaPreview() {
         clearInterval(heartbeatIntervalRef.current)
         heartbeatIntervalRef.current = null
       }
+      // ยกเลิก in-flight heartbeat ถ้ามี
+      if (heartbeatAbortControllerRef.current) {
+        try { heartbeatAbortControllerRef.current.abort() } catch {}
+        heartbeatAbortControllerRef.current = null
+        console.log('🛑 [FRONTEND] Heartbeat request aborted (not running)')
+      }
     }
 
     // Cleanup on unmount - AUTO STOP SANDBOX
@@ -66,6 +87,13 @@ export function useDaytonaPreview() {
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current)
         heartbeatIntervalRef.current = null
+        console.log('🛑 [FRONTEND] Heartbeat interval cleared on unmount')
+      }
+      // ยกเลิก in-flight heartbeat เมื่อ unmount
+      if (heartbeatAbortControllerRef.current) {
+        try { heartbeatAbortControllerRef.current.abort() } catch {}
+        heartbeatAbortControllerRef.current = null
+        console.log('🛑 [FRONTEND] Heartbeat request aborted on unmount')
       }
       
       // Auto stop sandbox when leaving page

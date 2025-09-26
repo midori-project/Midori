@@ -31,7 +31,6 @@ const sandboxStates = new Map<string, SandboxState>()
 class DaytonaCleanupService {
   private static cleanupInterval: NodeJS.Timeout | null = null
   private static idleCheckInterval: NodeJS.Timeout | null = null
-  private static usageCheckInterval: NodeJS.Timeout | null = null
   private static stoppedCleanupInterval: NodeJS.Timeout | null = null
   private static isRunning = false
 
@@ -49,15 +48,10 @@ class DaytonaCleanupService {
       this.cleanupExpiredStates()
     }, 60 * 60 * 1000) // 1 hour
 
-    // Cleanup idle sandboxes ทุก 10 นาที
+    // Cleanup idle sandboxes ทุก 1 นาที
     this.idleCheckInterval = setInterval(() => {
       this.cleanupIdleSandboxes()
-    }, 10 * 60 * 1000) // 10 minutes
-
-    // Enforce usage limits ทุก 5 นาที
-    this.usageCheckInterval = setInterval(() => {
-      this.enforceUsageLimits()
-    }, 5 * 60 * 1000) // 5 minutes
+    }, 60 * 1000) // 1 minute
 
     // Cleanup stopped sandboxes ทุกชั่วโมง
     this.stoppedCleanupInterval = setInterval(() => {
@@ -83,11 +77,6 @@ class DaytonaCleanupService {
     if (this.idleCheckInterval) {
       clearInterval(this.idleCheckInterval)
       this.idleCheckInterval = null
-    }
-
-    if (this.usageCheckInterval) {
-      clearInterval(this.usageCheckInterval)
-      this.usageCheckInterval = null
     }
 
     if (this.stoppedCleanupInterval) {
@@ -141,7 +130,7 @@ class DaytonaCleanupService {
 
     const daytona = new Daytona({ apiKey: daytonaConfig.apiKey })
     const now = Date.now()
-    const idleTimeout = 30 * 60 * 1000 // 30 นาที
+    const idleTimeout = 5 * 60 * 1000 // 5 นาที
     let cleanedCount = 0
     let errorCount = 0
 
@@ -247,7 +236,6 @@ class DaytonaCleanupService {
         intervals: {
           expiredCleanup: !!this.cleanupInterval,
           idleCleanup: !!this.idleCheckInterval,
-          usageCheck: !!this.usageCheckInterval,
           stoppedCleanup: !!this.stoppedCleanupInterval
         }
       }
@@ -573,7 +561,6 @@ export async function POST_CLEANUP(req: NextRequest) {
       // Run all cleanup functions
       DaytonaCleanupService.cleanupExpiredStates()
       await DaytonaCleanupService.cleanupIdleSandboxes()
-      await DaytonaCleanupService.enforceUsageLimits()
       DaytonaCleanupService.cleanupStoppedSandboxes()
       
       return NextResponse.json({ 
