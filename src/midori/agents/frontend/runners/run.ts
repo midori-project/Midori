@@ -885,28 +885,93 @@ WRONG examples (DO NOT return these):
 }
 
 /**
+ * Get brand name from Orchestrator data (no hardcode)
+ */
+function getBrandNameFromOrchestrator(customizations: any): string {
+  // Use brand name from Orchestrator
+  if (customizations.brandName) {
+    return customizations.brandName;
+  }
+  
+  // Use project type from Orchestrator
+  if (customizations.projectType) {
+    return customizations.projectType;
+  }
+  
+  // Default fallback
+  return 'ร้านค้าออนไลน์';
+}
+
+/**
+ * Generate content from Orchestrator data (no hardcode)
+ */
+function generateContentFromOrchestrator(customizations: any): any {
+  // Use data from Orchestrator
+  const brandName = getBrandNameFromOrchestrator(customizations);
+  
+  // Check if Orchestrator provided content
+  if (customizations.content) {
+    console.log('🎨 Using content from Orchestrator:', customizations.content);
+    return customizations.content;
+  }
+  
+  // Check if Orchestrator provided wording
+  if (customizations.wording) {
+    console.log('🎨 Using wording from Orchestrator:', customizations.wording);
+    return {
+      heroTitle: customizations.wording.heroTitle || `ยินดีต้อนรับสู่${brandName}`,
+      heroSubtitle: customizations.wording.heroSubtitle || `${brandName} คุณภาพดี ราคาเป็นมิตร`,
+      ctaLabel: customizations.wording.ctaLabel || 'ชมสินค้า',
+      feature1: customizations.wording.feature1 || { title: 'คุณภาพเยี่ยม', text: 'สินค้าคุณภาพดี' },
+      feature2: customizations.wording.feature2 || { title: 'ราคาเป็นมิตร', text: 'ราคาเหมาะสม' },
+      feature3: customizations.wording.feature3 || { title: 'บริการดี', text: 'บริการลูกค้าดี' },
+      products: { title: 'สินค้าของเรา', subtitle: `เลือกซื้อสินค้าจาก${brandName}` },
+      contact: { title: 'ติดต่อเรา', subtitle: 'สอบถามข้อมูลเพิ่มเติม' },
+      about: { title: 'เกี่ยวกับเรา', subtitle: `เรื่องราวของ${brandName}` }
+    };
+  }
+  
+  // Fallback to basic content
+  console.log('⚠️ No content from Orchestrator, using fallback');
+  return {
+    heroTitle: `ยินดีต้อนรับสู่${brandName}`,
+    heroSubtitle: `${brandName} คุณภาพดี ราคาเป็นมิตร`,
+    ctaLabel: 'ชมสินค้า',
+    feature1: { title: 'คุณภาพเยี่ยม', text: 'สินค้าคุณภาพดี' },
+    feature2: { title: 'ราคาเป็นมิตร', text: 'ราคาเหมาะสม' },
+    feature3: { title: 'บริการดี', text: 'บริการลูกค้าดี' },
+    products: { title: 'สินค้าของเรา', subtitle: `เลือกซื้อสินค้าจาก${brandName}` },
+    contact: { title: 'ติดต่อเรา', subtitle: 'สอบถามข้อมูลเพิ่มเติม' },
+    about: { title: 'เกี่ยวกับเรา', subtitle: `เรื่องราวของ${brandName}` }
+  };
+}
+
+/**
  * Apply template placeholder replacements
  */
 function applyTemplatePlaceholders(content: string, customizations: any): string {
   let modifiedContent = content;
   
-  // Default template placeholders
+  // Use content from Orchestrator (no duplication)
+  const dynamicContent = generateContentFromOrchestrator(customizations);
+  
+  // Create placeholders from dynamic content
   const placeholders = {
-    '{{home.heroTitle}}': 'ยินดีต้อนรับสู่ร้านหมูปิ้ง',
-    '{{home.heroSubtitle}}': 'หมูปิ้งสดใหม่ รสชาติดี ราคาเป็นมิตร',
-    '{{home.ctaLabel}}': 'สั่งซื้อเลย',
-    '{{home.feature1.title}}': 'สดใหม่ทุกวัน',
-    '{{home.feature1.text}}': 'เลือกเนื้อหมูคุณภาพดี ปรุงสดใหม่ทุกวัน',
-    '{{home.feature2.title}}': 'รสชาติเยี่ยม',
-    '{{home.feature2.text}}': 'สูตรลับเฉพาะที่ส่งต่อกันมา',
-    '{{home.feature3.title}}': 'ราคาเป็นมิตร',
-    '{{home.feature3.text}}': 'ราคาเหมาะสม คุณภาพเยี่ยม',
-    '{{products.title}}': 'สินค้าของเรา',
-    '{{products.subtitle}}': 'เลือกซื้อหมูปิ้งคุณภาพดี',
-    '{{contact.title}}': 'ติดต่อเรา',
-    '{{contact.subtitle}}': 'สอบถามข้อมูลเพิ่มเติม',
-    '{{about.title}}': 'เกี่ยวกับเรา',
-    '{{about.subtitle}}': 'เรื่องราวของร้านหมูปิ้ง'
+    '{{home.heroTitle}}': dynamicContent.heroTitle,
+    '{{home.heroSubtitle}}': dynamicContent.heroSubtitle,
+    '{{home.ctaLabel}}': dynamicContent.ctaLabel,
+    '{{home.feature1.title}}': dynamicContent.feature1.title,
+    '{{home.feature1.text}}': dynamicContent.feature1.text,
+    '{{home.feature2.title}}': dynamicContent.feature2.title,
+    '{{home.feature2.text}}': dynamicContent.feature2.text,
+    '{{home.feature3.title}}': dynamicContent.feature3.title,
+    '{{home.feature3.text}}': dynamicContent.feature3.text,
+    '{{products.title}}': dynamicContent.products.title,
+    '{{products.subtitle}}': dynamicContent.products.subtitle,
+    '{{contact.title}}': dynamicContent.contact.title,
+    '{{contact.subtitle}}': dynamicContent.contact.subtitle,
+    '{{about.title}}': dynamicContent.about.title,
+    '{{about.subtitle}}': dynamicContent.about.subtitle
   };
   
   // Apply custom wording if available
@@ -1001,7 +1066,7 @@ async function processTemplateSelection(task: any, startTime: number): Promise<C
       colorTone: 'default',
       colors: [],
       mood: 'default',
-      theme: 'default',
+      theme: 'dark', // ✅ เปลี่ยน default เป็น dark
       confidence: 0.1,
       reasoning: 'No style preferences provided'
     };
@@ -1082,7 +1147,7 @@ async function processTemplateSelection(task: any, startTime: number): Promise<C
             spacing: enhancedCustomizations.styling?.spacing || '1rem',
             borderRadius: enhancedCustomizations.styling?.borderRadius || '0.5rem',
             shadows: enhancedCustomizations.styling?.shadow || '0 1px 3px rgba(0, 0, 0, 0.1)',
-            theme: enhancedCustomizations.theme || 'light',
+            theme: enhancedCustomizations.theme || 'dark', // ✅ เปลี่ยน default เป็น dark
             customizations: enhancedCustomizations
           } as any,
           userPreferences: {
@@ -1522,7 +1587,7 @@ function validateTask(task: any): FrontendTask {
         colorTone: 'default',
         colors: [],
         mood: 'default',
-        theme: 'default',
+        theme: 'dark', // ✅ เปลี่ยน default เป็น dark
         confidence: 0.1,
         reasoning: 'No style preferences provided'
       },
