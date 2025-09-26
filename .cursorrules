@@ -1,0 +1,124 @@
+# Midori AI Website Generator - Cursor Rules
+
+## Project Overview
+Midori is an AI-powered website generator with multi-agent architecture built on Next.js 15.5, TypeScript, and Prisma. This project combines orchestrator, frontend, backend, and devops agents with sophisticated AI coordination.
+
+## Core Architecture
+
+### Tech Stack
+- **Frontend**: Next.js 15.5 (App Router) + TypeScript + Tailwind CSS v4
+- **Database**: PostgreSQL with Prisma ORM + Supabase integration
+- **AI Services**: OpenAI + DeepSeek with unified orchestrator
+- **Code Features**: Monaco Editor + Sandpack for live code preview
+- **Infrastructure**: AWS CDK deployment in `midori-infastructure/`
+
+### Directory Structure
+```
+src/
+├── midori/                 # Core AI agent system
+│   ├── agents/            # Multi-agent architecture (orchestrator, frontend, backend, devops)
+│   ├── adapters/          # LLM integrations
+│   ├── workflows/         # Task execution flows
+│   └── runtime/           # Agent runtime environment
+├── app/api/               # Next.js API routes with Zod validation
+├── components/            # Reusable UI components
+└── hooks/                 # Custom React hooks for API calls
+```
+
+## Critical Development Rules
+
+### HTTP Client Requirements
+**MANDATORY**: Always use `axios` methods instead of `fetch`:
+```typescript
+// ✅ Correct
+const response = await axios.get('/api/users');
+const result = await axios.post('/api/users', userData);
+
+// ❌ Never use fetch
+const response = await fetch('/api/users'); // Forbidden
+```
+
+### API Route Pattern
+All API routes MUST follow this structure:
+```typescript
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Validate with Zod schema
+    const body = await request.json();
+    const validatedData = RequestSchema.parse(body);
+    
+    // 2. Process request
+    const result = await processRequest(validatedData);
+    
+    // 3. Return standardized response
+    return NextResponse.json({ success: true, data: result });
+  } catch (error) {
+    // Handle Zod errors separately
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid request data' },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### Agent Workflow
+When users request complex tasks:
+1. Analyze user requirements and create task summary
+2. Wait for user confirmation before starting code generation
+3. Use the unified orchestrator in `src/midori/agents/orchestrator/orchestratorAI.ts`
+4. Leverage template-first approach for website generation
+
+### Database Integration
+- Use Prisma schema from `prisma/schema.prisma` (1000+ lines with complex relations)
+- Two database setups: local (`DATABASE_URL`) and infrastructure (`midori-infastructure/lambda/api/`)
+- Run `npx prisma studio --schema=midori-infastructure/lambda/api/prisma/schema.prisma` for infrastructure DB
+
+### Component Architecture
+Follow established patterns:
+- Extract business logic into custom hooks
+- Use composition pattern for flexible components  
+- Implement microservice-ready service classes
+- Apply dependency injection for loose coupling
+
+## Development Commands
+
+### Local Development
+```bash
+npm run dev                # Start development server
+npm run build             # Production build
+npm run test              # Run test suite
+```
+
+### Infrastructure Management
+```powershell
+# CDK commands (run from midori-infastructure/)
+npx cdk deploy           # Deploy AWS infrastructure
+npx cdk diff             # Compare with current state
+npx cdk synth            # Generate CloudFormation template
+```
+
+## Key Files to Reference
+- `src/midori/agents/orchestrator/orchestratorAI.ts` - Main AI coordination logic
+- `prisma/schema.prisma` - Database schema with User, Project, Agent models
+- `src/docs/midori_template_knowledge_base.md` - Template system documentation
+
+## Common Pitfalls to Avoid
+- Never use `fetch()` - project requires `axios` for all HTTP requests
+- Always validate API inputs with Zod schemas
+- Follow the agent workflow for complex tasks (summary → confirmation → execution)
+- Respect the microservice-ready architecture patterns established in the codebase
+
+## Testing Strategy
+- Integration tests in `tests/` directory focus on orchestrator functionality
+- API route testing with mocked requests/responses
+- Real-time WebSocket testing for agent communication
+
+## Database Security Setup
+The project includes PowerShell scripts for AWS RDS security group configuration - check `midori-infastructure/README.md` for IP whitelisting commands.

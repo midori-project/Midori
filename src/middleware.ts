@@ -20,6 +20,7 @@ const publicApiRoutes = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/validate',
+  '/api/mock-website',
 ];
 
 // Admin routes ที่ต้อง admin permission

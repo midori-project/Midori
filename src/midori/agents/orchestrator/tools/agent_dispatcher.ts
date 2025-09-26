@@ -36,6 +36,7 @@ interface ExecutionStatus {
 
 // Real agent clients - Call actual agent implementations
 import { run as frontendAgent } from '../../frontend/runners/run';
+import { dispatchDeploymentTask } from './deployment_dispatcher';
 
 class RealAgentClient {
   constructor(private agentName: string) {}
@@ -81,9 +82,14 @@ class RealAgentClient {
       } else if (this.agentName === 'devops') {
         console.log('🚀 Calling DevOps Agent...');
         
-        // Transform task to devops format if needed
-        const devopsTask = this.transformToDevOpsTask(task);
-        result = await this.callDevOpsAgent(devopsTask);
+        // Handle deployment tasks with deployment dispatcher
+        if (task.action === 'deploy_website') {
+          result = await dispatchDeploymentTask(task as any);
+        } else {
+          // Transform task to devops format if needed
+          const devopsTask = this.transformToDevOpsTask(task);
+          result = await this.callDevOpsAgent(devopsTask);
+        }
         
         console.log(`✅ DevOps Agent completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
         
