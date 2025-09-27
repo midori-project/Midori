@@ -48,6 +48,7 @@ model Project {
   deletedAt      DateTime?
   previewFileId  String?            @unique
   tenantId       String?
+  templateTheme  Json?
   agents         Agent[]
   Artifact       Artifact[]
   runs           ChatRun[]
@@ -102,9 +103,9 @@ model Snapshot {
   projectId        String
   label            String?
   files            Json
-  templateData     Json?            // ✅ Add template data field for preview info
   fromGenerationId String?
   createdAt        DateTime         @default(now())
+  templateData     Json?
   Artifact         Artifact[]
   patchSetsFrom    PatchSet[]       @relation("PatchSetFrom")
   patchSetsTo      PatchSet[]       @relation("PatchSetTo")
@@ -475,10 +476,10 @@ model ProjectContext {
   styling             Json
   conversationHistory Json
   userPreferences     Json
-  preview             Json?         // ✅ Add preview data for Daytona integration
   lastModified        DateTime      @default(now())
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
+  preview             Json?
   project             Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
@@ -486,33 +487,42 @@ model ProjectContext {
 }
 
 model UiTemplate {
-  id        String              @id @default(uuid())
-  key       String              @unique
-  label     String
-  category  String?
-  createdAt DateTime            @default(now())
-  meta      UiTemplateMeta?
-  versions  UiTemplateVersion[]
+  id                String              @id @default(uuid())
+  key               String              @unique
+  label             String
+  category          String?
+  createdAt         DateTime            @default(now())
+  demoData          Json?
+  jsonSource        Json?
+  placeholderConfig Json?
+  previewUrl        String?
+  themeMapping      Json?
+  meta              UiTemplateMeta?
+  versions          UiTemplateVersion[]
 }
 
 model UiTemplateVersion {
-  id            String                 @id @default(uuid())
-  templateId    String
-  version       Int
-  files         Json?
-  slots         Json?
-  constraints   Json?
-  createdAt     DateTime               @default(now())
-  checksum      String?
-  compat        Json?
-  deprecatedAt  DateTime?
-  publishedAt   DateTime?
-  semver        String?
-  sizeBytes     Int?
-  status        TemplateStatus         @default(published)
-  sourceFiles   TemplateSourceFile[]   @relation("Version_SourceFiles")
-  sourceSummary TemplateSourceSummary? @relation("Version_SourceSummary")
-  template      UiTemplate             @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  id              String                 @id @default(uuid())
+  templateId      String
+  version         Int
+  files           Json?
+  slots           Json?
+  constraints     Json?
+  createdAt       DateTime               @default(now())
+  checksum        String?
+  compat          Json?
+  deprecatedAt    DateTime?
+  publishedAt     DateTime?
+  semver          String?
+  sizeBytes       Int?
+  status          TemplateStatus         @default(published)
+  aiGenerated     Json?
+  demoPreview     Json?
+  fillHistory     Json?
+  placeholderData Json?
+  sourceFiles     TemplateSourceFile[]   @relation("Version_SourceFiles")
+  sourceSummary   TemplateSourceSummary? @relation("Version_SourceSummary")
+  template        UiTemplate             @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@unique([templateId, version])
   @@index([templateId])
