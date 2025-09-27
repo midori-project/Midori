@@ -1410,7 +1410,13 @@ function fixJSXWithAST(content: string, filePath: string): string {
     // 3. Fix self-closing elements
     modifiedContent = fixSelfClosingElements(modifiedContent);
     
-    // 4. Validate JSX structure
+    // 4. Fix array props with Thai text
+    modifiedContent = fixArrayProps(modifiedContent);
+    
+    // 5. Fix image paths
+    modifiedContent = fixImagePaths(modifiedContent);
+    
+    // 6. Validate JSX structure
     validateJSXStructure(modifiedContent, filePath);
     
     return modifiedContent;
@@ -1465,6 +1471,81 @@ function fixThaiAttributesInJSX(content: string): string {
 function fixRouteElements(content: string): string {
   let modifiedContent = content;
   
+  // Fix double closing braces in Route elements
+  const doubleClosingRegex = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>/g;
+  modifiedContent = modifiedContent.replace(doubleClosingRegex, (match) => {
+    return match.replace(/\s*\}\s*\/>/, ' />');
+  });
+  
+  // Fix multiple double closing braces
+  const multipleDoubleClosingRegex = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>\s*\/>/g;
+  modifiedContent = modifiedContent.replace(multipleDoubleClosingRegex, (match) => {
+    return match.replace(/\s*\}\s*\/>\s*\/>/, ' />');
+  });
+  
+  // Fix all remaining double closing braces
+  const allDoubleClosingRegex = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>/g;
+  modifiedContent = modifiedContent.replace(allDoubleClosingRegex, (match) => {
+    return match.replace(/\s*\}\s*\/>/, ' />');
+  });
+  
+  // Fix Thai text in route paths (Link components)
+  const thaiRouteRegex = /to="\/[^"]*[\u0E00-\u0E7F][^"]*"/g;
+  modifiedContent = modifiedContent.replace(thaiRouteRegex, (match) => {
+    const thaiPath = match.match(/to="\/([^"]*)"/)?.[1];
+    if (thaiPath) {
+      const pathMap: { [key: string]: string } = {
+        'สินค้าของเรา': 'products',
+        'เกี่ยวกับเรา': 'about',
+        'ติดต่อเรา': 'contact',
+        'เมนูหมูปิ้ง': 'menu',
+        'ติดต่อสั่งซื้อ': 'contact',
+        'ร้านค้าออนไลน์': 'home',
+        'หมูปิ้ง': 'menu',
+        'อาหาร': 'menu',
+        'สั่งซื้อ': 'products',
+        'ดูเมนู': 'menu',
+        'ชมสินค้า': 'products'
+      };
+      const englishPath = pathMap[thaiPath] || thaiPath.toLowerCase().replace(/[^\w]/g, '-');
+      return `to="/${englishPath}"`;
+    }
+    return match;
+  });
+  
+  // Fix Thai paths in Route elements
+  const thaiRoutePathRegex = /path="\/[^"]*[\u0E00-\u0E7F][^"]*"/g;
+  modifiedContent = modifiedContent.replace(thaiRoutePathRegex, (match) => {
+    const thaiPath = match.match(/path="\/([^"]*)"/)?.[1];
+    if (thaiPath) {
+      const pathMap: { [key: string]: string } = {
+        'เกี่ยวกับเรา': 'about',
+        'ติดต่อเรา': 'contact',
+        'สินค้าของเรา': 'products',
+        'เมนูหมูปิ้ง': 'menu',
+        'ติดต่อสั่งซื้อ': 'contact',
+        'ร้านค้าออนไลน์': 'home',
+        'หมูปิ้ง': 'menu',
+        'อาหาร': 'menu',
+        'สั่งซื้อ': 'products',
+        'ดูเมนู': 'menu',
+        'ชมสินค้า': 'products'
+      };
+      const englishPath = pathMap[thaiPath] || thaiPath.toLowerCase().replace(/[^\w]/g, '-');
+      return `path="/${englishPath}"`;
+    }
+    return match;
+  });
+  
+  // Fix invalid route paths
+  const invalidPathRegex = /path="\/-+[^"]*"/g;
+  modifiedContent = modifiedContent.replace(invalidPathRegex, (match) => {
+    if (match.includes('slug')) {
+      return 'path="/products/:slug"';
+    }
+    return match;
+  });
+  
   // Fix Route elements without proper path/element attributes
   const routeRegex = /<Route\s+([^>]*title="[^"]*"[^>]*)>/g;
   modifiedContent = modifiedContent.replace(routeRegex, (match, attributes) => {
@@ -1498,6 +1579,12 @@ function fixRouteElements(content: string): string {
 function fixSelfClosingElements(content: string): string {
   let modifiedContent = content;
   
+  // Fix self-closing tags with space before />
+  const selfClosingSpaceRegex = /<([A-Z][a-zA-Z0-9]*)\s+[^>]*\s+\/>/g;
+  modifiedContent = modifiedContent.replace(selfClosingSpaceRegex, (match, tagName) => {
+    return match.replace(/\s+\/>$/, ' />');
+  });
+  
   // Fix self-closing elements with corrupted attributes
   const selfClosingRegex = /<([A-Z][a-zA-Z0-9]*)\s+[^>]*>\s*\/>\s*}/g;
   modifiedContent = modifiedContent.replace(selfClosingRegex, (match, componentName) => {
@@ -1507,6 +1594,12 @@ function fixSelfClosingElements(content: string): string {
       return `<${componentName} />`;
     }
     return match;
+  });
+  
+  // Fix img tags with space before />
+  const imgSpaceRegex = /<img\s+[^>]*\s+\/>/g;
+  modifiedContent = modifiedContent.replace(imgSpaceRegex, (match) => {
+    return match.replace(/\s+\/>$/, ' />');
   });
   
   return modifiedContent;
@@ -1837,20 +1930,26 @@ CRITICAL JSX SYNTAX RULES - FOLLOW EXACTLY:
 13. CORRECT: <Home title="ยินดีต้อนรับ" subtitle="หมูปิ้งอร่อย" />
 14. WRONG: <Home ยินดีต้อนรับ="ยินดีต้อนรับ" หมูปิ้งอร่อย="หมูปิ้งอร่อย" />
 
+CRITICAL ROUTE SYNTAX RULES:
+15. Use English paths in Link components
+16. CORRECT: <Link to="/products" className="btn">สินค้าของเรา</Link>
+17. WRONG: <Link to="/สินค้าของเรา" className="btn">สินค้าของเรา</Link>
+
 CRITICAL TYPESCRIPT INTERFACE RULES - FOLLOW EXACTLY:
-15. ALL interface properties MUST use English names only
-16. CORRECT: interface Props { brandName: string; title: string; subtitle: string; }
-17. WRONG: interface Props { ร้านค้าออนไลน์: string; ยินดีต้อนรับ: string; }
+18. ALL interface properties MUST use English names only
+19. CORRECT: interface Props { brandName: string; title: string; subtitle: string; }
+20. WRONG: interface Props { ร้านค้าออนไลน์: string; ยินดีต้อนรับ: string; }
 
 CRITICAL COMPONENT PROPS RULES - FOLLOW EXACTLY:
-18. ALL component destructuring MUST use English names only
-19. CORRECT: const Component = ({ brandName, title, subtitle }) => { return <h1>{brandName}</h1>; }
-20. WRONG: const Component = ({ ร้านค้าออนไลน์, ยินดีต้อนรับ }) => { return <h1>{ร้านค้าออนไลน์}</h1>; }
+21. ALL component destructuring MUST use English names only
+22. CORRECT: const Component = ({ brandName, title, subtitle }) => { return <h1>{brandName}</h1>; }
+23. WRONG: const Component = ({ ร้านค้าออนไลน์, ยินดีต้อนรับ }) => { return <h1>{ร้านค้าออนไลน์}</h1>; }
 
 CRITICAL VALIDATION:
-21. If you see ANY Thai text as an attribute name, you are doing it WRONG
-22. If you see ANY Thai text in interface property names, you are doing it WRONG
-23. If you see ANY Thai text in destructuring parameters, you are doing it WRONG
+24. If you see ANY Thai text as an attribute name, you are doing it WRONG
+25. If you see ANY Thai text in interface property names, you are doing it WRONG
+26. If you see ANY Thai text in destructuring parameters, you are doing it WRONG
+27. If you see ANY Thai text in route paths, you are doing it WRONG
 
 CRITICAL: You must return ONLY the React component code. Do NOT return JSON, explanations, or any other format. Start with "import React" and end with "export default". No markdown code blocks.
 
@@ -1919,6 +2018,140 @@ WRONG examples (DO NOT return these):
     modifiedContent = modifiedContent.replace(/font-serif/g, 'font-mono');
   }
   
+  // Remove redundant inline styles when CSS variables are used
+  modifiedContent = removeRedundantInlineStyles(modifiedContent);
+  
+  return modifiedContent;
+}
+
+/**
+ * Remove redundant inline styles when CSS variables are used
+ */
+function removeRedundantInlineStyles(content: string): string {
+  let modifiedContent = content;
+  
+  // Remove redundant inline styles when CSS variables are available
+  const redundantStylePatterns = [
+    // Remove borderRadius when rounded classes are used
+    /style=\{\{[^}]*borderRadius[^}]*\}\}/g,
+    // Remove boxShadow when shadow classes are used
+    /style=\{\{[^}]*boxShadow[^}]*\}\}/g,
+    // Remove padding when p-* classes are used
+    /style=\{\{[^}]*padding[^}]*\}\}/g,
+    // Remove margin when m-* classes are used
+    /style=\{\{[^}]*margin[^}]*\}\}/g
+  ];
+  
+  redundantStylePatterns.forEach(pattern => {
+    modifiedContent = modifiedContent.replace(pattern, '');
+  });
+  
+  // Clean up empty style attributes
+  modifiedContent = modifiedContent.replace(/style=\{\{\s*\}\}/g, '');
+  modifiedContent = modifiedContent.replace(/\s+style=\{\{\s*\}\}/g, '');
+  
+  return modifiedContent;
+}
+
+/**
+ * Fix array props with Thai text
+ */
+function fixArrayProps(content: string): string {
+  let modifiedContent = content;
+  
+  // Fix Thai text in array props
+  const thaiArrayRegex = /(\w+)=\{\[([^\]]*[\u0E00-\u0E7F][^\]]*)\]\}/g;
+  modifiedContent = modifiedContent.replace(thaiArrayRegex, (match, propName, arrayContent) => {
+    if (propName === 'columns') {
+      // Convert Thai array to English object structure
+      const thaiItems = arrayContent.match(/"([^"]*[\u0E00-\u0E7F][^"]*)"/g);
+      if (thaiItems) {
+        const englishItems = thaiItems.map((item: any) => {
+          const thaiText = item.replace(/"/g, '');
+          const englishKey = thaiText.toLowerCase().replace(/[^\w]/g, '_');
+          return `{ title: "${thaiText}", links: ["${englishKey}"] }`;
+        });
+        return `${propName}={[${englishItems.join(', ')}]}`;
+      }
+    }
+    return match;
+  });
+  
+  // Fix Thai text in object props
+  const thaiObjectRegex = /(\w+)=\{\{\s*([^}]*[\u0E00-\u0E7F][^}]*)\s*\}\}/g;
+  modifiedContent = modifiedContent.replace(thaiObjectRegex, (match, propName, objectContent) => {
+    if (propName === 'newsletter') {
+      // Convert Thai object to English
+      const thaiProps = objectContent.match(/(\w+):\s*"([^"]*[\u0E00-\u0E7F][^"]*)"/g);
+      if (thaiProps) {
+        let englishObject = objectContent;
+        thaiProps.forEach((prop: any) => {
+          const [key, value] = prop.split(':').map((s: string) => s.trim());
+          const englishValue = value.replace(/"/g, '').toLowerCase().replace(/[^\w]/g, '_');
+          englishObject = englishObject.replace(prop, `${key}: "${englishValue}"`);
+        });
+        return `${propName}={${englishObject}}`;
+      }
+    }
+    return match;
+  });
+  
+  // Fix Thai text in socialLinks array
+  const socialLinksRegex = /socialLinks=\{\[([^\]]*[\u0E00-\u0E7F][^\]]*)\]\}/g;
+  modifiedContent = modifiedContent.replace(socialLinksRegex, (match, arrayContent) => {
+    const thaiItems = arrayContent.match(/\{[^}]*[\u0E00-\u0E7F][^}]*\}/g);
+    if (thaiItems) {
+      const englishItems = thaiItems.map((item: any) => {
+        // Convert Thai platform names to English
+        let englishItem = item;
+        englishItem = englishItem.replace(/platform:\s*"([^"]*[\u0E00-\u0E7F][^"]*)"/g, 'platform: "Facebook"');
+        return englishItem;
+      });
+      return `socialLinks={[${englishItems.join(', ')}]}`;
+    }
+    return match;
+  });
+  
+  // Fix invalid JSX expressions
+  const invalidJSXRegex = /socialLinks=\{\{footer\.socialLinks\}\}/g;
+  modifiedContent = modifiedContent.replace(invalidJSXRegex, 'socialLinks={[{ platform: "Facebook", url: "https://facebook.com" }, { platform: "Instagram", url: "https://instagram.com" }]}');
+  
+  // Fix malformed array props
+  const malformedArrayRegex = /columns=\{\[([^\]]*)\]\},\{([^}]*)\},\{([^}]*)\}\]/g;
+  modifiedContent = modifiedContent.replace(malformedArrayRegex, (match, firstArray, secondObj, thirdObj) => {
+    // Clean up the malformed structure
+    const cleanFirstArray = firstArray.replace(/[^\w\s"',:\[\]]/g, '');
+    const cleanSecondObj = secondObj.replace(/[^\w\s"',:]/g, '');
+    const cleanThirdObj = thirdObj.replace(/[^\w\s"',:]/g, '');
+    
+    return `columns={[${cleanFirstArray}, {${cleanSecondObj}}, {${cleanThirdObj}}]}`;
+  });
+  
+  return modifiedContent;
+}
+
+/**
+ * Fix image paths
+ */
+function fixImagePaths(content: string): string {
+  let modifiedContent = content;
+  
+  // Fix placeholder image paths
+  const imagePathRegex = /src="path_to_image\.jpg"/g;
+  modifiedContent = modifiedContent.replace(imagePathRegex, 'src="/images/hero-image.jpg"');
+  
+  // Fix other placeholder paths
+  const placeholderPathRegex = /src="path\/to\/image\.jpg"/g;
+  modifiedContent = modifiedContent.replace(placeholderPathRegex, 'src="/images/hero-image.jpg"');
+  
+  // Fix logo placeholder
+  const logoPathRegex = /logoUrl="logo_url_here"/g;
+  modifiedContent = modifiedContent.replace(logoPathRegex, 'logoUrl="/images/logo.png"');
+  
+  // Fix template variables
+  const templateVarRegex = /logoUrl="\{\{header\.logoUrl\}\}"/g;
+  modifiedContent = modifiedContent.replace(templateVarRegex, 'logoUrl="/images/logo.png"');
+  
   return modifiedContent;
 }
 
@@ -1969,38 +2202,64 @@ Instructions:
 7. For Route elements, ensure proper path and element attributes based on available routes
 8. For component props, use appropriate English attribute names
 9. Consider the complete template structure when making decisions
+10. Use English paths in Link components
 
 CRITICAL JSX SYNTAX RULES - FOLLOW EXACTLY:
-10. NEVER use Thai text as attribute names - ONLY use English attribute names
-11. Thai text must ONLY appear as VALUES inside quotes
-12. CORRECT: <Header brandName="ร้านค้าออนไลน์" tagline="ยินดีต้อนรับ" />
-13. WRONG: <Header ร้านค้าออนไลน์="ร้านค้าออนไลน์" tagline="ยินดีต้อนรับ" />
-14. CORRECT: <Home title="ยินดีต้อนรับ" subtitle="หมูปิ้งอร่อย" />
-15. WRONG: <Home ยินดีต้อนรับ="ยินดีต้อนรับ" หมูปิ้งอร่อย="หมูปิ้งอร่อย" />
+11. NEVER use Thai text as attribute names - ONLY use English attribute names
+12. Thai text must ONLY appear as VALUES inside quotes
+13. CORRECT: <Header brandName="ร้านค้าออนไลน์" tagline="ยินดีต้อนรับ" />
+14. WRONG: <Header ร้านค้าออนไลน์="ร้านค้าออนไลน์" tagline="ยินดีต้อนรับ" />
+15. CORRECT: <Home title="ยินดีต้อนรับ" subtitle="หมูปิ้งอร่อย" />
+16. WRONG: <Home ยินดีต้อนรับ="ยินดีต้อนรับ" หมูปิ้งอร่อย="หมูปิ้งอร่อย" />
 
 CRITICAL ROUTE SYNTAX RULES:
-16. Routes MUST have proper path and element attributes
-17. Use available routes from template context
-18. CORRECT: <Route path="/" element={<Home />} />
-19. WRONG: <Route title="..." subtitle="..." />} />
-20. CORRECT: <Route path="/about" element={<About />} />
-21. WRONG: <Route />} />
+17. Routes MUST have proper path and element attributes
+18. Use available routes from template context
+19. CORRECT: <Route path="/" element={<Home />} />
+20. WRONG: <Route title="..." subtitle="..." />} />
+21. CORRECT: <Route path="/about" element={<About />} />
+22. WRONG: <Route />} />
+23. Use English paths in Link components
+24. CORRECT: <Link to="/products" className="btn">สินค้าของเรา</Link>
+25. WRONG: <Link to="/สินค้าของเรา" className="btn">สินค้าของเรา</Link>
+26. NEVER use double closing braces: } />} />
+27. CORRECT: <Route path="/" element={<Home />} />
+28. WRONG: <Route path="/" element={<Home />} />} />
+29. NEVER use template variables in JSX: {{header.logoUrl}}
+30. CORRECT: logoUrl="/images/logo.png"
+31. WRONG: logoUrl="{{header.logoUrl}}"
 
 CRITICAL TYPESCRIPT INTERFACE RULES - FOLLOW EXACTLY:
-22. ALL interface properties MUST use English names only
-23. CORRECT: interface Props { brandName: string; title: string; subtitle: string; }
-24. WRONG: interface Props { ร้านค้าออนไลน์: string; ยินดีต้อนรับ: string; }
+29. ALL interface properties MUST use English names only
+30. CORRECT: interface Props { brandName: string; title: string; subtitle: string; }
+31. WRONG: interface Props { ร้านค้าออนไลน์: string; ยินดีต้อนรับ: string; }
 
 CRITICAL COMPONENT PROPS RULES - FOLLOW EXACTLY:
-25. ALL component destructuring MUST use English names only
-26. CORRECT: const Component = ({ brandName, title, subtitle }) => { return <h1>{brandName}</h1>; }
-27. WRONG: const Component = ({ ร้านค้าออนไลน์, ยินดีต้อนรับ }) => { return <h1>{ร้านค้าออนไลน์}</h1>; }
+32. ALL component destructuring MUST use English names only
+33. CORRECT: const Component = ({ brandName, title, subtitle }) => { return <h1>{brandName}</h1>; }
+34. WRONG: const Component = ({ ร้านค้าออนไลน์, ยินดีต้อนรับ }) => { return <h1>{ร้านค้าออนไลน์}</h1>; }
+
+CRITICAL ARRAY PROPS RULES:
+35. Use proper object structure for complex props
+36. CORRECT: columns={[{ title: "ติดต่อเรา", links: ["contact"] }]}
+37. WRONG: columns={["ติดต่อเรา", "เงื่อนไขการใช้งาน"]}
+38. CORRECT: newsletter={{ title: "Subscribe", placeholder: "Your email" }}
+39. WRONG: newsletter={{ title: "สมัครรับข้อมูล", placeholder: "อีเมลของคุณ" }}
+40. CORRECT: socialLinks={[{ platform: "Facebook", url: "https://facebook.com" }]}
+41. WRONG: socialLinks={[{ platform: "เฟสบุ๊ค", url: "https://facebook.com" }]}
 
 CRITICAL VALIDATION:
-28. If you see ANY Thai text as an attribute name, you are doing it WRONG
-29. If you see ANY Thai text in interface property names, you are doing it WRONG
-30. If you see ANY Thai text in destructuring parameters, you are doing it WRONG
-31. If you see Route elements without proper path/element attributes, you are doing it WRONG
+42. If you see ANY Thai text as an attribute name, you are doing it WRONG
+43. If you see ANY Thai text in interface property names, you are doing it WRONG
+44. If you see ANY Thai text in destructuring parameters, you are doing it WRONG
+45. If you see Route elements without proper path/element attributes, you are doing it WRONG
+46. If you see ANY Thai text in route paths, you are doing it WRONG
+47. If you see double closing braces } />} />, you are doing it WRONG
+48. If you see invalid route paths like /--------------slug, you are doing it WRONG
+49. If you see Thai text in object property values, you are doing it WRONG
+50. If you see template variables like {{header.logoUrl}}, you are doing it WRONG
+51. If you see malformed array props, you are doing it WRONG
+52. If you see invalid JSX expressions like {footer.socialLinks}, you are doing it WRONG
 
 CRITICAL: You must return ONLY the React component code. Do NOT return JSON, explanations, or any other format. Start with "import React" and end with "export default". No markdown code blocks.
 
