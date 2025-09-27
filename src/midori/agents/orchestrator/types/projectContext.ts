@@ -21,6 +21,7 @@ export interface ProjectContextData {
   styling: StylingStateData;
   conversationHistory: ConversationHistoryData;
   userPreferences: UserPreferencesData;
+  preview?: PreviewData | null;  // ✅ Add preview data for Daytona integration
   lastModified: Date;
   createdAt: Date;
 }
@@ -217,6 +218,7 @@ export interface UpdateProjectContextInput {
     styling?: StylingStateData;
     conversationHistory?: ConversationHistoryData;
     userPreferences?: UserPreferencesData;
+    preview?: PreviewData | null;  // ✅ Add preview updates
   };
 }
 
@@ -363,3 +365,29 @@ export interface ConversationHistoryQuery {
   orderBy?: 'timestamp' | 'createdAt';
   order?: 'asc' | 'desc';
 }
+
+// ============================
+// Preview Integration Types  
+// ============================
+
+export interface PreviewData {
+  sandboxId: string;            // Daytona sandbox ID
+  previewUrl: string;           // Live preview URL
+  status: PreviewStatus;        // Current preview status
+  error?: string;               // Error message if failed
+  createdAt: Date;              // When preview was created
+  lastUpdated: Date;            // Last time preview was updated
+  metadata?: {
+    projectType?: string;       // Type of project previewed
+    templateUsed?: string;      // Template used for preview
+    filesCount?: number;        // Number of files sent
+    buildTime?: number;         // Time taken to build (ms)
+  };
+}
+
+export type PreviewStatus = 
+  | 'creating'      // Building the preview
+  | 'running'       // Preview is live and accessible
+  | 'error'         // Preview failed
+  | 'stopped'       // Preview was manually stopped
+  | 'expired';      // Preview expired (auto-cleanup)

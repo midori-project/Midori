@@ -15,21 +15,25 @@ interface Message {
 
 interface ChatInterfaceProps {
   initialMessage?: string;
+  projectId?: string;
+  userId?: string;
+  sessionId?: string;
+  userEmail?: string;
 }
 
 
 
-export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
+export default function ChatInterface({ 
+  initialMessage, 
+  projectId, 
+  userId, 
+  sessionId,
+  userEmail
+}: ChatInterfaceProps) {
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: initialMessage || 'สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
-      sender: 'assistant',
-      timestamp: new Date(),
-      type: 'chat'
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [hasSentInitialMessage, setHasSentInitialMessage] = useState(false);
 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -41,10 +45,194 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Load conversation history on mount
+  useEffect(() => {
+    loadConversationHistory();
+  }, [userId, projectId]);
+
   // Auto focus input
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (!isLoadingHistory) {
+      inputRef.current?.focus();
+    }
+  }, [isLoadingHistory]);
+
+  // Auto send initial message from home page (after history is loaded)
+  useEffect(() => {
+    if (!isLoadingHistory && projectId && messages.length > 0 && !hasSentInitialMessage) {
+      // Check if there's a pending message from home page
+      const pendingMessage = localStorage.getItem(`pendingMessage_${projectId}`);
+      if (pendingMessage) {
+        // Remove the pending message from localStorage
+        localStorage.removeItem(`pendingMessage_${projectId}`);
+        // Mark as sent to prevent duplicate sending
+        setHasSentInitialMessage(true);
+        // Send the message directly as user message after ensuring history is loaded
+        setTimeout(() => {
+          handleSendWithMessage(pendingMessage);
+        }, 500);
+      }
+    }
+  }, [isLoadingHistory, projectId, messages.length, hasSentInitialMessage]);
+
+  // Load conversation history from database
+  const loadConversationHistory = async () => {
+    if (!userId) {
+      setIsLoadingHistory(false);
+      return;
+    }
+
+    try {
+      setIsLoadingHistory(true);
+      
+      // Get user's conversations
+      const response = await fetch(`/api/conversations?userId=${userId}&projectId=${projectId || ''}&limit=1`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+          // Get the most recent conversation with messages
+          const conversation = data.data[0];
+          const conversationResponse = await fetch(`/api/conversations/${conversation.id}`);
+          
+          if (conversationResponse.ok) {
+            const conversationData = await conversationResponse.json();
+            
+            if (conversationData.success && conversationData.data.messages) {
+              // Convert database messages to component messages
+              const historyMessages: Message[] = conversationData.data.messages.map((msg: any) => ({
+                id: msg.id,
+                content: msg.content || '',
+                sender: msg.role === 'user' ? 'user' : 'assistant',
+                timestamp: new Date(msg.createdAt),
+                type: msg.contentJson?.type || 'chat',
+                taskResults: msg.contentJson?.taskResults
+              }));
+              
+              setMessages(historyMessages);
+              console.log(`📚 Loaded ${historyMessages.length} messages from conversation history`);
+            }
+          }
+        } else {
+          // No conversation history, show welcome message
+          setMessages([{
+            id: 'welcome',
+            content: initialMessage || 'สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
+            sender: 'assistant',
+            timestamp: new Date(),
+            type: 'chat'
+          }]);
+        }
+      } else {
+        console.error('Failed to load conversation history');
+        // Fallback to welcome message
+        setMessages([{
+          id: 'welcome',
+          content: initialMessage || 'สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
+          sender: 'assistant',
+          timestamp: new Date(),
+          type: 'chat'
+        }]);
+      }
+    } catch (error) {
+      console.error('Error loading conversation history:', error);
+      // Fallback to welcome message
+      setMessages([{
+        id: 'welcome',
+        content: initialMessage || 'สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
+        sender: 'assistant',
+        timestamp: new Date(),
+        type: 'chat'
+      }]);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const handleSendWithMessage = async (messageContent: string) => {
+    if (!messageContent.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: messageContent.trim(),
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    // Add user message immediately
+    setMessages(prev => [...prev, userMessage]);
+    
+    setIsLoading(true);
+
+    try {
+      // Add loading message
+      const loadingMessage: Message = {
+        id: `loading-${Date.now()}`,
+        content: 'กำลังคิด...',
+        sender: 'assistant',
+        timestamp: new Date(),
+        loading: true
+      };
+      setMessages(prev => [...prev, loadingMessage]);
+
+      // Call API endpoint with real data
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: messageContent.trim(),
+          userId: userId || 'anonymous',
+          sessionId: sessionId || `session-${Date.now()}`,
+          context: { 
+            currentProject: projectId || null,
+            userEmail: userEmail || null,
+            timestamp: new Date().toISOString()
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response from chat API');
+      }
+
+      const result = await response.json();
+
+      // Remove loading message and add real response
+      setMessages(prev => {
+        const withoutLoading = prev.filter(msg => !msg.loading);
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          content: result.content,
+          sender: 'assistant',
+          timestamp: new Date(),
+          type: result.type,
+          taskResults: result.taskResults
+        };
+        return [...withoutLoading, assistantMessage];
+      });
+
+    } catch (error) {
+      console.error('Chat error:', error);
+      
+      // Remove loading message and add error message
+      setMessages(prev => {
+        const withoutLoading = prev.filter(msg => !msg.loading);
+        const errorMessage: Message = {
+          id: `error-${Date.now()}`,
+          content: 'ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง',
+          sender: 'assistant',
+          timestamp: new Date(),
+          type: 'chat'
+        };
+        return [...withoutLoading, errorMessage];
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -75,7 +263,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
       };
       setMessages(prev => [...prev, loadingMessage]);
 
-      // Call API endpoint instead of direct orchestrator
+      // Call API endpoint with real data
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -83,9 +271,13 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         },
         body: JSON.stringify({
           message: messageContent,
-          userId: 'user-123', // TODO: get real user ID
-          sessionId: 'session-456', // TODO: get real session ID
-          context: { currentProject: 'project_123' } // ✅ เพิ่ม project context
+          userId: userId || 'anonymous',
+          sessionId: sessionId || `session-${Date.now()}`,
+          context: { 
+            currentProject: projectId || null,
+            userEmail: userEmail || null,
+            timestamp: new Date().toISOString()
+          }
         }),
       });
 
@@ -185,9 +377,13 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
           </div>
           
           <div className="flex items-center space-x-2">
-            <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
-              <RefreshCw className="w-4 h-4" />
-              <span>Restore</span>
+            <button 
+              onClick={loadConversationHistory}
+              disabled={isLoadingHistory}
+              className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoadingHistory ? 'animate-spin' : ''}`} />
+              <span>{isLoadingHistory ? 'Loading...' : 'Restore'}</span>
             </button>
             <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
               <Code className="w-4 h-4" />
@@ -199,7 +395,15 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.map((message) => (
+        {isLoadingHistory ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="flex items-center space-x-2 text-gray-500">
+              <RefreshCw className="w-5 h-5 animate-spin" />
+              <span>Loading conversation history...</span>
+            </div>
+          </div>
+        ) : (
+          messages.map((message) => (
           <div
             key={message.id}
             className={`flex items-start space-x-3 ${
@@ -245,7 +449,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
               </div>
             </div>
           </div>
-        ))}
+        )))}
         <div ref={messagesEndRef} />
       </div>
 
@@ -260,7 +464,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask Midori AI..."
-                disabled={isLoading}
+                disabled={isLoading || isLoadingHistory}
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 rows={1}
                 style={{ maxHeight: '120px' }}
@@ -272,7 +476,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || isLoadingHistory}
                 className="absolute right-2 bottom-2 w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isLoading ? (

@@ -102,6 +102,7 @@ model Snapshot {
   projectId        String
   label            String?
   files            Json
+  templateData     Json?            // ✅ Add template data field for preview info
   fromGenerationId String?
   createdAt        DateTime         @default(now())
   Artifact         Artifact[]
@@ -474,6 +475,7 @@ model ProjectContext {
   styling             Json
   conversationHistory Json
   userPreferences     Json
+  preview             Json?         // ✅ Add preview data for Daytona integration
   lastModified        DateTime      @default(now())
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
@@ -987,6 +989,8 @@ enum ProjectType {
   landing_page
   business
   personal
+  healthcare
+  hotel
 }
 
 enum ProjectStatus {

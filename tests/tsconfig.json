@@ -1,11 +1,16 @@
 {
   "ts-node": {
-    "esm": true,
+    "esm": false,
+    "require": ["tsconfig-paths/register"],
     "compilerOptions": {
-      "module": "ESNext",
+      "module": "CommonJS",
       "moduleResolution": "node",
       "allowSyntheticDefaultImports": true,
-      "experimentalSpecifierResolution": "node"
+      "target": "ES2020",
+      "baseUrl": "..",
+      "paths": {
+        "@/*": ["./src/*"]
+      }
     }
   }
 }

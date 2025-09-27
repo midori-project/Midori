@@ -694,7 +694,7 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
           if (task.agent === 'frontend') {
             // Check if this is a new website creation (use template)
             if (task.action === 'create_component' && 
-                (command.commandType === 'SELECT_TEMPLATE' || 
+                (command.commandType === CommandType.SELECT_TEMPLATE || 
                  task.description?.includes('เว็บไซต์') || 
                  task.description?.includes('ร้าน'))) {
               console.log('🔄 Converting website creation to template selection:', task.taskId);
@@ -882,7 +882,7 @@ async function executeTasks(plan: ExecutionPlan): Promise<{
     // Execute tasks in parallel for now (can be enhanced with dependency management)
     const taskPromises = plan.tasks.map(async (task) => {
       try {
-        console.log(`📤 Dispatching task: ${task.taskId} to ${task.agent}`);
+        // Task dispatching logged in agent_dispatcher.ts
         const result = await dispatchTask(task);
         
         if (result.success) {

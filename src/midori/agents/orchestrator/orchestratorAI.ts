@@ -18,6 +18,7 @@ import { ProjectContextOrchestratorService } from './services/projectContextOrch
 import type { ProjectContextData } from './types/projectContext';
 import { projectContextStore } from './stores/projectContextStore';
 import { projectContextSync } from './sync/projectContextSync';
+import { ConversationService, type ConversationData, type MessageData } from './services/conversationService';
 import { randomUUID } from 'crypto';
 
 // Create singleton instance
@@ -58,6 +59,12 @@ export interface IntentAnalysis {
   requiredAgents: ('frontend' | 'backend' | 'devops')[];
   complexity: 'low' | 'medium' | 'high';
   parameters?: Record<string, any>;
+  designPreferences?: {
+    style: 'modern' | 'classic' | 'minimal' | 'vintage' | 'default';
+    colorTone: 'warm' | 'cool' | 'neutral' | 'default';
+    colors: string[];
+    mood: 'professional' | 'friendly' | 'elegant' | 'playful' | 'default';
+  };
 }
 
 export enum CommandType {
@@ -129,6 +136,7 @@ export interface Command {
 export class OrchestratorAI {
   private llmAdapter: LLMAdapter;
   private conversationHistory: Map<string, ConversationContext>;
+  private activeConversations: Map<string, ConversationData>; // ✅ เพิ่มการ track active conversations
   private initialized: boolean = false;
 
   /**
@@ -165,6 +173,12 @@ export class OrchestratorAI {
     'math_calculation': 'base_chat',
     'calculation': 'base_chat',
     
+    // Task types
+    'frontend_task': 'frontend_task',
+    'backend_task': 'backend_task',
+    'devops_task': 'devops_task',
+    'full_stack_task': 'full_stack_task',
+    
     'security_question': 'security_sensitive',
     'password_request': 'security_sensitive',
     'api_key_request': 'security_sensitive',
@@ -182,6 +196,7 @@ export class OrchestratorAI {
   constructor() {
     this.llmAdapter = new LLMAdapter();
     this.conversationHistory = new Map();
+    this.activeConversations = new Map();
   }
 
   /**
@@ -215,11 +230,17 @@ export class OrchestratorAI {
         await this.initialize();
       }
 
-      // Get conversation context
-      const context = this.getOrCreateContext(message.sessionId || message.userId);
+      // ✅ Get or create conversation in database
+      const conversation = await this.getOrCreateConversation(message.userId, message.context?.currentProject);
+      
+      // Get conversation context (memory + database)
+      const context = await this.getOrCreateContextWithRestore(message.sessionId || message.userId, conversation.id);
       
       // Update context with new message
       context.previousMessages.push(message.content);
+      
+      // ✅ Save user message to database
+      await this.saveUserMessage(conversation.id, message);
       
       // Analyze user intent
       const analysis = await this.analyzeIntent(message.content, context);
@@ -246,6 +267,9 @@ export class OrchestratorAI {
 
       // Update execution metadata
       response.metadata.executionTime = Date.now() - startTime;
+      
+      // ✅ Save assistant response to database
+      await this.saveAssistantMessage(conversation.id, response, message.userId);
       
       // Store context
       this.conversationHistory.set(message.sessionId || message.userId, context);
@@ -364,7 +388,8 @@ export class OrchestratorAI {
     // ถ้า type ตรงกับ prompt key อยู่แล้ว
     const validKeys = [
       'introduction', 'greeting', 'security_sensitive', 'midori_identity', 
-      'time_query', 'technology_explanation', 'base_chat', 'unclear'
+      'time_query', 'technology_explanation', 'base_chat', 'unclear',
+      'frontend_task', 'backend_task', 'devops_task', 'full_stack_task'
     ];
     
     if (validKeys.includes(llmType)) {
@@ -397,7 +422,12 @@ export class OrchestratorAI {
       'time_query', 'technology_explanation', 'base_chat', 'unclear'
     ];
     
-    if (!validChatTypes.includes(mappedType)) {
+    const validTaskTypes = [
+      'frontend_task', 'backend_task', 'devops_task', 'full_stack_task'
+    ];
+    
+    // Check if it's a valid chat type or task type
+    if (!validChatTypes.includes(mappedType) && !validTaskTypes.includes(mappedType)) {
       console.warn(`⚠️ Invalid type from LLM: ${mappedType}, mapping to appropriate type`);
       mappedType = this.mapLLMTypeToPromptKey(mappedType || 'unknown');
     }
@@ -791,6 +821,13 @@ export class OrchestratorAI {
     // Map intent to command type - Template-First Approach
     let commandType: CommandType;
     
+    console.log('🔍 Command creation analysis:', {
+      message: message.content,
+      taskType: analysis.taskType,
+      requiredAgents: analysis.requiredAgents,
+      intent: analysis.intent
+    });
+    
     // Template selection patterns (NEW!)
     if (message.content.includes('เลือกเทมเพลต') || 
         message.content.includes('เลือก template') ||
@@ -806,11 +843,24 @@ export class OrchestratorAI {
              analysis.taskType?.includes('template customization')) {
       commandType = CommandType.CUSTOMIZE_TEMPLATE;
     }
+    // Component update/modification patterns
+    else if (message.content.toLowerCase().includes('แก้ไข') || 
+             message.content.toLowerCase().includes('แก้') ||
+             message.content.toLowerCase().includes('ปรับ') ||
+             message.content.toLowerCase().includes('update') ||
+             message.content.toLowerCase().includes('modify') ||
+             message.content.toLowerCase().includes('edit')) {
+      commandType = CommandType.UPDATE_COMPONENT;
+    }
     // Website creation patterns - now use template selection
     else if (analysis.taskType?.includes('Website creation') || 
         message.content.includes('สร้างเว็บไซต์') || 
         message.content.includes('สร้างร้าน') ||
-        message.content.includes('สร้างเว็บ')) {
+        message.content.includes('สร้างเว็บ') ||
+        message.content.includes('เว็บขาย') ||
+        message.content.includes('เว็บไซต์ขาย') ||
+        message.content.includes('ขายเครื่องบิน') ||
+        message.content.includes('ขาย') && message.content.includes('เว็บ')) {
       commandType = CommandType.SELECT_TEMPLATE; // ✅ เปลี่ยนเป็น template selection
     } 
     // Component creation patterns
@@ -818,8 +868,13 @@ export class OrchestratorAI {
                message.content.includes('สร้าง component')) {
       commandType = CommandType.CREATE_COMPONENT;
     } 
-    // Agent-based mapping
-    else if (analysis.requiredAgents.includes('frontend')) {
+    // Agent-based mapping (ONLY if not website creation)
+    else if (analysis.requiredAgents.includes('frontend') && 
+             !message.content.includes('สร้างเว็บ') &&
+             !message.content.includes('เว็บขาย') &&
+             !message.content.includes('เว็บไซต์ขาย') &&
+             !message.content.includes('ขายเครื่องบิน') &&
+             !message.content.includes('ขาย') && !message.content.includes('เว็บ')) {
       commandType = CommandType.CREATE_COMPONENT;
     } else if (analysis.requiredAgents.includes('backend')) {
       commandType = CommandType.CREATE_API_ENDPOINT;
@@ -830,6 +885,8 @@ export class OrchestratorAI {
     else {
       commandType = CommandType.SELECT_TEMPLATE; // ✅ เปลี่ยน default เป็น template selection
     }
+    
+    console.log('🎯 Selected command type:', commandType, 'for message:', message.content);
 
     // Get project context if available
     let projectContext: ProjectContextData | null = null;
@@ -841,11 +898,24 @@ export class OrchestratorAI {
     // ถ้าไม่มี project context และเป็น task ให้สร้างใหม่
     if (!projectContext && (analysis.intent === 'simple_task' || analysis.intent === 'complex_task')) {
       console.log('🏗️ Creating new project context for task');
-      const projectId = `project_${Date.now()}`;
-      const projectType = await this.detectProjectTypeFromInput(message.content);
       
-      // สร้าง Project record ก่อน
-      await this.createProjectRecord(projectId, this.extractProjectName(message.content));
+      // ✅ ใช้ project ID ที่ส่งมาจาก home page ถ้ามี
+      let projectId = message.context?.currentProject;
+      if (!projectId) {
+        // สร้างใหม่เฉพาะเมื่อไม่มี project ID จาก home page
+        projectId = `project_${Date.now()}`;
+        console.log(`⚠️ No project ID from home page, creating new one: ${projectId}`);
+      } else {
+        console.log(`✅ Using project ID from home page: ${projectId}`);
+      }
+      
+      const projectTypeString = await this.detectProjectTypeFromInput(message.content);
+      const projectType = projectTypeString as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
+      
+      // สร้าง Project record ก่อน (เฉพาะเมื่อสร้าง project ID ใหม่)
+      if (!message.context?.currentProject) {
+        await this.createProjectRecord(projectId, this.extractProjectName(message.content));
+      }
       
       projectContext = await this.initializeProject(
         projectId,
@@ -910,6 +980,12 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
   "complexity": "low|medium|high",
   "parameters": {
     "type": "introduction|greeting|security_sensitive|midori_identity|technology_explanation|base_chat|unclear"
+  },
+  "designPreferences": {
+    "style": "modern|classic|minimal|vintage|default",
+    "colorTone": "warm|cool|neutral|default",
+    "colors": ["#3B82F6", "#10B981"],
+    "mood": "professional|friendly|elegant|playful|default"
   }
 }
 
@@ -925,7 +1001,8 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
 - **"unclear"**: ไม่ชัดเจน
 
 **📝 Task Types (สำหรับ intent: "simple_task" หรือ "complex_task"):**
-- **"frontend_task"**: งานเกี่ยวกับ UI/UX
+- **"Website creation"**: การสร้างเว็บไซต์ใหม่ (สร้างเว็บ, สร้างเว็บไซต์, สร้างร้าน, เว็บขาย)
+- **"frontend_task"**: งานเกี่ยวกับ UI/UX (สร้าง component, แก้ไขหน้าเว็บ)
 - **"backend_task"**: งานเกี่ยวกับ API/Database  
 - **"devops_task"**: งานเกี่ยวกับ deployment
 - **"full_stack_task"**: งานแบบครบ stack
@@ -935,7 +1012,9 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
 - "สวัสดี" → {"intent": "chat", "parameters": {"type": "greeting"}}
 - "1+1 เท่าไหร่" → {"intent": "chat", "parameters": {"type": "base_chat"}}
 - "React คืออะไร" → {"intent": "chat", "parameters": {"type": "technology_explanation"}}
-- "สร้างเว็บไซต์" → {"intent": "simple_task", "parameters": {"type": "frontend_task"}}`;
+- "สร้างเว็บไซต์" → {"intent": "simple_task", "taskType": "Website creation", "parameters": {"type": "frontend_task"}}
+- "สร้างเว็บขาย" → {"intent": "simple_task", "taskType": "Website creation", "parameters": {"type": "frontend_task"}}
+- "สร้างร้าน" → {"intent": "simple_task", "taskType": "Website creation", "parameters": {"type": "frontend_task"}}`;
   }
 
   /**
@@ -1230,7 +1309,7 @@ ${executionResults.map((result: any) =>
   async initializeProject(
     projectId: string,
     specBundleId: string,
-    projectType: string,
+    projectType: 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal',
     name: string,
     userInput?: string
   ): Promise<ProjectContextData> {
@@ -1269,7 +1348,7 @@ ${executionResults.map((result: any) =>
   async updateProjectContext(
     projectId: string,
     updates: {
-      status?: string;
+      status?: 'created' | 'in_progress' | 'completed' | 'paused' | 'cancelled' | 'template_selected';
       components?: any[];
       pages?: any[];
       styling?: any;
@@ -1441,8 +1520,18 @@ ${executionResults.map((result: any) =>
     pages: any[];
     styling: any | null;
     metadata: any;
-  }): any {
-    const updates: any = {};
+  }): {
+    status?: 'created' | 'in_progress' | 'completed' | 'paused' | 'cancelled' | 'template_selected';
+    components?: any[];
+    pages?: any[];
+    styling?: any;
+  } {
+    const updates: {
+      status?: 'created' | 'in_progress' | 'completed' | 'paused' | 'cancelled' | 'template_selected';
+      components?: any[];
+      pages?: any[];
+      styling?: any;
+    } = {};
     
     if (changes.components.length > 0) {
       updates.components = changes.components;
@@ -1458,7 +1547,7 @@ ${executionResults.map((result: any) =>
     
     // Update status based on changes
     if (changes.hasChanges) {
-      updates.status = 'in_progress';
+      updates.status = 'in_progress' as 'created' | 'in_progress' | 'completed' | 'paused' | 'cancelled' | 'template_selected';
     }
     
     return updates;
@@ -1576,10 +1665,13 @@ ${executionResults.map((result: any) =>
         'blog': 'blog',
         'landing_page': 'landing_page',
         'education': 'education',
-        'healthcare': 'healthcare'
+        'healthcare': 'healthcare',
+        'hotel': 'hotel',
+        'accommodation': 'hotel',
+        'travel': 'hotel'
       };
       
-      const projectType = projectTypeMapping[result.category.id] || 'e_commerce';
+      const projectType = (projectTypeMapping[result.category.id] || 'e_commerce') as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal' | 'healthcare' | 'hotel';
       
       console.log('✅ Project type detected:', projectType);
       return projectType;
@@ -1591,20 +1683,20 @@ ${executionResults.map((result: any) =>
       const lowerInput = input.toLowerCase();
       
       if (lowerInput.includes('ร้านกาแฟ') || lowerInput.includes('coffee')) {
-        return 'coffee_shop';
+        return 'coffee_shop' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
       } else if (lowerInput.includes('ร้านอาหาร') || lowerInput.includes('restaurant')) {
-        return 'restaurant';
+        return 'restaurant' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
       } else if (lowerInput.includes('ขาย') || lowerInput.includes('shop') || lowerInput.includes('store')) {
-        return 'e_commerce';
+        return 'e_commerce' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
       } else if (lowerInput.includes('portfolio') || lowerInput.includes('ผลงาน')) {
-        return 'portfolio';
+        return 'portfolio' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
       } else if (lowerInput.includes('blog') || lowerInput.includes('บล็อก')) {
-        return 'blog';
+        return 'blog' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
       } else if (lowerInput.includes('ธุรกิจ') || lowerInput.includes('business')) {
-        return 'business';
+        return 'business' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
       }
       
-      return 'e_commerce'; // Default to e_commerce for selling businesses
+      return 'e_commerce' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal'; // Default to e_commerce for selling businesses
     }
   }
 
@@ -1716,6 +1808,204 @@ ${executionResults.map((result: any) =>
     const formattedTime = formatter.format(now);
     return `ตอนนี้คือ ${formattedTime} ครับ`;
   }
+
+  // ============================
+  // Conversation Database Management
+  // ============================
+
+  /**
+   * Get or create conversation in database
+   */
+  private async getOrCreateConversation(
+    userId: string, 
+    projectId?: string
+  ): Promise<ConversationData> {
+    try {
+      // หา conversation ที่ active อยู่
+      let conversation = await ConversationService.getActiveConversation(userId, projectId);
+      
+      if (!conversation) {
+        // สร้างใหม่ถ้าไม่มี (ไม่ระบุ agentId เพื่อหลีกเลี่ยง foreign key constraint)
+        conversation = await ConversationService.createConversation({
+          userId,
+          projectId,
+          agentId: null, // ✅ ใช้ null แทน undefined
+          title: ConversationService.generateTitleFromMessage('การสนทนาใหม่')
+        });
+        
+        console.log(`🗣️ Created new conversation: ${conversation.id}`);
+      }
+      
+      // Cache ใน memory
+      this.activeConversations.set(userId, conversation);
+      
+      return conversation;
+    } catch (error) {
+      console.error('❌ Failed to get or create conversation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Save user message to database
+   */
+  private async saveUserMessage(conversationId: string, message: UserMessage): Promise<void> {
+    try {
+      await ConversationService.addMessage({
+        conversationId,
+        userId: message.userId,
+        role: 'user',
+        content: message.content,
+        metadata: {
+          sessionId: message.sessionId,
+          timestamp: message.timestamp,
+          context: message.context
+        }
+      });
+    } catch (error) {
+      console.error('❌ Failed to save user message:', error);
+      // ไม่ throw error เพื่อไม่ให้กระทบการทำงานหลัก
+    }
+  }
+
+  /**
+   * Save assistant response to database
+   */
+  private async saveAssistantMessage(
+    conversationId: string, 
+    response: OrchestratorResponse, 
+    userId: string
+  ): Promise<void> {
+    try {
+      await ConversationService.addMessage({
+        conversationId,
+        userId,
+        role: 'assistant',
+        content: response.content,
+        contentJson: {
+          type: response.type,
+          taskResults: response.taskResults,
+          nextSteps: response.nextSteps,
+          metadata: response.metadata
+        },
+        metadata: {
+          responseType: response.type,
+          agentsUsed: response.metadata.agentsUsed,
+          confidence: response.metadata.confidence,
+          executionTime: response.metadata.executionTime
+        }
+      });
+    } catch (error) {
+      console.error('❌ Failed to save assistant message:', error);
+      // ไม่ throw error เพื่อไม่ให้กระทบการทำงานหลัก
+    }
+  }
+
+  /**
+   * Get or create context with conversation restoration
+   */
+  private async getOrCreateContextWithRestore(
+    sessionId: string, 
+    conversationId?: string
+  ): Promise<ConversationContext> {
+    // ถ้ามีใน memory อยู่แล้ว ให้ใช้
+    if (this.conversationHistory.has(sessionId)) {
+      return this.conversationHistory.get(sessionId)!;
+    }
+
+    // ถ้ามี conversationId ให้ restore จาก database
+    if (conversationId) {
+      try {
+        const conversationData = await ConversationService.restoreConversationHistory(conversationId);
+        
+        if (conversationData) {
+          const context: ConversationContext = {
+            previousMessages: conversationData.messages
+              .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+              .map(msg => msg.content || ''),
+            activeAgents: ['orchestrator'],
+            lastTaskResult: null
+          };
+          
+          // Cache ใน memory
+          this.conversationHistory.set(sessionId, context);
+          
+          console.log(`🔄 Restored conversation context from database: ${conversationId}`);
+          return context;
+        }
+      } catch (error) {
+        console.error('❌ Failed to restore conversation context:', error);
+      }
+    }
+
+    // สร้าง context ใหม่
+    const context: ConversationContext = {
+      previousMessages: [],
+      activeAgents: [],
+    };
+    
+    this.conversationHistory.set(sessionId, context);
+    return context;
+  }
+
+  /**
+   * Get conversation history for a user
+   */
+  async getUserConversations(
+    userId: string, 
+    projectId?: string, 
+    limit: number = 20
+  ): Promise<ConversationData[]> {
+    try {
+      return await ConversationService.getUserConversations(userId, projectId, limit);
+    } catch (error) {
+      console.error('❌ Failed to get user conversations:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get conversation with messages
+   */
+  async getConversationWithMessages(
+    conversationId: string, 
+    limit?: number
+  ): Promise<{
+    conversation: ConversationData;
+    messages: MessageData[];
+  } | null> {
+    try {
+      return await ConversationService.restoreConversationHistory(conversationId, limit);
+    } catch (error) {
+      console.error('❌ Failed to get conversation with messages:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Archive conversation
+   */
+  async archiveConversation(conversationId: string): Promise<boolean> {
+    try {
+      return await ConversationService.archiveConversation(conversationId);
+    } catch (error) {
+      console.error('❌ Failed to archive conversation:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Update conversation title
+   */
+  async updateConversationTitle(conversationId: string, title: string): Promise<boolean> {
+    try {
+      const updated = await ConversationService.updateConversation(conversationId, { title });
+      return updated !== null;
+    } catch (error) {
+      console.error('❌ Failed to update conversation title:', error);
+      return false;
+    }
+  }
 }
 
 // Global orchestrator instance เพื่อไม่ต้อง initialize ซ้ำ
@@ -1745,4 +2035,69 @@ export async function processUserMessage(
   };
 
   return await globalOrchestrator.processUserInput(message);
+}
+
+/**
+ * ✅ Helper functions สำหรับ conversation management
+ */
+
+/**
+ * Get user's conversation history
+ */
+export async function getUserConversations(
+  userId: string,
+  projectId?: string,
+  limit: number = 20
+): Promise<ConversationData[]> {
+  if (!globalOrchestrator) {
+    globalOrchestrator = new OrchestratorAI();
+    await globalOrchestrator.initialize();
+  }
+  
+  return await globalOrchestrator.getUserConversations(userId, projectId, limit);
+}
+
+/**
+ * Get conversation with messages
+ */
+export async function getConversationWithMessages(
+  conversationId: string,
+  limit?: number
+): Promise<{
+  conversation: ConversationData;
+  messages: MessageData[];
+} | null> {
+  if (!globalOrchestrator) {
+    globalOrchestrator = new OrchestratorAI();
+    await globalOrchestrator.initialize();
+  }
+  
+  return await globalOrchestrator.getConversationWithMessages(conversationId, limit);
+}
+
+/**
+ * Archive conversation
+ */
+export async function archiveConversation(conversationId: string): Promise<boolean> {
+  if (!globalOrchestrator) {
+    globalOrchestrator = new OrchestratorAI();
+    await globalOrchestrator.initialize();
+  }
+  
+  return await globalOrchestrator.archiveConversation(conversationId);
+}
+
+/**
+ * Update conversation title
+ */
+export async function updateConversationTitle(
+  conversationId: string, 
+  title: string
+): Promise<boolean> {
+  if (!globalOrchestrator) {
+    globalOrchestrator = new OrchestratorAI();
+    await globalOrchestrator.initialize();
+  }
+  
+  return await globalOrchestrator.updateConversationTitle(conversationId, title);
 }

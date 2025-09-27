@@ -16,12 +16,14 @@ interface HoverDetailCardProps {
     color?: string;
     hoverColor?: string;
     textColor?: string;
+    onClick?: () => void;
   };
   secondaryButton?: {
     text: string;
     color?: string;
     hoverColor?: string;
     textColor?: string;
+    onClick?: () => void;
   };
   pills?: {
     category: {
@@ -289,6 +291,7 @@ export function HoverDetailCard({
                       exit={{ y: -20, opacity: 0 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.1 }}
                       className={`${primaryButton.color} ${primaryButton.hoverColor} ${primaryButton.textColor} cursor-pointer px-3 py-1.5 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200`}
+                      onClick={primaryButton.onClick}
                     >
                       {primaryButton.text}
                     </motion.button>
@@ -298,6 +301,7 @@ export function HoverDetailCard({
                       exit={{ y: -20, opacity: 0 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.2 }}
                       className={`${secondaryButton.color} ${secondaryButton.hoverColor} ${secondaryButton.textColor} cursor-pointer px-3 py-1.5 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200`}
+                      onClick={secondaryButton.onClick}
                     >
                       {secondaryButton.text}
                     </motion.button>

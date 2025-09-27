@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { HoverDetailCard, HoverDetailCardData } from './hover-detail-card';
 import { UserProject } from '@/libs/services/projectService';
 
@@ -19,6 +20,7 @@ export const CardWorkspaceClient: React.FC<CardWorkspaceClientProps> = ({
 }) => {
   // State สำหรับ pagination
   const [visibleRows, setVisibleRows] = useState(3); // เริ่มต้นแสดง 3 แถว
+  const router = useRouter();
 
   // Transform UserProject to HoverDetailCardData format (same as CardCommunity)
   const items: HoverDetailCardData[] = projects.map((project) => {
@@ -42,16 +44,18 @@ export const CardWorkspaceClient: React.FC<CardWorkspaceClientProps> = ({
       images: hasValidPreviewContent ? [project.preview_file!] : [fallbackImage],
       variant: 'workspace' as const,
       primaryButton: {
-        text: "ดูรายละเอียด",
+        text: "View Details",
         color: "bg-white/90",
         hoverColor: "hover:bg-white",
-        textColor: "text-gray-900"
+        textColor: "text-gray-900",
+        onClick: () => router.push(`/projects/${project.id}`)
       },
       secondaryButton: {
-        text: "ดูตัวอย่าง",
+        text: "Preview",
         color: "bg-blue-600",
         hoverColor: "hover:bg-blue-700",
-        textColor: "text-white"
+        textColor: "text-white",
+        onClick: () => router.push(`/projects/${project.id}`)
       },
       pills: {
         category: { 

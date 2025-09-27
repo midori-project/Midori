@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Template Fill Request Schema",
+  "description": "Schema for filling template slots with requirements",
+  "type": "object",
+  "required": ["templateKey", "version", "requirements"],
+  "properties": {
+    "templateKey": {
+      "type": "string",
+      "description": "Template identifier"
+    },
+    "version": {
+      "type": "number",
+      "description": "Template version number"
+    },
+    "requirements": {
+      "type": "object",
+      "description": "User requirements mapped to slot aliases",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9]*$": {
+          "type": ["string", "number", "boolean"]
+        }
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "description": "Direct slot overrides",
+      "patternProperties": {
+        "^slots\\..*$": {
+          "type": ["string", "number", "boolean"]
+        }
+      }
+    },
+    "strict": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to enforce strict validation"
+    },
+    "includeMock": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to include mock data for missing slots"
+    },
+    "mockProfile": {
+      "type": "string",
+      "enum": ["th-local-basic", "global-basic", "random"],
+      "default": "th-local-basic",
+      "description": "Mock profile to use"
+    }
+  }
+}

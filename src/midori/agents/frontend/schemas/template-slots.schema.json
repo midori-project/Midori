@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Template Slots Schema",
+  "description": "Schema for template slots and validation",
+  "type": "object",
+  "required": ["slots", "aliases"],
+  "properties": {
+    "slots": {
+      "type": "object",
+      "patternProperties": {
+        "^slots\\..*": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["string", "number", "boolean", "color", "url", "email", "phone"]
+            },
+            "required": {
+              "type": "boolean",
+              "default": false
+            },
+            "default": {
+              "type": ["string", "number", "boolean"]
+            },
+            "minLength": {
+              "type": "number"
+            },
+            "maxLength": {
+              "type": "number"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "Regex pattern for validation"
+            },
+            "enum": {
+              "type": "array",
+              "items": {
+                "type": ["string", "number"]
+              }
+            },
+            "description": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "aliases": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9]*$": {
+          "type": "string",
+          "pattern": "^slots\\..*"
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "crossField": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "condition": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

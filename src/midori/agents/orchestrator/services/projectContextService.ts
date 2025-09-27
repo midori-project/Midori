@@ -48,9 +48,9 @@ export class ProjectContextService {
         specBundleId: input.specBundleId,
         projectType: input.projectType,
         status: input.status || 'created',
-        components: input.components || [],
-        pages: input.pages || [],
-        styling: input.styling || {
+        components: JSON.parse(JSON.stringify(input.components || [])),
+        pages: JSON.parse(JSON.stringify(input.pages || [])),
+        styling: JSON.parse(JSON.stringify(input.styling || {
           theme: {
             name: 'default',
             primary: '#3B82F6',
@@ -65,16 +65,16 @@ export class ProjectContextService {
           fonts: {},
           spacing: {},
           breakpoints: {}
-        },
-        conversationHistory: input.conversationHistory || {
+        })),
+        conversationHistory: JSON.parse(JSON.stringify(input.conversationHistory || {
           messages: [],
           currentContext: '',
           lastIntent: '',
           lastAction: '',
           createdAt: new Date(),
           updatedAt: new Date()
-        },
-        userPreferences: input.userPreferences || {
+        })),
+        userPreferences: JSON.parse(JSON.stringify(input.userPreferences || {
           language: 'th',
           theme: 'light',
           autoSave: true,
@@ -82,7 +82,7 @@ export class ProjectContextService {
           customSettings: {},
           createdAt: new Date(),
           updatedAt: new Date()
-        }
+        }))
       }
     });
 
@@ -101,7 +101,7 @@ export class ProjectContextService {
     const projectContext = await prisma.projectContext.update({
       where: { projectId: input.projectId },
       data: {
-        ...input.updates,
+        ...JSON.parse(JSON.stringify(input.updates)),
         lastModified: new Date()
       }
     });

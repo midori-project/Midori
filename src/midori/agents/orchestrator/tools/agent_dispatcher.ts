@@ -58,7 +58,7 @@ class RealAgentClient {
         console.log('🎨 Calling Frontend Agent...');
         
         // Transform task to frontend format if needed
-        const frontendTask = this.transformToFrontendTask(task);
+        const frontendTask = await this.transformToFrontendTask(task);
         console.log('🎨 Transformed frontend task:', {
           taskId: frontendTask.taskId,
           taskType: frontendTask.taskType,
@@ -117,7 +117,7 @@ class RealAgentClient {
   /**
    * Transform Task to FrontendTask format with minimal data for template-based approach
    */
-  private transformToFrontendTask(task: Task): any {
+  private async transformToFrontendTask(task: Task): Promise<any> {
     const projectContext = task.payload.projectContext || null;
     
     // Generate component name based on task type and project context
@@ -130,15 +130,25 @@ class RealAgentClient {
       componentName = task.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
     
+    // Extract style preferences
+    const stylePreferences = await this.extractStylePreferences(task.payload?.userInput || '');
+    console.log('🎨 Style preferences extracted for frontend:', stylePreferences);
+    
     return {
       taskId: task.taskId,
       taskType: task.action,
       action: this.extractAction(task),
       componentName: componentName, // ✅ เพิ่ม componentName
+      userInput: task.payload?.userInput || '', // ✅ เพิ่ม userInput
       requirements: {
         templateType: projectContext?.projectType || 'default',
         features: ['responsive', 'seo', 'accessibility'],
-        customizations: this.extractCustomizations(projectContext)
+        customizations: this.extractCustomizations(projectContext),
+        stylePreferences: stylePreferences, // ✅ ส่ง style preferences ที่ถูกต้อง
+        type: 'functional',
+        props: [],
+        styling: 'tailwind',
+        tests: true
       },
       // ✅ ส่งเฉพาะข้อมูลที่จำเป็นสำหรับ template selection
       projectContext: projectContext ? {
@@ -277,6 +287,48 @@ class RealAgentClient {
       language: projectContext.userPreferences?.language || 'th',
       theme: projectContext.userPreferences?.theme || 'light'
     };
+  }
+
+  /**
+   * Extract style preferences from user input using StyleDetectionService
+   */
+  private async extractStylePreferences(userInput: string): Promise<any> {
+    try {
+      console.log('🎨 Orchestrator extracting style preferences for:', userInput);
+      
+      if (!userInput) {
+        console.log('❌ No user input provided for style extraction');
+        return {
+          style: 'default',
+          colorTone: 'default',
+          colors: [],
+          mood: 'default',
+          theme: 'default',
+          confidence: 0.1,
+          reasoning: 'No user input provided'
+        };
+      }
+
+      // Import StyleDetectionService
+      const { StyleDetectionService } = await import('../services/styleDetectionService');
+      const styleDetectionService = StyleDetectionService.getInstance();
+      
+      const result = await styleDetectionService.detectStylePreferences(userInput);
+      console.log('🎨 Orchestrator style detection result:', result);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to extract style preferences:', error);
+      return {
+        style: 'default',
+        colorTone: 'default',
+        colors: [],
+        mood: 'default',
+        theme: 'default',
+        confidence: 0.1,
+        reasoning: 'Style extraction failed'
+      };
+    }
   }
 
   /**

@@ -1,4 +1,7 @@
+"use client";
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { HoverDetailCard, HoverDetailCardData } from './hover-detail-card';
 import { getProjectsFromDatabase } from '../../app/home/getProjects';
 
@@ -6,12 +9,37 @@ export interface HoverDetailCardGridProps {
   columns?: number;
 }
 
-export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
+export const CardCommunity: React.FC<HoverDetailCardGridProps> = ({
   columns = 4,
 }) => {
-  // Fetch real data from database - จำกัดที่ 12 cards สำหรับหน้าโฮม
-  const projects = await getProjectsFromDatabase();
+  const router = useRouter();
+  const [projects, setProjects] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  // Fetch data on component mount
+  React.useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const data = await getProjectsFromDatabase();
+        setProjects(data);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
   
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">กำลังโหลด...</p>
+      </div>
+    );
+  }
+
   // ✅ จำกัดให้แสดงแค่ 12 cards ในหน้าโฮม
   const limitedProjects = projects.slice(0, 12);
   
@@ -37,16 +65,18 @@ export const CardCommunity: React.FC<HoverDetailCardGridProps> = async ({
       images: hasValidPreviewContent ? [project.previewFile.content] : [fallbackImage],
       variant: 'home' as const,
       primaryButton: {
-        text: "ดูรายละเอียด",
+        text: "View Details",
         color: "bg-white/90",
         hoverColor: "hover:bg-white",
-        textColor: "text-gray-900"
+        textColor: "text-gray-900",
+        onClick: () => router.push(`/projects/${project.id}`)
       },
       secondaryButton: {
-        text: "ดูตัวอย่าง",
+        text: "Preview",
         color: "bg-blue-600",
         hoverColor: "hover:bg-blue-700",
-        textColor: "text-white"
+        textColor: "text-white",
+        onClick: () => router.push(`/projects/${project.id}`)
       },
       pills: {
         category: { 

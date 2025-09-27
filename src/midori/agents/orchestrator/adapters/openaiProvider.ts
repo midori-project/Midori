@@ -65,7 +65,6 @@ export class OpenAIProvider implements LLMProvider {
           console.log('📊 Responses API response structure:', {
             hasOutputText: !!response?.output_text,
             outputTextLength: response?.output_text?.length || 0,
-            responseKeys: Object.keys(response || {}),
             responseType: typeof response,
             hasOutput: !!response?.output,
             outputType: typeof response?.output,
