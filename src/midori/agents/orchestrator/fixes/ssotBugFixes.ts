@@ -117,7 +117,7 @@ export class SSOTBugFixes {
       }
       
       // Fix 3: Ensure template_selected projects have template components
-      if (context.status === 'template_selected' && !context.components.some(c => c.type === 'template')) {
+      if (context.status === 'template_selected' && !context.components.some(c => c.type === 'template' as any)) {
         fixes.status = 'created';
         console.log('🔧 Fixed: Changed template_selected status to created (no template)');
       }

@@ -1,0 +1,234 @@
+{
+  "info": {
+    "name": "Midori Template API Tests (Fixed)",
+    "description": "ทดสอบ Template API สำหรับ Midori Platform - เติมค่าเรียบร้อยแล้ว",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Template Management",
+      "item": [
+        {
+          "name": "1. สร้าง Template ใหม่ (Online Shop)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"online-shop-enhanced\",\n  \"label\": \"Online Shop Enhanced Template\",\n  \"category\": \"e-commerce\",\n  \"meta\": {\n    \"description\": \"Template ร้านค้าออนไลน์ที่ครบถ้วน พร้อม placeholder support สำหรับ AI filling\",\n    \"engine\": \"react-vite-tailwind\",\n    \"status\": \"published\",\n    \"author\": \"Midori Team\",\n    \"versioningPolicy\": \"semver\",\n    \"previewScreenshot\": \"https://via.placeholder.com/800x600/3b82f6/ffffff?text=Online+Shop+Template\"\n  },\n  \"tags\": [\"e-commerce\", \"react\", \"tailwind\", \"placeholder\", \"ai-ready\"],\n  \"initialVersion\": {\n    \"version\": 1,\n    \"semver\": \"1.0.0\",\n    \"status\": \"published\",\n    \"sourceFiles\": [\n      {\n        \"path\": \"package.json\",\n        \"type\": \"config\",\n        \"encoding\": \"utf8\",\n        \"content\": \"{\\n  \\\"name\\\": \\\"online-shop\\\",\\n  \\\"version\\\": \\\"1.0.0\\\",\\n  \\\"private\\\": true,\\n  \\\"scripts\\\": {\\n    \\\"dev\\\": \\\"vite --host 0.0.0.0 --port 5173\\\",\\n    \\\"build\\\": \\\"vite build\\\",\\n    \\\"preview\\\": \\\"vite preview --host 0.0.0.0 --port 5173\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"react\\\": \\\"^18.2.0\\\",\\n    \\\"react-dom\\\": \\\"^18.2.0\\\",\\n    \\\"react-router-dom\\\": \\\"^6.14.0\\\",\\n    \\\"axios\\\": \\\"^1.3.0\\\"\\n  },\\n  \\\"devDependencies\\\": {\\n    \\\"vite\\\": \\\"^4.5.0\\\",\\n    \\\"@vitejs/plugin-react\\\": \\\"^3.1.0\\\",\\n    \\\"typescript\\\": \\\"^5.0.0\\\",\\n    \\\"tailwindcss\\\": \\\"^3.4.0\\\",\\n    \\\"postcss\\\": \\\"^8.4.0\\\",\\n    \\\"autoprefixer\\\": \\\"^10.4.0\\\"\\n  }\\n}\"\n      },\n      {\n        \"path\": \"src/App.tsx\",\n        \"type\": \"code\",\n        \"encoding\": \"utf8\",\n        \"content\": \"import React from 'react';\\nimport { Routes, Route } from 'react-router-dom';\\nimport Header from './components/Header';\\nimport Footer from './components/Footer';\\nimport Home from './pages/Home';\\nimport About from './pages/About';\\nimport Contact from './pages/Contact';\\nimport Products from './pages/Products';\\nimport ProductDetail from './pages/ProductDetail';\\nimport Cart from './pages/Cart';\\nimport Checkout from './pages/Checkout';\\nimport NotFound from './pages/NotFound';\\n\\nconst App: React.FC = () => {\\n  return (\\n    <div className=\\\"<tw/>\\\">\\n      <Header \\n        brandName=\\\"{{header.brandName}}\\\" \\n        tagline=\\\"{{header.tagline}}\\\" \\n        logoUrl=\\\"{{header.logoUrl}}\\\"\\n      />\\n      <main className=\\\"<tw/>\\\">\\n        <Routes>\\n          <Route path=\\\"/\\\" element={<Home />} />\\n          <Route path=\\\"/about\\\" element={<About />} />\\n          <Route path=\\\"/contact\\\" element={<Contact />} />\\n          <Route path=\\\"/products\\\" element={<Products />} />\\n          <Route path=\\\"/products/:slug\\\" element={<ProductDetail />} />\\n          <Route path=\\\"/cart\\\" element={<Cart />} />\\n          <Route path=\\\"/checkout\\\" element={<Checkout />} />\\n          <Route path=\\\"*\\\" element={<NotFound />} />\\n        </Routes>\\n      </main>\\n      <Footer \\n        columns={{footer.columns}} \\n        newsletter={{footer.newsletter}} \\n        brandName=\\\"{{header.brandName}}\\\"\\n        socialLinks={{footer.socialLinks}}\\n      />\\n    </div>\\n  );\\n};\\n\\nexport default App;\"\n      },\n      {\n        \"path\": \"src/pages/Home.tsx\",\n        \"type\": \"code\",\n        \"encoding\": \"utf8\",\n        \"content\": \"import React from 'react';\\nimport { Link } from 'react-router-dom';\\n\\nconst Home: React.FC = () => {\\n  return (\\n    <div className=\\\"<tw/>\\\">\\n      <div className=\\\"container\\\">\\n        <section className=\\\"section\\\">\\n          <div className=\\\"grid grid-cols-1 lg:grid-cols-2 gap-12 items-center\\\">\\n            <div>\\n              <h1 className=\\\"heading text-left\\\"><text/></h1>\\n              <p className=\\\"subheading text-left\\\"><text/></p>\\n              <div className=\\\"flex flex-col sm:flex-row gap-4 mt-8\\\">\\n                <Link to=\\\"/products\\\" className=\\\"btn\\\"><text/></Link>\\n                <Link to=\\\"/about\\\" className=\\\"btn-secondary\\\"><text/></Link>\\n              </div>\\n            </div>\\n            <div className=\\\"relative\\\">\\n              <img src=\\\"<img/>\\\" alt=\\\"<text/>\\\" className=\\\"w-full h-96 object-cover rounded-lg shadow-lg\\\" />\\n            </div>\\n          </div>\\n        </section>\\n      </div>\\n    </div>\\n  );\\n};\\n\\nexport default Home;\"\n      }\n    ],\n    \"slots\": {\n      \"header\": {\n        \"type\": \"object\",\n        \"component\": \"Header\",\n        \"fields\": [\n          { \"key\": \"brandName\", \"type\": \"text\", \"required\": true },\n          { \"key\": \"tagline\", \"type\": \"text\" },\n          { \"key\": \"logoUrl\", \"type\": \"image\", \"minWidth\": 200, \"aspectRatio\": \"3:1\" }\n        ]\n      },\n      \"home\": {\n        \"type\": \"object\",\n        \"component\": \"Home\",\n        \"fields\": [\n          { \"key\": \"heroTitle\", \"type\": \"text\", \"required\": true },\n          { \"key\": \"heroSubtitle\", \"type\": \"text\" },\n          { \"key\": \"ctaLabel\", \"type\": \"text\", \"default\": \"เริ่มช้อป\" }\n        ]\n      }\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/template",
+              "host": ["http://localhost:3000"],
+              "path": ["api", "template"]
+            },
+            "description": "สร้าง Online Shop template พร้อม placeholder support"
+          },
+          "response": []
+        },
+        {
+          "name": "2. เพิ่ม Version ให้ Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"2a90b089-6112-4585-979b-331c811957d9\",\n  \"version\": 2,\n  \"semver\": \"1.1.0\",\n  \"status\": \"published\",\n  \"sourceFiles\": [\n    {\n      \"path\": \"src/components/NewComponent.tsx\",\n      \"type\": \"code\",\n      \"encoding\": \"utf8\",\n      \"content\": \"import React from 'react';\\nconst NewComponent = () => {\\n  return <div className=\\\"<tw/>\\\">\\n    <h2><text/></h2>\\n    <img src=\\\"<img/>\\\" alt=\\\"<text/>\\\" />\\n  </div>;\\n};\\nexport default NewComponent;\"\n    }\n  ],\n  \"slots\": {\n    \"newSlot\": {\n      \"type\": \"object\",\n      \"fields\": [\n        { \"key\": \"title\", \"type\": \"text\" },\n        { \"key\": \"description\", \"type\": \"text\" }\n      ]\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/template?action=version",
+              "host": ["http://localhost:3000"],
+              "path": ["api", "template"],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "version"
+                }
+              ]
+            },
+            "description": "เพิ่ม version ใหม่ให้ template ที่มีอยู่"
+          },
+          "response": []
+        },
+        {
+          "name": "3. ดึงรายการ Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/template?category=e-commerce&status=published&limit=10",
+              "host": ["http://localhost:3000"],
+              "path": ["api", "template"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "e-commerce"
+                },
+                {
+                  "key": "status",
+                  "value": "published"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ดึงรายการ templates ตาม category และ status"
+          },
+          "response": []
+        },
+        {
+          "name": "4. ดึง Template Source Files",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/template?action=source&category=e-commerce",
+              "host": ["http://localhost:3000"],
+              "path": ["api", "template"],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "source"
+                },
+                {
+                  "key": "category",
+                  "value": "e-commerce"
+                }
+              ]
+            },
+            "description": "ดึง source files ของ template"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Placeholder Management",
+      "item": [
+        {
+          "name": "5. เติม Placeholder ด้วย AI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"2a90b089-6112-4585-979b-331c811957d9\",\n  \"theme\": \"modern cozy; primary:sky-600; accent:amber-400; radius:xl; elevation:lg; grid:3; header:underlined; font:inter; imagery:\\\"coffee latte art\\\"; tone:thai-casual\",\n  \"projectId\": \"demo-project\",\n  \"action\": \"fill_placeholders\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/template/placeholder",
+              "host": ["http://localhost:3000"],
+              "path": ["api", "template", "placeholder"]
+            },
+            "description": "เติม placeholder ใน template ด้วย AI ตาม theme"
+          },
+          "response": []
+        },
+        {
+          "name": "6. ตรวจสอบ Placeholder (Validate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"2a90b089-6112-4585-979b-331c811957d9\",\n  \"theme\": \"modern\",\n  \"action\": \"validate\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/template/placeholder",
+              "host": ["http://localhost:3000"],
+              "path": ["api", "template", "placeholder"]
+            },
+            "description": "ตรวจสอบ placeholder ใน template"
+          },
+          "response": []
+        },
+        {
+          "name": "7. อัพโหลด JSON Template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"template\": {\n    \"name\": \"Online Shop Enhanced\",\n    \"category\": \"e-commerce\",\n    \"version\": \"1.0.0\",\n    \"files\": [\n      {\n        \"path\": \"src/App.tsx\",\n        \"content\": \"import React from 'react';\\nimport { Routes, Route } from 'react-router-dom';\\nimport Header from './components/Header';\\nimport Footer from './components/Footer';\\nimport Home from './pages/Home';\\nimport About from './pages/About';\\nimport Contact from './pages/Contact';\\nimport Products from './pages/Products';\\nimport ProductDetail from './pages/ProductDetail';\\nimport Cart from './pages/Cart';\\nimport Checkout from './pages/Checkout';\\nimport NotFound from './pages/NotFound';\\n\\nconst App: React.FC = () => {\\n  return (\\n    <div className=\\\"<tw/>\\\">\\n      <Header \\n        brandName=\\\"{{header.brandName}}\\\" \\n        tagline=\\\"{{header.tagline}}\\\" \\n        logoUrl=\\\"{{header.logoUrl}}\\\"\\n      />\\n      <main className=\\\"<tw/>\\\">\\n        <Routes>\\n          <Route path=\\\"/\\\" element={<Home />} />\\n          <Route path=\\\"/about\\\" element={<About />} />\\n          <Route path=\\\"/contact\\\" element={<Contact />} />\\n          <Route path=\\\"/products\\\" element={<Products />} />\\n          <Route path=\\\"/products/:slug\\\" element={<ProductDetail />} />\\n          <Route path=\\\"/cart\\\" element={<Cart />} />\\n          <Route path=\\\"/checkout\\\" element={<Checkout />} />\\n          <Route path=\\\"*\\\" element={<NotFound />} />\\n        </Routes>\\n      </main>\\n      <Footer \\n        columns={{footer.columns}} \\n        newsletter={{footer.newsletter}} \\n        brandName=\\\"{{header.brandName}}\\\"\\n        socialLinks={{footer.socialLinks}}\\n      />\\n    </div>\\n  );\\n};\\n\\nexport default App;\"\n      },\n      {\n        \"path\": \"src/pages/Home.tsx\",\n        \"content\": \"import React from 'react';\\nimport { Link } from 'react-router-dom';\\n\\nconst Home: React.FC = () => {\\n  return (\\n    <div className=\\\"<tw/>\\\">\\n      <div className=\\\"container\\\">\\n        <section className=\\\"section\\\">\\n          <div className=\\\"grid grid-cols-1 lg:grid-cols-2 gap-12 items-center\\\">\\n            <div>\\n              <h1 className=\\\"heading text-left\\\"><text/></h1>\\n              <p className=\\\"subheading text-left\\\"><text/></p>\\n              <div className=\\\"flex flex-col sm:flex-row gap-4 mt-8\\\">\\n                <Link to=\\\"/products\\\" className=\\\"btn\\\"><text/></Link>\\n                <Link to=\\\"/about\\\" className=\\\"btn-secondary\\\"><text/></Link>\\n              </div>\\n            </div>\\n            <div className=\\\"relative\\\">\\n              <img src=\\\"<img/>\\\" alt=\\\"<text/>\\\" className=\\\"w-full h-96 object-cover rounded-lg shadow-lg\\\" />\\n            </div>\\n          </div>\\n        </section>\\n      </div>\\n    </div>\\n  );\\n};\\n\\nexport default Home;\"\n      }\n    ],\n    \"placeholders\": {\n      \"theme\": \"modern cozy; primary:sky-600; accent:amber-400; radius:xl; elevation:lg; font:inter; imagery:\\\"coffee latte art\\\"; tone:thai-casual\",\n      \"imagery\": \"coffee latte art\",\n      \"tone\": \"thai-casual\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/template/placeholder",
+              "host": ["http://localhost:3000"],
+              "path": ["api", "template", "placeholder"]
+            },
+            "description": "อัพโหลด template จาก JSON format"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Project Integration",
+      "item": [
+        {
+          "name": "8. สร้าง Project จาก Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Coffee Delight Shop\",\n  \"description\": \"ร้านกาแฟออนไลน์ที่สร้างจาก template\",\n  \"templateId\": \"2a90b089-6112-4585-979b-331c811957d9\",\n  \"theme\": \"modern cozy; primary:sky-600; accent:amber-400\",\n  \"customizations\": {\n    \"brandName\": \"Coffee Delight\",\n    \"primaryColor\": \"sky-600\",\n    \"imagery\": \"coffee latte art\",\n    \"tone\": \"thai-casual\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/projects",
+              "host": ["http://localhost:3000"],
+              "path": ["api", "projects"]
+            },
+            "description": "สร้าง project ใหม่จาก template"
+          },
+          "response": []
+        },
+        {
+          "name": "9. ดึง Project Preview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/projects/REPLACE_WITH_PROJECT_ID/preview",
+              "host": ["http://localhost:3000"],
+              "path": ["api", "projects", "REPLACE_WITH_PROJECT_ID", "preview"]
+            },
+            "description": "ดึงข้อมูล preview ของ project (ต้องใส่ Project ID จริง)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

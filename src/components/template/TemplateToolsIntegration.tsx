@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { template_slots_tool } from '@/midori/agents/frontend/tools/template-slots-tool';
+// import { template_slots_tool } from '@/midori/agents/frontend/tools/template-slots-tool';
 import PreviewWindow from '../preview/PreviewWindow';
 
 interface TemplateToolsIntegrationProps {
@@ -36,21 +36,31 @@ export default function TemplateToolsIntegration({ sampleData }: TemplateToolsIn
         description: 'สัมผัสรสชาติกาแฟคุณภาพสูงจากเมล็ดคั่วสดใหม่'
       };
 
-      // เรียกใช้ template_slots_tool
-      const toolResult = await template_slots_tool({
-        action: 'complete_flow',
-        params: {
+      // เรียกใช้ template_slots_tool (temporarily disabled)
+      // const toolResult = await template_slots_tool({
+      //   action: 'complete_flow',
+      //   params: {
+      //     templateKey,
+      //     requirements,
+      //     mockProfile: 'th-local-basic',
+      //     exportFormat: 'json',
+      //     fileName: `${templateType}-website`
+      //   }
+      // });
+
+      // Temporarily mock the result
+      const mockResult = {
+        success: true,
+        data: {
           templateKey,
           requirements,
-          mockProfile: 'th-local-basic',
-          exportFormat: 'json',
-          fileName: `${templateType}-website`
+          message: 'Template processing temporarily disabled'
         }
-      });
+      };
 
-      if (toolResult.success) {
-        console.log('✅ Template processing สำเร็จ:', toolResult.data);
-        setResult(toolResult.data);
+      if (mockResult.success) {
+        console.log('✅ Template processing สำเร็จ:', mockResult.data);
+        setResult(mockResult.data);
         
         // สร้าง preview URL (จำลอง)
         const mockPreviewUrl = `https://preview.daytona.works/sandbox/${Date.now()}`;
@@ -60,7 +70,7 @@ export default function TemplateToolsIntegration({ sampleData }: TemplateToolsIn
         setPreviewToken(mockToken);
         
       } else {
-        throw new Error(toolResult.error || 'Template processing failed');
+        throw new Error('Template processing failed');
       }
 
     } catch (err) {

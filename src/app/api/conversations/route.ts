@@ -77,7 +77,9 @@ export async function POST(request: NextRequest) {
         
         console.log(`💬 Sending message from user: ${userId}`);
         const response = await processUserMessage(content, userId, undefined, {
-          currentProject: projectId
+          previousMessages: [],
+          currentProject: projectId,
+          activeAgents: []
         });
         
         return NextResponse.json({

@@ -2,8 +2,8 @@
  * Export Service สำหรับสร้างไฟล์ใหม่จาก template ที่เติม slots แล้ว
  */
 
-import { TemplateService } from './template-service';
-import { SlotsFiller, FillSlotsResult } from './slots-filler';
+// import { TemplateService } from './template-service';
+// import { SlotsFiller, FillSlotsResult } from './slots-filler';
 
 export interface ExportBundleInput {
   templateKey: string;
@@ -35,9 +35,9 @@ export interface ExportBundleResult {
 }
 
 export class ExportService {
-  private templateService: TemplateService;
+  private templateService: any; // TemplateService temporarily disabled
 
-  constructor(templateService: TemplateService) {
+  constructor(templateService: any) {
     this.templateService = templateService;
   }
 

@@ -378,7 +378,7 @@ export class ProjectContextOrchestratorService {
       [ProjectType.personal]: [ComponentType.header, ComponentType.hero, ComponentType.content, ComponentType.footer]
     };
 
-    return componentMap[projectType] || [ComponentType.header, ComponentType.content, ComponentType.footer];
+    return (componentMap as any)[projectType] || [ComponentType.header, ComponentType.content, ComponentType.footer];
   }
 
   private static getDefaultPageTypes(projectType: ProjectType): PageType[] {
@@ -393,7 +393,7 @@ export class ProjectContextOrchestratorService {
       [ProjectType.personal]: [PageType.home, PageType.about, PageType.gallery, PageType.contact]
     };
 
-    return pageMap[projectType] || [PageType.home, PageType.about, PageType.contact];
+    return (pageMap as any)[projectType] || [PageType.home, PageType.about, PageType.contact];
   }
 
   private static getDefaultPath(pageType: PageType): string {

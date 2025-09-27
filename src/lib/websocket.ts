@@ -106,7 +106,7 @@ export class ProjectContextWebSocketServer {
     this.connections.get(message.projectId)!.add(ws);
 
     // Add to project context sync
-    projectContextSync.addWebSocketConnection(message.projectId, ws);
+    projectContextSync.addWebSocketConnection(message.projectId, ws as any);
 
     // Send confirmation
     this.sendMessage(ws, {
@@ -137,7 +137,7 @@ export class ProjectContextWebSocketServer {
     }
 
     // Remove from project context sync
-    projectContextSync.removeWebSocketConnection(message.projectId, ws);
+    projectContextSync.removeWebSocketConnection(message.projectId, ws as any);
 
     // Send confirmation
     this.sendMessage(ws, {
@@ -218,7 +218,7 @@ export class ProjectContextWebSocketServer {
         if (connections.size === 0) {
           this.connections.delete(projectId);
         }
-        projectContextSync.removeWebSocketConnection(projectId, ws);
+        projectContextSync.removeWebSocketConnection(projectId, ws as any);
       }
     }
   }

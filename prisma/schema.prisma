@@ -72,6 +72,9 @@ model Project {
   specBundles    SpecBundle[]
   testRuns       TestRun[]
   testSuites     TestSuite[]
+  
+  // Template theme support
+  templateTheme  Json?              // เก็บ theme settings สำหรับ template
 
   @@index([ownerId])
   @@index([tenantId])
@@ -486,13 +489,20 @@ model ProjectContext {
 }
 
 model UiTemplate {
-  id        String              @id @default(uuid())
-  key       String              @unique
-  label     String
-  category  String?
-  createdAt DateTime            @default(now())
-  meta      UiTemplateMeta?
-  versions  UiTemplateVersion[]
+  id                String              @id @default(uuid())
+  key               String              @unique
+  label             String
+  category          String?
+  createdAt         DateTime            @default(now())
+  meta              UiTemplateMeta?
+  versions          UiTemplateVersion[]
+  
+  // Placeholder support fields
+  placeholderConfig Json?               // เก็บการตั้งค่า placeholder
+  themeMapping      Json?               // เก็บ mapping ระหว่าง theme กับ placeholder
+  jsonSource        Json?               // เก็บ JSON source ที่อัพโหลดมา
+  previewUrl        String?             // URL สำหรับ preview
+  demoData          Json?               // ข้อมูลสำหรับ demo
 }
 
 model UiTemplateVersion {
@@ -513,6 +523,12 @@ model UiTemplateVersion {
   sourceFiles   TemplateSourceFile[]   @relation("Version_SourceFiles")
   sourceSummary TemplateSourceSummary? @relation("Version_SourceSummary")
   template      UiTemplate             @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  // Placeholder support fields
+  placeholderData Json?                // เก็บข้อมูล placeholder ที่ถูกเติมแล้ว
+  fillHistory     Json?                // เก็บประวัติการเติม placeholder
+  aiGenerated     Json?                // เก็บผลลัพธ์จาก AI
+  demoPreview     Json?                // ข้อมูลสำหรับ demo preview
 
   @@unique([templateId, version])
   @@index([templateId])

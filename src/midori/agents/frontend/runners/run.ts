@@ -290,7 +290,7 @@ async function selectTemplateFromDatabase(templateType: string, customizations: 
 
 /**
  * Customize template based on requirements
- * Now processes actual template files from database
+ * Now processes actual template files from database with placeholder support
  */
 async function customizeTemplate(template: any, customizations: any): Promise<any> {
   console.log('🎨 Customizing template:', template.name);
@@ -325,7 +325,18 @@ async function customizeTemplate(template: any, customizations: any): Promise<an
       contentLength: f.content?.length || 0,
       type: f.type
     })));
-    customizedFiles = await processTemplateFiles(template.files, enhancedCustomizations);
+    
+    // ✅ Check for placeholder support
+    const hasPlaceholders = checkTemplatePlaceholders(template.files);
+    console.log('🔍 Template has placeholders:', hasPlaceholders);
+    
+    if (hasPlaceholders) {
+      console.log('🤖 Filling placeholders with AI...');
+      customizedFiles = await fillTemplatePlaceholders(template.files, enhancedCustomizations);
+    } else {
+      console.log('📝 Processing template files normally...');
+      customizedFiles = await processTemplateFiles(template.files, enhancedCustomizations);
+    }
   } else {
     console.log('⚠️ No template files found, using mock files');
     customizedFiles = generateMockFiles(template, enhancedCustomizations);
@@ -336,7 +347,8 @@ async function customizeTemplate(template: any, customizations: any): Promise<an
     ...template,
     files: customizedFiles,
     customizations: enhancedCustomizations,
-    customizedAt: new Date().toISOString()
+    customizedAt: new Date().toISOString(),
+    hasPlaceholders: checkTemplatePlaceholders(template.files || [])
   };
   
   console.log('🎨 Enhanced template with', customizedFiles.length, 'customized files');
@@ -2834,6 +2846,141 @@ async function createDaytonaPreview(
       status: 'error',
       error: error instanceof Error ? error.message : 'Unknown error'
     };
+  }
+}
+
+/**
+ * Check if template files contain placeholders
+ */
+function checkTemplatePlaceholders(files: any[]): boolean {
+  for (const file of files) {
+    if (file.content && (
+      file.content.includes('<tw/>') ||
+      file.content.includes('<text/>') ||
+      file.content.includes('<img/>') ||
+      file.content.includes('<data')
+    )) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Fill template placeholders with AI
+ */
+async function fillTemplatePlaceholders(files: any[], customizations: any): Promise<any[]> {
+  console.log('🤖 Starting placeholder filling process...');
+  
+  const filledFiles = [];
+  
+  for (const file of files) {
+    console.log(`🤖 Processing file: ${file.path}`);
+    
+    if (!file.content) {
+      filledFiles.push(file);
+      continue;
+    }
+    
+    // Check if file has placeholders
+    const hasPlaceholders = file.content.includes('<tw/>') || 
+                           file.content.includes('<text/>') || 
+                           file.content.includes('<img/>') || 
+                           file.content.includes('<data');
+    
+    if (!hasPlaceholders) {
+      console.log(`📝 No placeholders found in ${file.path}`);
+      filledFiles.push(file);
+      continue;
+    }
+    
+    try {
+      // Fill placeholders with AI
+      const filledContent = await fillPlaceholdersWithAI(file.content, customizations);
+      
+      filledFiles.push({
+        ...file,
+        content: filledContent,
+        originalContent: file.content,
+        placeholderFilled: true
+      });
+      
+      console.log(`✅ Successfully filled placeholders in ${file.path}`);
+      
+    } catch (error) {
+      console.error(`❌ Failed to fill placeholders in ${file.path}:`, error);
+      
+      // Fallback to original content
+      filledFiles.push({
+        ...file,
+        placeholderFilled: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+  
+  console.log(`🤖 Completed placeholder filling: ${filledFiles.length} files processed`);
+  return filledFiles;
+}
+
+/**
+ * Fill placeholders with AI using LLM
+ */
+async function fillPlaceholdersWithAI(content: string, customizations: any): Promise<string> {
+  // Import LLM adapter
+  const { LLMAdapter } = await import('@/midori/agents/orchestrator/adapters/llmAdapter');
+  const llmAdapter = new LLMAdapter();
+  
+  // Create prompt for AI
+  const prompt = `
+Fill the placeholders in this React component with appropriate content:
+
+${content}
+
+Customizations:
+- Theme: ${customizations.theme || 'light'}
+- Style: ${customizations.style || 'default'}
+- Mood: ${customizations.mood || 'default'}
+- Color Scheme: ${JSON.stringify(customizations.colorScheme)}
+- Styling: ${JSON.stringify(customizations.styling)}
+- Wording: ${JSON.stringify(customizations.wording)}
+
+Instructions:
+1. Replace <tw/> with appropriate Tailwind classes based on theme and style
+2. Replace <text/> with Thai text appropriate for the context and mood
+3. Replace <img/> with Unsplash image URLs with Thai alt text
+4. Replace <data key="..."/> with appropriate data structures
+5. Keep the same component structure and functionality
+6. Ensure valid React/JSX syntax
+7. Use Thai language for text content
+
+Return only the filled component code, no explanations or markdown formatting.
+`;
+
+  try {
+    const response = await llmAdapter.callLLM(prompt, {
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      maxTokens: 8000,
+      maxCompletionTokens: 8000,
+    });
+    
+    if (response && response.content) {
+      let filledContent = response.content.trim();
+      
+      // Clean up response if it has markdown formatting
+      if (filledContent.startsWith('```')) {
+        filledContent = filledContent.replace(/^```(?:jsx|tsx|javascript|typescript)?\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      return filledContent;
+    } else {
+      throw new Error('No content received from AI');
+    }
+    
+  } catch (error) {
+    console.error('AI placeholder filling failed:', error);
+    throw error;
   }
 }
 

@@ -1,0 +1,262 @@
+{
+  "key": "online-shop-enhanced",
+  "label": "Online Shop Enhanced Template",
+  "category": "e-commerce",
+  "meta": {
+    "description": "Template ร้านค้าออนไลน์ที่ครบถ้วน พร้อม placeholder support สำหรับ AI filling",
+    "engine": "react-vite-tailwind",
+    "status": "published",
+    "author": "Midori Team",
+    "versioningPolicy": "semver",
+    "previewScreenshot": "https://via.placeholder.com/800x600/3b82f6/ffffff?text=Online+Shop+Template"
+  },
+  "tags": ["e-commerce", "react", "tailwind", "placeholder", "ai-ready"],
+  "initialVersion": {
+    "version": 1,
+    "semver": "1.0.0",
+    "status": "published",
+    "sourceFiles": [
+      {
+        "path": "package.json",
+        "type": "config",
+        "encoding": "utf8",
+        "content": "{\n  \"name\": \"online-shop\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"dev\": \"vite --host 0.0.0.0 --port 5173\",\n    \"build\": \"vite build\",\n    \"preview\": \"vite preview --host 0.0.0.0 --port 5173\"\n  },\n  \"dependencies\": {\n    \"react\": \"^18.2.0\",\n    \"react-dom\": \"^18.2.0\",\n    \"react-router-dom\": \"^6.14.0\",\n    \"axios\": \"^1.3.0\"\n  },\n  \"devDependencies\": {\n    \"vite\": \"^4.5.0\",\n    \"@vitejs/plugin-react\": \"^3.1.0\",\n    \"typescript\": \"^5.0.0\",\n    \"tailwindcss\": \"^3.4.0\",\n    \"postcss\": \"^8.4.0\",\n    \"autoprefixer\": \"^10.4.0\"\n  }\n}"
+      },
+      {
+        "path": "src/main.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App';\nimport './index.css';\n\nconst rootElement = document.getElementById('root');\nif (!rootElement) throw new Error('Failed to find the root element');\n\nconst root = ReactDOM.createRoot(rootElement);\nroot.render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>\n);"
+      },
+      {
+        "path": "src/App.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Header from './components/Header';\nimport Footer from './components/Footer';\nimport Home from './pages/Home';\nimport About from './pages/About';\nimport Contact from './pages/Contact';\nimport Products from './pages/Products';\nimport ProductDetail from './pages/ProductDetail';\nimport Cart from './pages/Cart';\nimport Checkout from './pages/Checkout';\nimport NotFound from './pages/NotFound';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <Header \n        brandName=\"{{header.brandName}}\" \n        tagline=\"{{header.tagline}}\" \n        logoUrl=\"{{header.logoUrl}}\"\n      />\n      <main className=\"<tw/>\">\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/about\" element={<About />} />\n          <Route path=\"/contact\" element={<Contact />} />\n          <Route path=\"/products\" element={<Products />} />\n          <Route path=\"/products/:slug\" element={<ProductDetail />} />\n          <Route path=\"/cart\" element={<Cart />} />\n          <Route path=\"/checkout\" element={<Checkout />} />\n          <Route path=\"*\" element={<NotFound />} />\n        </Routes>\n      </main>\n      <Footer \n        columns={{footer.columns}} \n        newsletter={{footer.newsletter}} \n        brandName=\"{{header.brandName}}\"\n        socialLinks={{footer.socialLinks}}\n      />\n    </div>\n  );\n};\n\nexport default App;"
+      },
+      {
+        "path": "src/index.css",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n@layer base {\n  html { \n    font-size: <data key=\"typography.baseFontSize\"/>px; \n    line-height: 1.5; \n    color: #111827; \n    background-color: <data key=\"theme.backgroundColor\"/>; \n  }\n  body { \n    font-family: <data key=\"typography.fontFamily\"/>, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; \n    margin: 0; \n    padding: 0; \n  }\n  h1, h2, h3, h4, h5, h6 { margin: 0; font-weight: 700; }\n  p { margin: 0; }\n}\n\n@layer components {\n  .btn { @apply px-4 py-2 rounded-lg text-white <tw/> transition duration-300 ease-in-out; }\n  .btn-secondary { @apply px-4 py-2 rounded-lg border-2 <tw/> transition duration-300 ease-in-out; }\n  .card { @apply bg-white shadow-md rounded-lg p-6 mb-4; }\n  .header { @apply <tw/>; }\n  .footer { @apply <tw/> text-gray-200 p-6 text-center; }\n  .container { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }\n  .section { @apply py-12 lg:py-16; }\n  .heading { @apply text-3xl lg:text-4xl font-bold mb-6 text-center; }\n  .subheading { @apply text-xl text-gray-600 mb-8 text-center max-w-3xl mx-auto; }\n}"
+      },
+      {
+        "path": "src/pages/Home.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Home: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <div className=\"container\">\n        {/* Hero Section */}\n        <section className=\"section\">\n          <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12 items-center\">\n            <div>\n              <h1 className=\"heading text-left\"><text/></h1>\n              <p className=\"subheading text-left\"><text/></p>\n              <div className=\"flex flex-col sm:flex-row gap-4 mt-8\">\n                <Link to=\"/products\" className=\"btn\"><text/></Link>\n                <Link to=\"/about\" className=\"btn-secondary\"><text/></Link>\n              </div>\n            </div>\n            <div className=\"relative\">\n              <img src=\"<img/>\" alt=\"<text/>\" className=\"w-full h-96 object-cover rounded-lg shadow-lg\" />\n            </div>\n          </div>\n        </section>\n\n        {/* Features Section */}\n        <section className=\"section bg-gray-50\">\n          <div className=\"container\">\n            <h2 className=\"heading\"><text/></h2>\n            <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n            </div>\n          </div>\n        </section>\n\n        {/* CTA Section */}\n        <section className=\"section\">\n          <div className=\"container text-center\">\n            <h2 className=\"heading\"><text/></h2>\n            <p className=\"subheading\"><text/></p>\n            <Link to=\"/contact\" className=\"btn mt-8\"><text/></Link>\n          </div>\n        </section>\n      </div>\n    </div>\n  );\n};\n\nexport default Home;"
+      },
+      {
+        "path": "src/pages/About.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React from 'react';\n\nconst About: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <div className=\"container\">\n        {/* Hero Section */}\n        <section className=\"section\">\n          <div className=\"text-center mb-16\">\n            <h1 className=\"heading\"><text/></h1>\n            <p className=\"subheading\"><text/></p>\n          </div>\n          <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12 items-center\">\n            <div>\n              <img src=\"<img/>\" alt=\"<text/>\" className=\"w-full h-96 object-cover rounded-lg shadow-lg\" />\n            </div>\n            <div>\n              <h2 className=\"text-3xl font-bold mb-6\"><text/></h2>\n              <div className=\"prose max-w-none\">\n                <text/>\n              </div>\n            </div>\n          </div>\n        </section>\n\n        {/* Values Section */}\n        <section className=\"section bg-gray-50\">\n          <div className=\"container\">\n            <h2 className=\"heading\"><text/></h2>\n            <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n            </div>\n          </div>\n        </section>\n\n        {/* Team Section */}\n        <section className=\"section\">\n          <div className=\"container\">\n            <h2 className=\"heading\"><text/></h2>\n            <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8\">\n              <div className=\"card text-center\">\n                <img src=\"<img/>\" alt=\"<text/>\" className=\"w-32 h-32 object-cover rounded-full mx-auto mb-4\" />\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600 mb-4\"><text/></p>\n                <p className=\"text-sm text-gray-500\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <img src=\"<img/>\" alt=\"<text/>\" className=\"w-32 h-32 object-cover rounded-full mx-auto mb-4\" />\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600 mb-4\"><text/></p>\n                <p className=\"text-sm text-gray-500\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <img src=\"<img/>\" alt=\"<text/>\" className=\"w-32 h-32 object-cover rounded-full mx-auto mb-4\" />\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600 mb-4\"><text/></p>\n                <p className=\"text-sm text-gray-500\"><text/></p>\n              </div>\n            </div>\n          </div>\n        </section>\n      </div>\n    </div>\n  );\n};\n\nexport default About;"
+      },
+      {
+        "path": "src/pages/Contact.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React, { useState } from 'react';\n\nconst Contact: React.FC = () => {\n  const [formData, setFormData] = useState({\n    name: '',\n    email: '',\n    subject: '',\n    message: ''\n  });\n\n  const handleSubmit = (e: React.FormEvent) => {\n    e.preventDefault();\n    // Handle form submission\n    alert('ส่งข้อความสำเร็จ!');\n  };\n\n  return (\n    <div className=\"<tw/>\">\n      <div className=\"container\">\n        {/* Hero Section */}\n        <section className=\"section\">\n          <div className=\"text-center mb-16\">\n            <h1 className=\"heading\"><text/></h1>\n            <p className=\"subheading\"><text/></p>\n          </div>\n        </section>\n\n        <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12\">\n          {/* Contact Info */}\n          <div>\n            <h2 className=\"text-2xl font-bold mb-6\"><text/></h2>\n            <div className=\"space-y-6\">\n              <div className=\"flex items-start space-x-4\">\n                <div className=\"<tw/>\">\n                  <text/>\n                </div>\n                <div>\n                  <h3 className=\"font-semibold\"><text/></h3>\n                  <p className=\"text-gray-600\"><text/></p>\n                </div>\n              </div>\n              <div className=\"flex items-start space-x-4\">\n                <div className=\"<tw/>\">\n                  <text/>\n                </div>\n                <div>\n                  <h3 className=\"font-semibold\"><text/></h3>\n                  <p className=\"text-gray-600\"><text/></p>\n                </div>\n              </div>\n              <div className=\"flex items-start space-x-4\">\n                <div className=\"<tw/>\">\n                  <text/>\n                </div>\n                <div>\n                  <h3 className=\"font-semibold\"><text/></h3>\n                  <p className=\"text-gray-600\"><text/></p>\n                </div>\n              </div>\n              <div className=\"flex items-start space-x-4\">\n                <div className=\"<tw/>\">\n                  <text/>\n                </div>\n                <div>\n                  <h3 className=\"font-semibold\"><text/></h3>\n                  <p className=\"text-gray-600\"><text/></p>\n                </div>\n              </div>\n            </div>\n          </div>\n\n          {/* Contact Form */}\n          <div>\n            <h2 className=\"text-2xl font-bold mb-6\"><text/></h2>\n            <form onSubmit={handleSubmit} className=\"space-y-6\">\n              <div>\n                <label className=\"block text-sm font-medium text-gray-700 mb-2\">\n                  <text/>\n                </label>\n                <input\n                  type=\"text\"\n                  required\n                  value={formData.name}\n                  onChange={(e) => setFormData({...formData, name: e.target.value})}\n                  className=\"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                  placeholder=\"<text/>\"\n                />\n              </div>\n              <div>\n                <label className=\"block text-sm font-medium text-gray-700 mb-2\">\n                  <text/>\n                </label>\n                <input\n                  type=\"email\"\n                  required\n                  value={formData.email}\n                  onChange={(e) => setFormData({...formData, email: e.target.value})}\n                  className=\"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                  placeholder=\"<text/>\"\n                />\n              </div>\n              <div>\n                <label className=\"block text-sm font-medium text-gray-700 mb-2\">\n                  <text/>\n                </label>\n                <input\n                  type=\"text\"\n                  required\n                  value={formData.subject}\n                  onChange={(e) => setFormData({...formData, subject: e.target.value})}\n                  className=\"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                  placeholder=\"<text/>\"\n                />\n              </div>\n              <div>\n                <label className=\"block text-sm font-medium text-gray-700 mb-2\">\n                  <text/>\n                </label>\n                <textarea\n                  required\n                  rows={5}\n                  value={formData.message}\n                  onChange={(e) => setFormData({...formData, message: e.target.value})}\n                  className=\"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                  placeholder=\"<text/>\"\n                />\n              </div>\n              <button type=\"submit\" className=\"btn w-full\">\n                <text/>\n              </button>\n            </form>\n          </div>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default Contact;"
+      },
+      {
+        "path": "src/pages/NotFound.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst NotFound: React.FC = () => {\n  return (\n    <div className=\"min-h-screen flex items-center justify-center bg-gray-50\">\n      <div className=\"text-center\">\n        <h1 className=\"text-6xl font-bold text-gray-900 mb-4\">404</h1>\n        <h2 className=\"text-2xl font-semibold text-gray-700 mb-4\"><text/></h2>\n        <p className=\"text-gray-600 mb-8 max-w-md mx-auto\"><text/></p>\n        <div className=\"space-x-4\">\n          <Link to=\"/\" className=\"btn\"><text/></Link>\n          <Link to=\"/products\" className=\"btn-secondary\"><text/></Link>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default NotFound;"
+      },
+      {
+        "path": "src/components/Header.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React, { useState } from 'react';\nimport { Link, useLocation } from 'react-router-dom';\n\ninterface HeaderProps { \n  brandName: string; \n  tagline?: string; \n  logoUrl?: string;\n}\n\nconst Header: React.FC<HeaderProps> = ({ brandName, tagline, logoUrl }) => {\n  const [isMenuOpen, setIsMenuOpen] = useState(false);\n  const location = useLocation();\n\n  const navigation = [\n    { name: 'หน้าแรก', href: '/' },\n    { name: 'เกี่ยวกับเรา', href: '/about' },\n    { name: 'สินค้า', href: '/products' },\n    { name: 'ติดต่อ', href: '/contact' }\n  ];\n\n  return (\n    <header className=\"header sticky top-0 z-50\">\n      <div className=\"container\">\n        <div className=\"flex items-center justify-between py-4\">\n          {/* Logo */}\n          <Link to=\"/\" className=\"flex items-center space-x-3\">\n            {logoUrl && (\n              <img src={logoUrl} alt={brandName} className=\"h-10 w-auto\" />\n            )}\n            <div>\n              <h1 className=\"brand\">{brandName}</h1>\n              {tagline && <p className=\"text-sm text-gray-500\">{tagline}</p>}\n            </div>\n          </Link>\n\n          {/* Desktop Navigation */}\n          <nav className=\"hidden md:flex items-center space-x-8\">\n            {navigation.map((item) => (\n              <Link\n                key={item.name}\n                to={item.href}\n                className={`nav ${location.pathname === item.href \n                  ? 'text-blue-600 font-medium' \n                  : 'text-gray-700 hover:text-gray-900'}`}\n              >\n                {item.name}\n              </Link>\n            ))}\n            <Link to=\"/cart\" className=\"nav flex items-center space-x-2\">\n              <span><text/></span>\n              <span className=\"<tw/>\"><text/></span>\n            </Link>\n          </nav>\n\n          {/* Mobile menu button */}\n          <button\n            onClick={() => setIsMenuOpen(!isMenuOpen)}\n            className=\"md:hidden p-2 rounded-md text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500\"\n          >\n            <span className=\"sr-only\">เปิดเมนู</span>\n            <svg className=\"h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">\n              <path strokeLinecap=\"round\" strokeLinejoin=\"round\" strokeWidth={2} d=\"M4 6h16M4 12h16M4 18h16\" />\n            </svg>\n          </button>\n        </div>\n\n        {/* Mobile Navigation */}\n        {isMenuOpen && (\n          <div className=\"md:hidden border-t border-gray-200 py-4\">\n            <nav className=\"flex flex-col space-y-2\">\n              {navigation.map((item) => (\n                <Link\n                  key={item.name}\n                  to={item.href}\n                  onClick={() => setIsMenuOpen(false)}\n                  className={`px-3 py-2 rounded-md text-base font-medium ${\n                    location.pathname === item.href\n                      ? 'text-blue-600 bg-blue-50'\n                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'\n                  }`}\n                >\n                  {item.name}\n                </Link>\n              ))}\n              <Link\n                to=\"/cart\"\n                onClick={() => setIsMenuOpen(false)}\n                className=\"px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50\"\n              >\n                <text/>\n              </Link>\n            </nav>\n          </div>\n        )}\n      </div>\n    </header>\n  );\n};\n\nexport default Header;"
+      },
+      {
+        "path": "src/components/Footer.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\ninterface FooterProps { \n  brandName: string; \n  columns: { title: string; links: { label: string; href: string }[] }[]; \n  newsletter?: { enabled: boolean }; \n  socialLinks?: { platform: string; url: string; icon: string }[];\n}\n\nconst Footer: React.FC<FooterProps> = ({ brandName, columns, newsletter, socialLinks }) => {\n  return (\n    <footer className=\"footer\">\n      <div className=\"container\">\n        <div className=\"grid grid-cols-1 md:grid-cols-4 gap-8 mb-8\">\n          {/* Brand */}\n          <div className=\"md:col-span-1\">\n            <h3 className=\"text-lg font-semibold mb-4\">{brandName}</h3>\n            <p className=\"text-gray-400 text-sm mb-4\"><text/></p>\n            {socialLinks && (\n              <div className=\"flex space-x-4\">\n                {socialLinks.map((social, index) => (\n                  <a\n                    key={index}\n                    href={social.url}\n                    target=\"_blank\"\n                    rel=\"noopener noreferrer\"\n                    className=\"text-gray-400 hover:text-white transition-colors\"\n                  >\n                    <span className=\"sr-only\">{social.platform}</span>\n                    <span className=\"text-xl\">{social.icon}</span>\n                  </a>\n                ))}\n              </div>\n            )}\n          </div>\n\n          {/* Links */}\n          {columns.map((col, idx) => (\n            <div key={idx} className=\"md:col-span-1\">\n              <h4 className=\"text-lg font-semibold mb-4\">{col.title}</h4>\n              <ul className=\"space-y-2\">\n                {col.links.map((link, i) => (\n                  <li key={i}>\n                    <Link to={link.href} className=\"link\">\n                      {link.label}\n                    </Link>\n                  </li>\n                ))}\n              </ul>\n            </div>\n          ))}\n        </div>\n\n        {/* Newsletter */}\n        {newsletter?.enabled && (\n          <div className=\"border-t border-gray-700 pt-8 mb-8\">\n            <div className=\"max-w-md mx-auto text-center\">\n              <h4 className=\"text-lg font-semibold mb-4\"><text/></h4>\n              <p className=\"text-gray-400 text-sm mb-4\"><text/></p>\n              <div className=\"flex\">\n                <input\n                  type=\"email\"\n                  placeholder=\"<text/>\"\n                  className=\"flex-1 px-4 py-2 rounded-l-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500\"\n                />\n                <button className=\"btn rounded-l-none\"><text/></button>\n              </div>\n            </div>\n          </div>\n        )}\n\n        {/* Copyright */}\n        <div className=\"border-t border-gray-700 pt-8 text-center\">\n          <p className=\"text-sm text-gray-400\">\n            © {new Date().getFullYear()} {brandName}. <text/>\n          </p>\n        </div>\n      </div>\n    </footer>\n  );\n};\n\nexport default Footer;"
+      }
+    ],
+    "slots": {
+      "header": {
+        "type": "object",
+        "component": "Header",
+        "fields": [
+          { "key": "brandName", "type": "text", "required": true, "validators": [{ "kind": "maxLength", "value": 40 }] },
+          { "key": "tagline", "type": "text", "validators": [{ "kind": "maxLength", "value": 80 }] },
+          { "key": "logoUrl", "type": "image", "minWidth": 200, "aspectRatio": "3:1" }
+        ],
+        "style": {
+          "allowedClasses": {
+            "header": ["bg-white", "bg-gray-50", "border-b", "shadow", "shadow-sm", "p-4", "p-6"],
+            "brand": ["text-2xl", "text-3xl", "font-bold", "text-gray-900"],
+            "nav": ["flex", "gap-3", "text-gray-700", "hover:text-gray-900"]
+          }
+        }
+      },
+      "footer": {
+        "type": "object",
+        "component": "Footer",
+        "fields": [
+          { "key": "columns", "type": "list", "itemShape": { "title": { "type": "text" }, "links": { "type": "list", "itemShape": { "label": { "type": "text" }, "href": { "type": "url" } } } } },
+          { "key": "newsletter", "type": "object", "shape": { "enabled": { "type": "boolean" } } },
+          { "key": "socialLinks", "type": "list", "itemShape": { "platform": { "type": "text" }, "url": { "type": "url" }, "icon": { "type": "text" } } }
+        ],
+        "style": {
+          "allowedClasses": {
+            "footer": ["bg-gray-900", "text-gray-200", "p-6", "p-8"],
+            "link": ["text-sm", "underline", "hover:text-white"]
+          }
+        }
+      },
+      "home": {
+        "type": "object",
+        "component": "Home",
+        "fields": [
+          { "key": "heroTitle", "type": "text", "required": true, "validators": [{ "kind": "maxLength", "value": 60 }] },
+          { "key": "heroSubtitle", "type": "text", "validators": [{ "kind": "maxLength", "value": 160 }] },
+          { "key": "heroImage", "type": "image", "minWidth": 1200, "aspectRatio": "16:9" },
+          { "key": "ctaLabel", "type": "text", "default": "เริ่มช้อป" },
+          { "key": "feature1", "type": "object", "shape": { "title": { "type": "text" }, "text": { "type": "text" }, "icon": { "type": "text" } } },
+          { "key": "feature2", "type": "object", "shape": { "title": { "type": "text" }, "text": { "type": "text" }, "icon": { "type": "text" } } },
+          { "key": "feature3", "type": "object", "shape": { "title": { "type": "text" }, "text": { "type": "text" }, "icon": { "type": "text" } } }
+        ],
+        "style": {
+          "allowedClasses": {
+            "title": ["text-4xl", "text-5xl", "font-extrabold", "text-green-700", "text-gray-900"],
+            "cta": ["btn", "text-base", "text-lg", "px-6", "px-8", "py-2", "py-3"]
+          }
+        }
+      },
+      "about": {
+        "type": "object",
+        "component": "About",
+        "fields": [
+          { "key": "pageTitle", "type": "text", "required": true },
+          { "key": "pageSubtitle", "type": "text" },
+          { "key": "heroImage", "type": "image", "minWidth": 1200, "aspectRatio": "16:9" },
+          { "key": "storyTitle", "type": "text" },
+          { "key": "storyContent", "type": "richtext" },
+          { "key": "values", "type": "list", "itemShape": { "title": { "type": "text" }, "description": { "type": "text" }, "icon": { "type": "text" } } },
+          { "key": "team", "type": "list", "itemShape": { "name": { "type": "text" }, "role": { "type": "text" }, "image": { "type": "image", "minWidth": 400, "aspectRatio": "1:1" }, "bio": { "type": "text" } } }
+        ]
+      },
+      "contact": {
+        "type": "object",
+        "component": "Contact",
+        "fields": [
+          { "key": "pageTitle", "type": "text", "required": true },
+          { "key": "pageSubtitle", "type": "text" },
+          { "key": "contactInfo", "type": "object", "shape": { "phone": { "type": "text" }, "email": { "type": "email" }, "address": { "type": "text" }, "hours": { "type": "text" } } },
+          { "key": "formFields", "type": "list", "itemShape": { "name": { "type": "text" }, "type": { "type": "text" }, "required": { "type": "boolean" }, "placeholder": { "type": "text" } } },
+          { "key": "submitButton", "type": "text", "default": "ส่งข้อความ" }
+        ]
+      },
+      "productList": {
+        "type": "object",
+        "component": "ProductGrid",
+        "fields": [
+          { "key": "title", "type": "text", "required": true },
+          { "key": "categories", "type": "list", "itemShape": { "id": { "type": "text" }, "name": { "type": "text" } } },
+          {
+            "key": "products",
+            "type": "list",
+            "itemShape": {
+              "id": { "type": "text" },
+              "name": { "type": "text", "validators": [{ "kind": "maxLength", "value": 60 }] },
+              "price": { "type": "number" },
+              "imageUrl": { "type": "image", "minWidth": 600, "aspectRatio": "4:3" },
+              "rating": { "type": "number" },
+              "tags": { "type": "list", "itemShape": { "value": { "type": "text" } } }
+            },
+            "validators": [{ "kind": "maxItems", "value": 120 }]
+          }
+        ],
+        "style": {
+          "allowedClasses": {
+            "grid": ["grid", "grid-cols-1", "sm:grid-cols-2", "md:grid-cols-3", "lg:grid-cols-4", "gap-4", "gap-6"],
+            "card": ["bg-white", "rounded-lg", "shadow", "hover:shadow-lg", "transition"]
+          }
+        }
+      },
+      "product": {
+        "type": "object",
+        "component": "ProductDetail",
+        "fields": [
+          { "key": "product", "type": "object", "shape": { "name": { "type": "text" }, "price": { "type": "number" }, "imageUrl": { "type": "image", "minWidth": 1200, "aspectRatio": "16:9" }, "description": { "type": "text" } } },
+          { "key": "descriptionHtml", "type": "richtext" },
+          { "key": "gallery", "type": "list", "itemShape": { "imageUrl": { "type": "image", "minWidth": 800, "aspectRatio": "4:3" }, "alt": { "type": "text" } } },
+          { "key": "specifications", "type": "list", "itemShape": { "name": { "type": "text" }, "value": { "type": "text" } } }
+        ]
+      },
+      "cart": {
+        "type": "object",
+        "component": "Cart",
+        "fields": [
+          { "key": "items", "type": "list", "itemShape": { "id": { "type": "text" }, "name": { "type": "text" }, "price": { "type": "number" }, "qty": { "type": "number" }, "imageUrl": { "type": "image", "minWidth": 300, "aspectRatio": "1:1" } } },
+          { "key": "emptyMessage", "type": "text", "default": "ตะกร้าว่างเปล่า" },
+          { "key": "continueShopping", "type": "text", "default": "ช้อปต่อ" }
+        ]
+      },
+      "checkout": {
+        "type": "object",
+        "component": "Checkout",
+        "fields": [
+          { "key": "total", "type": "number" },
+          { "key": "paymentMethods", "type": "list", "itemShape": { "id": { "type": "text" }, "name": { "type": "text" }, "icon": { "type": "text" } } },
+          { "key": "shippingOptions", "type": "list", "itemShape": { "id": { "type": "text" }, "name": { "type": "text" }, "price": { "type": "number" }, "duration": { "type": "text" } } }
+        ]
+      },
+      "i18n": {
+        "type": "object",
+        "component": "i18n",
+        "fields": [
+          { "key": "currency", "type": "text", "default": "฿" },
+          { "key": "language", "type": "text", "default": "th" },
+          { "key": "commonTexts", "type": "object", "shape": { "addToCart": { "type": "text" }, "buyNow": { "type": "text" }, "search": { "type": "text" }, "filter": { "type": "text" } } }
+        ]
+      },
+      "theme": {
+        "type": "object",
+        "component": "theme",
+        "fields": [
+          { "key": "primaryColor", "type": "text", "default": "sky-600" },
+          { "key": "accentColor", "type": "text", "default": "amber-400" },
+          { "key": "borderRadius", "type": "text", "default": "xl" },
+          { "key": "elevation", "type": "text", "default": "lg" },
+          { "key": "gridColumns", "type": "number", "default": 3 },
+          { "key": "fontFamily", "type": "text", "default": "inter" },
+          { "key": "imagery", "type": "text", "default": "modern clean" },
+          { "key": "tone", "type": "text", "default": "thai-casual" }
+        ]
+      }
+    },
+    "constraints": {
+      "a11y": { "contrast": "AA", "minFontSizePx": 14, "ariaRequired": true, "keyboardNavigable": true },
+      "layout": { "breakpoints": ["sm", "md", "lg"], "containerMaxWidth": 1200, "minTapTargetPx": 44 },
+      "content": { "seo": { "titleMaxLen": 60, "descMaxLen": 160, "requireH1": true, "metaTags": ["og:title", "og:description"] } },
+      "assets": {
+        "productList.products.imageUrl": { "minWidth": 600, "aspectRatio": "4:3" },
+        "product.product.imageUrl": { "minWidth": 1200, "aspectRatio": "16:9" }
+      },
+      "performance": { "maxImageKb": 700, "maxCriticalCssKb": 180 },
+      "security": { "disallowInlineScript": true },
+      "i18n": { "noHardcodedText": false },
+      "code": { "tsc": true }
+    }
+  },
+  "placeholderConfig": {
+    "hasPlaceholders": true,
+    "placeholderTypes": {
+      "tw": 45,
+      "text": 28,
+      "img": 12,
+      "data": 8
+    },
+    "themeMapping": {
+      "modern": "primary:sky-600; accent:amber-400; radius:xl; elevation:lg",
+      "cozy": "primary:emerald-600; accent:orange-400; radius:lg; elevation:md",
+      "minimal": "primary:gray-600; accent:blue-400; radius:sm; elevation:sm"
+    }
+  }
+}

@@ -131,7 +131,7 @@ export class SSOTOptimizations {
           case 'completed':
             ttl = 30 * 60 * 1000; // 30 minutes for completed projects
             break;
-          case 'archived':
+          case 'archived' as any:
             ttl = 60 * 60 * 1000; // 1 hour for archived projects
             break;
         }

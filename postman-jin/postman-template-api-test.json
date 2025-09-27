@@ -1,0 +1,265 @@
+{
+  "info": {
+    "name": "Midori Template API Tests",
+    "description": "ทดสอบ Template API สำหรับ Midori Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Template Management",
+      "item": [
+        {
+          "name": "1. สร้าง Template ใหม่ (Online Shop)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{template_create_body}}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/template",
+              "host": ["{{base_url}}"],
+              "path": ["api", "template"]
+            },
+            "description": "สร้าง Online Shop template พร้อม placeholder support"
+          },
+          "response": []
+        },
+        {
+          "name": "2. เพิ่ม Version ให้ Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"{{template_id}}\",\n  \"version\": 2,\n  \"semver\": \"1.1.0\",\n  \"status\": \"published\",\n  \"sourceFiles\": [\n    {\n      \"path\": \"src/components/NewComponent.tsx\",\n      \"type\": \"code\",\n      \"encoding\": \"utf8\",\n      \"content\": \"import React from 'react';\\nconst NewComponent = () => {\\n  return <div className=\\\"<tw/>\\\">\\n    <h2><text/></h2>\\n    <img src=\\\"<img/>\\\" alt=\\\"<text/>\\\" />\\n  </div>;\\n};\\nexport default NewComponent;\"\n    }\n  ],\n  \"slots\": {\n    \"newSlot\": {\n      \"type\": \"object\",\n      \"fields\": [\n        { \"key\": \"title\", \"type\": \"text\" },\n        { \"key\": \"description\", \"type\": \"text\" }\n      ]\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/template?action=version",
+              "host": ["{{base_url}}"],
+              "path": ["api", "template"],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "version"
+                }
+              ]
+            },
+            "description": "เพิ่ม version ใหม่ให้ template ที่มีอยู่"
+          },
+          "response": []
+        },
+        {
+          "name": "3. ดึงรายการ Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/template?category=e-commerce&status=published&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "template"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "e-commerce"
+                },
+                {
+                  "key": "status",
+                  "value": "published"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ดึงรายการ templates ตาม category และ status"
+          },
+          "response": []
+        },
+        {
+          "name": "4. ดึง Template Source Files",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/template?action=source&category=e-commerce",
+              "host": ["{{base_url}}"],
+              "path": ["api", "template"],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "source"
+                },
+                {
+                  "key": "category",
+                  "value": "e-commerce"
+                }
+              ]
+            },
+            "description": "ดึง source files ของ template"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Placeholder Management",
+      "item": [
+        {
+          "name": "5. เติม Placeholder ด้วย AI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"{{template_id}}\",\n  \"theme\": \"modern cozy; primary:sky-600; accent:amber-400; radius:xl; elevation:lg; grid:3; header:underlined; font:inter; imagery:\\\"coffee latte art\\\"; tone:thai-casual\",\n  \"projectId\": \"demo-project\",\n  \"action\": \"fill_placeholders\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/template/placeholder",
+              "host": ["{{base_url}}"],
+              "path": ["api", "template", "placeholder"]
+            },
+            "description": "เติม placeholder ใน template ด้วย AI ตาม theme"
+          },
+          "response": []
+        },
+        {
+          "name": "6. ตรวจสอบ Placeholder (Validate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"{{template_id}}\",\n  \"theme\": \"modern\",\n  \"action\": \"validate\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/template/placeholder",
+              "host": ["{{base_url}}"],
+              "path": ["api", "template", "placeholder"]
+            },
+            "description": "ตรวจสอบ placeholder ใน template"
+          },
+          "response": []
+        },
+        {
+          "name": "7. อัพโหลด JSON Template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{json_template_body}}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/template/placeholder",
+              "host": ["{{base_url}}"],
+              "path": ["api", "template", "placeholder"]
+            },
+            "description": "อัพโหลด template จาก JSON format"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Project Integration",
+      "item": [
+        {
+          "name": "8. สร้าง Project จาก Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Online Shop\",\n  \"description\": \"ร้านค้าออนไลน์ที่สร้างจาก template\",\n  \"templateId\": \"{{template_id}}\",\n  \"theme\": \"modern cozy; primary:sky-600; accent:amber-400\",\n  \"customizations\": {\n    \"brandName\": \"Coffee Delight\",\n    \"primaryColor\": \"sky-600\",\n    \"imagery\": \"coffee latte art\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects"]
+            },
+            "description": "สร้าง project ใหม่จาก template"
+          },
+          "response": []
+        },
+        {
+          "name": "9. ดึง Project Preview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{project_id}}/preview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "{{project_id}}", "preview"]
+            },
+            "description": "ดึงข้อมูล preview ของ project"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "template_id",
+      "value": "",
+      "type": "string",
+      "description": "Template ID ที่ได้จากการสร้าง template"
+    },
+    {
+      "key": "project_id",
+      "value": "",
+      "type": "string",
+      "description": "Project ID ที่ได้จากการสร้าง project"
+    },
+    {
+      "key": "template_create_body",
+      "value": "",
+      "type": "string",
+      "description": "JSON body สำหรับสร้าง template (จะใส่จากไฟล์ template)"
+    },
+    {
+      "key": "json_template_body",
+      "value": "",
+      "type": "string",
+      "description": "JSON template body สำหรับอัพโหลด"
+    }
+  ]
+}

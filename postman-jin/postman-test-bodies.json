@@ -1,0 +1,174 @@
+{
+  "template_create_body": {
+    "key": "online-shop-enhanced",
+    "label": "Online Shop Enhanced Template",
+    "category": "e-commerce",
+    "meta": {
+      "description": "Template ร้านค้าออนไลน์ที่ครบถ้วน พร้อม placeholder support สำหรับ AI filling",
+      "engine": "react-vite-tailwind",
+      "status": "published",
+      "author": "Midori Team",
+      "versioningPolicy": "semver",
+      "previewScreenshot": "https://via.placeholder.com/800x600/3b82f6/ffffff?text=Online+Shop+Template"
+    },
+    "tags": ["e-commerce", "react", "tailwind", "placeholder", "ai-ready"],
+    "initialVersion": {
+      "version": 1,
+      "semver": "1.0.0",
+      "status": "published",
+      "sourceFiles": [
+        {
+          "path": "package.json",
+          "type": "config",
+          "encoding": "utf8",
+          "content": "{\n  \"name\": \"online-shop\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"dev\": \"vite --host 0.0.0.0 --port 5173\",\n    \"build\": \"vite build\",\n    \"preview\": \"vite preview --host 0.0.0.0 --port 5173\"\n  },\n  \"dependencies\": {\n    \"react\": \"^18.2.0\",\n    \"react-dom\": \"^18.2.0\",\n    \"react-router-dom\": \"^6.14.0\",\n    \"axios\": \"^1.3.0\"\n  },\n  \"devDependencies\": {\n    \"vite\": \"^4.5.0\",\n    \"@vitejs/plugin-react\": \"^3.1.0\",\n    \"typescript\": \"^5.0.0\",\n    \"tailwindcss\": \"^3.4.0\",\n    \"postcss\": \"^8.4.0\",\n    \"autoprefixer\": \"^10.4.0\"\n  }\n}"
+        },
+        {
+          "path": "src/main.tsx",
+          "type": "code",
+          "encoding": "utf8",
+          "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App';\nimport './index.css';\n\nconst rootElement = document.getElementById('root');\nif (!rootElement) throw new Error('Failed to find the root element');\n\nconst root = ReactDOM.createRoot(rootElement);\nroot.render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>\n);"
+        },
+        {
+          "path": "src/App.tsx",
+          "type": "code",
+          "encoding": "utf8",
+          "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Header from './components/Header';\nimport Footer from './components/Footer';\nimport Home from './pages/Home';\nimport About from './pages/About';\nimport Contact from './pages/Contact';\nimport Products from './pages/Products';\nimport ProductDetail from './pages/ProductDetail';\nimport Cart from './pages/Cart';\nimport Checkout from './pages/Checkout';\nimport NotFound from './pages/NotFound';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <Header \n        brandName=\"{{header.brandName}}\" \n        tagline=\"{{header.tagline}}\" \n        logoUrl=\"{{header.logoUrl}}\"\n      />\n      <main className=\"<tw/>\">\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/about\" element={<About />} />\n          <Route path=\"/contact\" element={<Contact />} />\n          <Route path=\"/products\" element={<Products />} />\n          <Route path=\"/products/:slug\" element={<ProductDetail />} />\n          <Route path=\"/cart\" element={<Cart />} />\n          <Route path=\"/checkout\" element={<Checkout />} />\n          <Route path=\"*\" element={<NotFound />} />\n        </Routes>\n      </main>\n      <Footer \n        columns={{footer.columns}} \n        newsletter={{footer.newsletter}} \n        brandName=\"{{header.brandName}}\"\n        socialLinks={{footer.socialLinks}}\n      />\n    </div>\n  );\n};\n\nexport default App;"
+        },
+        {
+          "path": "src/index.css",
+          "type": "code",
+          "encoding": "utf8",
+          "content": "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n@layer base {\n  html { \n    font-size: <data key=\"typography.baseFontSize\"/>px; \n    line-height: 1.5; \n    color: #111827; \n    background-color: <data key=\"theme.backgroundColor\"/>; \n  }\n  body { \n    font-family: <data key=\"typography.fontFamily\"/>, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; \n    margin: 0; \n    padding: 0; \n  }\n  h1, h2, h3, h4, h5, h6 { margin: 0; font-weight: 700; }\n  p { margin: 0; }\n}\n\n@layer components {\n  .btn { @apply px-4 py-2 rounded-lg text-white <tw/> transition duration-300 ease-in-out; }\n  .btn-secondary { @apply px-4 py-2 rounded-lg border-2 <tw/> transition duration-300 ease-in-out; }\n  .card { @apply bg-white shadow-md rounded-lg p-6 mb-4; }\n  .header { @apply <tw/>; }\n  .footer { @apply <tw/> text-gray-200 p-6 text-center; }\n  .container { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }\n  .section { @apply py-12 lg:py-16; }\n  .heading { @apply text-3xl lg:text-4xl font-bold mb-6 text-center; }\n  .subheading { @apply text-xl text-gray-600 mb-8 text-center max-w-3xl mx-auto; }\n}"
+        },
+        {
+          "path": "src/pages/Home.tsx",
+          "type": "code",
+          "encoding": "utf8",
+          "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Home: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <div className=\"container\">\n        {/* Hero Section */}\n        <section className=\"section\">\n          <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12 items-center\">\n            <div>\n              <h1 className=\"heading text-left\"><text/></h1>\n              <p className=\"subheading text-left\"><text/></p>\n              <div className=\"flex flex-col sm:flex-row gap-4 mt-8\">\n                <Link to=\"/products\" className=\"btn\"><text/></Link>\n                <Link to=\"/about\" className=\"btn-secondary\"><text/></Link>\n              </div>\n            </div>\n            <div className=\"relative\">\n              <img src=\"<img/>\" alt=\"<text/>\" className=\"w-full h-96 object-cover rounded-lg shadow-lg\" />\n            </div>\n          </div>\n        </section>\n\n        {/* Features Section */}\n        <section className=\"section bg-gray-50\">\n          <div className=\"container\">\n            <h2 className=\"heading\"><text/></h2>\n            <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n            </div>\n          </div>\n        </section>\n\n        {/* CTA Section */}\n        <section className=\"section\">\n          <div className=\"container text-center\">\n            <h2 className=\"heading\"><text/></h2>\n            <p className=\"subheading\"><text/></p>\n            <Link to=\"/contact\" className=\"btn mt-8\"><text/></Link>\n          </div>\n        </section>\n      </div>\n    </div>\n  );\n};\n\nexport default Home;"
+        },
+        {
+          "path": "src/pages/About.tsx",
+          "type": "code",
+          "encoding": "utf8",
+          "content": "import React from 'react';\n\nconst About: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <div className=\"container\">\n        {/* Hero Section */}\n        <section className=\"section\">\n          <div className=\"text-center mb-16\">\n            <h1 className=\"heading\"><text/></h1>\n            <p className=\"subheading\"><text/></p>\n          </div>\n          <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12 items-center\">\n            <div>\n              <img src=\"<img/>\" alt=\"<text/>\" className=\"w-full h-96 object-cover rounded-lg shadow-lg\" />\n            </div>\n            <div>\n              <h2 className=\"text-3xl font-bold mb-6\"><text/></h2>\n              <div className=\"prose max-w-none\">\n                <text/>\n              </div>\n            </div>\n          </div>\n        </section>\n\n        {/* Values Section */}\n        <section className=\"section bg-gray-50\">\n          <div className=\"container\">\n            <h2 className=\"heading\"><text/></h2>\n            <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n            </div>\n          </div>\n        </section>\n\n        {/* Team Section */}\n        <section className=\"section\">\n          <div className=\"container\">\n            <h2 className=\"heading\"><text/></h2>\n            <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8\">\n              <div className=\"card text-center\">\n                <img src=\"<img/>\" alt=\"<text/>\" className=\"w-32 h-32 object-cover rounded-full mx-auto mb-4\" />\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600 mb-4\"><text/></p>\n                <p className=\"text-sm text-gray-500\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <img src=\"<img/>\" alt=\"<text/>\" className=\"w-32 h-32 object-cover rounded-full mx-auto mb-4\" />\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600 mb-4\"><text/></p>\n                <p className=\"text-sm text-gray-500\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <img src=\"<img/>\" alt=\"<text/>\" className=\"w-32 h-32 object-cover rounded-full mx-auto mb-4\" />\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600 mb-4\"><text/></p>\n                <p className=\"text-sm text-gray-500\"><text/></p>\n              </div>\n            </div>\n          </div>\n        </section>\n      </div>\n    </div>\n  );\n};\n\nexport default About;"
+        },
+        {
+          "path": "src/pages/Contact.tsx",
+          "type": "code",
+          "encoding": "utf8",
+          "content": "import React, { useState } from 'react';\n\nconst Contact: React.FC = () => {\n  const [formData, setFormData] = useState({\n    name: '',\n    email: '',\n    subject: '',\n    message: ''\n  });\n\n  const handleSubmit = (e: React.FormEvent) => {\n    e.preventDefault();\n    alert('ส่งข้อความสำเร็จ!');\n  };\n\n  return (\n    <div className=\"<tw/>\">\n      <div className=\"container\">\n        <section className=\"section\">\n          <div className=\"text-center mb-16\">\n            <h1 className=\"heading\"><text/></h1>\n            <p className=\"subheading\"><text/></p>\n          </div>\n        </section>\n\n        <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12\">\n          <div>\n            <h2 className=\"text-2xl font-bold mb-6\"><text/></h2>\n            <div className=\"space-y-6\">\n              <div className=\"flex items-start space-x-4\">\n                <div className=\"<tw/>\">\n                  <text/>\n                </div>\n                <div>\n                  <h3 className=\"font-semibold\"><text/></h3>\n                  <p className=\"text-gray-600\"><text/></p>\n                </div>\n              </div>\n              <div className=\"flex items-start space-x-4\">\n                <div className=\"<tw/>\">\n                  <text/>\n                </div>\n                <div>\n                  <h3 className=\"font-semibold\"><text/></h3>\n                  <p className=\"text-gray-600\"><text/></p>\n                </div>\n              </div>\n              <div className=\"flex items-start space-x-4\">\n                <div className=\"<tw/>\">\n                  <text/>\n                </div>\n                <div>\n                  <h3 className=\"font-semibold\"><text/></h3>\n                  <p className=\"text-gray-600\"><text/></p>\n                </div>\n              </div>\n            </div>\n          </div>\n\n          <div>\n            <h2 className=\"text-2xl font-bold mb-6\"><text/></h2>\n            <form onSubmit={handleSubmit} className=\"space-y-6\">\n              <div>\n                <label className=\"block text-sm font-medium text-gray-700 mb-2\">\n                  <text/>\n                </label>\n                <input\n                  type=\"text\"\n                  required\n                  value={formData.name}\n                  onChange={(e) => setFormData({...formData, name: e.target.value})}\n                  className=\"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                  placeholder=\"<text/>\"\n                />\n              </div>\n              <div>\n                <label className=\"block text-sm font-medium text-gray-700 mb-2\">\n                  <text/>\n                </label>\n                <input\n                  type=\"email\"\n                  required\n                  value={formData.email}\n                  onChange={(e) => setFormData({...formData, email: e.target.value})}\n                  className=\"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                  placeholder=\"<text/>\"\n                />\n              </div>\n              <div>\n                <label className=\"block text-sm font-medium text-gray-700 mb-2\">\n                  <text/>\n                </label>\n                <input\n                  type=\"text\"\n                  required\n                  value={formData.subject}\n                  onChange={(e) => setFormData({...formData, subject: e.target.value})}\n                  className=\"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                  placeholder=\"<text/>\"\n                />\n              </div>\n              <div>\n                <label className=\"block text-sm font-medium text-gray-700 mb-2\">\n                  <text/>\n                </label>\n                <textarea\n                  required\n                  rows={5}\n                  value={formData.message}\n                  onChange={(e) => setFormData({...formData, message: e.target.value})}\n                  className=\"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                  placeholder=\"<text/>\"\n                />\n              </div>\n              <button type=\"submit\" className=\"btn w-full\">\n                <text/>\n              </button>\n            </form>\n          </div>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default Contact;"
+        }
+      ],
+      "slots": {
+        "header": {
+          "type": "object",
+          "component": "Header",
+          "fields": [
+            { "key": "brandName", "type": "text", "required": true, "validators": [{ "kind": "maxLength", "value": 40 }] },
+            { "key": "tagline", "type": "text", "validators": [{ "kind": "maxLength", "value": 80 }] },
+            { "key": "logoUrl", "type": "image", "minWidth": 200, "aspectRatio": "3:1" }
+          ]
+        },
+        "footer": {
+          "type": "object",
+          "component": "Footer",
+          "fields": [
+            { "key": "columns", "type": "list", "itemShape": { "title": { "type": "text" }, "links": { "type": "list", "itemShape": { "label": { "type": "text" }, "href": { "type": "url" } } } } },
+            { "key": "newsletter", "type": "object", "shape": { "enabled": { "type": "boolean" } } },
+            { "key": "socialLinks", "type": "list", "itemShape": { "platform": { "type": "text" }, "url": { "type": "url" }, "icon": { "type": "text" } } }
+          ]
+        },
+        "home": {
+          "type": "object",
+          "component": "Home",
+          "fields": [
+            { "key": "heroTitle", "type": "text", "required": true, "validators": [{ "kind": "maxLength", "value": 60 }] },
+            { "key": "heroSubtitle", "type": "text", "validators": [{ "kind": "maxLength", "value": 160 }] },
+            { "key": "heroImage", "type": "image", "minWidth": 1200, "aspectRatio": "16:9" },
+            { "key": "ctaLabel", "type": "text", "default": "เริ่มช้อป" }
+          ]
+        },
+        "about": {
+          "type": "object",
+          "component": "About",
+          "fields": [
+            { "key": "pageTitle", "type": "text", "required": true },
+            { "key": "pageSubtitle", "type": "text" },
+            { "key": "heroImage", "type": "image", "minWidth": 1200, "aspectRatio": "16:9" }
+          ]
+        },
+        "contact": {
+          "type": "object",
+          "component": "Contact",
+          "fields": [
+            { "key": "pageTitle", "type": "text", "required": true },
+            { "key": "pageSubtitle", "type": "text" },
+            { "key": "contactInfo", "type": "object", "shape": { "phone": { "type": "text" }, "email": { "type": "email" }, "address": { "type": "text" } } }
+          ]
+        },
+        "theme": {
+          "type": "object",
+          "component": "theme",
+          "fields": [
+            { "key": "primaryColor", "type": "text", "default": "sky-600" },
+            { "key": "accentColor", "type": "text", "default": "amber-400" },
+            { "key": "borderRadius", "type": "text", "default": "xl" },
+            { "key": "elevation", "type": "text", "default": "lg" },
+            { "key": "fontFamily", "type": "text", "default": "inter" },
+            { "key": "imagery", "type": "text", "default": "modern clean" },
+            { "key": "tone", "type": "text", "default": "thai-casual" }
+          ]
+        }
+      },
+      "constraints": {
+        "a11y": { "contrast": "AA", "minFontSizePx": 14, "ariaRequired": true, "keyboardNavigable": true },
+        "layout": { "breakpoints": ["sm", "md", "lg"], "containerMaxWidth": 1200, "minTapTargetPx": 44 },
+        "content": { "seo": { "titleMaxLen": 60, "descMaxLen": 160, "requireH1": true } },
+        "performance": { "maxImageKb": 700, "maxCriticalCssKb": 180 },
+        "security": { "disallowInlineScript": true },
+        "code": { "tsc": true }
+      }
+    }
+  },
+  "json_template_body": {
+    "template": {
+      "name": "Online Shop Enhanced",
+      "category": "e-commerce",
+      "version": "1.0.0",
+      "files": [
+        {
+          "path": "src/App.tsx",
+          "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Header from './components/Header';\nimport Footer from './components/Footer';\nimport Home from './pages/Home';\nimport About from './pages/About';\nimport Contact from './pages/Contact';\nimport Products from './pages/Products';\nimport ProductDetail from './pages/ProductDetail';\nimport Cart from './pages/Cart';\nimport Checkout from './pages/Checkout';\nimport NotFound from './pages/NotFound';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <Header \n        brandName=\"{{header.brandName}}\" \n        tagline=\"{{header.tagline}}\" \n        logoUrl=\"{{header.logoUrl}}\"\n      />\n      <main className=\"<tw/>\">\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/about\" element={<About />} />\n          <Route path=\"/contact\" element={<Contact />} />\n          <Route path=\"/products\" element={<Products />} />\n          <Route path=\"/products/:slug\" element={<ProductDetail />} />\n          <Route path=\"/cart\" element={<Cart />} />\n          <Route path=\"/checkout\" element={<Checkout />} />\n          <Route path=\"*\" element={<NotFound />} />\n        </Routes>\n      </main>\n      <Footer \n        columns={{footer.columns}} \n        newsletter={{footer.newsletter}} \n        brandName=\"{{header.brandName}}\"\n        socialLinks={{footer.socialLinks}}\n      />\n    </div>\n  );\n};\n\nexport default App;"
+        },
+        {
+          "path": "src/pages/Home.tsx",
+          "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Home: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <div className=\"container\">\n        <section className=\"section\">\n          <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12 items-center\">\n            <div>\n              <h1 className=\"heading text-left\"><text/></h1>\n              <p className=\"subheading text-left\"><text/></p>\n              <div className=\"flex flex-col sm:flex-row gap-4 mt-8\">\n                <Link to=\"/products\" className=\"btn\"><text/></Link>\n                <Link to=\"/about\" className=\"btn-secondary\"><text/></Link>\n              </div>\n            </div>\n            <div className=\"relative\">\n              <img src=\"<img/>\" alt=\"<text/>\" className=\"w-full h-96 object-cover rounded-lg shadow-lg\" />\n            </div>\n          </div>\n        </section>\n      </div>\n    </div>\n  );\n};\n\nexport default Home;"
+        }
+      ],
+      "placeholders": {
+        "theme": "modern cozy; primary:sky-600; accent:amber-400; radius:xl; elevation:lg; font:inter; imagery:\"coffee latte art\"; tone:thai-casual",
+        "imagery": "coffee latte art",
+        "tone": "thai-casual"
+      }
+    }
+  },
+  "placeholder_fill_request": {
+    "templateId": "{{template_id}}",
+    "theme": "modern cozy; primary:sky-600; accent:amber-400; radius:xl; elevation:lg; grid:3; header:underlined; font:inter; imagery:\"coffee latte art\"; tone:thai-casual",
+    "projectId": "demo-project",
+    "action": "fill_placeholders"
+  },
+  "project_create_request": {
+    "name": "Coffee Delight Shop",
+    "description": "ร้านกาแฟออนไลน์ที่สร้างจาก template",
+    "templateId": "{{template_id}}",
+    "theme": "modern cozy; primary:sky-600; accent:amber-400",
+    "customizations": {
+      "brandName": "Coffee Delight",
+      "primaryColor": "sky-600",
+      "imagery": "coffee latte art",
+      "tone": "thai-casual"
+    }
+  }
+}
