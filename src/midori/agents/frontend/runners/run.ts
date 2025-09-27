@@ -91,6 +91,319 @@ interface ComponentResult {
 // Template selection functions
 
 /**
+ * Sort source files by priority for proper build order
+ * Supports future template additions with correct ordering
+ */
+function sortSourceFilesByPriority(sourceFiles: any[]): any[] {
+  console.log('📁 [SORT] Sorting source files by priority for future-proof ordering');
+  
+  // ✅ Enhanced priority system that supports future additions
+  const priorityConfig = {
+    // 1. Root config files (highest priority)
+    config: {
+      'package.json': 1,
+      'tsconfig.json': 2,
+      'tsconfig.node.json': 3,
+      'vite.config.ts': 4,
+      'vite.config.js': 4,
+      'tailwind.config.js': 5,
+      'postcss.config.js': 6,
+      'next.config.js': 7,
+      'next.config.ts': 7,
+      'webpack.config.js': 8,
+      'rollup.config.js': 9
+    },
+    
+    // 2. HTML entry points
+    html: {
+      'index.html': 10,
+      'public/index.html': 11
+    },
+    
+    // 3. Main entry files
+    entry: {
+      'src/main.tsx': 20,
+      'src/main.ts': 20,
+      'src/index.tsx': 21,
+      'src/index.ts': 21,
+      'src/App.tsx': 30,
+      'src/App.ts': 30
+    },
+    
+    // 4. Global styles
+    styles: {
+      'src/index.css': 40,
+      'src/globals.css': 41,
+      'src/app/globals.css': 42,
+      'src/styles/globals.css': 43
+    },
+    
+    // 5. Layout components (high priority)
+    layout: {
+      'src/components/layout': 50,
+      'src/layouts': 51,
+      'src/app/layout.tsx': 52
+    },
+    
+    // 6. Core components
+    components: {
+      'src/components': 60,
+      'src/components/ui': 61,
+      'src/components/common': 62
+    },
+    
+    // 7. Pages/Routes (เรียงตาม dependency)
+    pages: {
+      'src/pages': 70,
+      'src/app': 71,
+      'src/app/(app)': 72, // Next.js app directory
+      'src/app/(auth)': 73,
+      'src/app/(dashboard)': 74
+    },
+    
+    // 8. Feature modules (รองรับการเพิ่มหน้าใหม่)
+    features: {
+      'src/features': 80,
+      'src/modules': 81,
+      'src/pages/auth': 82,
+      'src/pages/dashboard': 83,
+      'src/pages/products': 84,
+      'src/pages/checkout': 85,
+      'src/pages/admin': 86,
+      'src/pages/profile': 87,
+      'src/pages/settings': 88,
+      'src/pages/reports': 89
+    },
+    
+    // 9. Utils and libs
+    utils: {
+      'src/utils': 90,
+      'src/lib': 91,
+      'src/hooks': 92,
+      'src/context': 93,
+      'src/services': 94,
+      'src/api': 95
+    },
+    
+    // 10. Types and interfaces
+    types: {
+      'src/types': 100,
+      'src/interfaces': 101,
+      'src/schemas': 102
+    },
+    
+    // 11. Assets and static files
+    assets: {
+      'src/assets': 110,
+      'public': 111,
+      'src/images': 112,
+      'src/icons': 113
+    },
+    
+    // 12. Tests and documentation
+    tests: {
+      'src/__tests__': 120,
+      'src/tests': 121,
+      'tests': 122,
+      'docs': 123
+    }
+  };
+  
+  const getFilePriority = (filePath: string): number => {
+    // Extract path components
+    const pathParts = filePath.split('/');
+    const fileName = pathParts[pathParts.length - 1];
+    const directory = pathParts.slice(0, -1).join('/');
+    const fullPath = filePath;
+    
+    // Check exact file matches first
+    for (const [category, files] of Object.entries(priorityConfig)) {
+      if (files[fileName as keyof typeof files]) {
+        return files[fileName as keyof typeof files] as number;
+      }
+    }
+    
+    // Check directory patterns
+    for (const [category, files] of Object.entries(priorityConfig)) {
+      for (const [pattern, priority] of Object.entries(files)) {
+        if (fullPath.includes(pattern) || directory.includes(pattern)) {
+          return priority as number;
+        }
+      }
+    }
+    
+    // Check file type patterns
+    if (fileName.includes('.config.')) return 5;
+    if (fileName.includes('main.') || fileName.includes('index.')) return 20;
+    if (fileName.includes('App.')) return 30;
+    if (fileName.endsWith('.css')) return 40;
+    if (filePath.includes('/components/')) return 60;
+    if (filePath.includes('/pages/') || filePath.includes('/app/')) return 70;
+    if (filePath.includes('/features/') || filePath.includes('/modules/')) return 80;
+    if (filePath.includes('/utils/') || filePath.includes('/lib/')) return 90;
+    if (filePath.includes('/types/')) return 100;
+    if (filePath.includes('/assets/') || filePath.includes('/public/')) return 110;
+    
+    // ✅ Future-proof: New pages/components get appropriate priority
+    if (filePath.includes('/auth/')) return 82;
+    if (filePath.includes('/dashboard/')) return 83;
+    if (filePath.includes('/products/')) return 84;
+    if (filePath.includes('/checkout/')) return 85;
+    if (filePath.includes('/admin/')) return 86;
+    if (filePath.includes('/profile/')) return 87;
+    if (filePath.includes('/settings/')) return 88;
+    if (filePath.includes('/reports/')) return 89;
+    
+    return 150; // Default priority for unknown files
+  };
+  
+  const getPriorityCategory = (priority: number): string => {
+    if (priority < 20) return 'config';
+    if (priority < 40) return 'entry';
+    if (priority < 50) return 'styles';
+    if (priority < 60) return 'layout';
+    if (priority < 70) return 'components';
+    if (priority < 80) return 'pages';
+    if (priority < 90) return 'features';
+    if (priority < 100) return 'utils';
+    if (priority < 110) return 'types';
+    if (priority < 120) return 'assets';
+    return 'other';
+  };
+  
+  // Sort files by priority, then alphabetically within same priority
+  const sortedFiles = [...sourceFiles].sort((a, b) => {
+    const priorityA = getFilePriority(a.path);
+    const priorityB = getFilePriority(b.path);
+    
+    // First sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // Then sort alphabetically within same priority
+    return a.path.localeCompare(b.path);
+  });
+  
+  console.log('📁 [SORT] Future-proof file sorting completed:', {
+    originalCount: sourceFiles.length,
+    sortedCount: sortedFiles.length,
+    priorityGroups: {
+      config: sortedFiles.filter(f => getFilePriority(f.path) < 20).length,
+      entry: sortedFiles.filter(f => getFilePriority(f.path) >= 20 && getFilePriority(f.path) < 40).length,
+      styles: sortedFiles.filter(f => getFilePriority(f.path) >= 40 && getFilePriority(f.path) < 50).length,
+      layout: sortedFiles.filter(f => getFilePriority(f.path) >= 50 && getFilePriority(f.path) < 60).length,
+      components: sortedFiles.filter(f => getFilePriority(f.path) >= 60 && getFilePriority(f.path) < 70).length,
+      pages: sortedFiles.filter(f => getFilePriority(f.path) >= 70 && getFilePriority(f.path) < 80).length,
+      features: sortedFiles.filter(f => getFilePriority(f.path) >= 80 && getFilePriority(f.path) < 90).length,
+      utils: sortedFiles.filter(f => getFilePriority(f.path) >= 90 && getFilePriority(f.path) < 100).length,
+      types: sortedFiles.filter(f => getFilePriority(f.path) >= 100 && getFilePriority(f.path) < 110).length,
+      assets: sortedFiles.filter(f => getFilePriority(f.path) >= 110).length
+    },
+    firstFiles: sortedFiles.slice(0, 5).map(f => ({ 
+      path: f.path, 
+      priority: getFilePriority(f.path),
+      category: getPriorityCategory(getFilePriority(f.path))
+    }))
+  });
+  
+  return sortedFiles;
+}
+
+/**
+ * Combine source files into a single JSON structure
+ * Enhanced with proper file ordering for build process
+ */
+function combineSourceFilesToJSON(sourceFiles: any[]): any {
+  if (!sourceFiles || sourceFiles.length === 0) {
+    console.log('📁 [JSON] No source files to combine');
+    return null;
+  }
+  
+  console.log('📁 [JSON] Combining source files into JSON structure:', sourceFiles.length);
+  
+  // ✅ เรียงลำดับไฟล์ก่อนรวม
+  const sortedFiles = sortSourceFilesByPriority(sourceFiles);
+  
+  // Create JSON structure similar to test.json format
+  const combinedJSON = {
+    project: {
+      name: 'Template Project',
+      version: '1.0.0',
+      description: 'Generated from template source files with proper ordering',
+      files: sortedFiles.length
+    },
+    files: sortedFiles.map((file: any) => ({
+      path: file.path,
+      type: file.type || file.path.split('.').pop(),
+      content: file.content,
+      size: file.size || file.content?.length || 0,
+      encoding: file.encoding || 'utf-8',
+      contentType: file.contentType || getContentType(file.path),
+      sha256: file.sha256,
+      createdAt: file.createdAt,
+      metadata: {
+        hasPlaceholders: file.content?.includes('<tw/>') || file.content?.includes('<text/>') || file.content?.includes('<img/>'),
+        placeholderCount: (file.content?.match(/<tw\/>|<text\/>|<img\/>|<data/g) || []).length,
+        isConfig: file.path.includes('.json') || file.path.includes('.config') || file.path.includes('.html'),
+        isComponent: file.path.includes('.tsx') || file.path.includes('.jsx'),
+        isStyle: file.path.includes('.css') || file.path.includes('.scss'),
+        isTypeScript: file.path.includes('.ts') || file.path.includes('.tsx'),
+        isJavaScript: file.path.includes('.js') || file.path.includes('.jsx')
+      }
+    })),
+    summary: {
+      totalFiles: sortedFiles.length,
+      totalSize: sortedFiles.reduce((sum, file) => sum + (file.size || file.content?.length || 0), 0),
+      fileTypes: [...new Set(sortedFiles.map(f => f.type || f.path.split('.').pop()))],
+      filesWithPlaceholders: sortedFiles.filter(f => f.content?.includes('<tw/>') || f.content?.includes('<text/>') || f.content?.includes('<img/>')).length,
+      configFiles: sortedFiles.filter(f => f.path.includes('.json') || f.path.includes('.config')).length,
+      componentFiles: sortedFiles.filter(f => f.path.includes('.tsx') || f.path.includes('.jsx')).length,
+      styleFiles: sortedFiles.filter(f => f.path.includes('.css') || f.path.includes('.scss')).length
+    },
+    generatedAt: new Date().toISOString(),
+    generatedBy: 'frontend-agent'
+  };
+  
+  console.log('📁 [JSON] Combined JSON structure created with proper ordering:', {
+    totalFiles: combinedJSON.summary.totalFiles,
+    totalSize: combinedJSON.summary.totalSize,
+    fileTypes: combinedJSON.summary.fileTypes,
+    filesWithPlaceholders: combinedJSON.summary.filesWithPlaceholders,
+    orderedFiles: combinedJSON.files.slice(0, 5).map(f => f.path)
+  });
+  
+  return combinedJSON;
+}
+
+/**
+ * Get content type based on file extension
+ */
+function getContentType(filePath: string): string {
+  const extension = filePath.split('.').pop()?.toLowerCase();
+  
+  const contentTypes: Record<string, string> = {
+    'tsx': 'text/typescript',
+    'ts': 'text/typescript',
+    'jsx': 'text/javascript',
+    'js': 'text/javascript',
+    'css': 'text/css',
+    'scss': 'text/scss',
+    'html': 'text/html',
+    'json': 'application/json',
+    'md': 'text/markdown',
+    'txt': 'text/plain',
+    'svg': 'image/svg+xml',
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'gif': 'image/gif'
+  };
+  
+  return contentTypes[extension || ''] || 'text/plain';
+}
+
+/**
  * Get supported template categories and their mappings
  */
 function getSupportedTemplateCategories(): { projectType: string; category: string; available: boolean }[] {
@@ -178,6 +491,8 @@ async function selectTemplateFromDatabase(templateType: string, customizations: 
     
     const templateCategory = categoryMapping[templateType] || templateType;
     
+    console.log('🔍 [DB] Searching for template with category:', templateCategory);
+    
     // Find template by category
     const template = await prisma.uiTemplate.findFirst({
       where: { 
@@ -190,12 +505,30 @@ async function selectTemplateFromDatabase(templateType: string, customizations: 
           orderBy: { version: 'desc' },
           take: 1,
           include: {
-            sourceFiles: true,
+            sourceFiles: true, // ✅ ใช้ sourceFiles ตาม schema
             sourceSummary: true
           }
         }
       }
     });
+    
+    console.log('📄 [DB] Template found:', template ? 'YES' : 'NO');
+    if (template) {
+      console.log('📄 [DB] Template details:', {
+        id: template.id,
+        key: template.key,
+        category: template.category,
+        versionsCount: template.versions?.length || 0
+      });
+      if (template.versions && template.versions.length > 0) {
+        console.log('📁 [DB] Template sourceFiles count:', template.versions[0].sourceFiles?.length || 0);
+        console.log('📁 [DB] SourceFiles structure:', template.versions[0].sourceFiles?.map(f => ({
+          path: f.path,
+          contentLength: f.content?.length || 0,
+          type: f.type
+        })) || []);
+      }
+    }
     
     if (!template) {
       console.warn(`⚠️ No template found for category: ${templateCategory}`);
@@ -260,13 +593,24 @@ async function selectTemplateFromDatabase(templateType: string, customizations: 
     // Get the latest published version
     const latestVersion = template.versions[0];
     
+    // ✅ Combine source files into a single JSON structure
+    const sourceFiles = latestVersion?.sourceFiles || [];
+    const combinedFiles = combineSourceFilesToJSON(sourceFiles);
+    
+    console.log('📁 [DB] Source files retrieved:', {
+      count: sourceFiles.length,
+      hasCombinedJSON: !!combinedFiles,
+      filePaths: sourceFiles.map(f => f.path)
+    });
+    
     return {
       id: template.id,
       key: template.key,
       name: template.label,
       category: template.category,
       version: latestVersion?.version || 1,
-      files: latestVersion?.sourceFiles || [],
+      files: sourceFiles, // ✅ Keep original array format for compatibility
+      combinedJSON: combinedFiles, // ✅ Add combined JSON format
       isActive: true,
       meta: template.meta,
       slots: latestVersion?.slots,
@@ -290,7 +634,7 @@ async function selectTemplateFromDatabase(templateType: string, customizations: 
 
 /**
  * Customize template based on requirements
- * Now processes actual template files from database with placeholder support
+ * Enhanced with detailed file logging before and after placeholder filling
  */
 async function customizeTemplate(template: any, customizations: any): Promise<any> {
   console.log('🎨 Customizing template:', template.name);
@@ -319,26 +663,79 @@ async function customizeTemplate(template: any, customizations: any): Promise<an
   // Process actual template files if available
   let customizedFiles = [];
   if (template.files && template.files.length > 0) {
-    console.log('📁 Processing template files:', template.files.length);
-    console.log('📁 Template files structure:', template.files.map((f: any) => ({
+    console.log('📁 [CUSTOMIZE] Processing template files:', template.files.length);
+    
+    // ✅ LOG: แสดงไฟล์ต้นฉบับก่อนประมวลผล
+    console.log('📋 [CUSTOMIZE] Original template files (before placeholder filling):');
+    console.log(JSON.stringify(template.files.map((f: any) => ({
       path: f.path,
-      contentLength: f.content?.length || 0,
-      type: f.type
-    })));
+      type: f.type || f.path.split('.').pop(),
+      size: f.content?.length || 0,
+      hasContent: !!f.content,
+      hasPlaceholders: f.content?.includes('<tw/>') || f.content?.includes('<text/>') || f.content?.includes('<img/>'),
+      placeholderCount: (f.content?.match(/<tw\/>|<text\/>|<img\/>|<data/g) || []).length,
+      preview: f.content?.substring(0, 150) + (f.content?.length > 150 ? '...' : '')
+    })), null, 2));
+    
+    // ✅ LOG: แสดง Combined JSON (ถ้ามี)
+    if (template.combinedJSON) {
+      console.log('📋 [CUSTOMIZE] Combined JSON structure from database (with proper ordering):');
+      console.log(JSON.stringify({
+        project: template.combinedJSON.project,
+        summary: template.combinedJSON.summary,
+        filesCount: template.combinedJSON.files.length,
+        generatedAt: template.combinedJSON.generatedAt,
+        generatedBy: template.combinedJSON.generatedBy,
+        ordering: {
+          description: 'Files are sorted by priority: config → entry → styles → layout → components → pages → features → utils → types → assets',
+          firstFiles: template.combinedJSON.files.slice(0, 5).map((f: any) => f.path),
+          lastFiles: template.combinedJSON.files.slice(-3).map((f: any) => f.path)
+        },
+        files: template.combinedJSON.files.map((f: any) => ({
+          path: f.path,
+          type: f.type,
+          size: f.size,
+          hasContent: !!f.content,
+          hasPlaceholders: f.metadata?.hasPlaceholders,
+          placeholderCount: f.metadata?.placeholderCount,
+          isConfig: f.metadata?.isConfig,
+          isComponent: f.metadata?.isComponent,
+          isStyle: f.metadata?.isStyle,
+          preview: f.content?.substring(0, 100) + (f.content?.length > 100 ? '...' : '')
+        }))
+      }, null, 2));
+    } else {
+      console.log('⚠️ [CUSTOMIZE] No combined JSON available in template');
+    }
     
     // ✅ Check for placeholder support
     const hasPlaceholders = checkTemplatePlaceholders(template.files);
-    console.log('🔍 Template has placeholders:', hasPlaceholders);
+    console.log('🔍 [CUSTOMIZE] Template has placeholders:', hasPlaceholders);
     
     if (hasPlaceholders) {
-      console.log('🤖 Filling placeholders with AI...');
+      console.log('🤖 [CUSTOMIZE] Filling placeholders with AI...');
       customizedFiles = await fillTemplatePlaceholders(template.files, enhancedCustomizations);
     } else {
-      console.log('📝 Processing template files normally...');
+      console.log('📝 [CUSTOMIZE] Processing template files normally...');
       customizedFiles = await processTemplateFiles(template.files, enhancedCustomizations);
     }
+    
+    // ✅ LOG: แสดงไฟล์หลังเติม placeholder
+    console.log('📋 [CUSTOMIZE] Files after placeholder filling:');
+    console.log(JSON.stringify(customizedFiles.map((f: any) => ({
+      path: f.path,
+      type: f.type || f.path.split('.').pop(),
+      size: f.content?.length || 0,
+      hasContent: !!f.content,
+      hasPlaceholders: f.content?.includes('<tw/>') || f.content?.includes('<text/>') || f.content?.includes('<img/>'),
+      placeholderFilled: f.placeholderFilled || false,
+      hasChanges: f.hasChanges || false,
+      error: f.error || null,
+      preview: f.content?.substring(0, 150) + (f.content?.length > 150 ? '...' : '')
+    })), null, 2));
+    
   } else {
-    console.log('⚠️ No template files found, using mock files');
+    console.log('⚠️ [CUSTOMIZE] No template files found, using mock files');
     customizedFiles = generateMockFiles(template, enhancedCustomizations);
   }
   
@@ -1586,7 +1983,7 @@ function generateMockFiles(template: any, customizations: any): any[] {
     {
       path: `src/templates/${template.name}Template.tsx`,
       content: `// Template: ${template.name}\n// Customizations: ${JSON.stringify(customizations)}\n// Generated at: ${new Date().toISOString()}`,
-      type: 'tsx',
+      type: 'code',
       size: 200,
       hasChanges: true,
       customizedAt: new Date().toISOString()
@@ -1594,7 +1991,7 @@ function generateMockFiles(template: any, customizations: any): any[] {
     {
       path: `src/templates/${template.name}Template.types.ts`,
       content: `interface ${template.name}TemplateProps {\n  customizations?: ${JSON.stringify(customizations)}\n}`,
-      type: 'ts',
+      type: 'code',
       size: 50,
       hasChanges: true,
       customizedAt: new Date().toISOString()
@@ -1902,16 +2299,8 @@ async function createTemplateSnapshot(projectId: string, customizedFiles: any[],
           hasChanges: file.hasChanges,
           customizedAt: file.customizedAt
         })),
-        // ✅ Add preview info to template data
-        templateData: previewInfo ? {
-          previewInfo: {
-            sandboxId: previewInfo.sandboxId,
-            previewUrl: previewInfo.previewUrl,
-            previewToken: previewInfo.previewToken,
-            status: previewInfo.status,
-            createdAt: new Date().toISOString()
-          }
-        } : {}
+        // ✅ Add preview info to template data (removed - not in schema)
+        // Note: Preview info should be stored separately if needed
       }
     });
     
@@ -2024,7 +2413,7 @@ function generateTemplateSelectionResult(task: any, startTime: number, template?
       {
         path: `src/templates/${templateType}Template.types.ts`,
         content: `interface ${templateType}TemplateProps {\n  // Template props\n  customizations?: ${JSON.stringify(customizations)}\n}`,
-        type: 'interface',
+        type: 'code',
         size: 50,
         hasChanges: true,
         customizedAt: new Date().toISOString()
@@ -2504,7 +2893,7 @@ async function applyTemplateCustomizations(customizations: any): Promise<any> {
 
 /**
  * Generate complete project structure for Daytona preview
- * Based on test.json structure with customized template content
+ * Uses only template files (base files are already included in template)
  */
 function generateCompleteProjectStructure(
   template: any, 
@@ -2516,41 +2905,70 @@ function generateCompleteProjectStructure(
   const projectName = projectContext?.projectType || 'custom-project';
   const brandName = customizations?.brandName || getBrandNameFromOrchestrator(customizations);
   
-  // Base project files (similar to test.json)
-  const baseFiles = [
-    // Package.json
-    {
-      path: 'package.json',
-      content: JSON.stringify({
-        name: `${projectName}-shop`,
-        version: '1.0.0',
-        private: true,
-        scripts: {
-          dev: 'vite --host 0.0.0.0 --port 5173',
-          build: 'vite build',
-          preview: 'vite preview --host 0.0.0.0 --port 5173'
-        },
-        dependencies: {
-          react: '^18.2.0',
-          'react-dom': '^18.2.0',
-          'react-router-dom': '^6.14.0',
-          axios: '^1.3.0'
-        },
-        devDependencies: {
-          vite: '^4.5.0',
-          '@vitejs/plugin-react': '^3.1.0',
-          typescript: '^5.0.0',
-          tailwindcss: '^3.4.0',
-          postcss: '^8.4.0',
-          autoprefixer: '^10.4.0'
-        }
-      }, null, 2)
-    },
+  // ✅ Use only template files (base files are already included in template)
+  let projectFiles = [];
+  
+  if (template?.files && template.files.length > 0) {
+    console.log('📁 [PROJECT] Using template files for project structure');
     
-    // index.html
-    {
-      path: 'index.html',
-      content: `<!doctype html>
+    // ✅ LOG: แสดง template files ก่อนรวม
+    console.log('📋 [FILES] Template files before processing:');
+    console.log(JSON.stringify(template.files.map((f: any) => ({
+      path: f.path,
+      type: f.type || f.path.split('.').pop(),
+      size: f.content?.length || 0,
+      hasContent: !!f.content,
+      hasPlaceholders: f.content?.includes('<tw/>') || f.content?.includes('<text/>') || f.content?.includes('<img/>'),
+      hasChanges: f.hasChanges || false,
+      preview: f.content?.substring(0, 100) + (f.content?.length > 100 ? '...' : '')
+    })), null, 2));
+    
+    // Convert template files to project files format
+    projectFiles = template.files.map((file: any) => ({
+      path: file.path,
+      content: file.content,
+      type: file.type || file.path.split('.').pop(),
+      size: file.content?.length || 0,
+      hasPlaceholders: file.content?.includes('<tw/>') || file.content?.includes('<text/>') || file.content?.includes('<img/>'),
+      hasChanges: file.hasChanges || false
+    }));
+    
+    console.log(`📁 [PROJECT] Processed ${projectFiles.length} template files`);
+    
+  } else {
+    console.log('⚠️ [PROJECT] No template files found, creating minimal structure');
+    
+    // Fallback minimal structure if no template files
+    projectFiles = [
+      {
+        path: 'package.json',
+        content: JSON.stringify({
+          name: `${projectName}-shop`,
+          version: '1.0.0',
+          private: true,
+          scripts: {
+            dev: 'vite --host 0.0.0.0 --port 5173',
+            build: 'vite build',
+            preview: 'vite preview --host 0.0.0.0 --port 5173'
+          },
+          dependencies: {
+            react: '^18.2.0',
+            'react-dom': '^18.2.0'
+          },
+          devDependencies: {
+            vite: '^4.5.0',
+            '@vitejs/plugin-react': '^3.1.0',
+            typescript: '^5.0.0'
+          }
+        }, null, 2),
+        type: 'json',
+        size: 0,
+        hasPlaceholders: false,
+        hasChanges: false
+      },
+      {
+        path: 'index.html',
+        content: `<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -2561,183 +2979,34 @@ function generateCompleteProjectStructure(
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html>`
-    },
-    
-    // TypeScript configs
-    {
-      path: 'tsconfig.json',
-      content: JSON.stringify({
-        compilerOptions: {
-          target: 'ES2020',
-          useDefineForClassFields: true,
-          lib: ['ES2020', 'DOM', 'DOM.Iterable'],
-          module: 'ESNext',
-          skipLibCheck: true,
-          jsx: 'react-jsx',
-          moduleResolution: 'bundler',
-          resolveJsonModule: true,
-          isolatedModules: true,
-          noEmit: true,
-          esModuleInterop: true,
-          strict: true
-        },
-        include: ['src']
-      }, null, 2)
-    },
-    
-    {
-      path: 'tsconfig.node.json',
-      content: JSON.stringify({
-        compilerOptions: {
-          composite: true,
-          module: 'ESNext',
-          moduleResolution: 'bundler',
-          types: ['node']
-        },
-        include: ['vite.config.ts']
-      }, null, 2)
-    },
-    
-    // Vite config
-    {
-      path: 'vite.config.ts',
-      content: `import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-})`
-    },
-    
-    // Tailwind config
-    {
-      path: 'tailwind.config.js',
-      content: `module.exports = {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}`
-    },
-    
-    // PostCSS config
-    {
-      path: 'postcss.config.js',
-      content: `module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}`
-    },
-    
-    // React entry point
-    {
-      path: 'src/main.tsx',
-      content: `import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import './index.css';
-
-const rootElement = document.getElementById('root');
-if (!rootElement) throw new Error('Failed to find the root element');
-
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
-);`
-    },
-    
-    // Base CSS with customized theme
-    {
-      path: 'src/index.css',
-      content: generateCustomizedCSS(customizations)
-    }
-  ];
-  
-  // Add customized template files from the template
-  if (template?.files && template.files.length > 0) {
-    console.log('📁 Adding customized template files to project structure');
-    template.files.forEach((file: any) => {
-      // Skip files that are already in base structure
-      if (!baseFiles.find(bf => bf.path === file.path)) {
-        baseFiles.push({
-          path: file.path,
-          content: file.content
-        });
+</html>`,
+        type: 'code',
+        size: 0,
+        hasPlaceholders: false,
+        hasChanges: false
       }
-    });
+    ];
   }
   
-  console.log(`✅ Generated ${baseFiles.length} files for project structure`);
-  return baseFiles;
-}
-
-/**
- * Generate customized CSS with theme colors
- */
-function generateCustomizedCSS(customizations: any): string {
-  const colorScheme = customizations?.colorScheme || {
-    primary: '#3B82F6',
-    secondary: '#6B7280',
-    accent: '#F59E0B'
-  };
+  // ✅ LOG: แสดงไฟล์ทั้งหมดที่จะส่งไป Daytona
+  console.log('📋 [DAYTONA] All files to send to Daytona:');
+  console.log(JSON.stringify(projectFiles.map((f: any) => ({
+    path: f.path,
+    type: f.type,
+    size: f.size,
+    hasContent: !!f.content,
+    hasPlaceholders: f.hasPlaceholders,
+    hasChanges: f.hasChanges,
+    isConfig: f.path.includes('.json') || f.path.includes('.config') || f.path.includes('.html'),
+    isComponent: f.path.includes('.tsx') || f.path.includes('.jsx'),
+    isStyle: f.path.includes('.css') || f.path.includes('.scss'),
+    preview: f.content?.substring(0, 100) + (f.content?.length > 100 ? '...' : '')
+  })), null, 2));
   
-  const theme = customizations?.theme || 'light';
-  const isDark = theme === 'dark';
-  
-  return `@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  html { 
-    font-size: 16px; 
-    line-height: 1.5; 
-    color: ${isDark ? '#F9FAFB' : '#111827'}; 
-    background-color: ${isDark ? '#1F2937' : '#f9fafb'}; 
-  }
-  body { 
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; 
-    margin: 0; 
-    padding: 0; 
-  }
-  h1, h2, h3, h4, h5, h6 { margin: 0; font-weight: 700; }
-  p { margin: 0; }
+  console.log(`✅ Generated ${projectFiles.length} files for project structure`);
+  return projectFiles;
 }
 
-@layer components {
-  .btn { 
-    @apply px-4 py-2 rounded-lg text-white transition duration-300 ease-in-out;
-    background-color: ${colorScheme.primary};
-  }
-  .btn:hover { 
-    background-color: ${colorScheme.secondary}; 
-  }
-  .card { 
-    @apply shadow-md rounded-lg p-6 mb-4;
-    background-color: ${isDark ? '#374151' : 'white'};
-    color: ${isDark ? '#F9FAFB' : '#111827'};
-  }
-  .header { 
-    @apply border-b;
-    background-color: ${isDark ? '#1F2937' : 'white'};
-    border-color: ${isDark ? '#4B5563' : '#E5E7EB'};
-  }
-  .footer { 
-    @apply p-6 text-center;
-    background-color: ${isDark ? '#111827' : '#1F2937'};
-    color: ${isDark ? '#D1D5DB' : '#D1D5DB'};
-  }
-}`;
-}
 
 /**
  * Send project files to Daytona for preview
@@ -2870,14 +3139,19 @@ function checkTemplatePlaceholders(files: any[]): boolean {
  * Fill template placeholders with AI
  */
 async function fillTemplatePlaceholders(files: any[], customizations: any): Promise<any[]> {
-  console.log('🤖 Starting placeholder filling process...');
+  console.log('🤖 [PLACEHOLDER] Starting placeholder filling process...');
+  console.log('🤖 [PLACEHOLDER] Files to process:', files.length);
+  console.log('🤖 [PLACEHOLDER] Customizations:', customizations);
   
   const filledFiles = [];
+  let successCount = 0;
+  let errorCount = 0;
   
   for (const file of files) {
-    console.log(`🤖 Processing file: ${file.path}`);
+    console.log(`🤖 [PLACEHOLDER] Processing file: ${file.path}`);
     
     if (!file.content) {
+      console.log(`⚠️ [PLACEHOLDER] No content in ${file.path}, skipping`);
       filledFiles.push(file);
       continue;
     }
@@ -2889,37 +3163,50 @@ async function fillTemplatePlaceholders(files: any[], customizations: any): Prom
                            file.content.includes('<data');
     
     if (!hasPlaceholders) {
-      console.log(`📝 No placeholders found in ${file.path}`);
+      console.log(`📝 [PLACEHOLDER] No placeholders found in ${file.path}`);
       filledFiles.push(file);
       continue;
     }
+    
+    console.log(`🔍 [PLACEHOLDER] Found placeholders in ${file.path}, processing...`);
     
     try {
       // Fill placeholders with AI
       const filledContent = await fillPlaceholdersWithAI(file.content, customizations);
       
-      filledFiles.push({
-        ...file,
-        content: filledContent,
-        originalContent: file.content,
-        placeholderFilled: true
-      });
-      
-      console.log(`✅ Successfully filled placeholders in ${file.path}`);
+      if (filledContent && filledContent !== file.content) {
+        filledFiles.push({
+          ...file,
+          content: filledContent,
+          originalContent: file.content,
+          placeholderFilled: true
+        });
+        
+        console.log(`✅ [PLACEHOLDER] Successfully filled placeholders in ${file.path}`);
+        successCount++;
+      } else {
+        console.log(`⚠️ [PLACEHOLDER] No changes made to ${file.path}`);
+        filledFiles.push(file);
+      }
       
     } catch (error) {
-      console.error(`❌ Failed to fill placeholders in ${file.path}:`, error);
+      console.error(`❌ [PLACEHOLDER] Failed to fill placeholders in ${file.path}:`, error);
       
-      // Fallback to original content
+      // Fallback to original content with error tracking
       filledFiles.push({
         ...file,
         placeholderFilled: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+      errorCount++;
     }
   }
   
-  console.log(`🤖 Completed placeholder filling: ${filledFiles.length} files processed`);
+  console.log(`🤖 [PLACEHOLDER] Completed placeholder filling:`);
+  console.log(`   - Files processed: ${filledFiles.length}`);
+  console.log(`   - Success: ${successCount}`);
+  console.log(`   - Errors: ${errorCount}`);
+  
   return filledFiles;
 }
 
@@ -2927,12 +3214,20 @@ async function fillTemplatePlaceholders(files: any[], customizations: any): Prom
  * Fill placeholders with AI using LLM
  */
 async function fillPlaceholdersWithAI(content: string, customizations: any): Promise<string> {
-  // Import LLM adapter
-  const { LLMAdapter } = await import('@/midori/agents/orchestrator/adapters/llmAdapter');
-  const llmAdapter = new LLMAdapter();
+  console.log('🤖 [AI] Starting AI placeholder filling...');
+  console.log('🤖 [AI] Content length:', content.length);
+  console.log('🤖 [AI] Customizations keys:', Object.keys(customizations));
   
-  // Create prompt for AI
-  const prompt = `
+  try {
+    // Import LLM adapter
+    console.log('🤖 [AI] Importing LLM adapter...');
+    const { LLMAdapter } = await import('@/midori/agents/orchestrator/adapters/llmAdapter');
+    const llmAdapter = new LLMAdapter();
+    console.log('🤖 [AI] LLM adapter initialized');
+  
+    // Create prompt for AI
+    console.log('🤖 [AI] Creating AI prompt...');
+    const prompt = `
 Fill the placeholders in this React component with appropriate content:
 
 ${content}
@@ -2957,7 +3252,8 @@ Instructions:
 Return only the filled component code, no explanations or markdown formatting.
 `;
 
-  try {
+    console.log('🤖 [AI] Calling LLM with prompt length:', prompt.length);
+    
     const response = await llmAdapter.callLLM(prompt, {
       model: 'gpt-4o-mini',
       temperature: 0.7,
@@ -2965,21 +3261,31 @@ Return only the filled component code, no explanations or markdown formatting.
       maxCompletionTokens: 8000,
     });
     
+    console.log('🤖 [AI] LLM response received:', response ? 'YES' : 'NO');
+    
     if (response && response.content) {
       let filledContent = response.content.trim();
+      console.log('🤖 [AI] Response content length:', filledContent.length);
       
       // Clean up response if it has markdown formatting
       if (filledContent.startsWith('```')) {
+        console.log('🤖 [AI] Cleaning markdown formatting...');
         filledContent = filledContent.replace(/^```(?:jsx|tsx|javascript|typescript)?\s*/, '').replace(/\s*```$/, '');
       }
       
+      console.log('✅ [AI] AI placeholder filling completed successfully');
       return filledContent;
     } else {
+      console.error('❌ [AI] No content received from AI response');
       throw new Error('No content received from AI');
     }
     
   } catch (error) {
-    console.error('AI placeholder filling failed:', error);
+    console.error('❌ [AI] AI placeholder filling failed:', error);
+    console.error('❌ [AI] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     throw error;
   }
 }

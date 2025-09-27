@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-// import { template_slots_tool } from '@/midori/agents/frontend/tools/template-slots-tool';
 import PreviewWindow from '../preview/PreviewWindow';
 
 interface TemplateToolsIntegrationProps {
@@ -23,10 +22,13 @@ export default function TemplateToolsIntegration({ sampleData }: TemplateToolsIn
     setResult(null);
 
     try {
-      console.log('🚀 เริ่มประมวลผล template...');
+      console.log('🚀 [STEP 1] เริ่มประมวลผล template...');
+      console.log('📋 [STEP 1] Template type:', templateType);
+      console.log('📋 [STEP 1] Sample data:', sampleData);
 
       // กำหนด template key ตามประเภท
       const templateKey = templateType === 'cafe' ? 'cafe-modern' : 'restaurant-basic';
+      console.log('🔑 [STEP 1] Template key:', templateKey);
       
       // สร้าง requirements จาก sample data
       const requirements = {
@@ -35,49 +37,119 @@ export default function TemplateToolsIntegration({ sampleData }: TemplateToolsIn
         title: 'กาแฟสดใหม่ทุกวัน',
         description: 'สัมผัสรสชาติกาแฟคุณภาพสูงจากเมล็ดคั่วสดใหม่'
       };
+      console.log('📝 [STEP 1] Requirements:', requirements);
 
-      // เรียกใช้ template_slots_tool (temporarily disabled)
-      // const toolResult = await template_slots_tool({
-      //   action: 'complete_flow',
-      //   params: {
-      //     templateKey,
-      //     requirements,
-      //     mockProfile: 'th-local-basic',
-      //     exportFormat: 'json',
-      //     fileName: `${templateType}-website`
-      //   }
-      // });
+      console.log('🔄 [STEP 2] เรียกใช้ Chat API สำหรับ template processing...');
+      
+      // เรียกใช้ Chat API แทน template_slots_tool
+      const chatResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `สร้างเว็บไซต์ ${templateType} โดยใช้ template ${templateKey} ตามข้อมูลนี้: ${JSON.stringify(requirements)}`,
+          userId: 'template-user',
+          sessionId: `template-session-${Date.now()}`,
+          context: {
+            templateType,
+            templateKey,
+            requirements,
+            sampleData
+          }
+        })
+      });
 
-      // Temporarily mock the result
-      const mockResult = {
-        success: true,
-        data: {
+      console.log('📡 [STEP 2] Chat API response status:', chatResponse.status);
+
+      if (!chatResponse.ok) {
+        throw new Error(`Chat API failed: ${chatResponse.status} ${chatResponse.statusText}`);
+      }
+
+      const chatResult = await chatResponse.json();
+      console.log('📄 [STEP 2] Chat API result:', chatResult);
+
+      // ตรวจสอบว่ามีไฟล์ที่สร้างขึ้นหรือไม่
+      if (chatResult.taskResults && chatResult.taskResults.length > 0) {
+        console.log('📁 [STEP 3] พบไฟล์ที่สร้างขึ้น:', chatResult.taskResults.length, 'files');
+        
+        // รวบรวมไฟล์ทั้งหมดจาก taskResults
+        const allFiles = [];
+        for (const taskResult of chatResult.taskResults) {
+          if (taskResult.files && Array.isArray(taskResult.files)) {
+            allFiles.push(...taskResult.files);
+            console.log('📁 [STEP 3] เพิ่มไฟล์จาก task:', taskResult.files.length, 'files');
+          }
+        }
+
+        console.log('📁 [STEP 3] ไฟล์ทั้งหมด:', allFiles.length, 'files');
+        console.log('📁 [STEP 3] รายละเอียดไฟล์:', allFiles.map(f => ({ path: f.path, contentLength: f.content?.length || 0 })));
+
+        if (allFiles.length > 0) {
+          console.log('🚀 [STEP 4] ส่งไฟล์ไปยัง Daytona Preview API...');
+          
+          // ส่งไฟล์ไปยัง Daytona Preview API
+          const previewResponse = await fetch('/api/preview/daytona', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              files: allFiles,
+              projectId: `template-${templateType}-${Date.now()}`
+            })
+          });
+
+          console.log('📡 [STEP 4] Daytona API response status:', previewResponse.status);
+
+          if (!previewResponse.ok) {
+            const errorData = await previewResponse.json();
+            console.error('❌ [STEP 4] Daytona API error:', errorData);
+            throw new Error(`Daytona API failed: ${errorData.error || previewResponse.statusText}`);
+          }
+
+          const previewResult = await previewResponse.json();
+          console.log('✅ [STEP 4] Daytona API result:', previewResult);
+
+          // ตั้งค่า preview URL และ token
+          if (previewResult.url && previewResult.token) {
+            setPreviewUrl(previewResult.url);
+            setPreviewToken(previewResult.token);
+            console.log('🌐 [STEP 4] Preview URL set:', previewResult.url);
+            console.log('🔑 [STEP 4] Preview token set:', previewResult.token ? 'YES' : 'NO');
+          } else {
+            console.warn('⚠️ [STEP 4] ไม่พบ preview URL หรือ token');
+          }
+
+          setResult({
+            templateKey,
+            requirements,
+            files: allFiles,
+            previewUrl: previewResult.url,
+            previewToken: previewResult.token,
+            message: 'Template processing สำเร็จและสร้าง preview แล้ว'
+          });
+
+          console.log('✅ [COMPLETE] Template processing สำเร็จทั้งหมด!');
+        } else {
+          throw new Error('ไม่พบไฟล์ที่สร้างขึ้น');
+        }
+      } else {
+        console.log('📄 [STEP 2] ไม่พบ taskResults, ใช้ข้อมูลจาก chat response');
+        setResult({
           templateKey,
           requirements,
-          message: 'Template processing temporarily disabled'
-        }
-      };
-
-      if (mockResult.success) {
-        console.log('✅ Template processing สำเร็จ:', mockResult.data);
-        setResult(mockResult.data);
-        
-        // สร้าง preview URL (จำลอง)
-        const mockPreviewUrl = `https://preview.daytona.works/sandbox/${Date.now()}`;
-        const mockToken = `token_${Math.random().toString(36).substr(2, 9)}`;
-        
-        setPreviewUrl(mockPreviewUrl);
-        setPreviewToken(mockToken);
-        
-      } else {
-        throw new Error('Template processing failed');
+          chatResponse: chatResult,
+          message: 'Template processing สำเร็จ (ไม่มีไฟล์)'
+        });
       }
 
     } catch (err) {
-      console.error('❌ Template processing error:', err);
+      console.error('❌ [ERROR] Template processing error:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsProcessing(false);
+      console.log('🏁 [FINISH] Template processing เสร็จสิ้น');
     }
   };
 
