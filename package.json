@@ -12,6 +12,10 @@
     "ai:dev": "echo 'AI agent dev server would start here'"
   },
   "dependencies": {
+    "@babel/generator": "^7.28.3",
+    "@babel/parser": "^7.28.4",
+    "@babel/traverse": "^7.28.4",
+    "@babel/types": "^7.28.4",
     "@codesandbox/sandpack-react": "^2.20.0",
     "@daytonaio/sdk": "^0.27.1",
     "@monaco-editor/react": "^4.7.0",
@@ -43,6 +47,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/babel__generator": "^7.27.0",
+    "@types/babel__parser": "^7.0.0",
+    "@types/babel__traverse": "^7.28.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20",
     "@types/react": "^19",
