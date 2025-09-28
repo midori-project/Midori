@@ -6,6 +6,12 @@
 import { projectContextStore } from '../../orchestrator/stores/projectContextStore';
 // Style Detection moved to Orchestrator
 
+// AST Parser imports
+import { parse } from '@babel/parser';
+import traverse from '@babel/traverse';
+import * as t from '@babel/types';
+import generate from '@babel/generator';
+
 // Types
 interface FrontendTask {
   taskId: string;
@@ -50,6 +56,8 @@ interface ComponentResult {
     content: string;
     type: string;
     size?: number;
+    hasChanges?: boolean;
+    customizedAt?: string;
   }>;
   tests?: {
     generated: boolean;
@@ -90,33 +98,6 @@ interface ComponentResult {
 
 // Template selection functions
 
-/**
- * Get supported template categories and their mappings
- */
-function getSupportedTemplateCategories(): { projectType: string; category: string; available: boolean }[] {
-  // ✅ Map all project types to e-commerce template (the only one we have)
-  const categoryMapping: Record<string, string> = {
-    'e_commerce': 'e-commerce',
-    'coffee_shop': 'e-commerce', 
-    'restaurant': 'e-commerce',
-    'portfolio': 'e-commerce',
-    'blog': 'e-commerce',
-    'landing_page': 'e-commerce',
-    'business': 'e-commerce',
-    'personal': 'e-commerce',
-    'hotel': 'e-commerce',
-    'healthcare': 'e-commerce'
-  };
-  
-  // ✅ Only e-commerce template is available in database
-  const availableCategories = ['e-commerce'];
-  
-  return Object.entries(categoryMapping).map(([projectType, category]) => ({
-    projectType,
-    category,
-    available: availableCategories.includes(category)
-  }));
-}
 
 /**
  * Get available templates from database
@@ -168,7 +149,7 @@ async function selectTemplateFromDatabase(templateType: string, customizations: 
     console.log('📋 Available templates in database:', availableTemplates.map(t => t.category));
     
     // ✅ 2. Map templateType ให้ตรงกับ category ที่มี
-    const categoryMapping: Record<string, string> = {
+           const categoryMapping: Record<string, string> = {
       'e_commerce': 'e-commerce',
       'coffee_shop': 'e-commerce',
       'restaurant': 'e-commerce',
@@ -545,36 +526,18 @@ function analyzeFileStructure(templateFiles: any[]): any {
     const content = file.content || '';
     const path = file.path;
     
-    // Analyze React components
+    // Analyze React components (simplified)
     if (path.endsWith('.tsx') || path.endsWith('.jsx')) {
-      const componentName = extractComponentName(content, path);
-      if (componentName) {
-        analysis.components.set(componentName, {
+      const fileName = path.split('/').pop()?.replace(/\.(tsx|jsx)$/, '');
+      if (fileName) {
+        analysis.components.set(fileName, {
           path,
-          props: extractComponentProps(content),
-          imports: extractImports(content),
-          exports: extractExports(content)
+          props: [],
+          imports: [],
+          exports: []
         });
       }
     }
-    
-    // Analyze App.tsx for routes
-    if (path.includes('App.tsx')) {
-      analysis.routes = extractRoutes(content);
-    }
-    
-    // Analyze imports and dependencies
-    const imports = extractImports(content);
-    imports.forEach(imp => {
-      if (!analysis.imports.has(imp.from)) {
-        analysis.imports.set(imp.from, []);
-      }
-      analysis.imports.get(imp.from).push({
-        file: path,
-        name: imp.name,
-        type: imp.type
-      });
-    });
   });
   
   return {
@@ -586,124 +549,10 @@ function analyzeFileStructure(templateFiles: any[]): any {
   };
 }
 
-/**
- * Extract component name from file content
- */
-function extractComponentName(content: string, filePath: string): string | null {
-  // Try to find default export component
-  const defaultExportMatch = content.match(/export\s+default\s+(\w+)/);
-  if (defaultExportMatch) {
-    return defaultExportMatch[1];
-  }
-  
-  // Try to find function component
-  const functionMatch = content.match(/const\s+(\w+):\s*React\.FC/);
-  if (functionMatch) {
-    return functionMatch[1];
-  }
-  
-  // Try to find class component
-  const classMatch = content.match(/class\s+(\w+)\s+extends\s+React\.Component/);
-  if (classMatch) {
-    return classMatch[1];
-  }
-  
-  // Fallback to filename
-  const fileName = filePath.split('/').pop()?.replace(/\.(tsx|jsx)$/, '');
-  return fileName || null;
-}
 
-/**
- * Extract component props from TypeScript interface
- */
-function extractComponentProps(content: string): string[] {
-  const props: string[] = [];
-  
-  // Find interface definitions
-  const interfaceMatches = content.match(/interface\s+(\w+)Props\s*{([^}]+)}/g);
-  interfaceMatches?.forEach(match => {
-    const propsMatch = match.match(/\w+:\s*\w+/g);
-    if (propsMatch) {
-      props.push(...propsMatch.map(p => p.split(':')[0].trim()));
-    }
-  });
-  
-  return props;
-}
 
-/**
- * Extract imports from file content
- */
-function extractImports(content: string): any[] {
-  const imports: any[] = [];
-  const importMatches = content.match(/import\s+.*?from\s+['"]([^'"]+)['"]/g);
-  
-  importMatches?.forEach(match => {
-    const fromMatch = match.match(/from\s+['"]([^'"]+)['"]/);
-    const nameMatch = match.match(/import\s+{([^}]+)}/);
-    const defaultMatch = match.match(/import\s+(\w+)/);
-    
-    if (fromMatch) {
-      const from = fromMatch[1];
-      if (nameMatch) {
-        // Named imports
-        const names = nameMatch[1].split(',').map(n => n.trim());
-        names.forEach(name => {
-          imports.push({ name, from, type: 'named' });
-        });
-      } else if (defaultMatch) {
-        // Default import
-        imports.push({ name: defaultMatch[1], from, type: 'default' });
-      }
-    }
-  });
-  
-  return imports;
-}
 
-/**
- * Extract exports from file content
- */
-function extractExports(content: string): string[] {
-  const exports: string[] = [];
-  
-  // Find named exports
-  const namedExports = content.match(/export\s+const\s+(\w+)/g);
-  namedExports?.forEach(match => {
-    const name = match.match(/export\s+const\s+(\w+)/)?.[1];
-    if (name) exports.push(name);
-  });
-  
-  // Find default export
-  const defaultExport = content.match(/export\s+default\s+(\w+)/);
-  if (defaultExport) {
-    exports.push(defaultExport[1]);
-  }
-  
-  return exports;
-}
 
-/**
- * Extract routes from App.tsx
- */
-function extractRoutes(content: string): any[] {
-  const routes: any[] = [];
-  const routeMatches = content.match(/<Route\s+path="([^"]+)"\s+element=\{<(\w+)/g);
-  
-  routeMatches?.forEach(match => {
-    const pathMatch = match.match(/path="([^"]+)"/);
-    const componentMatch = match.match(/element=\{<(\w+)/);
-    
-    if (pathMatch && componentMatch) {
-      routes.push({
-        path: pathMatch[1],
-        component: componentMatch[1]
-      });
-    }
-  });
-  
-  return routes;
-}
 
 /**
  * Process template as a complete unit for better context awareness
@@ -721,13 +570,16 @@ async function processTemplateAsCompleteUnit(templateFiles: any[], customization
   // ✅ Process React files as a complete template
   const processedReactFiles = await processReactFilesAsCompleteTemplate(reactFiles, customizations, fileAnalysis);
   
+  // ✅ Remove unused imports from App.tsx
+  const cleanedReactFiles = removeUnusedImports(processedReactFiles, fileAnalysis);
+  
   // ✅ Process other files individually (they don't need context)
   const processedConfigFiles = await processNonReactFiles(configFiles, customizations);
   const processedStyleFiles = await processNonReactFiles(styleFiles, customizations);
   
   // ✅ Combine all processed files
   const allProcessedFiles = [
-    ...processedReactFiles,
+    ...cleanedReactFiles,
     ...processedConfigFiles,
     ...processedStyleFiles
   ];
@@ -762,25 +614,31 @@ async function processReactFilesAsCompleteTemplate(reactFiles: any[], customizat
     routes: templateContext.routes.length
   });
   
-  // ✅ Process all React files with complete context
-  const processedFiles = await Promise.all(reactFiles.map(async file => {
+  // ✅ Process all files as a batch
+  let processedFiles = [...reactFiles];
+  
+  // Apply color scheme to all files at once
+  if (customizations.colorScheme) {
+    console.log('🎨 Applying color scheme to all files...');
+    processedFiles = await applyColorSchemeToAllFiles(processedFiles, customizations.colorScheme);
+  }
+  
+  // Apply styling to all files at once
+  if (customizations.styling) {
+    console.log('🎭 Applying styling to all files...');
+    processedFiles = await applyStylingToAllFiles(processedFiles, customizations.styling);
+  }
+  
+  // Apply wording to all files at once
+  if (customizations.wording) {
+    console.log('📝 Applying wording to all files...');
+    processedFiles = await applyWordingToAllFiles(processedFiles, customizations.wording, templateContext);
+  }
+  
+  // Apply individual fixes to each file
+  const finalProcessedFiles = processedFiles.map(file => {
     let content = file.content || '';
-    const originalContent = content;
-    
-    console.log(`📝 Processing React file with complete context: ${file.path}`);
-    
-    // Apply all customizations with complete template context
-    if (customizations.colorScheme) {
-      content = await applyColorScheme(content, customizations.colorScheme);
-    }
-    
-    if (customizations.styling) {
-      content = await applyStyling(content, customizations.styling);
-    }
-    
-    if (customizations.wording) {
-      content = await applyWordingWithCompleteContext(content, customizations.wording, templateContext, file.path);
-    }
+    const originalContent = file.originalContent || content;
     
     // Apply template placeholder replacements
     content = applyTemplatePlaceholders(content, customizations);
@@ -792,7 +650,7 @@ async function processReactFilesAsCompleteTemplate(reactFiles: any[], customizat
     content = validateAndFixFileContent(content, file.path);
     
     const hasChanges = content !== originalContent;
-    console.log(`✅ React file ${file.path} processed with complete context${hasChanges ? ' with changes' : ' (no changes)'}`);
+    console.log(`✅ React file ${file.path} processed${hasChanges ? ' with changes' : ' (no changes)'}`);
     if (hasChanges) {
       console.log(`📊 Changes: ${originalContent.length} → ${content.length} characters`);
     }
@@ -804,21 +662,458 @@ async function processReactFilesAsCompleteTemplate(reactFiles: any[], customizat
       hasChanges: hasChanges,
       customizedAt: new Date().toISOString()
     };
-  }));
+  });
   
-  return processedFiles;
+  return finalProcessedFiles;
 }
+
+/**
+ * Apply color scheme to all files at once (batch processing)
+ */
+async function applyColorSchemeToAllFiles(files: any[], colorScheme: any): Promise<any[]> {
+  console.log('🎨 Applying color scheme to all files in batch...');
+  
+  // Feature flag for LLM
+  if (process.env.ENABLE_LLM !== 'true') {
+    console.log('🔧 LLM disabled, using fallback color scheme application');
+    return files;
+  }
+
+  if (!colorScheme || !Object.keys(colorScheme).length) {
+    return files;
+  }
+
+  try {
+    const { LLMAdapter } = await import('../../orchestrator/adapters/llmAdapter');
+    const llmAdapter = new LLMAdapter();
+    await llmAdapter.initialize();
+
+    // Create template overview for LLM
+    const templateOverview = files.map(f => ({
+      path: f.path,
+      type: f.path.includes('App.tsx') ? 'App' : f.path.includes('/pages/') ? 'Page' : f.path.includes('/components/') ? 'Component' : 'Other',
+      hasContent: f.content && f.content.length > 0
+    }));
+
+    const prompt = `
+You are a UI/UX design expert. Apply the following color scheme to ALL React files in this template:
+
+Color Scheme Requirements:
+${JSON.stringify(colorScheme, null, 2)}
+
+Template Overview:
+${JSON.stringify(templateOverview, null, 2)}
+
+All Files Content:
+${files.map(f => `=== ${f.path} ===\n\`\`\`tsx\n${f.content || ''}\n\`\`\``).join('\n\n')}
+
+Instructions:
+1. Apply the color scheme consistently across ALL files
+2. Replace hardcoded colors with CSS variables or Tailwind classes
+3. Ensure color consistency throughout the entire template
+4. Use the primary, secondary, and accent colors appropriately
+5. Maintain the same React structure and functionality
+6. Return ALL files with their updated content
+
+Return the result as a JSON object with this structure:
+{
+  "files": [
+    {
+      "path": "src/App.tsx",
+      "content": "updated content here..."
+    },
+    {
+      "path": "src/pages/Home.tsx", 
+      "content": "updated content here..."
+    }
+    // ... all other files
+  ]
+}
+
+CRITICAL: Return ONLY the JSON object, no other text or explanations.
+`;
+
+    const response = await llmAdapter.callLLM(prompt, {
+      maxTokens: 20000,
+      temperature: 0.7
+    });
+
+    // Validate response content
+    if (!response.content || typeof response.content !== 'string') {
+      throw new Error('Invalid response content from LLM');
+    }
+
+    // Clean response content - remove any trailing incomplete JSON
+    let cleanedContent = response.content.trim();
+    
+    // Try to find the last complete JSON object
+    const lastBraceIndex = cleanedContent.lastIndexOf('}');
+    if (lastBraceIndex > 0) {
+      cleanedContent = cleanedContent.substring(0, lastBraceIndex + 1);
+    }
+
+    // Parse the response with error handling
+    let result;
+    try {
+      result = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      console.warn(`⚠️ JSON parse error in batch processing:`, parseError);
+      console.warn(`📄 Response content length: ${response.content.length}`);
+      console.warn(`📄 Response content preview: ${response.content.substring(0, 200)}...`);
+      console.warn(`📄 Cleaned content preview: ${cleanedContent.substring(0, 200)}...`);
+      throw new Error(`JSON parse failed: ${parseError}`);
+    }
+    
+    if (result.files && Array.isArray(result.files)) {
+      console.log(`✅ Color scheme applied to ${result.files.length} files`);
+      return files.map(file => {
+        const updatedFile = result.files.find((f: any) => f.path === file.path);
+        return {
+          ...file,
+          content: updatedFile ? updatedFile.content : file.content,
+          originalContent: file.content
+        };
+      });
+    }
+
+    return files;
+  } catch (error) {
+    console.warn('⚠️ Batch color scheme application failed, falling back to individual processing:', error);
+    // Fallback to individual processing
+    const processedFiles = [];
+    for (const file of files) {
+      const updatedContent = await applyColorScheme(file.content || '', colorScheme);
+      processedFiles.push({
+        ...file,
+        content: updatedContent,
+        originalContent: file.content
+      });
+    }
+    return processedFiles;
+  }
+}
+
+/**
+ * Apply styling to all files at once (batch processing)
+ */
+async function applyStylingToAllFiles(files: any[], styling: any): Promise<any[]> {
+  console.log('🎭 Applying styling to all files in batch...');
+
+  if (!styling || !Object.keys(styling).length) {
+    return files;
+  }
+
+  try {
+    const { LLMAdapter } = await import('../../orchestrator/adapters/llmAdapter');
+    const llmAdapter = new LLMAdapter();
+    await llmAdapter.initialize();
+
+    // Create template overview for LLM
+    const templateOverview = files.map(f => ({
+      path: f.path,
+      type: f.path.includes('App.tsx') ? 'App' : f.path.includes('/pages/') ? 'Page' : f.path.includes('/components/') ? 'Component' : 'Other',
+      hasContent: f.content && f.content.length > 0
+    }));
+
+    const prompt = `
+You are a UI/UX design expert. Apply the following styling preferences to ALL React files in this template:
+
+Styling Requirements:
+${JSON.stringify(styling, null, 2)}
+
+Template Overview:
+${JSON.stringify(templateOverview, null, 2)}
+
+All Files Content:
+${files.map(f => `=== ${f.path} ===\n\`\`\`tsx\n${f.content || ''}\n\`\`\``).join('\n\n')}
+
+Instructions:
+1. Apply styling consistently across ALL files
+2. Use Tailwind CSS classes appropriately
+3. Ensure responsive design principles
+4. Maintain consistent spacing, typography, and layout
+5. Keep the same React structure and functionality
+6. Return ALL files with their updated content
+
+Return the result as a JSON object with this structure:
+{
+  "files": [
+    {
+      "path": "src/App.tsx",
+      "content": "updated content here..."
+    },
+    {
+      "path": "src/pages/Home.tsx", 
+      "content": "updated content here..."
+    }
+    // ... all other files
+  ]
+}
+
+CRITICAL: Return ONLY the JSON object, no other text or explanations.
+`;
+
+    const response = await llmAdapter.callLLM(prompt, {
+      maxTokens: 20000,
+      temperature: 0.7
+    });
+
+    // Validate response content
+    if (!response.content || typeof response.content !== 'string') {
+      throw new Error('Invalid response content from LLM');
+    }
+
+    // Clean response content - remove any trailing incomplete JSON
+    let cleanedContent = response.content.trim();
+    
+    // Try to find the last complete JSON object
+    const lastBraceIndex = cleanedContent.lastIndexOf('}');
+    if (lastBraceIndex > 0) {
+      cleanedContent = cleanedContent.substring(0, lastBraceIndex + 1);
+    }
+
+    // Parse the response with error handling
+    let result;
+    try {
+      result = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      console.warn(`⚠️ JSON parse error in batch processing:`, parseError);
+      console.warn(`📄 Response content length: ${response.content.length}`);
+      console.warn(`📄 Response content preview: ${response.content.substring(0, 200)}...`);
+      console.warn(`📄 Cleaned content preview: ${cleanedContent.substring(0, 200)}...`);
+      throw new Error(`JSON parse failed: ${parseError}`);
+    }
+    
+    if (result.files && Array.isArray(result.files)) {
+      console.log(`✅ Styling applied to ${result.files.length} files`);
+      return files.map(file => {
+        const updatedFile = result.files.find((f: any) => f.path === file.path);
+        return {
+          ...file,
+          content: updatedFile ? updatedFile.content : file.content,
+          originalContent: file.originalContent || file.content
+        };
+      });
+    }
+
+    return files;
+  } catch (error) {
+    console.warn('⚠️ Batch styling application failed, falling back to individual processing:', error);
+    // Fallback to individual processing
+    const processedFiles = [];
+    for (const file of files) {
+      const updatedContent = await applyStyling(file.content || '', styling);
+      processedFiles.push({
+        ...file,
+        content: updatedContent,
+        originalContent: file.originalContent || file.content
+      });
+    }
+    return processedFiles;
+  }
+}
+
+/**
+ * Apply wording to all files at once (batch processing)
+ */
+async function applyWordingToAllFiles(files: any[], wording: any, templateContext: any): Promise<any[]> {
+  console.log('📝 Applying wording to all files in batch...');
+
+  if (!wording || !Object.keys(wording).length) {
+    return files;
+  }
+
+  try {
+    const { LLMAdapter } = await import('../../orchestrator/adapters/llmAdapter');
+    const llmAdapter = new LLMAdapter();
+    await llmAdapter.initialize();
+
+    // Create template overview for LLM
+    const templateOverview = templateContext.allFiles.map((f: any) => ({
+      path: f.path,
+      type: f.isMainApp ? 'App' : f.isPage ? 'Page' : f.isComponent ? 'Component' : 'Other',
+      hasContent: f.content && f.content.length > 0
+    }));
+
+    const prompt = `
+You are a content writer and UX expert. Customize the wording in ALL React files based on the requirements and complete template context:
+
+Wording Requirements:
+${JSON.stringify(wording, null, 2)}
+
+Complete Template Context:
+- Template overview: ${JSON.stringify(templateOverview, null, 2)}
+- Available components: ${Object.keys(templateContext.availableComponents).join(', ')}
+- Available routes: ${templateContext.routes.map((r: any) => `${r.path} -> ${r.component}`).join(', ')}
+
+All Files Content:
+${files.map(f => `=== ${f.path} ===\n\`\`\`tsx\n${f.content || ''}\n\`\`\``).join('\n\n')}
+
+Instructions:
+1. Replace all placeholder text with appropriate Thai content
+2. Use wording from the requirements above
+3. Make content relevant to grilled pork business (หมูปิ้ง, อาหาร, เมนู, สั่งซื้อ, etc.)
+4. Keep the same React structure and functionality
+5. Use proper Thai language for food business
+6. Replace template placeholders like {{home.heroTitle}} with actual content
+7. For Route elements, ensure proper path and element attributes based on available routes
+8. For component props, use appropriate English attribute names
+9. Consider the complete template structure when making decisions
+10. Use English paths in Link components
+
+CRITICAL JSX SYNTAX RULES - FOLLOW EXACTLY:
+11. NEVER use Thai text as attribute names - ONLY use English attribute names
+12. Thai text must ONLY appear as VALUES inside quotes
+13. CORRECT: <Header brandName="ร้านค้าออนไลน์" tagline="ยินดีต้อนรับ" />
+14. WRONG: <Header ร้านค้าออนไลน์="ร้านค้าออนไลน์" ยินดีต้อนรับ="ยินดีต้อนรับ" />
+15. For Route elements, use ONLY path and element attributes
+16. CORRECT: <Route path="/about" element={<About />} />
+17. WRONG: <Route path="/about" element={<About />} title="About" />
+
+Return the result as a JSON object with this structure:
+{
+  "files": [
+    {
+      "path": "src/App.tsx",
+      "content": "updated content here..."
+    },
+    {
+      "path": "src/pages/Home.tsx", 
+      "content": "updated content here..."
+    }
+    // ... all other files
+  ]
+}
+
+CRITICAL: Return ONLY the JSON object, no other text or explanations.
+`;
+
+    const response = await llmAdapter.callLLM(prompt, {
+      maxTokens: 20000,
+      temperature: 0.7
+    });
+
+    // Validate response content
+    if (!response.content || typeof response.content !== 'string') {
+      throw new Error('Invalid response content from LLM');
+    }
+
+    // Clean response content - remove any trailing incomplete JSON
+    let cleanedContent = response.content.trim();
+    
+    // Try to find the last complete JSON object
+    const lastBraceIndex = cleanedContent.lastIndexOf('}');
+    if (lastBraceIndex > 0) {
+      cleanedContent = cleanedContent.substring(0, lastBraceIndex + 1);
+    }
+
+    // Parse the response with error handling
+    let result;
+    try {
+      result = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      console.warn(`⚠️ JSON parse error in batch processing:`, parseError);
+      console.warn(`📄 Response content length: ${response.content.length}`);
+      console.warn(`📄 Response content preview: ${response.content.substring(0, 200)}...`);
+      console.warn(`📄 Cleaned content preview: ${cleanedContent.substring(0, 200)}...`);
+      throw new Error(`JSON parse failed: ${parseError}`);
+    }
+    
+    if (result.files && Array.isArray(result.files)) {
+      console.log(`✅ Wording applied to ${result.files.length} files`);
+      return files.map(file => {
+        const updatedFile = result.files.find((f: any) => f.path === file.path);
+        return {
+          ...file,
+          content: updatedFile ? updatedFile.content : file.content,
+          originalContent: file.originalContent || file.content
+        };
+      });
+    }
+
+    return files;
+  } catch (error) {
+    console.warn('⚠️ Batch wording application failed, falling back to individual processing:', error);
+    // Fallback to individual processing
+    const processedFiles = [];
+    for (const file of files) {
+      const updatedContent = await applyWordingWithCompleteContext(file.content || '', wording, templateContext, file.path);
+      processedFiles.push({
+        ...file,
+        content: updatedContent,
+        originalContent: file.originalContent || file.content
+      });
+    }
+    return processedFiles;
+  }
+}
+
+/**
+ * Remove unused imports from App.tsx based on available components
+ */
+function removeUnusedImports(processedFiles: any[], fileAnalysis: any): any[] {
+  return processedFiles.map(file => {
+    if (file.path === 'src/App.tsx') {
+      console.log(`🔧 Cleaning unused imports from App.tsx`);
+      
+      const availableComponents = Object.keys(fileAnalysis.components || {});
+      const cleanedContent = removeUnusedImportsFromContent(file.content, availableComponents);
+      
+      return {
+        ...file,
+        content: cleanedContent,
+        hasChanges: file.content !== cleanedContent
+      };
+    }
+    return file;
+  });
+}
+
+/**
+ * Remove unused imports from file content
+ */
+function removeUnusedImportsFromContent(content: string, availableComponents: string[]): string {
+  let modifiedContent = content;
+  
+  // Remove unused component imports
+  const importRegex = /import\s+(\w+)\s+from\s+['"][^'"]*['"];?\s*\n?/g;
+  modifiedContent = modifiedContent.replace(importRegex, (match, componentName) => {
+    if (availableComponents.includes(componentName)) {
+      return match; // Keep the import
+    } else {
+      console.log(`🗑️ Removing unused import: ${componentName}`);
+      return ''; // Remove the import
+    }
+  });
+  
+  // Remove unused Route elements
+  const routeRegex = /<Route\s+path="[^"]*"\s+element=\{<(\w+)\s*\/>\s*\}\s*\/>/g;
+  modifiedContent = modifiedContent.replace(routeRegex, (match, componentName) => {
+    if (availableComponents.includes(componentName)) {
+      return match; // Keep the route
+    } else {
+      console.log(`🗑️ Removing unused route: ${componentName}`);
+      return ''; // Remove the route
+    }
+  });
+  
+  // Clean up extra whitespace
+  modifiedContent = modifiedContent.replace(/\n\s*\n\s*\n/g, '\n\n');
+  
+  return modifiedContent;
+}
+
 
 /**
  * Process non-React files individually
  */
 async function processNonReactFiles(files: any[], customizations: any): Promise<any[]> {
   return files.map(file => ({
-    ...file,
+      ...file,
     content: file.content || '',
     originalContent: file.content || '',
     hasChanges: false,
-    customizedAt: new Date().toISOString()
+      customizedAt: new Date().toISOString()
   }));
 }
 
@@ -837,7 +1132,8 @@ function applyContextAwareFixes(content: string, filePath: string, fileAnalysis:
       if (filePath.includes(componentName)) {
         // Add proper TypeScript interfaces if missing
         if (!modifiedContent.includes('interface') && componentInfo.props?.length > 0) {
-          const interfaceCode = `interface ${componentName}Props {\n  ${componentInfo.props.join(': string;\n  ')}: string;\n}\n\n`;
+          const propsLines = componentInfo.props.map((p: string) => `  ${p}: string;`).join('\n');
+          const interfaceCode = `interface ${componentName}Props {\n${propsLines}\n}\n\n`;
           modifiedContent = interfaceCode + modifiedContent;
         }
       }
@@ -859,9 +1155,9 @@ function applyContextAwareFixes(content: string, filePath: string, fileAnalysis:
 // ❌ REMOVED: processTemplateFiles - replaced by processTemplateAsCompleteUnit
 
 /**
- * Fix JSX syntax issues
+ * Comprehensive JSX syntax fixer - combines all JSX fixing functions
  */
-function fixJSXSyntax(content: string): string {
+function fixJSXSyntax(content: string, filePath?: string): string {
   let modifiedContent = content;
   const originalContent = content;
   
@@ -982,7 +1278,7 @@ function fixJSXSyntax(content: string): string {
   
   // ✅ Special fix for App.tsx Route elements
   // This is a more aggressive fix for the specific issue
-  if (modifiedContent.includes('App.tsx') || modifiedContent.includes('Routes')) {
+  if ((filePath && filePath.includes('App.tsx')) || modifiedContent.includes('Routes')) {
     // Fix all Route elements in App.tsx
     const appRouteRegex = /<Route\s+path="([^"]+)"\s+element=\{<([A-Z][a-zA-Z0-9]*)\s+[^>]*>\s*\/>\}/g;
     modifiedContent = modifiedContent.replace(appRouteRegex, (match, path, componentName) => {
@@ -1045,11 +1341,11 @@ function fixJSXSyntax(content: string): string {
     return `<Footer ${before} brandName="${brandName}" />`;
   });
   
-  // ✅ Fix Home component with multiple Thai text attributes
-  // Pattern: <Home สวัสดี! ยินดีต้อนรับสู่ร้านค้าออนไลน์="..." เรามีสินค้าดีๆ รอคุณอยู่="..." ... />
+  // ✅ Fix Home component with Thai attributes only
+  // Pattern: <Home ข้อความไทย="..." />
   // Should be: <Home />
-  const homeRegex = /<Home\s+[^>]*>\s*\/>/g;
-  modifiedContent = modifiedContent.replace(homeRegex, (match) => {
+  const homeWithThaiRegex = /<Home\s+[^>]*[\u0E00-\u0E7F][^>]*>\s*\/>/g;
+  modifiedContent = modifiedContent.replace(homeWithThaiRegex, (match) => {
     return `<Home />`;
   });
   
@@ -1272,7 +1568,9 @@ function validateAndFixFileContent(content: string, filePath: string): string {
   }
   
   // ✅ 4. Validate JSX syntax
-  modifiedContent = validateJSXSyntax(modifiedContent);
+  if (modifiedContent.includes('{') && modifiedContent.includes('}')) {
+    modifiedContent = fixJSXWithAST(modifiedContent, filePath);
+  }
   
   // ✅ 5. Fix common React patterns
   modifiedContent = fixReactPatterns(modifiedContent);
@@ -1357,21 +1655,6 @@ function fixJavaScriptSyntax(content: string): string {
   return modifiedContent;
 }
 
-/**
- * Validate JSX syntax
- */
-function validateJSXSyntax(content: string): string {
-  let modifiedContent = content;
-  
-  // Check for unclosed JSX tags
-  const selfClosingTags = ['img', 'br', 'hr', 'input'];
-  selfClosingTags.forEach(tag => {
-    const pattern = new RegExp(`<${tag}([^>]*)>(?!</${tag}>)`, 'g');
-    modifiedContent = modifiedContent.replace(pattern, `<${tag}$1 />`);
-  });
-  
-  return modifiedContent;
-}
 
 /**
  * Fix common React patterns
@@ -1391,39 +1674,401 @@ function fixReactPatterns(content: string): string {
   return modifiedContent;
 }
 
+
+
+
 /**
- * Fix JSX syntax using AST parsing (more accurate than regex)
+ * Pre-clean JSX with regex before AST parsing
+ */
+function preCleanJSX(content: string): string {
+  let modifiedContent = content;
+  
+  // Fix double closing braces in Route elements - multiple passes
+  for (let i = 0; i < 5; i++) {
+    const doubleClosingRegex = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>/g;
+    const before = modifiedContent;
+    modifiedContent = modifiedContent.replace(doubleClosingRegex, (match) => {
+      return match.replace(/\s*\}\s*\/>/, ' />');
+    });
+    if (before === modifiedContent) break; // No more changes needed
+  }
+  
+  // Fix template variables
+  const templateVarRegex = /(\w+)="\{\{([^}]+)\}\}"/g;
+  modifiedContent = modifiedContent.replace(templateVarRegex, (match, propName) => {
+    if (propName === 'logoUrl') {
+      return 'logoUrl="/images/logo.png"';
+    }
+    return match;
+  });
+  
+  // Fix invalid JSX expressions
+  const invalidJSXRegex = /(\w+)=\{\{([^}]+)\}\}/g;
+  modifiedContent = modifiedContent.replace(invalidJSXRegex, (match, propName) => {
+    if (propName === 'socialLinks') {
+      return 'socialLinks={[{ platform: "Facebook", url: "https://facebook.com" }, { platform: "Instagram", url: "https://instagram.com" }]}';
+    }
+    return match;
+  });
+  
+  // Fix invalid values (dashes only)
+  const invalidValueRegex = /(\w+)="\/-+"/g;
+  modifiedContent = modifiedContent.replace(invalidValueRegex, (match, propName) => {
+    const invalidValueMap: { [key: string]: string } = {
+      'brandName': 'ร้านค้าออนไลน์',
+      'tagline': 'ยินดีต้อนรับสู่ร้านค้าออนไลน์',
+      'subtitle': 'สินค้าคุณภาพดี ราคาเป็นมิตร',
+      'title': 'ยินดีต้อนรับ',
+      'placeholder': 'กรุณากรอกอีเมลของคุณ'
+    };
+    
+    const properValue = invalidValueMap[propName] || 'Default Value';
+    return `${propName}="${properValue}"`;
+  });
+  
+  // Fix invalid route paths
+  const invalidRoutePathRegex = /path="[^"]*-+[^"]*"/g;
+  modifiedContent = modifiedContent.replace(invalidRoutePathRegex, (match) => {
+    if (match.includes('slug')) {
+      return 'path="/products/:slug"';
+    }
+    return match;
+  });
+  
+  // Fix Thai text in titles
+  const thaiTitleRegex = /title="([^"]*[\u0E00-\u0E7F][^"]*)"/g;
+  modifiedContent = modifiedContent.replace(thaiTitleRegex, (match, title) => {
+    const thaiTitleMap: { [key: string]: string } = {
+      'ไม่พบหน้า': 'Page Not Found',
+      'ตะกร้าของคุณ': 'Your Cart',
+      'สั่งซื้อสินค้า': 'Order Products',
+      'ยินดีต้อนรับสู่ร้านค้าออนไลน์': 'Welcome to Online Store'
+    };
+    
+    const englishTitle = thaiTitleMap[title] || title;
+    return `title="${englishTitle}"`;
+  });
+  
+  // Fix any remaining invalid values with dashes
+  const anyInvalidValueRegex = /"\/-+"/g;
+  modifiedContent = modifiedContent.replace(anyInvalidValueRegex, (match) => {
+    return '"Default Value"';
+  });
+  
+  return modifiedContent;
+}
+
+/**
+ * Fix JSX syntax using AST Parser
  */
 function fixJSXWithAST(content: string, filePath: string): string {
   try {
-    // Use basic AST-like parsing without external dependencies
-    // This is a simplified version that's more accurate than regex
+    console.log(`🔧 Using AST Parser for ${filePath}`);
     
-    let modifiedContent = content;
+    // Pre-clean with regex
+    const cleanedContent = preCleanJSX(content);
     
-    // 1. Fix Thai attributes in JSX elements
-    modifiedContent = fixThaiAttributesInJSX(modifiedContent);
+    // Try to parse with AST
+    const ast = parse(cleanedContent, {
+      sourceType: 'module',
+      plugins: ['jsx', 'typescript', 'decorators-legacy'],
+      allowImportExportEverywhere: true,
+      allowReturnOutsideFunction: true
+    });
     
-    // 2. Fix Route elements with proper path and element attributes
-    modifiedContent = fixRouteElements(modifiedContent);
+    // Traverse and fix AST nodes
+    traverse(ast, {
+      // Fix Route elements
+      JSXElement(path) {
+        const openingElement = path.node.openingElement;
+        const closingElement = path.node.closingElement;
+        
+        // Check if it's a Route element
+        if (t.isJSXIdentifier(openingElement.name) && openingElement.name.name === 'Route') {
+          // Fix double closing braces - remove self-closing if there's a closing element
+          if (openingElement.selfClosing && closingElement) {
+            openingElement.selfClosing = false;
+          }
+          
+          // Fix invalid attributes
+          openingElement.attributes = openingElement.attributes.filter(attr => {
+            if (t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name)) {
+              // Remove title attributes from Route elements
+              if (attr.name.name === 'title' || attr.name.name === 'subtitle') {
+                return false;
+              }
+            }
+            return true;
+          });
+        }
+      },
+      
+      // Fix JSX attributes
+      JSXAttribute(path) {
+        const name = path.node.name;
+        const value = path.node.value;
+        
+        if (t.isJSXIdentifier(name)) {
+          // Fix template variables
+          if (t.isStringLiteral(value) && value.value.includes('{{') && value.value.includes('}}')) {
+            if (name.name === 'logoUrl') {
+              path.node.value = t.stringLiteral('/images/logo.png');
+            }
+          }
+          
+          // Fix invalid values (dashes only)
+          if (t.isStringLiteral(value) && value.value.match(/^\/-+$/)) {
+            const invalidValueMap: { [key: string]: string } = {
+              'brandName': 'ร้านค้าออนไลน์',
+              'tagline': 'ยินดีต้อนรับสู่ร้านค้าออนไลน์',
+              'subtitle': 'สินค้าคุณภาพดี ราคาเป็นมิตร',
+              'title': 'ยินดีต้อนรับ',
+              'placeholder': 'กรุณากรอกอีเมลของคุณ'
+            };
+            
+            const properValue = invalidValueMap[name.name] || 'Default Value';
+            path.node.value = t.stringLiteral(properValue);
+          }
+          
+          // Fix Thai attributes
+          if (name.name.match(/[\u0E00-\u0E7F]/)) {
+            // Map Thai attributes to English
+            const thaiToEnglish: { [key: string]: string } = {
+              'ร้านค้าออนไลน์': 'brandName',
+              'ยินดีต้อนรับ': 'title',
+              'หมูปิ้งอร่อย': 'subtitle'
+            };
+            
+            const englishName = thaiToEnglish[name.name] || name.name.toLowerCase().replace(/[^\w]/g, '');
+            path.node.name = t.jsxIdentifier(englishName);
+          }
+        }
+      },
+      
+      // Fix JSX expression containers
+      JSXExpressionContainer(path) {
+        const expression = path.node.expression;
+        
+        // Fix invalid expressions like {footer.socialLinks}
+        if (t.isMemberExpression(expression)) {
+          const object = expression.object;
+          const property = expression.property;
+          
+          if (t.isIdentifier(object) && t.isIdentifier(property)) {
+            if (object.name === 'footer' && property.name === 'socialLinks') {
+              // Replace with proper array
+              path.replaceWith(t.jsxExpressionContainer(
+                t.arrayExpression([
+                  t.objectExpression([
+                    t.objectProperty(t.identifier('platform'), t.stringLiteral('Facebook')),
+                    t.objectProperty(t.identifier('url'), t.stringLiteral('https://facebook.com'))
+                  ]),
+                  t.objectExpression([
+                    t.objectProperty(t.identifier('platform'), t.stringLiteral('Instagram')),
+                    t.objectProperty(t.identifier('url'), t.stringLiteral('https://instagram.com'))
+                  ])
+                ])
+              ));
+            }
+          }
+        }
+      },
+      
+      // Fix string literals in JSX
+      StringLiteral(path) {
+        const value = path.node.value;
+        
+        // Fix Thai paths in route paths
+        if (value.match(/[\u0E00-\u0E7F]/)) {
+          const thaiPathMap: { [key: string]: string } = {
+            'เกี่ยวกับเรา': 'about',
+            'ติดต่อเรา': 'contact',
+            'สินค้าของเรา': 'products',
+            'เมนูหมูปิ้ง': 'menu',
+            'ติดต่อสั่งซื้อ': 'contact',
+            'ร้านค้าออนไลน์': 'home',
+            'หมูปิ้ง': 'menu',
+            'อาหาร': 'menu',
+            'สั่งซื้อ': 'products',
+            'ดูเมนู': 'menu',
+            'ชมสินค้า': 'products'
+          };
+          
+          // Check if this is a route path
+          if (path.parent && t.isJSXAttribute(path.parent)) {
+            const attr = path.parent;
+            if (t.isJSXIdentifier(attr.name) && (attr.name.name === 'path' || attr.name.name === 'to')) {
+              const englishPath = thaiPathMap[value] || value.toLowerCase().replace(/[^\w]/g, '-');
+              path.node.value = englishPath;
+            }
+          }
+        }
+        
+        // Fix invalid route paths (dashes only)
+        if (value.match(/^-+$/)) {
+          if (path.parent && t.isJSXAttribute(path.parent)) {
+            const attr = path.parent;
+            if (t.isJSXIdentifier(attr.name) && attr.name.name === 'path') {
+              // Map invalid paths to proper routes
+              const invalidPathMap: { [key: string]: string } = {
+                '-------------': '/about',
+                '----------': '/contact', 
+                '---------------slug': '/products/:slug'
+              };
+              
+              const properPath = invalidPathMap[value] || '/';
+              path.node.value = properPath;
+            }
+          }
+        }
+        
+        // Fix invalid values (dashes only) in JSX attributes
+        if (value.match(/^\/-+$/)) {
+          if (path.parent && t.isJSXAttribute(path.parent)) {
+            const attr = path.parent;
+            if (t.isJSXIdentifier(attr.name)) {
+              const invalidValueMap: { [key: string]: string } = {
+                'brandName': 'ร้านค้าออนไลน์',
+                'tagline': 'ยินดีต้อนรับสู่ร้านค้าออนไลน์',
+                'subtitle': 'สินค้าคุณภาพดี ราคาเป็นมิตร',
+                'title': 'ยินดีต้อนรับ',
+                'placeholder': 'กรุณากรอกอีเมลของคุณ'
+              };
+              
+              const properValue = invalidValueMap[attr.name.name] || 'Default Value';
+              path.node.value = properValue;
+            }
+          }
+        }
+        
+        // Fix invalid values in object properties
+        if (value.match(/^\/-+$/)) {
+          if (path.parent && t.isObjectProperty(path.parent)) {
+            const prop = path.parent;
+            if (t.isIdentifier(prop.key)) {
+              const objectValueMap: { [key: string]: string } = {
+                'title': 'Default Title',
+                'placeholder': 'Enter text here',
+                'brandName': 'Default Brand'
+              };
+              
+              const properValue = objectValueMap[prop.key.name] || 'Default Value';
+              path.node.value = properValue;
+            }
+          }
+        }
+        
+        // Fix invalid route paths with slug
+        if (value.match(/^-+slug$/)) {
+          if (path.parent && t.isJSXAttribute(path.parent)) {
+            const attr = path.parent;
+            if (t.isJSXIdentifier(attr.name) && attr.name.name === 'path') {
+              path.node.value = '/products/:slug';
+            }
+          }
+        }
+        
+        // Fix Thai paths in array links
+        if (value.match(/^\/[\u0E00-\u0E7F]/)) {
+          const thaiPathMap: { [key: string]: string } = {
+            '/เกี่ยวกับเรา': '/about',
+            '/ติดต่อเรา': '/contact',
+            '/สินค้าของเรา': '/products',
+            '/เมนูหมูปิ้ง': '/menu',
+            '/ติดต่อสั่งซื้อ': '/contact',
+            '/ร้านค้าออนไลน์': '/home',
+            '/หมูปิ้ง': '/menu',
+            '/อาหาร': '/menu',
+            '/สั่งซื้อ': '/products',
+            '/ดูเมนู': '/menu',
+            '/ชมสินค้า': '/products'
+          };
+          
+          const englishPath = thaiPathMap[value] || value.toLowerCase().replace(/[^\w]/g, '-');
+          path.node.value = englishPath;
+        }
+        
+        // Fix Thai text in array links (without leading slash)
+        if (value.match(/^[\u0E00-\u0E7F]/)) {
+          const thaiTextMap: { [key: string]: string } = {
+            'สั่งซื้อ': '/checkout',
+            'สินค้า': '/products',
+            'ติดต่อเรา': '/contact',
+            'เกี่ยวกับเรา': '/about',
+            'เมนู': '/menu',
+            'หมูปิ้ง': '/menu',
+            'อาหาร': '/menu',
+            'ดูเมนู': '/menu',
+            'ชมสินค้า': '/products'
+          };
+          
+          const englishPath = thaiTextMap[value] || `/${value.toLowerCase().replace(/[^\w]/g, '-')}`;
+          path.node.value = englishPath;
+        }
+        
+        // Fix invalid values (dashes only)
+        if (value.match(/^\/-+$/)) {
+          if (path.parent && t.isJSXAttribute(path.parent)) {
+            const attr = path.parent;
+            if (t.isJSXIdentifier(attr.name)) {
+              const invalidValueMap: { [key: string]: string } = {
+                'brandName': 'ร้านค้าออนไลน์',
+                'tagline': 'ยินดีต้อนรับสู่ร้านค้าออนไลน์',
+                'subtitle': 'สินค้าคุณภาพดี ราคาเป็นมิตร',
+                'title': 'ยินดีต้อนรับ',
+                'placeholder': 'กรุณากรอกอีเมลของคุณ'
+              };
+              
+              const properValue = invalidValueMap[attr.name.name] || 'Default Value';
+              path.node.value = properValue;
+            }
+          }
+        }
+        
+        // Fix Thai text in object properties
+        if (value.match(/[\u0E00-\u0E7F]/)) {
+          const thaiPropertyMap: { [key: string]: string } = {
+            'สมัครรับข่าวสาร': 'Subscribe to Newsletter',
+            'กรุณากรอกอีเมลของคุณ': 'Enter your email address',
+            'ยินดีต้อนรับ': 'Welcome',
+            'เกี่ยวกับเรา': 'About Us',
+            'ติดต่อเรา': 'Contact Us',
+            'สินค้าของเรา': 'Our Products',
+            'สั่งซื้อ': 'Order Now',
+            'ชำระเงิน': 'Checkout',
+            'ตะกร้าสินค้า': 'Shopping Cart',
+            'ตะกร้าของคุณ': 'Your Cart',
+            'สั่งซื้อสินค้า': 'Order Products',
+            '404 ไม่พบหน้า': '404 Page Not Found'
+          };
+          
+          // Only replace if it's in object properties, not in route paths
+          if (path.parent && t.isJSXAttribute(path.parent)) {
+            const attr = path.parent;
+            if (t.isJSXIdentifier(attr.name) && 
+                (attr.name.name === 'title' || attr.name.name === 'content' || attr.name.name === 'placeholder')) {
+              const englishText = thaiPropertyMap[value] || value;
+              path.node.value = englishText;
+            }
+          }
+        }
+      }
+    });
     
-    // 3. Fix self-closing elements
-    modifiedContent = fixSelfClosingElements(modifiedContent);
+    // Generate code from AST
+    const result = generate(ast, {
+      retainLines: false,
+      compact: false,
+      comments: true
+    });
     
-    // 4. Fix array props with Thai text
-    modifiedContent = fixArrayProps(modifiedContent);
+    console.log(`✅ AST Parser completed for ${filePath}`);
+    return result.code;
     
-    // 5. Fix image paths
-    modifiedContent = fixImagePaths(modifiedContent);
-    
-    // 6. Validate JSX structure
-    validateJSXStructure(modifiedContent, filePath);
-    
-    return modifiedContent;
   } catch (error) {
-    console.warn(`⚠️ AST-based JSX fixing failed for ${filePath}:`, error);
+    console.warn(`⚠️ AST Parser failed for ${filePath}:`, error);
     // Fallback to regex-based fixing
-    return fixJSXSyntax(content);
+    return fixJSXSyntax(content, filePath);
   }
 }
 
@@ -1471,21 +2116,28 @@ function fixThaiAttributesInJSX(content: string): string {
 function fixRouteElements(content: string): string {
   let modifiedContent = content;
   
-  // Fix double closing braces in Route elements
-  const doubleClosingRegex = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>/g;
-  modifiedContent = modifiedContent.replace(doubleClosingRegex, (match) => {
+  // Fix double closing braces in Route elements - more comprehensive approach
+  // Pattern 1: <Route path="/" element={<Home />} />} />
+  const doubleClosingRegex1 = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>/g;
+  modifiedContent = modifiedContent.replace(doubleClosingRegex1, (match) => {
     return match.replace(/\s*\}\s*\/>/, ' />');
   });
   
-  // Fix multiple double closing braces
-  const multipleDoubleClosingRegex = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>\s*\/>/g;
-  modifiedContent = modifiedContent.replace(multipleDoubleClosingRegex, (match) => {
-    return match.replace(/\s*\}\s*\/>\s*\/>/, ' />');
+  // Pattern 2: <Route path="/" element={<Home />} />} />
+  const doubleClosingRegex2 = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>/g;
+  modifiedContent = modifiedContent.replace(doubleClosingRegex2, (match) => {
+    return match.replace(/\s*\}\s*\/>/, ' />');
   });
   
-  // Fix all remaining double closing braces
-  const allDoubleClosingRegex = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>/g;
-  modifiedContent = modifiedContent.replace(allDoubleClosingRegex, (match) => {
+  // Pattern 3: More aggressive fix for any remaining double closing braces
+  const aggressiveDoubleClosingRegex = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>/g;
+  modifiedContent = modifiedContent.replace(aggressiveDoubleClosingRegex, (match) => {
+    return match.replace(/\s*\}\s*\/>/, ' />');
+  });
+  
+  // Pattern 4: Fix any Route with double closing braces (fallback)
+  const fallbackDoubleClosingRegex = /<Route\s+[^>]*element=\{<[^>]+>\s*\/>\s*\}\s*\/>/g;
+  modifiedContent = modifiedContent.replace(fallbackDoubleClosingRegex, (match) => {
     return match.replace(/\s*\}\s*\/>/, ' />');
   });
   
@@ -1711,6 +2363,12 @@ function applyThemeToCSS(content: string, theme: string, colorScheme: any): stri
  * Apply color scheme to file content using LLM
  */
 async function applyColorScheme(content: string, colorScheme: any): Promise<string> {
+  // Feature flag for LLM
+  if (process.env.ENABLE_LLM !== 'true') {
+    console.log('🔧 LLM disabled, using fallback color scheme application');
+    return content;
+  }
+
   let modifiedContent = content;
   
   // Use LLM for intelligent color scheme application
@@ -1868,10 +2526,10 @@ WRONG examples (DO NOT return these):
     modifiedContent = modifiedContent.replace(/--bg-color:\s*#[0-9A-Fa-f]{6}/g, `--bg-color: ${colorScheme.background}`);
     modifiedContent = modifiedContent.replace(/background-color:\s*#[0-9A-Fa-f]{6}/g, `background-color: ${colorScheme.background}`);
     
-    // Replace Tailwind background classes
-    modifiedContent = modifiedContent.replace(/bg-white/g, 'bg-orange-50');
-    modifiedContent = modifiedContent.replace(/bg-gray-50/g, 'bg-orange-50');
-    modifiedContent = modifiedContent.replace(/bg-gray-100/g, 'bg-orange-100');
+    // Replace Tailwind background classes with CSS variables
+    modifiedContent = modifiedContent.replace(/bg-white/g, 'bg-background');
+    modifiedContent = modifiedContent.replace(/bg-gray-50/g, 'bg-background');
+    modifiedContent = modifiedContent.replace(/bg-gray-100/g, 'bg-background');
   }
   
   if (colorScheme.text) {
@@ -1879,10 +2537,10 @@ WRONG examples (DO NOT return these):
     modifiedContent = modifiedContent.replace(/--text-color:\s*#[0-9A-Fa-f]{6}/g, `--text-color: ${colorScheme.text}`);
     modifiedContent = modifiedContent.replace(/color:\s*#[0-9A-Fa-f]{6}/g, `color: ${colorScheme.text}`);
     
-    // Replace Tailwind text classes
-    modifiedContent = modifiedContent.replace(/text-black/g, 'text-orange-900');
-    modifiedContent = modifiedContent.replace(/text-gray-900/g, 'text-orange-900');
-    modifiedContent = modifiedContent.replace(/text-gray-800/g, 'text-orange-800');
+    // Replace Tailwind text classes with CSS variables
+    modifiedContent = modifiedContent.replace(/text-black/g, 'text-text');
+    modifiedContent = modifiedContent.replace(/text-gray-900/g, 'text-text');
+    modifiedContent = modifiedContent.replace(/text-gray-800/g, 'text-text');
   }
   
   return modifiedContent;
@@ -2053,107 +2711,7 @@ function removeRedundantInlineStyles(content: string): string {
   return modifiedContent;
 }
 
-/**
- * Fix array props with Thai text
- */
-function fixArrayProps(content: string): string {
-  let modifiedContent = content;
-  
-  // Fix Thai text in array props
-  const thaiArrayRegex = /(\w+)=\{\[([^\]]*[\u0E00-\u0E7F][^\]]*)\]\}/g;
-  modifiedContent = modifiedContent.replace(thaiArrayRegex, (match, propName, arrayContent) => {
-    if (propName === 'columns') {
-      // Convert Thai array to English object structure
-      const thaiItems = arrayContent.match(/"([^"]*[\u0E00-\u0E7F][^"]*)"/g);
-      if (thaiItems) {
-        const englishItems = thaiItems.map((item: any) => {
-          const thaiText = item.replace(/"/g, '');
-          const englishKey = thaiText.toLowerCase().replace(/[^\w]/g, '_');
-          return `{ title: "${thaiText}", links: ["${englishKey}"] }`;
-        });
-        return `${propName}={[${englishItems.join(', ')}]}`;
-      }
-    }
-    return match;
-  });
-  
-  // Fix Thai text in object props
-  const thaiObjectRegex = /(\w+)=\{\{\s*([^}]*[\u0E00-\u0E7F][^}]*)\s*\}\}/g;
-  modifiedContent = modifiedContent.replace(thaiObjectRegex, (match, propName, objectContent) => {
-    if (propName === 'newsletter') {
-      // Convert Thai object to English
-      const thaiProps = objectContent.match(/(\w+):\s*"([^"]*[\u0E00-\u0E7F][^"]*)"/g);
-      if (thaiProps) {
-        let englishObject = objectContent;
-        thaiProps.forEach((prop: any) => {
-          const [key, value] = prop.split(':').map((s: string) => s.trim());
-          const englishValue = value.replace(/"/g, '').toLowerCase().replace(/[^\w]/g, '_');
-          englishObject = englishObject.replace(prop, `${key}: "${englishValue}"`);
-        });
-        return `${propName}={${englishObject}}`;
-      }
-    }
-    return match;
-  });
-  
-  // Fix Thai text in socialLinks array
-  const socialLinksRegex = /socialLinks=\{\[([^\]]*[\u0E00-\u0E7F][^\]]*)\]\}/g;
-  modifiedContent = modifiedContent.replace(socialLinksRegex, (match, arrayContent) => {
-    const thaiItems = arrayContent.match(/\{[^}]*[\u0E00-\u0E7F][^}]*\}/g);
-    if (thaiItems) {
-      const englishItems = thaiItems.map((item: any) => {
-        // Convert Thai platform names to English
-        let englishItem = item;
-        englishItem = englishItem.replace(/platform:\s*"([^"]*[\u0E00-\u0E7F][^"]*)"/g, 'platform: "Facebook"');
-        return englishItem;
-      });
-      return `socialLinks={[${englishItems.join(', ')}]}`;
-    }
-    return match;
-  });
-  
-  // Fix invalid JSX expressions
-  const invalidJSXRegex = /socialLinks=\{\{footer\.socialLinks\}\}/g;
-  modifiedContent = modifiedContent.replace(invalidJSXRegex, 'socialLinks={[{ platform: "Facebook", url: "https://facebook.com" }, { platform: "Instagram", url: "https://instagram.com" }]}');
-  
-  // Fix malformed array props
-  const malformedArrayRegex = /columns=\{\[([^\]]*)\]\},\{([^}]*)\},\{([^}]*)\}\]/g;
-  modifiedContent = modifiedContent.replace(malformedArrayRegex, (match, firstArray, secondObj, thirdObj) => {
-    // Clean up the malformed structure
-    const cleanFirstArray = firstArray.replace(/[^\w\s"',:\[\]]/g, '');
-    const cleanSecondObj = secondObj.replace(/[^\w\s"',:]/g, '');
-    const cleanThirdObj = thirdObj.replace(/[^\w\s"',:]/g, '');
-    
-    return `columns={[${cleanFirstArray}, {${cleanSecondObj}}, {${cleanThirdObj}}]}`;
-  });
-  
-  return modifiedContent;
-}
 
-/**
- * Fix image paths
- */
-function fixImagePaths(content: string): string {
-  let modifiedContent = content;
-  
-  // Fix placeholder image paths
-  const imagePathRegex = /src="path_to_image\.jpg"/g;
-  modifiedContent = modifiedContent.replace(imagePathRegex, 'src="/images/hero-image.jpg"');
-  
-  // Fix other placeholder paths
-  const placeholderPathRegex = /src="path\/to\/image\.jpg"/g;
-  modifiedContent = modifiedContent.replace(placeholderPathRegex, 'src="/images/hero-image.jpg"');
-  
-  // Fix logo placeholder
-  const logoPathRegex = /logoUrl="logo_url_here"/g;
-  modifiedContent = modifiedContent.replace(logoPathRegex, 'logoUrl="/images/logo.png"');
-  
-  // Fix template variables
-  const templateVarRegex = /logoUrl="\{\{header\.logoUrl\}\}"/g;
-  modifiedContent = modifiedContent.replace(templateVarRegex, 'logoUrl="/images/logo.png"');
-  
-  return modifiedContent;
-}
 
 /**
  * Apply wording customizations with complete template context
@@ -2293,136 +2851,11 @@ WRONG examples (DO NOT return these):
   }
   
   // Fallback to original applyWording
-  return await applyWording(content, wording);
+  return await applyWordingWithCompleteContext(content, wording, {}, '');
 }
 
 // ❌ REMOVED: applyWordingWithContext - replaced by applyWordingWithCompleteContext
 
-/**
- * Apply wording customizations to file content using LLM
- */
-async function applyWording(content: string, wording: any): Promise<string> {
-  let modifiedContent = content;
-  
-  // Use LLM for intelligent wording customization
-  if (wording && Object.keys(wording).length > 0) {
-    try {
-      const { LLMAdapter } = await import('../../orchestrator/adapters/llmAdapter');
-      const llmAdapter = new LLMAdapter();
-      await llmAdapter.initialize();
-      
-      const prompt = `
-You are a content writer and UX expert. Customize the wording in this React component based on the requirements:
-
-Wording Requirements:
-${JSON.stringify(wording, null, 2)}
-
-Component Code:
-\`\`\`tsx
-${content}
-\`\`\`
-
-Instructions:
-1. Replace all placeholder text with appropriate Thai content
-2. Use wording from the requirements above
-3. Make content relevant to grilled pork business (หมูปิ้ง, อาหาร, เมนู, สั่งซื้อ, etc.)
-4. Keep the same React structure and functionality
-5. Use proper Thai language for food business
-6. Replace template placeholders like {{home.heroTitle}} with actual content
-7. For Route elements, ensure proper path and element attributes
-8. For component props, use appropriate English attribute names
-
-CRITICAL JSX SYNTAX RULES - FOLLOW EXACTLY:
-9. NEVER use Thai text as attribute names - ONLY use English attribute names
-10. Thai text must ONLY appear as VALUES inside quotes
-11. CORRECT: <Header brandName="ร้านค้าออนไลน์" tagline="ยินดีต้อนรับ" />
-12. WRONG: <Header ร้านค้าออนไลน์="ร้านค้าออนไลน์" tagline="ยินดีต้อนรับ" />
-13. CORRECT: <Home title="ยินดีต้อนรับ" subtitle="หมูปิ้งอร่อย" />
-14. WRONG: <Home ยินดีต้อนรับ="ยินดีต้อนรับ" หมูปิ้งอร่อย="หมูปิ้งอร่อย" />
-
-CRITICAL ROUTE SYNTAX RULES:
-15. Routes MUST have proper path and element attributes
-16. CORRECT: <Route path="/" element={<Home />} />
-17. WRONG: <Route title="..." subtitle="..." />} />
-18. CORRECT: <Route path="/about" element={<About />} />
-19. WRONG: <Route />} />
-
-CRITICAL TYPESCRIPT INTERFACE RULES - FOLLOW EXACTLY:
-20. ALL interface properties MUST use English names only
-21. CORRECT: interface Props { brandName: string; title: string; subtitle: string; }
-22. WRONG: interface Props { ร้านค้าออนไลน์: string; ยินดีต้อนรับ: string; }
-
-CRITICAL COMPONENT PROPS RULES - FOLLOW EXACTLY:
-23. ALL component destructuring MUST use English names only
-24. CORRECT: const Component = ({ brandName, title, subtitle }) => { return <h1>{brandName}</h1>; }
-25. WRONG: const Component = ({ ร้านค้าออนไลน์, ยินดีต้อนรับ }) => { return <h1>{ร้านค้าออนไลน์}</h1>; }
-
-CRITICAL VALIDATION:
-26. If you see ANY Thai text as an attribute name, you are doing it WRONG
-27. If you see ANY Thai text in interface property names, you are doing it WRONG
-28. If you see ANY Thai text in destructuring parameters, you are doing it WRONG
-29. If you see Route elements without proper path/element attributes, you are doing it WRONG
-
-CRITICAL: You must return ONLY the React component code. Do NOT return JSON, explanations, or any other format. Start with "import React" and end with "export default". No markdown code blocks.
-
-Example of correct response:
-import React from 'react';
-const Component = () => { return <div>content</div>; };
-export default Component;
-
-WRONG examples (DO NOT return these):
-- {"success": true, "plan": {...}}
-- Any JSON format
-- Any explanations or markdown
-- Any task planning format
-`;
-
-      const response = await llmAdapter.callLLM(prompt, {
-        model: 'gpt-4o-mini',
-        temperature: 0.9,
-        maxTokens: 12000,
-        maxCompletionTokens: 12000,
-      });
-      
-      if (response && response.content && response.content.trim()) {
-        modifiedContent = response.content.trim();
-        console.log('✍️ Applied LLM-based wording customization');
-        return modifiedContent;
-      }
-    } catch (error) {
-      console.warn('⚠️ LLM wording failed, falling back to pattern matching:', error);
-    }
-  }
-  
-  // Common wording replacements
-  const wordingMap = {
-    'Welcome to our store': wording.title || 'Welcome to our store',
-    'Shop Now': wording.cta || 'Shop Now',
-    'Learn More': wording.learnMore || 'Learn More',
-    'Contact Us': wording.contact || 'Contact Us',
-    'About Us': wording.about || 'About Us',
-    'Our Products': wording.products || 'Our Products',
-    'Our Services': wording.services || 'Our Services',
-    // Template placeholders
-    '{{home.heroTitle}}': wording.heroTitle || '{{home.heroTitle}}',
-    '{{home.heroSubtitle}}': wording.heroSubtitle || '{{home.heroSubtitle}}',
-    '{{home.ctaLabel}}': wording.ctaLabel || '{{home.ctaLabel}}',
-    '{{home.feature1.title}}': wording.feature1Title || '{{home.feature1.title}}',
-    '{{home.feature1.text}}': wording.feature1Text || '{{home.feature1.text}}',
-    '{{home.feature2.title}}': wording.feature2Title || '{{home.feature2.title}}',
-    '{{home.feature2.text}}': wording.feature2Text || '{{home.feature2.text}}',
-    '{{home.feature3.title}}': wording.feature3Title || '{{home.feature3.title}}',
-    '{{home.feature3.text}}': wording.feature3Text || '{{home.feature3.text}}'
-  };
-  
-  Object.entries(wordingMap).forEach(([original, replacement]) => {
-    if (original !== replacement) {
-      modifiedContent = modifiedContent.replace(new RegExp(original, 'g'), replacement);
-    }
-  });
-  
-  return modifiedContent;
-}
 
 /**
  * Get brand name from Orchestrator data (no hardcode)
@@ -2513,26 +2946,37 @@ function applyTemplatePlaceholders(content: string, customizations: any): string
   // Use content from Orchestrator (no duplication)
   const dynamicContent = generateContentFromOrchestrator(customizations);
   
-  // Create placeholders from dynamic content
+  // Escape function for JSX content
+  const escapeForJSX = (str: string): string => {
+    if (typeof str !== 'string') return str;
+    return str
+      .replace(/\\/g, '\\\\')  // Escape backslashes
+      .replace(/"/g, '\\"')    // Escape quotes
+      .replace(/\n/g, '\\n')   // Escape newlines
+      .replace(/\r/g, '\\r')   // Escape carriage returns
+      .replace(/\t/g, '\\t');  // Escape tabs
+  };
+
+  // Create placeholders from dynamic content with proper escaping
   const placeholders = {
-    '{{home.heroTitle}}': dynamicContent.heroTitle,
-    '{{home.heroSubtitle}}': dynamicContent.heroSubtitle,
-    '{{home.ctaLabel}}': dynamicContent.ctaLabel,
-    '{{home.feature1.title}}': dynamicContent.feature1.title,
-    '{{home.feature1.text}}': dynamicContent.feature1.text,
-    '{{home.feature2.title}}': dynamicContent.feature2.title,
-    '{{home.feature2.text}}': dynamicContent.feature2.text,
-    '{{home.feature3.title}}': dynamicContent.feature3.title,
-    '{{home.feature3.text}}': dynamicContent.feature3.text,
-    '{{products.title}}': dynamicContent.products.title,
-    '{{products.subtitle}}': dynamicContent.products.subtitle,
-    '{{contact.title}}': dynamicContent.contact.title,
-    '{{contact.subtitle}}': dynamicContent.contact.subtitle,
-    '{{about.title}}': dynamicContent.about.title,
-    '{{about.subtitle}}': dynamicContent.about.subtitle,
+    '{{home.heroTitle}}': escapeForJSX(dynamicContent.heroTitle),
+    '{{home.heroSubtitle}}': escapeForJSX(dynamicContent.heroSubtitle),
+    '{{home.ctaLabel}}': escapeForJSX(dynamicContent.ctaLabel),
+    '{{home.feature1.title}}': escapeForJSX(dynamicContent.feature1.title),
+    '{{home.feature1.text}}': escapeForJSX(dynamicContent.feature1.text),
+    '{{home.feature2.title}}': escapeForJSX(dynamicContent.feature2.title),
+    '{{home.feature2.text}}': escapeForJSX(dynamicContent.feature2.text),
+    '{{home.feature3.title}}': escapeForJSX(dynamicContent.feature3.title),
+    '{{home.feature3.text}}': escapeForJSX(dynamicContent.feature3.text),
+    '{{products.title}}': escapeForJSX(dynamicContent.products.title),
+    '{{products.subtitle}}': escapeForJSX(dynamicContent.products.subtitle),
+    '{{contact.title}}': escapeForJSX(dynamicContent.contact.title),
+    '{{contact.subtitle}}': escapeForJSX(dynamicContent.contact.subtitle),
+    '{{about.title}}': escapeForJSX(dynamicContent.about.title),
+    '{{about.subtitle}}': escapeForJSX(dynamicContent.about.subtitle),
     // ✅ Add Footer placeholders
-    '{{header.brandName}}': dynamicContent.brandName || 'ร้านค้าออนไลน์',
-    '{{header.tagline}}': dynamicContent.tagline || 'ยินดีต้อนรับสู่ร้านค้าออนไลน์',
+    '{{header.brandName}}': escapeForJSX(dynamicContent.brandName || 'ร้านค้าออนไลน์'),
+    '{{header.tagline}}': escapeForJSX(dynamicContent.tagline || 'ยินดีต้อนรับสู่ร้านค้าออนไลน์'),
     '{{footer.columns}}': `{${JSON.stringify(dynamicContent.footerColumns || [
       { title: "สินค้า", links: ["หมูปิ้ง", "น้ำจิ้ม", "ข้าวเหนียว"] },
       { title: "บริการ", links: ["จัดส่ง", "ติดต่อ", "เกี่ยวกับเรา"] },
@@ -2643,10 +3087,10 @@ async function processTemplateSelection(task: any, startTime: number): Promise<C
     
     // Get available templates first
     const availableTemplates = await getAvailableTemplates();
-    const supportedCategories = getSupportedTemplateCategories();
+    // const supportedCategories = getSupportedTemplateCategories(); // Removed unused function
     
     console.log('📋 Available templates:', availableTemplates.map(t => ({ key: t.key, category: t.category })));
-    console.log('🎯 Requested template type:', templateType, '→', supportedCategories.find(c => c.projectType === templateType));
+    console.log('🎯 Requested template type:', templateType);
     
     // Select template from database with enhanced customizations
     const template = await selectTemplateFromDatabase(templateType, enhancedCustomizations);
@@ -3358,11 +3802,12 @@ async function createComponent(specs: any): Promise<any> {
  */
 function generateComponentCode(specs: any): string {
   const { name, type, props, features, styling } = specs;
+  const isTypeScript = features.includes('typescript');
   
-  // Generate TypeScript React component
+  // Generate React component
   let code = `import React from 'react';\n`;
   
-  if (features.includes('typescript')) {
+  if (isTypeScript) {
     code += `\ninterface ${name}Props {\n`;
     props.forEach((prop: string) => {
       const [propName, propType] = prop.split(': ');
@@ -3372,18 +3817,30 @@ function generateComponentCode(specs: any): string {
   }
   
   if (type === 'functional') {
+    if (isTypeScript) {
     code += `const ${name}: React.FC<${name}Props> = ({ `;
+    } else {
+      code += `function ${name}({ `;
+    }
     code += props.map((prop: string) => prop.split(': ')[0]).join(', ');
-    code += ` }) => {\n`;
+    code += ` }) {\n`;
     code += `  return (\n`;
     code += `    <div className="${styling === 'tailwind' ? 'p-4 bg-white rounded-lg shadow-md' : 'component'}">\n`;
     code += `      <h3>${name}</h3>\n`;
     code += `      {/* Component content */}\n`;
     code += `    </div>\n`;
     code += `  );\n`;
+    if (isTypeScript) {
     code += `};\n\n`;
   } else {
+      code += `}\n\n`;
+    }
+  } else {
+    if (isTypeScript) {
     code += `class ${name} extends React.Component<${name}Props> {\n`;
+    } else {
+      code += `class ${name} extends React.Component {\n`;
+    }
     code += `  render() {\n`;
     code += `    return (\n`;
     code += `      <div className="${styling === 'tailwind' ? 'p-4 bg-white rounded-lg shadow-md' : 'component'}">\n`;
@@ -3759,7 +4216,7 @@ function generateCustomizedCSS(customizations: any): string {
  * Normalize URL to ensure proper protocol and format
  */
 function normalizeUrl(url: string): string {
-  if (!url) return 'http://localhost:3000';
+  if (!url) return 'https://localhost:3000';
   
   // Remove trailing slash
   url = url.replace(/\/$/, '');
@@ -3770,8 +4227,8 @@ function normalizeUrl(url: string): string {
     if (url.includes('vercel.app') || url.includes('vercel.com')) {
       url = `https://${url}`;
     } else {
-      // For localhost, use http
-      url = `http://${url}`;
+      // Default to https for security (reduces mixed content issues)
+      url = `https://${url}`;
     }
   }
   
