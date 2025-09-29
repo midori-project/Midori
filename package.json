@@ -9,7 +9,12 @@
     "lint": "eslint",
     "ai:validate": "node scripts/validate-ai-config.js",
     "ai:test": "npm run ai:validate && echo 'AI agent tests would run here'",
-    "ai:dev": "echo 'AI agent dev server would start here'"
+    "ai:dev": "echo 'AI agent dev server would start here'",
+    "test:template": "ts-node src/template-system/tests/template-system-test.ts",
+    "test:template:single": "ts-node src/template-system/tests/template-system-test.ts",
+    "test:template:ai": "ts-node src/template-system/tests/template-system-test.ts ai-content",
+    "test:template:tailwind": "ts-node src/template-system/tests/template-system-test.ts tailwind-ai",
+    "test:template:placeholder": "ts-node src/template-system/tests/template-system-test.ts placeholder-replacer"
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.20.0",

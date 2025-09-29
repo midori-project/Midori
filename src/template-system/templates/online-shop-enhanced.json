@@ -1,0 +1,153 @@
+{
+  "key": "online-shop-enhanced",
+  "label": "Online Shop Enhanced Template",
+  "category": "e-commerce",
+  "meta": {
+    "description": "Template ร้านค้าออนไลน์ที่ครบถ้วน พร้อม placeholder support สำหรับ AI filling",
+    "engine": "react-vite-tailwind",
+    "status": "published",
+    "author": "Midori Team",
+    "versioningPolicy": "semver",
+    "previewScreenshot": "https://via.placeholder.com/800x600/3b82f6/ffffff?text=Online+Shop+Template"
+  },
+  "tags": ["e-commerce", "react", "tailwind", "placeholder", "ai-ready"],
+  "initialVersion": {
+    "version": 1,
+    "semver": "1.0.0",
+    "status": "published",
+    "sourceFiles": [
+      {
+        "path": "package.json",
+        "type": "config",
+        "encoding": "utf8",
+        "content": "{\n  \"name\": \"online-shop\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"dev\": \"vite --host 0.0.0.0 --port 5173\",\n    \"build\": \"vite build\",\n    \"preview\": \"vite preview --host 0.0.0.0 --port 5173\"\n  },\n  \"dependencies\": {\n    \"react\": \"^18.2.0\",\n    \"react-dom\": \"^18.2.0\",\n    \"react-router-dom\": \"^6.14.0\",\n    \"axios\": \"^1.3.0\"\n  },\n  \"devDependencies\": {\n    \"vite\": \"^4.5.0\",\n    \"@vitejs/plugin-react\": \"^3.1.0\",\n    \"typescript\": \"^5.0.0\",\n    \"tailwindcss\": \"^3.4.0\",\n    \"postcss\": \"^8.4.0\",\n    \"autoprefixer\": \"^10.4.0\"\n  }\n}"
+      },
+      {
+        "path": "src/main.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport { BrowserRouter } from 'react-router-dom';\nimport App from './App';\nimport './index.css';\n\nconst rootElement = document.getElementById('root');\nif (!rootElement) throw new Error('Failed to find the root element');\n\nconst root = ReactDOM.createRoot(rootElement);\nroot.render(\n  <React.StrictMode>\n    <BrowserRouter>\n      <App />\n    </BrowserRouter>\n  </React.StrictMode>\n);"
+      },
+      {
+        "path": "src/App.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React from 'react';\nimport { Routes, Route } from 'react-router-dom';\nimport Header from './components/Header';\nimport Footer from './components/Footer';\nimport Home from './pages/Home';\nimport About from './pages/About';\nimport Contact from './pages/Contact';\nimport Products from './pages/Products';\nimport ProductDetail from './pages/ProductDetail';\nimport Cart from './pages/Cart';\nimport Checkout from './pages/Checkout';\nimport NotFound from './pages/NotFound';\n\nconst App: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <Header \n        brandName=\"{{header.brandName}}\" \n        tagline=\"{{header.tagline}}\" \n        logoUrl=\"{{header.logoUrl}}\"\n      />\n      <main className=\"<tw/>\">\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/about\" element={<About />} />\n          <Route path=\"/contact\" element={<Contact />} />\n          <Route path=\"/products\" element={<Products />} />\n          <Route path=\"/products/:slug\" element={<ProductDetail />} />\n          <Route path=\"/cart\" element={<Cart />} />\n          <Route path=\"/checkout\" element={<Checkout />} />\n          <Route path=\"*\" element={<NotFound />} />\n        </Routes>\n      </main>\n      <Footer \n        columns={{footer.columns}} \n        newsletter={{footer.newsletter}} \n        brandName=\"{{header.brandName}}\"\n        socialLinks={{footer.socialLinks}}\n      />\n    </div>\n  );\n};\n\nexport default App;"
+      },
+      {
+        "path": "src/index.css",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n@layer base {\n  html { \n    font-size: <data key=\"typography.baseFontSize\"/>px; \n    line-height: 1.5; \n    color: #111827; \n    background-color: <data key=\"theme.backgroundColor\"/>; \n  }\n  body { \n    font-family: <data key=\"typography.fontFamily\"/>, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; \n    margin: 0; \n    padding: 0; \n  }\n  h1, h2, h3, h4, h5, h6 { margin: 0; font-weight: 700; }\n  p { margin: 0; }\n}\n\n@layer components {\n  .btn { @apply px-4 py-2 rounded-lg text-white <tw/> transition duration-300 ease-in-out; }\n  .btn-secondary { @apply px-4 py-2 rounded-lg border-2 <tw/> transition duration-300 ease-in-out; }\n  .card { @apply bg-white shadow-md rounded-lg p-6 mb-4; }\n  .header { @apply <tw/>; }\n  .footer { @apply <tw/> text-gray-200 p-6 text-center; }\n  .container { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }\n  .section { @apply py-12 lg:py-16; }\n  .heading { @apply text-3xl lg:text-4xl font-bold mb-6 text-center; }\n  .subheading { @apply text-xl text-gray-600 mb-8 text-center max-w-3xl mx-auto; }\n}"
+      },
+      {
+        "path": "src/pages/Home.tsx",
+        "type": "code",
+        "encoding": "utf8",
+        "content": "import React from 'react';\nimport { Link } from 'react-router-dom';\n\nconst Home: React.FC = () => {\n  return (\n    <div className=\"<tw/>\">\n      <div className=\"container\">\n        {/* Hero Section */}\n        <section className=\"section\">\n          <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12 items-center\">\n            <div>\n              <h1 className=\"heading text-left\"><text/></h1>\n              <p className=\"subheading text-left\"><text/></p>\n              <div className=\"flex flex-col sm:flex-row gap-4 mt-8\">\n                <Link to=\"/products\" className=\"btn\"><text/></Link>\n                <Link to=\"/about\" className=\"btn-secondary\"><text/></Link>\n              </div>\n            </div>\n            <div className=\"relative\">\n              <img src=\"<img/>\" alt=\"<text/>\" className=\"w-full h-96 object-cover rounded-lg shadow-lg\" />\n            </div>\n          </div>\n        </section>\n\n        {/* Features Section */}\n        <section className=\"section bg-gray-50\">\n          <div className=\"container\">\n            <h2 className=\"heading\"><text/></h2>\n            <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n              <div className=\"card text-center\">\n                <div className=\"<tw/> mb-4\">\n                  <text/>\n                </div>\n                <h3 className=\"text-xl font-semibold mb-2\"><text/></h3>\n                <p className=\"text-gray-600\"><text/></p>\n              </div>\n            </div>\n          </div>\n        </section>\n\n        {/* CTA Section */}\n        <section className=\"section\">\n          <div className=\"container text-center\">\n            <h2 className=\"heading\"><text/></h2>\n            <p className=\"subheading\"><text/></p>\n            <Link to=\"/contact\" className=\"btn mt-8\"><text/></Link>\n          </div>\n        </section>\n      </div>\n    </div>\n  );\n};\n\nexport default Home;"
+      }
+    ],
+    "slots": {
+      "header": {
+        "type": "object",
+        "component": "Header",
+        "fields": [
+          { "key": "brandName", "type": "text", "required": true, "validators": [{ "kind": "maxLength", "value": 40 }] },
+          { "key": "tagline", "type": "text", "validators": [{ "kind": "maxLength", "value": 80 }] },
+          { "key": "logoUrl", "type": "image", "minWidth": 200, "aspectRatio": "3:1" }
+        ],
+        "style": {
+          "allowedClasses": {
+            "header": ["bg-white", "bg-gray-50", "border-b", "shadow", "shadow-sm", "p-4", "p-6"],
+            "brand": ["text-2xl", "text-3xl", "font-bold", "text-gray-900"],
+            "nav": ["flex", "gap-3", "text-gray-700", "hover:text-gray-900"]
+          }
+        }
+      },
+      "home": {
+        "type": "object",
+        "component": "Home",
+        "fields": [
+          { "key": "heroTitle", "type": "text", "required": true, "validators": [{ "kind": "maxLength", "value": 60 }] },
+          { "key": "heroSubtitle", "type": "text", "validators": [{ "kind": "maxLength", "value": 160 }] },
+          { "key": "heroImage", "type": "image", "minWidth": 1200, "aspectRatio": "16:9" },
+          { "key": "ctaLabel", "type": "text", "default": "เริ่มช้อป" },
+          { "key": "feature1", "type": "object", "shape": { "title": { "type": "text" }, "text": { "type": "text" }, "icon": { "type": "text" } } },
+          { "key": "feature2", "type": "object", "shape": { "title": { "type": "text" }, "text": { "type": "text" }, "icon": { "type": "text" } } },
+          { "key": "feature3", "type": "object", "shape": { "title": { "type": "text" }, "text": { "type": "text" }, "icon": { "type": "text" } } }
+        ],
+        "style": {
+          "allowedClasses": {
+            "title": ["text-4xl", "text-5xl", "font-extrabold", "text-green-700", "text-gray-900"],
+            "cta": ["btn", "text-base", "text-lg", "px-6", "px-8", "py-2", "py-3"]
+          }
+        }
+      },
+      "footer": {
+        "type": "object",
+        "component": "Footer",
+        "fields": [
+          { "key": "columns", "type": "list", "itemShape": { "title": { "type": "text" }, "links": { "type": "list", "itemShape": { "label": { "type": "text" }, "href": { "type": "url" } } } } },
+          { "key": "newsletter", "type": "object", "shape": { "enabled": { "type": "boolean" } } },
+          { "key": "socialLinks", "type": "list", "itemShape": { "platform": { "type": "text" }, "url": { "type": "url" }, "icon": { "type": "text" } } }
+        ],
+        "style": {
+          "allowedClasses": {
+            "footer": ["bg-gray-900", "text-gray-200", "p-6", "p-8"],
+            "link": ["text-sm", "underline", "hover:text-white"]
+          }
+        }
+      },
+      "i18n": {
+        "type": "object",
+        "component": "i18n",
+        "fields": [
+          { "key": "currency", "type": "text", "default": "฿" },
+          { "key": "language", "type": "text", "default": "th" },
+          { "key": "commonTexts", "type": "object", "shape": { "addToCart": { "type": "text" }, "buyNow": { "type": "text" }, "search": { "type": "text" }, "filter": { "type": "text" } } }
+        ]
+      },
+      "theme": {
+        "type": "object",
+        "component": "theme",
+        "fields": [
+          { "key": "primaryColor", "type": "text", "default": "sky-600" },
+          { "key": "accentColor", "type": "text", "default": "amber-400" },
+          { "key": "borderRadius", "type": "text", "default": "xl" },
+          { "key": "elevation", "type": "text", "default": "lg" },
+          { "key": "gridColumns", "type": "number", "default": 3 },
+          { "key": "fontFamily", "type": "text", "default": "inter" },
+          { "key": "imagery", "type": "text", "default": "modern clean" },
+          { "key": "tone", "type": "text", "default": "thai-casual" }
+        ]
+      }
+    },
+    "constraints": {
+      "a11y": { "contrast": "AA", "minFontSizePx": 14, "ariaRequired": true, "keyboardNavigable": true },
+      "layout": { "breakpoints": ["sm", "md", "lg"], "containerMaxWidth": 1200, "minTapTargetPx": 44 },
+      "content": { "seo": { "titleMaxLen": 60, "descMaxLen": 160, "requireH1": true, "metaTags": ["og:title", "og:description"] } },
+      "assets": {
+        "productList.products.imageUrl": { "minWidth": 600, "aspectRatio": "4:3" },
+        "product.product.imageUrl": { "minWidth": 1200, "aspectRatio": "16:9" }
+      },
+      "performance": { "maxImageKb": 700, "maxCriticalCssKb": 180 },
+      "security": { "disallowInlineScript": true },
+      "i18n": { "noHardcodedText": false },
+      "code": { "tsc": true }
+    }
+  },
+  "placeholderConfig": {
+    "hasPlaceholders": true,
+    "placeholderTypes": {
+      "tw": 45,
+      "text": 28,
+      "img": 12,
+      "data": 8
+    },
+    "themeMapping": {
+      "modern": "primary:sky-600; accent:amber-400; radius:xl; elevation:lg",
+      "cozy": "primary:emerald-600; accent:orange-400; radius:lg; elevation:md",
+      "minimal": "primary:gray-600; accent:blue-400; radius:sm; elevation:sm"
+    }
+  }
+}
