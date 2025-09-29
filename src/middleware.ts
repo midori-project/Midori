@@ -23,6 +23,9 @@ const publicApiRoutes = [
   '/api/preview/daytona', // เพิ่ม Daytona preview API
   '/api/projects', // เพิ่ม projects API (สำหรับ preview)
   '/api/mock-website',
+  '/api/deploy-mock', // เพิ่ม mock deployment API
+  '/api/deploy-website/mock', // เพิ่ม mock-to-vercel deployment API
+  '/api/vercel-test', // เพิ่ม Vercel connection test API
 ];
 
 // Admin routes ที่ต้อง admin permission

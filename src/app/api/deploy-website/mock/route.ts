@@ -61,6 +61,32 @@ export async function POST(request: NextRequest) {
       projectName: subdomain || `midori-mock-${deployment.id.slice(0, 8)}`
     });
 
+    // Test Vercel connection first
+    try {
+      await axios.get(
+        vercelTeamId 
+          ? `https://api.vercel.com/v2/teams/${vercelTeamId}`
+          : 'https://api.vercel.com/v2/user',
+        {
+          headers: {
+            'Authorization': `Bearer ${vercelToken}`,
+          }
+        }
+      );
+      console.log('✅ Vercel connection test passed');
+    } catch (connectionError: any) {
+      console.error('❌ Vercel connection test failed:', connectionError.response?.data || connectionError.message);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Vercel connection failed. Please check your token and team settings.',
+          details: connectionError.response?.data?.error || connectionError.message,
+          suggestion: 'Try testing your Vercel connection with GET /api/vercel-test'
+        },
+        { status: connectionError.response?.status || 500 }
+      );
+    }
+
     const filesPayload = files.reduce((acc, file) => {
       acc[file.path] = file.content;
       return acc;
