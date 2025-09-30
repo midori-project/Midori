@@ -122,17 +122,55 @@ async function installDeps(sandbox: any) {
 async function startDevServer(sandbox: any, cwd = '.') {
   const sessionId = 'dev'
   await sandbox.process.createSession(sessionId)
+  
+  // ✅ Check if package.json exists and has correct scripts
+  const packageCheck = await sandbox.process.executeSessionCommand(sessionId, {
+    command: `cd ${cwd} && test -f package.json && echo "haspackage" || echo "nopackage"`,
+    runAsync: false,
+  })
+  
+  if (!(packageCheck.stdout || packageCheck.output || '').includes('haspackage')) {
+    throw new Error('package.json not found in project directory')
+  }
+  
+  // ✅ Check if dev script exists
+  const scriptCheck = await sandbox.process.executeSessionCommand(sessionId, {
+    command: `cd ${cwd} && grep -q '"dev"' package.json && echo "hasdev" || echo "nodev"`,
+    runAsync: false,
+  })
+  
+  if (!(scriptCheck.stdout || scriptCheck.output || '').includes('hasdev')) {
+    throw new Error('dev script not found in package.json')
+  }
+  
   const cmd = `bash -lc "cd ${cwd} && npm run dev -- --host 0.0.0.0 --port 5173"`
   const resp = await sandbox.process.executeSessionCommand(sessionId, {
     command: cmd,
     runAsync: true,
   })
   console.log('[dev spawn]', resp)
+  
+  // ✅ Wait a bit for the server to start
+  await new Promise(resolve => setTimeout(resolve, 3000))
 }
 
 async function waitForReady(sandbox: any, maxAttempts = 20, delayMs = 2000) {
   const sessionId = 'probe'
   await sandbox.process.createSession(sessionId)
+  
+  // ✅ Check if dev server is running first
+  const devCheck = await sandbox.process.executeSessionCommand(sessionId, {
+    command: 'ps aux | grep "npm run dev" | grep -v grep || echo "notrunning"',
+    runAsync: false,
+  })
+  const isDevRunning = !(devCheck.stdout || devCheck.output || '').includes('notrunning')
+  console.log(`[ready] Dev server running: ${isDevRunning}`)
+  
+  if (!isDevRunning) {
+    console.log('[ready] Dev server not running, starting it...')
+    await startDevServer(sandbox, '.')
+  }
+  
   for (let i = 1; i <= maxAttempts; i++) {
     const port = await sandbox.process.executeSessionCommand(sessionId, {
       command: 'ss -lntp | grep :5173 || netstat -tlnp | grep :5173 || echo "noport"',
@@ -150,6 +188,24 @@ async function waitForReady(sandbox: any, maxAttempts = 20, delayMs = 2000) {
         return
       }
       console.log(`[ready] attempt ${i} port open, http=${code}`)
+      
+      // ✅ Check for build errors
+      const buildCheck = await sandbox.process.executeSessionCommand(sessionId, {
+        command: 'ps aux | grep "vite" | grep -v grep || echo "novite"',
+        runAsync: false,
+      })
+      const hasVite = !(buildCheck.stdout || buildCheck.output || '').includes('novite')
+      console.log(`[ready] Vite process running: ${hasVite}`)
+      
+      if (!hasVite) {
+        console.log('[ready] Vite not running, checking for errors...')
+        const errorCheck = await sandbox.process.executeSessionCommand(sessionId, {
+          command: 'cat package.json | grep -q "react" && echo "hasreact" || echo "noreact"',
+          runAsync: false,
+        })
+        console.log(`[ready] Package.json has React: ${(errorCheck.stdout || errorCheck.output || '').includes('hasreact')}`)
+      }
+      
       return // พอถือว่าพร้อม
     }
     console.log(`[ready] attempt ${i} waiting...`)
