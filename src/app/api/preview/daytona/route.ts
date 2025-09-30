@@ -128,7 +128,7 @@ class DaytonaCleanupService {
       return
     }
 
-    const daytona = new Daytona({ apiKey: daytonaConfig.apiKey })
+    const daytona = new Daytona({ apiKey: daytonaConfig.apiKey, baseUrl: daytonaConfig.baseUrl })
     const now = Date.now()
     const idleTimeout = 5 * 60 * 1000 // 5 นาที
     let cleanedCount = 0
@@ -387,7 +387,7 @@ async function waitForReady(sandbox: any, maxAttempts = 20, delayMs = 2000) {
 // ---------- Core ----------
 async function createDaytonaSandbox(): Promise<{ sandboxId: string; url?: string; token?: string; status: string }> {
   if (!daytonaConfig?.apiKey) throw new Error('Missing DAYTONA_API_KEY')
-  const daytona = new Daytona({ apiKey: daytonaConfig.apiKey })
+  const daytona = new Daytona({ apiKey: daytonaConfig.apiKey, baseUrl: daytonaConfig.baseUrl })
   const sandbox = await daytona.create({
     ...daytonaConfig.defaultSandboxConfig,
     public: true,
@@ -470,13 +470,13 @@ export async function GET(req: NextRequest) {
 
     const state = sandboxStates.get(sandboxId)
     if (state) {
-      // อัปเดต heartbeat
-      await updateSandboxStatus(sandboxId, state.status, state.previewUrl, state.previewToken, state.error)
-      return NextResponse.json(state)
+      // อัปเดต heartbeat แล้วคืนค่าที่อัปเดตจริง
+      const updated = await updateSandboxStatus(sandboxId, state.status, state.previewUrl, state.previewToken, state.error)
+      return NextResponse.json(updated)
     }
 
     // no state → ลองเช็คกับ Daytona
-    const daytona = new Daytona({ apiKey: daytonaConfig.apiKey! })
+    const daytona = new Daytona({ apiKey: daytonaConfig.apiKey!, baseUrl: daytonaConfig.baseUrl })
     const exists = await verifySandboxExists(daytona, sandboxId)
     if (!exists) return NextResponse.json({ error: 'Sandbox not found' }, { status: 404 })
     const fallback = await updateSandboxStatus(sandboxId, 'unknown')
@@ -496,7 +496,7 @@ export async function DELETE(req: NextRequest) {
 
     console.log(`🛑 [DELETE] Stopping sandbox: ${sandboxId}`)
 
-    const daytona = new Daytona({ apiKey: daytonaConfig.apiKey! })
+    const daytona = new Daytona({ apiKey: daytonaConfig.apiKey!, baseUrl: daytonaConfig.baseUrl })
     const s = await daytona.get(sandboxId)
     await s.delete() // ลบ sandbox จริง
     await updateSandboxStatus(sandboxId, 'stopped')

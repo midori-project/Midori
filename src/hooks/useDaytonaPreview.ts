@@ -1,7 +1,7 @@
 // hooks/useDaytonaPreview.ts
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 
 type Status = 'idle' | 'creating' | 'running' | 'stopped' | 'error'
 
@@ -18,15 +18,23 @@ export function useDaytonaPreview() {
   const lastHeartbeatRef = useRef<number>(0)
   const heartbeatAbortControllerRef = useRef<AbortController | null>(null)
 
-  const previewUrlWithToken =
-    previewUrl && previewToken
-      ? `${previewUrl}?DAYTONA_SANDBOX_AUTH_KEY=${encodeURIComponent(previewToken)}`
-      : previewUrl
+  const previewUrlWithToken = useMemo(() => {
+    if (!previewUrl) return undefined
+    if (!previewToken) return previewUrl
+    try {
+      const u = new URL(previewUrl)
+      u.searchParams.set('DAYTONA_SANDBOX_AUTH_KEY', previewToken)
+      return u.toString()
+    } catch {
+      const sep = previewUrl.includes('?') ? '&' : '?'
+      return `${previewUrl}${sep}DAYTONA_SANDBOX_AUTH_KEY=${encodeURIComponent(previewToken)}`
+    }
+  }, [previewUrl, previewToken])
 
   // Heartbeat function
   const sendHeartbeat = useCallback(async () => {
     // ป้องกันการยิง heartbeat ถ้าไม่ได้รันอยู่ หรือ interval ถูกยกเลิกแล้ว
-    if (!sandboxId || status !== 'running' || !heartbeatIntervalRef.current) return
+    if (!sandboxId || status !== 'running') return
 
     try {
       console.log(`💓 [FRONTEND] Sending heartbeat for sandbox: ${sandboxId}`)
