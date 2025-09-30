@@ -1,0 +1,54 @@
+{
+    "id": "restaurant.minimal.v1",
+    "category": "restaurant",
+    "version": 1,
+    "files": [
+      { "path": "Hero.tsx",   "kind": "tsx" },
+      { "path": "Navbar.tsx", "kind": "tsx" },
+      { "path": "theme.css",      "kind": "css" }
+    ],
+    "fields": {
+      "global.palette.primary":   { "type": "enum", "enum": ["blue","green","purple","pink","orange"], "required": true },
+      "global.palette.secondary": { "type": "enum", "enum": ["blue","green","purple","pink","orange"] },
+      "global.palette.bgTone":    { "type": "enum", "enum": ["50","100","200"], "default": "100" },
+      "global.tokens.radius":     { "type": "enum", "enum": ["6px","8px","10px"], "default": "8px" },
+      "global.tokens.spacing":    { "type": "enum", "enum": ["0.75rem","1rem","1.25rem"], "default": "1rem" },
+  
+      "Hero.heading":     { "type": "string", "max": 80,  "required": true },
+      "Hero.subheading":  { "type": "string", "max": 160, "required": true },
+      "Hero.ctaLabel":    { "type": "string", "max": 24,  "required": true },
+      "Hero.accentColor": { "type": "enum", "enum": ["primary","secondary"], "default": "primary" },
+  
+      "Navbar.brand":        { "type": "string", "min": 1, "required": true },
+      "Navbar.menu[].label": { "type": "string", "min": 1, "required": true },
+      "Navbar.menu[].href":  { "type": "string", "min": 1, "required": true }
+    },
+    "mapping": [
+      {
+        "file": "Hero.tsx",
+        "placeholders": {
+          "primary": "global.palette.primary",
+          "bgTone": "global.palette.bgTone",
+          "heading": "Hero.heading",
+          "subheading": "Hero.subheading",
+          "ctaLabel": "Hero.ctaLabel",
+          "accentColor": "Hero.accentColor"
+        }
+      },
+      {
+        "file": "Navbar.tsx",
+        "placeholders": {
+          "primary": "global.palette.primary",
+          "brand": "Navbar.brand",
+          "menuItems": "Navbar.menu"
+        }
+      },
+      {
+        "file": "theme.css",
+        "placeholders": {
+          "radius": "global.tokens.radius",
+          "spacing": "global.tokens.spacing"
+        }
+      }
+    ]
+  }
