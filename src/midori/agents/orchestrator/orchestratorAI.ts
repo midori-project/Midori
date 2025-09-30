@@ -802,13 +802,12 @@ export class OrchestratorAI {
   }) {
     // ใช้ model จาก LLMAdapter จริง ๆ
     const currentModel = this.llmAdapter.getCurrentModel();
-    const constraints = this.llmAdapter.getModelConstraints();
     
-    console.log(`🤖 Using model: ${currentModel}, constraints:`, constraints);
+    console.log(`🤖 Using model: ${currentModel}`);
     
-    // ถ้า model ต้องการ default temperature เท่านั้น
-    if (constraints.requiresDefaultTemperature) {
-      console.log(`⚠️ Model ${currentModel} requires default temperature, removing custom temperature`);
+    // ถ้าเป็น GPT-5 model ต้องใช้ temperature = 1 เท่านั้น
+    if (currentModel.includes('gpt-5')) {
+      console.log(`⚠️ Model ${currentModel} requires temperature = 1, removing custom temperature`);
       const { temperature, ...optionsWithoutTemp } = options;
       return optionsWithoutTemp; // ไม่ส่ง temperature parameter
     }

@@ -30,6 +30,9 @@ const adminRoutes = [
   '/api/admin',
 ];
 
+// Debug logging helper
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 /**
  * Auth Middleware สำหรับ Next.js 15
  * ตรวจสอบ authentication และ authorization
@@ -37,13 +40,10 @@ const adminRoutes = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Debug log
-  console.log('🔧 Middleware running for path:', pathname);
-  
   // Apply rate limiting first (before any other checks)
   const rateLimitResponse = rateLimitMiddleware(request);
   if (rateLimitResponse.status === 429) {
-    console.log('🚫 Rate limit exceeded for:', pathname);
+    console.warn('🚫 Rate limit exceeded for:', pathname);
     return securityHeadersMiddleware(rateLimitResponse);
   }
   
@@ -69,31 +69,28 @@ export async function middleware(request: NextRequest) {
   
   const isPublicApiRoute = publicApiRoutes.some(route => {
     if (route === '/api/projects') {
-      const matches = pathname.startsWith('/api/projects/') && pathname.endsWith('/preview');
-      console.log('🔍 Projects API check:', { pathname, route, matches });
-      return matches;
+      return pathname.startsWith('/api/projects/') && pathname.endsWith('/preview');
     }
     return pathname.startsWith(route);
   });
 
-  console.log('🔍 Path analysis:', { pathname, isPublicRoute, isPublicApiRoute, publicRoutes, publicApiRoutes });
-
   // Allow public routes
   if (isPublicRoute || isPublicApiRoute) {
-    console.log('✅ Public route allowed:', pathname);
+    if (isDevelopment) {
+      console.log('✅ Public route allowed:', pathname);
+    }
     const response = NextResponse.next();
     return securityHeadersMiddleware(response);
   }
 
   try {
-    console.log('🔐 Checking authentication for protected route:', pathname);
-    
     // ตรวจสอบ session จาก cookie (เช็คแค่ว่ามีหรือไม่)
     const sessionCookie = request.cookies.get(sessionConfig.cookieName);
-    console.log('🍪 Session cookie:', sessionCookie ? 'Found' : 'Not found');
     
     if (!sessionCookie?.value) {
-      console.log('❌ No session cookie - redirecting to login');
+      if (isDevelopment) {
+        console.log('❌ No session cookie - redirecting to login for:', pathname);
+      }
       
       if (pathname.startsWith('/api/')) {
         const response = NextResponse.json(
@@ -105,12 +102,9 @@ export async function middleware(request: NextRequest) {
       
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
-      console.log('🔄 Redirecting to:', loginUrl.toString());
       const response = NextResponse.redirect(loginUrl);
       return securityHeadersMiddleware(response);
     }
-    
-    console.log('✅ Session cookie found, allowing access');
     
     // หมายเหตุ: การตรวจสอบ session expiry จะทำใน client-side (SessionManager)
     // และใน API routes ที่ใช้ getCurrentSession() เพื่อไม่กระทบ middleware performance
@@ -140,7 +134,7 @@ export async function middleware(request: NextRequest) {
     return securityHeadersMiddleware(response);
 
   } catch (error) {
-    console.error('Middleware error:', error);
+    console.error('❌ Middleware error:', error);
     
     if (pathname.startsWith('/api/')) {
       const response = NextResponse.json(
