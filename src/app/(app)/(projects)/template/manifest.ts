@@ -103,6 +103,7 @@ export async function callLLMJson(prompt: string) {
     messages: [{ role: "user", content: prompt }],
   });
   const raw = resp.choices[0]?.message?.content ?? "{}";
+  console.log(raw);
   try { return JSON.parse(raw); } catch { return {}; }
 }
 
@@ -122,6 +123,9 @@ function serialize(ph: string, val: any, ctx: { primary: string; secondary: stri
     return val.map((m: any) =>
       `<li><a className="text-${ctx.primary}-700 hover:text-${ctx.primary}-900" href="${esc(m.href)}">${esc(m.label)}</a></li>`
     ).join("");
+  }
+  if (ph === "brandFirstChar" && typeof val === "string") {
+    return esc(val.charAt(0));
   }
   return esc(String(val));
 }
