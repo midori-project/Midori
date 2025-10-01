@@ -5,7 +5,7 @@ export default function Page() {
   const [files, setFiles] = useState<Record<string,string>|null>(null);
   const [keywords, setKeywords] = useState("fresh,organic,homemade");
   const [loading, setLoading] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
 
 
   const gen = async () => {
