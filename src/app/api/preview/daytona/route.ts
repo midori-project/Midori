@@ -451,7 +451,7 @@ async function createDaytonaSandbox(projectFiles?: ProjectFile[]): Promise<{ san
   
   console.log(`🏗️ Creating Daytona sandbox with ${projectFiles.length} files`);
   
-  const daytona = new Daytona({ apiKey: daytonaConfig.apiKey })
+ 
   const daytona = new Daytona({ apiKey: daytonaConfig.apiKey, baseUrl: daytonaConfig.baseUrl })
   const sandbox = await daytona.create({
     ...daytonaConfig.defaultSandboxConfig,
