@@ -449,6 +449,69 @@ async function createAllFiles(sandbox: any, files: ProjectFile[]) {
   console.log('[tree]\n', tree.stdout || tree.output || '')
 }
 
+async function updateFilesInSandbox(sandbox: any, files: ProjectFile[]) {
+  const sessionId = 'update-session'
+  await sandbox.process.createSession(sessionId)
+
+  let updatedCount = 0
+  const errors: string[] = []
+
+  console.log(`🔄 [UPDATE] Updating ${files.length} files in sandbox`)
+
+  // อัปเดตไฟล์ทีละไฟล์
+  for (const file of files) {
+    try {
+      // สร้าง directory ถ้าไม่มี
+      const dir = file.path.includes('/') ? file.path.slice(0, file.path.lastIndexOf('/')) : ''
+      if (dir) {
+        await sandbox.process.executeSessionCommand(sessionId, {
+          command: `mkdir -p "${dir}"`,
+          runAsync: false,
+        })
+      }
+
+      // เขียนไฟล์ใหม่ (base64 → decode ใน shell)
+      const b64 = Buffer.from(file.content).toString('base64')
+      const cmd = `echo "${b64}" | base64 -d > "${file.path}"`
+      const resp = await sandbox.process.executeSessionCommand(sessionId, {
+        command: cmd,
+        runAsync: false,
+      })
+      
+      if (resp.exitCode !== 0) {
+        const error = `Failed to update ${file.path}: ${resp.stderr || resp.output}`
+        console.error(`❌ [UPDATE] ${error}`)
+        errors.push(error)
+      } else {
+        console.log(`✅ [UPDATE] Updated file: ${file.path}`)
+        updatedCount++
+      }
+    } catch (error: any) {
+      const errorMsg = `Error updating ${file.path}: ${error.message}`
+      console.error(`❌ [UPDATE] ${errorMsg}`)
+      errors.push(errorMsg)
+    }
+  }
+
+  // แสดงโครงสร้างไฟล์หลังจากอัปเดต (debug)
+  const tree = await sandbox.process.executeSessionCommand(sessionId, {
+    command:
+      'find . -maxdepth 3 -type f \\( -name "*.ts" -o -name "*.tsx" -o -name "*.json" -o -name "*.html" -o -name "*.css" \\) | sed -n "1,50p"',
+    runAsync: false,
+  })
+  console.log('[update tree]\n', tree.stdout || tree.output || '')
+
+  if (errors.length > 0) {
+    console.warn(`⚠️ [UPDATE] ${errors.length} files failed to update:`, errors)
+  }
+
+  return {
+    updatedCount,
+    totalFiles: files.length,
+    errors
+  }
+}
+
 async function ensureReactPlugin(sandbox: any) {
   // กันเคสที่ package.json ใช้ '@vitejs/plugin-react' แต่ไม่ได้ติดตั้ง หรือเผลอใช้ 'vite-plugin-react'
   const sessionId = 'pkg-fix'
@@ -625,7 +688,7 @@ export async function OPTIONS() {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
       'X-Daytona-Skip-Preview-Warning': 'true',
@@ -730,6 +793,88 @@ export async function GET(req: NextRequest) {
   } catch (e: any) {
     console.error(`❌ [HEARTBEAT ERROR] ${e?.message}`)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
+  }
+}
+
+// อัปเดตไฟล์ใน sandbox ที่มีอยู่
+export async function PUT(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const sandboxId = searchParams.get('sandboxId')
+    if (!sandboxId) return NextResponse.json({ error: 'Missing sandboxId' }, { status: 400 })
+
+    console.log(`🔄 [PUT] Updating files in sandbox: ${sandboxId}`)
+
+    // Parse request body
+    const body = await req.json()
+    const { files, projectId } = body
+    
+    // Validate request
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      return NextResponse.json(
+        { error: 'No files provided. Please include a "files" array in request body.' }, 
+        { status: 400 }
+      )
+    }
+    
+    // Validate file structure
+    const invalidFiles = files.filter((file: any) => !file.path || !file.content)
+    if (invalidFiles.length > 0) {
+      return NextResponse.json(
+        { error: `Invalid file structure. All files must have "path" and "content" properties.` }, 
+        { status: 400 }
+      )
+    }
+
+    // Check if sandbox exists and is running
+    const state = sandboxStates.get(sandboxId)
+    if (!state) {
+      return NextResponse.json({ error: 'Sandbox not found in memory' }, { status: 404 })
+    }
+
+    if (state.status !== 'running') {
+      return NextResponse.json({ error: 'Sandbox is not running' }, { status: 400 })
+    }
+
+    // Verify sandbox exists on Daytona
+    const daytona = new Daytona(getDaytonaClient())
+    const sandboxExists = await verifySandboxExists(daytona, sandboxId)
+    
+    if (!sandboxExists) {
+      return NextResponse.json({ error: 'Sandbox not found on Daytona' }, { status: 404 })
+    }
+
+    // Get sandbox instance
+    const sandbox = await daytona.get(sandboxId)
+    
+    // Update files in sandbox
+    const updateResult = await updateFilesInSandbox(sandbox, files)
+    
+    // Update heartbeat
+    await updateSandboxStatus(sandboxId, 'running', state.previewUrl, state.previewToken)
+    
+    console.log(`✅ [PUT] Successfully updated ${updateResult.updatedCount}/${updateResult.totalFiles} files in sandbox: ${sandboxId}`)
+    
+    return NextResponse.json({
+      success: true,
+      updatedFiles: updateResult.updatedCount,
+      totalFiles: updateResult.totalFiles,
+      errors: updateResult.errors,
+      message: `Successfully updated ${updateResult.updatedCount} files`,
+      projectId
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'X-Daytona-Skip-Preview-Warning': 'true',
+      },
+    })
+    
+  } catch (e: any) {
+    console.error(`❌ [PUT ERROR] ${e?.message}`)
+    return NextResponse.json({ 
+      error: e?.message || 'Failed to update files',
+      details: e?.stack || 'No additional details'
+    }, { status: 500 })
   }
 }
 

@@ -83,10 +83,10 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
       // Send initial heartbeat
       sendHeartbeat()
       
-      // Set up interval (every 30 seconds)
+      // Set up interval (every 5 minutes)
       heartbeatIntervalRef.current = setInterval(() => {
         sendHeartbeat()
-      }, 30000)
+      }, 5 * 60 * 1000)
     } else {
       // Clear heartbeat when not running
       if (heartbeatIntervalRef.current) {
@@ -246,6 +246,65 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
     }
   }, [sandboxId])
 
+  const updateFiles = useCallback(async (newFiles: ProjectFile[]) => {
+    if (!sandboxId) {
+      console.log('❌ [FRONTEND] No sandbox to update')
+      throw new Error('No active sandbox to update')
+    }
+
+    if (status !== 'running') {
+      console.log('❌ [FRONTEND] Sandbox is not running')
+      throw new Error('Sandbox is not running')
+    }
+
+    if (!newFiles || newFiles.length === 0) {
+      console.log('❌ [FRONTEND] No files provided for update')
+      throw new Error('No files provided for update')
+    }
+
+    setLoading(true)
+    setError(undefined)
+    console.log(`🔄 [FRONTEND] Updating ${newFiles.length} files in sandbox: ${sandboxId}`)
+    
+    try {
+      const res = await fetch(`/api/preview/daytona?sandboxId=${encodeURIComponent(sandboxId)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          files: newFiles,
+          projectId 
+        })
+      })
+      
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to update files')
+      }
+      
+      console.log(`✅ [FRONTEND] Files updated successfully: ${data.updatedFiles} files`)
+      
+      // อัปเดต heartbeat หลังจากอัปเดตไฟล์สำเร็จ
+      lastHeartbeatRef.current = Date.now()
+      
+      return {
+        success: true,
+        updatedFiles: data.updatedFiles,
+        message: data.message || 'Files updated successfully'
+      }
+    } catch (e: any) {
+      console.error(`❌ [FRONTEND] File update failed:`, e)
+      setError(e?.message || 'Unexpected error')
+      return {
+        success: false,
+        error: e?.message || 'Unexpected error'
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [sandboxId, status, projectId])
+
   return {
     sandboxId,
     status,
@@ -256,6 +315,7 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
     loading,
     startPreview,
     stopPreview,
+    updateFiles,
     // Additional heartbeat info
     lastHeartbeat: lastHeartbeatRef.current,
     isHeartbeatActive: heartbeatIntervalRef.current !== null,
