@@ -1,7 +1,7 @@
 // app/api/preview/daytona/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { Daytona } from '@daytonaio/sdk'
-import { daytonaConfig } from '@/config/daytona'
+import { daytonaConfig, getDaytonaClient } from '@/config/daytona'
 // import testJson from '@/components/preview/test/test.json' // ✅ Remove hardcoded import
 
 // ใช้ Node APIs ได้
@@ -34,7 +34,7 @@ class DaytonaCleanupService {
   private static stoppedCleanupInterval: NodeJS.Timeout | null = null
   private static isRunning = false
 
-  static start(): void {
+  static async start(): Promise<void> {
     if (this.isRunning) {
       console.log('🧹 Daytona cleanup service already running')
       return
@@ -43,15 +43,18 @@ class DaytonaCleanupService {
     console.log('🚀 Starting Daytona cleanup service...')
     this.isRunning = true
 
+    // ✅ Sync กับ Daytona ก่อนเริ่ม cleanup
+    await this.syncWithDaytona()
+
     // Cleanup expired states ทุกชั่วโมง
     this.cleanupInterval = setInterval(() => {
       this.cleanupExpiredStates()
     }, 60 * 60 * 1000) // 1 hour
 
-    // Cleanup idle sandboxes ทุก 1 นาที
+    // Cleanup idle sandboxes ทุก 5 นาที
     this.idleCheckInterval = setInterval(() => {
       this.cleanupIdleSandboxes()
-    }, 60 * 1000) // 1 minute
+    }, 5 * 60 * 1000) // 5 minutes
 
     // Cleanup stopped sandboxes ทุกชั่วโมง
     this.stoppedCleanupInterval = setInterval(() => {
@@ -112,14 +115,6 @@ class DaytonaCleanupService {
   }
 
   static async cleanupIdleSandboxes(): Promise<void> {
-    // ตรวจสอบว่ามี sandbox ที่กำลังทำงานหรือไม่ก่อน
-    const runningSandboxes = Array.from(sandboxStates.values()).filter(s => s.status === 'running')
-    
-    // ถ้าไม่มี sandbox ที่กำลังทำงาน ให้ skip
-    if (runningSandboxes.length === 0) {
-      return // ไม่ log อะไร
-    }
-    
     const startTime = Date.now()
     console.log(`🧹 [IDLE CLEANUP] Starting idle sandboxes cleanup at ${new Date().toISOString()}`)
     
@@ -128,11 +123,35 @@ class DaytonaCleanupService {
       return
     }
 
-    const daytona = new Daytona({ apiKey: daytonaConfig.apiKey, baseUrl: daytonaConfig.baseUrl })
+    const daytona = new Daytona(getDaytonaClient())
+    
+    // ✅ เช็คจำนวน sandbox จาก Daytona แทน
+    let daytonaSandboxCount = 0
+    try {
+      const sandboxes = await daytona.list()
+      daytonaSandboxCount = sandboxes.length
+      console.log(`📊 [IDLE CLEANUP] Found ${daytonaSandboxCount} sandboxes on Daytona`)
+    } catch (error) {
+      console.error('❌ [IDLE CLEANUP] Failed to list sandboxes from Daytona:', error)
+      return
+    }
+    
+    // ถ้าไม่มี sandbox บน Daytona ให้ skip
+    if (daytonaSandboxCount === 0) {
+      console.log('⏭️ [IDLE CLEANUP] No sandboxes on Daytona, skipping cleanup')
+      return
+    }
     const now = Date.now()
     const idleTimeout = 5 * 60 * 1000 // 5 นาที
     let cleanedCount = 0
     let errorCount = 0
+
+    // ✅ แสดงข้อมูลใน state ทั้งหมด
+    console.log(`📊 [IDLE CLEANUP] Current sandbox states in memory:`)
+    for (const [sandboxId, state] of sandboxStates.entries()) {
+      console.log(`  - ${sandboxId}: status=${state.status}, lastHeartbeat=${state.lastHeartbeatAt ? new Date(state.lastHeartbeatAt).toISOString() : 'none'}, created=${state.createdAt ? new Date(state.createdAt).toISOString() : 'none'}`)
+    }
+    console.log(`📊 [IDLE CLEANUP] Total states in memory: ${sandboxStates.size}`)
 
     for (const [sandboxId, state] of sandboxStates.entries()) {
       if (state.status === 'running' && state.lastHeartbeatAt) {
@@ -141,28 +160,140 @@ class DaytonaCleanupService {
         if (idleTime > idleTimeout) {
           console.log(`⏰ [IDLE CLEANUP] Found idle sandbox: ${sandboxId} (idle for ${Math.round(idleTime / 60000)} minutes, created: ${new Date(state.createdAt || 0).toISOString()})`)
           
+          // ✅ 1. เช็คจากเว็บก่อนว่ามี sandbox อยู่จริงหรือไม่
           try {
-            // ลบ sandbox จาก Daytona
+            const sandboxExists = await verifySandboxExists(daytona, sandboxId)
+            
+            if (!sandboxExists) {
+              // ✅ 2. ถ้าไม่มีในเว็บ ให้ลบออกจาก state และนับเป็น cleaned
+              console.log(`🗑️ [IDLE CLEANUP] Sandbox ${sandboxId} not found on Daytona, removing from memory`)
+              sandboxStates.delete(sandboxId)
+              cleanedCount++
+              continue
+            }
+            
+            // ✅ 3. ถ้ามีในเว็บ ให้ลบจาก Daytona
             const sandbox = await daytona.get(sandboxId)
             await sandbox.delete()
             
-            // อัปเดตสถานะใน memory
+            // ✅ 4. อัปเดตสถานะใน memory เป็น stopped
             sandboxStates.set(sandboxId, { ...state, status: 'stopped' })
             cleanedCount++
             
             console.log(`✅ [IDLE CLEANUP] Successfully cleaned up idle sandbox: ${sandboxId}`)
-          } catch (error) {
+            
+          } catch (error: any) {
             errorCount++
             console.error(`❌ [IDLE CLEANUP] Failed to cleanup idle sandbox ${sandboxId}:`, error)
+            
+            // ✅ ถ้าเกิด error ในการลบ ให้อัปเดตสถานะเป็น error
+            sandboxStates.set(sandboxId, { ...state, status: 'error', error: error.message })
+            
+            // ✅ เพิ่ม console.log เพื่อ debug
+            console.log(`🔍 [IDLE CLEANUP DEBUG] Error details for ${sandboxId}:`)
+            console.log(`  - Error message: ${error.message}`)
+            console.log(`  - Error type: ${typeof error}`)
+            console.log(`  - Current state:`, state)
+            console.log(`  - Sandbox exists check result: ${await verifySandboxExists(daytona, sandboxId)}`)
           }
         }
       }
     }
 
     const duration = Date.now() - startTime
-    console.log(`✅ [IDLE CLEANUP] Completed: cleaned ${cleanedCount}/${runningSandboxes.length} idle sandboxes (${errorCount} errors) in ${duration}ms`)
+    console.log(`✅ [IDLE CLEANUP] Completed: cleaned ${cleanedCount} idle sandboxes (${errorCount} errors) in ${duration}ms`)
+    
+    // ✅ ทำความสะอาด memory หลังจาก idle cleanup
+    await this.cleanupMemoryStates()
   }
 
+
+  /**
+   * ทำความสะอาด memory states ที่ไม่ตรงกับ Daytona
+   */
+  static async cleanupMemoryStates(): Promise<void> {
+    const startTime = Date.now()
+    console.log(`🧹 [MEMORY CLEANUP] Starting memory states cleanup at ${new Date().toISOString()}`)
+    
+    if (!daytonaConfig.apiKey) {
+      console.warn('⚠️ [MEMORY CLEANUP] Daytona API key not configured, skipping cleanup')
+      return
+    }
+
+    const daytona = new Daytona(getDaytonaClient())
+    let cleanedCount = 0
+    let errorCount = 0
+    
+    // ดึงรายการ sandbox ทั้งหมดจาก Daytona
+    let daytonaSandboxIds: string[] = []
+    try {
+      const sandboxes = await daytona.list()
+      daytonaSandboxIds = sandboxes.map(s => s.id)
+      console.log(`📊 [MEMORY CLEANUP] Found ${daytonaSandboxIds.length} sandboxes on Daytona`)
+    } catch (error) {
+      console.error('❌ [MEMORY CLEANUP] Failed to list sandboxes from Daytona:', error)
+      return
+    }
+    
+    // ✅ แสดงรายการ sandbox IDs บน Daytona
+    console.log(`📋 [MEMORY CLEANUP] Sandbox IDs on Daytona:`, daytonaSandboxIds)
+    
+    // ✅ แสดงรายการ sandbox IDs ใน memory
+    const memorySandboxIds = Array.from(sandboxStates.keys())
+    console.log(`📋 [MEMORY CLEANUP] Sandbox IDs in memory:`, memorySandboxIds)
+    
+    // ตรวจสอบ sandbox ใน memory ว่ามีอยู่ใน Daytona หรือไม่
+    for (const [sandboxId, state] of sandboxStates.entries()) {
+      try {
+        if (!daytonaSandboxIds.includes(sandboxId)) {
+          console.log(`🗑️ [MEMORY CLEANUP] Removing orphaned sandbox from memory: ${sandboxId} (status: ${state.status})`)
+          sandboxStates.delete(sandboxId)
+          cleanedCount++
+        } else {
+          console.log(`✅ [MEMORY CLEANUP] Sandbox ${sandboxId} exists on Daytona, keeping in memory`)
+        }
+      } catch (error) {
+        errorCount++
+        console.error(`❌ [MEMORY CLEANUP] Error checking sandbox ${sandboxId}:`, error)
+      }
+    }
+    
+    const duration = Date.now() - startTime
+    console.log(`✅ [MEMORY CLEANUP] Completed: cleaned ${cleanedCount} orphaned states (${errorCount} errors) in ${duration}ms`)
+  }
+
+  /**
+   * Sync memory states กับ Daytona จริง
+   */
+  static async syncWithDaytona(): Promise<void> {
+    console.log('🔄 [SYNC] Syncing memory states with Daytona...')
+    
+    if (!daytonaConfig.apiKey) {
+      console.warn('⚠️ [SYNC] Daytona API key not configured, skipping sync')
+      return
+    }
+
+    const daytona = new Daytona(getDaytonaClient())
+    let syncedCount = 0
+    let removedCount = 0
+
+    for (const [sandboxId, state] of sandboxStates.entries()) {
+      try {
+        const exists = await verifySandboxExists(daytona, sandboxId)
+        if (!exists) {
+          console.log(`🗑️ [SYNC] Removing non-existent sandbox: ${sandboxId} (status: ${state.status})`)
+          sandboxStates.delete(sandboxId)
+          removedCount++
+        } else {
+          syncedCount++
+        }
+      } catch (error) {
+        console.error(`❌ [SYNC] Error checking sandbox ${sandboxId}:`, error)
+      }
+    }
+
+    console.log(`✅ [SYNC] Completed: ${syncedCount} synced, ${removedCount} removed`)
+  }
 
   /**
    * ทำความสะอาด stopped sandboxes ที่ไม่ต้องการแล้ว
@@ -244,7 +375,7 @@ class DaytonaCleanupService {
 }
 
 // Auto-start cleanup service
-DaytonaCleanupService.start()
+DaytonaCleanupService.start().catch(console.error)
 
 // ---------- Helpers ----------
 async function updateSandboxStatus(
@@ -452,7 +583,7 @@ async function createDaytonaSandbox(projectFiles?: ProjectFile[]): Promise<{ san
   console.log(`🏗️ Creating Daytona sandbox with ${projectFiles.length} files`);
   
  
-  const daytona = new Daytona({ apiKey: daytonaConfig.apiKey, baseUrl: daytonaConfig.baseUrl })
+  const daytona = new Daytona(getDaytonaClient())
   const sandbox = await daytona.create({
     ...daytonaConfig.defaultSandboxConfig,
     public: true,
@@ -591,7 +722,7 @@ export async function GET(req: NextRequest) {
     }
 
     // no state → ลองเช็คกับ Daytona
-    const daytona = new Daytona({ apiKey: daytonaConfig.apiKey!, baseUrl: daytonaConfig.baseUrl })
+    const daytona = new Daytona(getDaytonaClient())
     const exists = await verifySandboxExists(daytona, sandboxId)
     if (!exists) return NextResponse.json({ error: 'Sandbox not found' }, { status: 404 })
     const fallback = await updateSandboxStatus(sandboxId, 'unknown')
@@ -611,9 +742,21 @@ export async function DELETE(req: NextRequest) {
 
     console.log(`🛑 [DELETE] Stopping sandbox: ${sandboxId}`)
 
-    const daytona = new Daytona({ apiKey: daytonaConfig.apiKey!, baseUrl: daytonaConfig.baseUrl })
-    const s = await daytona.get(sandboxId)
-    await s.delete() // ลบ sandbox จริง
+    const daytona = new Daytona(getDaytonaClient())
+    
+    // ✅ ตรวจสอบว่า sandbox มีอยู่จริงหรือไม่ก่อน
+    const sandboxExists = await verifySandboxExists(daytona, sandboxId)
+    
+    if (sandboxExists) {
+      // ถ้ามีอยู่จริง ให้ลบจาก Daytona
+      const s = await daytona.get(sandboxId)
+      await s.delete() // ลบ sandbox จริง
+      console.log(`✅ [DELETE] Successfully deleted sandbox from Daytona: ${sandboxId}`)
+    } else {
+      console.log(`⚠️ [DELETE] Sandbox ${sandboxId} not found on Daytona, updating memory only`)
+    }
+    
+    // ✅ อัปเดตสถานะใน memory เป็น stopped เสมอ (ไม่ว่าจะมีใน Daytona หรือไม่)
     await updateSandboxStatus(sandboxId, 'stopped')
 
     // แสดงสถิติหลังจากลบ
@@ -654,7 +797,7 @@ export async function POST_CLEANUP(req: NextRequest) {
     const { action } = await req.json()
     
     if (action === 'start') {
-      DaytonaCleanupService.start()
+      await DaytonaCleanupService.start()
       console.log('🚀 [CLEANUP SERVICE] Started via API')
       return NextResponse.json({ 
         success: true, 
@@ -683,6 +826,26 @@ export async function POST_CLEANUP(req: NextRequest) {
         message: 'Manual cleanup completed',
         stats: DaytonaCleanupService.getStats()
       })
+    } else if (action === 'memory') {
+      // Manual memory cleanup
+      console.log('🧹 [CLEANUP SERVICE] Manual memory cleanup triggered via API')
+      await DaytonaCleanupService.cleanupMemoryStates()
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Memory cleanup completed',
+        stats: DaytonaCleanupService.getStats()
+      })
+    } else if (action === 'sync') {
+      // Manual sync
+      console.log('🔄 [CLEANUP SERVICE] Manual sync triggered via API')
+      await DaytonaCleanupService.syncWithDaytona()
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Manual sync completed',
+        stats: DaytonaCleanupService.getStats()
+      })
     } else if (action === 'stopped') {
       // Manual stopped cleanup
       console.log('🧹 [CLEANUP SERVICE] Manual stopped cleanup triggered')
@@ -696,7 +859,7 @@ export async function POST_CLEANUP(req: NextRequest) {
     } else {
       return NextResponse.json({ 
         success: false,
-        error: 'Invalid action. Use: start, stop, cleanup, or stopped' 
+        error: 'Invalid action. Use: start, stop, cleanup, sync, memory, or stopped' 
       }, { status: 400 })
     }
   } catch (error: any) {
