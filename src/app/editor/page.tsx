@@ -11,6 +11,9 @@ export default function CodeEditorPage() {
   const mockProjectId = "mock-project-123"
   const projectName = testCafeData.projectStructure.name
   
+  // State สำหรับ toggle Code Editor
+  const [isCodeEditorVisible, setIsCodeEditorVisible] = React.useState(true)
+  
   // แปลงไฟล์จาก JSON เป็นรูปแบบที่ API ต้องการ
   const templateFiles = React.useMemo(() => {
     return testCafeData.files.map((f: any) => ({
@@ -38,6 +41,20 @@ export default function CodeEditorPage() {
     console.log(`✅ Loaded ${templateFiles.length} files from test-cafe-complete.json`)
     console.log(`📦 Project: ${projectName}`)
   }, [templateFiles.length, projectName])
+
+  // คีย์ลัดสำหรับ toggle Code Editor
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+E หรือ Cmd+E เพื่อ toggle Code Editor
+      if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault()
+        setIsCodeEditorVisible(prev => !prev)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -71,6 +88,14 @@ export default function CodeEditorPage() {
                 className="px-4 py-2 rounded-lg bg-rose-600 text-white disabled:opacity-50 hover:bg-rose-700 transition-colors"
               >
                 Stop Preview
+              </button>
+
+              <button
+                onClick={() => setIsCodeEditorVisible(!isCodeEditorVisible)}
+                className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                title={isCodeEditorVisible ? "Hide Code Editor" : "Show Code Editor"}
+              >
+                {isCodeEditorVisible ? '👁️ Hide Editor' : '👁️ Show Editor'}
               </button>
             </div>
             
@@ -127,19 +152,25 @@ export default function CodeEditorPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-200px)]">
+          <div className={`grid gap-4 h-[calc(100vh-200px)] ${
+            isCodeEditorVisible 
+              ? 'grid-cols-1 lg:grid-cols-3' 
+              : 'grid-cols-1'
+          }`}>
             {/* Code Editor */}
-            <div className="lg:col-span-2">
-              <CodeEditor
-                sandboxId={sandboxId}
-                projectId={mockProjectId}
-                initialFiles={templateFiles}
-                className="h-full"
-              />
-            </div>
+            {isCodeEditorVisible && (
+              <div className="lg:col-span-2">
+                <CodeEditor
+                  sandboxId={sandboxId}
+                  projectId={mockProjectId}
+                  initialFiles={templateFiles}
+                  className="h-full"
+                />
+              </div>
+            )}
 
             {/* Live Preview */}
-            <div className="lg:col-span-1">
+            <div className={isCodeEditorVisible ? "lg:col-span-1" : "col-span-1"}>
               <div className="h-full bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="p-3 border-b border-gray-200 bg-gray-50">
                   <h3 className="text-sm font-semibold text-gray-700 flex items-center">
@@ -147,6 +178,11 @@ export default function CodeEditorPage() {
                     <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
                       Connected
                     </span>
+                    {!isCodeEditorVisible && (
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                        Full Screen
+                      </span>
+                    )}
                   </h3>
                 </div>
                 
@@ -193,6 +229,7 @@ export default function CodeEditorPage() {
               <span>💾 Ctrl+S: Save</span>
               <span>🚀 Ctrl+Shift+S: Update Full</span>
               <span>🔧 Ctrl+Shift+P: Partial Update</span>
+              <span>👁️ Ctrl+E: Toggle Editor</span>
             </div>
           </div>
         </div>
