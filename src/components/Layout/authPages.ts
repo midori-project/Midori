@@ -11,7 +11,6 @@ export const authPages: AuthPageEntry[] = [
   '/info',
   '/chat',
   '/projects',
-  '/template'
   
   // info pages: allow scroll in some cases; default not set (false)
 ];
