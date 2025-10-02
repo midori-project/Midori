@@ -807,7 +807,16 @@ export async function PUT(req: NextRequest) {
 
     // Parse request body
     const body = await req.json()
-    const { files, projectId } = body
+    const { files, projectId, comparison } = body
+    
+    // Log comparison info if available
+    if (comparison) {
+      console.log(`📊 [PUT] File comparison info:`, {
+        totalFiles: comparison.totalFiles,
+        changedFiles: comparison.changedFiles,
+        skippedFiles: comparison.skippedFiles
+      })
+    }
     
     // Validate request
     if (!files || !Array.isArray(files) || files.length === 0) {
@@ -859,9 +868,15 @@ export async function PUT(req: NextRequest) {
       success: true,
       updatedFiles: updateResult.updatedCount,
       totalFiles: updateResult.totalFiles,
+      skippedFiles: comparison?.skippedFiles || 0,
       errors: updateResult.errors,
-      message: `Successfully updated ${updateResult.updatedCount} files`,
-      projectId
+      message: `Successfully updated ${updateResult.updatedCount} files${comparison?.skippedFiles ? `, skipped ${comparison.skippedFiles} unchanged files` : ''}`,
+      projectId,
+      comparison: comparison ? {
+        totalFiles: comparison.totalFiles,
+        changedFiles: comparison.changedFiles,
+        skippedFiles: comparison.skippedFiles
+      } : undefined
     }, {
       headers: {
         'Access-Control-Allow-Origin': '*',

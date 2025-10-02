@@ -12,6 +12,30 @@ interface ProjectFile {
   language?: string
 }
 
+interface FileState {
+  path: string
+  content: string
+  hash: string
+  lastModified: number
+  size: number
+}
+
+interface FileComparison {
+  hasChanged: boolean
+  changeType: 'added' | 'removed' | 'modified' | 'unchanged'
+  oldState?: FileState
+  newState: FileState
+}
+
+interface UpdateResult {
+  success: boolean
+  updatedFiles: number
+  totalFiles: number
+  skippedFiles: number
+  message: string
+  error?: string
+}
+
 interface UseDaytonaPreviewProps {
   projectId?: string
   files?: ProjectFile[]
@@ -29,6 +53,52 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const lastHeartbeatRef = useRef<number>(0)
   const heartbeatAbortControllerRef = useRef<AbortController | null>(null)
+  
+  // File state management for comparison
+  const fileStatesRef = useRef<Map<string, FileState>>(new Map())
+
+  // File Comparison utilities
+  const generateHash = useCallback((content: string): string => {
+    // Simple hash function for client-side (in production, use crypto.subtle.digest)
+    let hash = 0
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32-bit integer
+    }
+    return hash.toString(36)
+  }, [])
+
+  const createFileState = useCallback((path: string, content: string): FileState => {
+    return {
+      path,
+      content,
+      hash: generateHash(content),
+      lastModified: Date.now(),
+      size: content.length
+    }
+  }, [generateHash])
+
+  const compareFiles = useCallback((path: string, newContent: string): FileComparison => {
+    const oldState = fileStatesRef.current.get(path)
+    const newState = createFileState(path, newContent)
+    
+    if (!oldState) {
+      return { hasChanged: true, changeType: 'added', newState }
+    }
+    
+    if (oldState.hash === newState.hash) {
+      return { hasChanged: false, changeType: 'unchanged', oldState, newState }
+    }
+    
+    return { hasChanged: true, changeType: 'modified', oldState, newState }
+  }, [createFileState])
+
+  const updateFileState = useCallback((path: string, content: string) => {
+    const newState = createFileState(path, content)
+    fileStatesRef.current.set(path, newState)
+    return newState
+  }, [createFileState])
 
   const previewUrlWithToken = useMemo(() => {
     if (!previewUrl) return undefined
@@ -195,6 +265,14 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
 
       console.log(`✅ [FRONTEND] Preview created successfully: ${data.sandboxId}`)
       
+      // เก็บสถานะไฟล์เริ่มต้นสำหรับการเปรียบเทียบ
+      if (files) {
+        files.forEach(file => {
+          updateFileState(file.path, file.content)
+        })
+        console.log(`📁 [FRONTEND] Stored initial state for ${files.length} files`)
+      }
+      
       setSandboxId(data.sandboxId)
       setPreviewUrl(data.url)
       setPreviewToken(data.token)
@@ -246,7 +324,7 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
     }
   }, [sandboxId])
 
-  const updateFiles = useCallback(async (newFiles: ProjectFile[]) => {
+  const updateFiles = useCallback(async (newFiles: ProjectFile[]): Promise<UpdateResult> => {
     if (!sandboxId) {
       console.log('❌ [FRONTEND] No sandbox to update')
       throw new Error('No active sandbox to update')
@@ -264,7 +342,39 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
 
     setLoading(true)
     setError(undefined)
-    console.log(`🔄 [FRONTEND] Updating ${newFiles.length} files in sandbox: ${sandboxId}`)
+    
+    // 🔍 File Comparison: ตรวจสอบไฟล์ที่เปลี่ยนแปลง
+    const changedFiles: ProjectFile[] = []
+    const skippedFiles: string[] = []
+    
+    console.log(`🔍 [FRONTEND] Comparing ${newFiles.length} files for changes...`)
+    
+    newFiles.forEach(file => {
+      const comparison = compareFiles(file.path, file.content)
+      
+      if (comparison.hasChanged) {
+        changedFiles.push(file)
+        console.log(`📝 [FRONTEND] File changed: ${file.path} (${comparison.changeType})`)
+      } else {
+        skippedFiles.push(file.path)
+        console.log(`⏭️ [FRONTEND] File unchanged: ${file.path}`)
+      }
+    })
+    
+    console.log(`📊 [FRONTEND] Comparison result: ${changedFiles.length} changed, ${skippedFiles.length} unchanged`)
+    
+    // ถ้าไม่มีไฟล์เปลี่ยนแปลง ไม่ต้องส่ง request
+    if (changedFiles.length === 0) {
+      console.log(`✅ [FRONTEND] No files to update - all files are unchanged`)
+      setLoading(false)
+      return {
+        success: true,
+        updatedFiles: 0,
+        totalFiles: newFiles.length,
+        skippedFiles: skippedFiles.length,
+        message: 'No files to update - all files are unchanged'
+      }
+    }
     
     try {
       const res = await fetch(`/api/preview/daytona?sandboxId=${encodeURIComponent(sandboxId)}`, {
@@ -273,8 +383,13 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          files: newFiles,
-          projectId 
+          files: changedFiles,  // ส่งเฉพาะไฟล์ที่เปลี่ยนแปลง
+          projectId,
+          comparison: {
+            totalFiles: newFiles.length,
+            changedFiles: changedFiles.length,
+            skippedFiles: skippedFiles.length
+          }
         })
       })
       
@@ -282,6 +397,11 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
       if (!res.ok) {
         throw new Error(data?.error || 'Failed to update files')
       }
+      
+      // อัปเดตสถานะไฟล์หลังจากอัปเดตสำเร็จ
+      changedFiles.forEach(file => {
+        updateFileState(file.path, file.content)
+      })
       
       console.log(`✅ [FRONTEND] Files updated successfully: ${data.updatedFiles} files`)
       
@@ -291,19 +411,25 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
       return {
         success: true,
         updatedFiles: data.updatedFiles,
-        message: data.message || 'Files updated successfully'
+        totalFiles: newFiles.length,
+        skippedFiles: skippedFiles.length,
+        message: data.message || `Updated ${data.updatedFiles} files, skipped ${skippedFiles.length} unchanged files`
       }
     } catch (e: any) {
       console.error(`❌ [FRONTEND] File update failed:`, e)
       setError(e?.message || 'Unexpected error')
       return {
         success: false,
+        updatedFiles: 0,
+        totalFiles: newFiles.length,
+        skippedFiles: 0,
+        message: 'Update failed',
         error: e?.message || 'Unexpected error'
       }
     } finally {
       setLoading(false)
     }
-  }, [sandboxId, status, projectId])
+  }, [sandboxId, status, projectId, compareFiles, updateFileState])
 
   return {
     sandboxId,

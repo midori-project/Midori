@@ -43,6 +43,88 @@ export default function DaytonaPreviewPage() {
     console.log(`📦 Project: ${projectName}`)
   }, [templateFiles.length, projectName])
 
+  // ฟังก์ชันสำหรับทดสอบ File Comparison
+  const testFileComparison = React.useCallback(async () => {
+    if (!updateFiles || status !== 'running') {
+      setUpdateResult('❌ No active sandbox to test')
+      return
+    }
+
+    setIsUpdating(true)
+    setUpdateResult('🔄 Testing file comparison...')
+
+    try {
+      // สร้างไฟล์ที่มีการเปลี่ยนแปลงและไม่เปลี่ยนแปลง
+      const testFiles = [
+        {
+          path: 'src/pages/Home.tsx',
+          content: `import React from 'react';
+import { Link } from 'react-router-dom';
+
+const Home: React.FC = () => {
+  return (
+    <div className="min-h-screen p-8 bg-orange-50">
+      <div className="max-w-4xl mx-auto text-center">
+        <h1 className="text-5xl font-bold mb-6 text-red-600">
+          🎉 Welcome to Café Delight - COMPARISON TEST!
+        </h1>
+        <p className="text-xl text-gray-700 mb-8">
+          This file was changed to test file comparison
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default Home;`,
+          type: 'typescript'
+        },
+        {
+          path: 'src/index.css',
+          content: `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #3a3a3a;
+    background-color: #fffaf0;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg text-white bg-orange-600 hover:bg-orange-500 transition duration-300 ease-in-out;
+  }
+  
+  /* This file was NOT changed - should be skipped */
+}`,
+          type: 'css'
+        }
+      ]
+
+      const result = await updateFiles(testFiles)
+      
+      if (result?.success) {
+        const message = `🧪 File Comparison Test: Updated ${result.updatedFiles} files, skipped ${result.skippedFiles} unchanged files!`
+        setUpdateResult(message)
+      } else {
+        setUpdateResult(`❌ Comparison test failed: ${result?.error || 'Unknown error'}`)
+      }
+    } catch (error: any) {
+      setUpdateResult(`❌ Comparison test error: ${error?.message || 'Unknown error'}`)
+    } finally {
+      setIsUpdating(false)
+    }
+  }, [updateFiles, status])
+
   // ฟังก์ชันสำหรับทดสอบการอัปเดตไฟล์
   const testUpdateFiles = React.useCallback(async () => {
     if (!updateFiles || status !== 'running') {
@@ -213,7 +295,10 @@ export default Home;`,
       const result = await updateFiles(testFiles)
       
       if (result?.success) {
-        setUpdateResult(`✅ Successfully updated ${result.updatedFiles} files! Check the preview to see changes.`)
+        const message = result.skippedFiles > 0 
+          ? `✅ Updated ${result.updatedFiles} files, skipped ${result.skippedFiles} unchanged files! Check the preview to see changes.`
+          : `✅ Successfully updated ${result.updatedFiles} files! Check the preview to see changes.`
+        setUpdateResult(message)
       } else {
         setUpdateResult(`❌ Update failed: ${result?.error || 'Unknown error'}`)
       }
@@ -258,6 +343,14 @@ export default Home;`,
             {isUpdating ? 'Updating...' : 'Test Update Files'}
           </button>
 
+          <button
+            onClick={testFileComparison}
+            disabled={loading || status !== 'running' || isUpdating}
+            className="px-4 py-2 rounded-lg bg-purple-600 text-white disabled:opacity-50"
+          >
+            {isUpdating ? 'Testing...' : 'Test File Comparison'}
+          </button>
+
           <span className="px-3 py-2 rounded-lg bg-neutral-200 text-neutral-700">
             Status: {status}
           </span>
@@ -298,9 +391,16 @@ export default Home;`,
             <ol className="list-decimal list-inside space-y-1 ml-4">
               <li>คลิก <span className="font-mono bg-emerald-100 text-emerald-700 px-2 py-1 rounded">Start Preview</span> เพื่อสร้าง sandbox</li>
               <li>รอให้สถานะเป็น <span className="font-mono bg-green-100 text-green-700 px-2 py-1 rounded">running</span></li>
-              <li>คลิก <span className="font-mono bg-blue-100 text-blue-700 px-2 py-1 rounded">Test Update Files</span> เพื่อทดสอบการอัปเดต</li>
+              <li>คลิก <span className="font-mono bg-blue-100 text-blue-700 px-2 py-1 rounded">Test Update Files</span> เพื่อทดสอบการอัปเดตปกติ</li>
+              <li>คลิก <span className="font-mono bg-purple-100 text-purple-700 px-2 py-1 rounded">Test File Comparison</span> เพื่อทดสอบระบบเปรียบเทียบไฟล์</li>
               <li>ดูการเปลี่ยนแปลงใน iframe หรือเปิดแท็บใหม่</li>
             </ol>
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+              <p className="text-xs text-blue-700">
+                <strong>🧪 File Comparison Test:</strong> จะทดสอบการเปรียบเทียบไฟล์โดยส่งไฟล์ที่มีการเปลี่ยนแปลงและไม่เปลี่ยนแปลง 
+                ระบบจะอัปเดตเฉพาะไฟล์ที่เปลี่ยนแปลงและข้ามไฟล์ที่ไม่เปลี่ยนแปลง
+              </p>
+            </div>
             <p className="text-xs text-neutral-500 mt-3">
               <strong>หมายเหตุ:</strong> การทดสอบจะอัปเดตไฟล์ <code>src/pages/Home.tsx</code> และ <code>src/index.css</code> 
               ด้วยเนื้อหาที่มีข้อความ "UPDATED!" และเอฟเฟกต์ hover ใหม่
