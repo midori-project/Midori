@@ -48,9 +48,24 @@ export async function PATCH(req: NextRequest) {
     const daytona = new Daytona(getDaytonaClient())
     const sandbox = await daytona.get(sandboxId)
     
-    // Get current file content
-    const sessionId = 'partial-update-session'
-    await sandbox.process.createSession(sessionId)
+    // ✅ สร้าง unique session ID ด้วย timestamp และ random string
+    const sessionId = `partial-update-${Date.now()}-${Math.random().toString(36).substring(7)}`
+    console.log(`📝 [PATCH] Creating session: ${sessionId}`)
+    
+    try {
+      await sandbox.process.createSession(sessionId)
+    } catch (sessionError: any) {
+      // ถ้า session มีอยู่แล้ว ให้ลบและสร้างใหม่
+      if (sessionError?.message?.includes('already exists')) {
+        console.log(`🔄 [PATCH] Session already exists, trying to delete and recreate`)
+        try {
+          await sandbox.process.deleteSession(sessionId)
+        } catch {}
+        await sandbox.process.createSession(sessionId)
+      } else {
+        throw sessionError
+      }
+    }
     
     // Read current file content
     const readResult = await sandbox.process.executeSessionCommand(sessionId, {
@@ -111,7 +126,7 @@ export async function PATCH(req: NextRequest) {
             errors.push(`Unknown operation type: ${type}`)
         }
       } catch (error: any) {
-        const errorMsg = `Error applying operation ${type} at line ${operation.line}: ${error.message}`
+        const errorMsg = `Error applying operation ${operation.type} at line ${operation.line}: ${error.message}`
         console.error(`❌ [PATCH] ${errorMsg}`)
         errors.push(errorMsg)
       }
@@ -128,6 +143,14 @@ export async function PATCH(req: NextRequest) {
     
     if (writeResult.exitCode !== 0) {
       throw new Error(`Failed to write updated file: ${writeResult.stderr || writeResult.output}`)
+    }
+    
+    // ✅ ลบ session หลังจากใช้งานเสร็จ
+    try {
+      await sandbox.process.deleteSession(sessionId)
+      console.log(`🗑️ [PATCH] Deleted session: ${sessionId}`)
+    } catch (deleteError) {
+      console.warn(`⚠️ [PATCH] Failed to delete session: ${deleteError}`)
     }
     
     console.log(`✅ [PATCH] Successfully applied ${appliedOperations}/${operations.length} operations to ${path}`)
