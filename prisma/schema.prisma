@@ -49,6 +49,9 @@ model Project {
   previewFileId  String?            @unique
   tenantId       String?
   templateTheme  Json?
+  previewEnabled Boolean            @default(true)
+  previewAutoBuild Boolean          @default(true)
+  previewSettings Json?
   agents         Agent[]
   Artifact       Artifact[]
   runs           ChatRun[]
@@ -130,18 +133,27 @@ model Deployment {
 }
 
 model PreviewSession {
-  id         String    @id @default(uuid())
-  projectId  String
-  snapshotId String?
-  url        String?
-  state      String?
-  meta       Json?
-  createdAt  DateTime  @default(now())
-  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  snapshot   Snapshot? @relation(fields: [snapshotId], references: [id])
+  id           String        @id @default(uuid())
+  projectId    String
+  snapshotId   String?
+  url          String?
+  state        PreviewState  @default(queued)
+  meta         Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  expiresAt    DateTime?
+  accessedAt   DateTime?
+  buildTimeMs  Int?
+  errorMessage String?
+  authToken    String?
+  authExpiresAt DateTime?
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  snapshot     Snapshot?     @relation(fields: [snapshotId], references: [id])
 
   @@index([projectId])
   @@index([snapshotId])
+  @@index([state])
+  @@index([expiresAt])
 }
 
 model AuthCredential {
@@ -1051,4 +1063,13 @@ enum TemplateStatus {
   draft
   published
   deprecated
+}
+
+enum PreviewState {
+  queued
+  building
+  ready
+  failed
+  expired
+  cancelled
 }

@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDaytonaPreview } from '@/hooks/useDaytonaPreview';
+import { CodeEditor } from '@/components/CodeEditor/CodeEditor';
 import { Monitor, Smartphone, Tablet, RefreshCw, Code, Eye, Settings } from 'lucide-react';
+import testCafeData from '@/components/preview/test/test-cafe-complete.json';
 
 // Client-side only time display component
 function TimeDisplay() {
@@ -42,16 +44,60 @@ type DeviceType = 'desktop' | 'tablet' | 'mobile';
 const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
   
-  // ✅ Use Daytona preview hook with projectId
+  // State สำหรับ toggle Code Editor (เหมือนใน editor page)
+  const [isCodeEditorVisible, setIsCodeEditorVisible] = useState(true);
+  
+  // 🔄 TODO: สามารถปรับแต่ง loading messages ได้ตามต้องการ
+  // Mock loading messages ที่เล่นวนไปเรื่อยๆ
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const loadingMessages = [
+    "กินกาแฟ...",
+    "กินหมูปิ้ง 20 ไม้...",
+    "กินข้าวกะเพรา...",
+    "กินข้าวหมูกรอบ...",
+    "กินข้าวกุ้งกะปิ...",
+    "กินข้าวผัดกระเทียม...",
+    "เกือบเสร็จแล้ว...",
+    "กินข้าวผัดตะเข้...",
+    "กินข้าวผัดหมู...",
+  ];
+  
+  // 🔄 TODO: แทนที่ mock data ด้วยข้อมูลจริงจาก DB
+  // เพิ่ม state สำหรับข้อมูลจริงจาก DB:
+  // const [projectData, setProjectData] = useState(null);
+  // const [projectFiles, setProjectFiles] = useState([]);
+  
+  // ใช้ mock data จาก test-cafe-complete.json เหมือนใน editor page
+  const ProjectId = projectId || "mock-project-123";
+  const projectName = testCafeData.projectStructure.name;
+  
+  // 🔄 TODO: แทนที่ด้วยการดึงข้อมูลจาก API/DB
+  // แปลงไฟล์จาก JSON เป็นรูปแบบที่ API ต้องการ
+  const templateFiles = useMemo(() => {
+    return testCafeData.files.map((f: any) => ({
+      path: f.path,
+      content: f.content,
+      type: f.type || f.language,
+    }))
+  }, []);
+  
+  // ✅ ใช้ useDaytonaPreview เหมือนใน editor page
+  // 🔄 TODO: แทนที่ mockProjectId ด้วย projectId จริง
   const {
-    previewUrl,
-    loading: isLoading,
-    error,
     sandboxId,
     status,
+    previewUrlWithToken,
+    error,
+    loading,
     startPreview,
-    stopPreview
-  } = useDaytonaPreview({ projectId });
+    stopPreview,
+  } = useDaytonaPreview({ 
+    projectId: projectId,  // 🔄 TODO: เปลี่ยนเป็น projectId จริง
+    files: templateFiles       // 🔄 TODO: เปลี่ยนเป็นไฟล์จาก DB
+  });
+  
+  // Extract data from preview
+  const previewUrl = previewUrlWithToken;
 
   // ✅ Handle refresh action
   const handleRefresh = () => {
@@ -62,6 +108,48 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   const isError = status === 'error';
   const lastUpdated = null; // This hook doesn't provide lastUpdated
 
+  // 🔄 TODO: เพิ่ม useEffect สำหรับดึงข้อมูลจาก API/DB
+  // useEffect(() => {
+  //   const fetchProjectData = async () => {
+  //     const response = await fetch(`/api/projects/${projectId}`);
+  //     const data = await response.json();
+  //     setProjectData(data);
+  //     setProjectFiles(data.files);
+  //   };
+  //   fetchProjectData();
+  // }, [projectId]);
+
+  // Log ข้อมูลเมื่อโหลด component (เหมือนใน editor page)
+  useEffect(() => {
+    console.log(`✅ ProjectPreview loaded ${templateFiles.length} files from test-cafe-complete.json`);
+    console.log(`📦 Project: ${projectName} (ID: ${ProjectId})`);
+  }, [templateFiles.length, projectName, ProjectId]);
+
+  // คีย์ลัดสำหรับ toggle Code Editor (เหมือนใน editor page)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+E หรือ Cmd+E เพื่อ toggle Code Editor
+      if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        setIsCodeEditorVisible(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Loading message animation - เปลี่ยนข้อความทุก 1.5 วินาที
+  useEffect(() => {
+    if (!loading) return;
+
+    const interval = setInterval(() => {
+      setLoadingMessageIndex(prev => (prev + 1) % loadingMessages.length);
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [loading, loadingMessages.length]);
+
   const getDeviceWidth = () => {
     switch (deviceType) {
       case 'mobile': return '375px';
@@ -69,6 +157,11 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
       case 'desktop': return '100%';
       default: return '100%';
     }
+  };
+
+  // ดึง loading message ปัจจุบัน
+  const getCurrentLoadingMessage = () => {
+    return loadingMessages[loadingMessageIndex] || "กำลังโหลด...";
   };
 
   return (
@@ -81,7 +174,10 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
               <Eye className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">{projectId}</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {/* 🔄 TODO: แทนที่ด้วยชื่อโปรเจคจริงจาก DB */}
+                {projectId}
+              </h2>
               <p className="text-sm text-gray-500">
                 {previewUrl ? 'Live preview' : 'No preview available'}
               </p>
@@ -91,17 +187,37 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
           <div className="flex items-center space-x-2">
             {/* Action Buttons */}
             <button
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center space-x-1"
+              onClick={startPreview}
+              disabled={loading || status === 'running' || templateFiles.length === 0}
+              className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>
+                {status === 'running' ? 'Running' : 
+                 loading ? getCurrentLoadingMessage() : 
+                 'Start Preview'}
+              </span>
+            </button>
+
+            <button
+              onClick={stopPreview}
+              disabled={loading || status !== 'running'}
+              className="px-3 py-1.5 text-sm bg-rose-600 text-white rounded-md hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
+            >
+              <span>Stop Preview</span>
             </button>
             
             <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
               <Code className="w-4 h-4" />
-              <span>Files</span>
+              <span>Files ({templateFiles.length})</span>
+            </button>
+            
+            <button
+              onClick={() => setIsCodeEditorVisible(!isCodeEditorVisible)}
+              className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center space-x-1"
+              title={isCodeEditorVisible ? "Hide Code Editor" : "Show Code Editor"}
+            >
+              <span>{isCodeEditorVisible ? '👁️ Hide Editor' : '👁️ Show Editor'}</span>
             </button>
             
             <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
@@ -148,69 +264,111 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
 
       {/* Preview Content */}
       <div className="flex-1 overflow-hidden bg-gray-100 p-4">
-        <div className="h-full bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="h-full flex items-center justify-center">
-            {isLoading ? (
-              <div className="flex flex-col items-center space-y-4">
-                <RefreshCw className="w-8 h-8 text-purple-600 animate-spin" />
-                <p className="text-gray-600">
-                  {status === 'creating' ? 'กำลังสร้าง Preview...' : 'กำลังโหลด Preview...'}
-                </p>
-                {sandboxId && (
-                  <p className="text-xs text-gray-400">Sandbox ID: {sandboxId}</p>
-                )}
-              </div>
-            ) : isError ? (
-              <div className="flex flex-col items-center space-y-4 p-8">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">⚠️</span>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Preview ไม่สามารถใช้งานได้</h3>
-                  <p className="text-gray-600 mb-4">
-                    {error || 'ไม่สามารถโหลด Preview ได้ กรุณาลองใหม่อีกครั้ง'}
+        {status !== 'running' ? (
+          <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
+            <div className="text-center">
+              {loading ? (
+                <>
+                  <div className="text-6xl mb-4 animate-pulse">⚡</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2 animate-pulse">
+                    {getCurrentLoadingMessage()}
+                  </h3>
+                  <div className="flex justify-center mb-6">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                  </div>
+                  <p className="text-gray-500 text-sm">
+                    กรุณารอสักครู่... เรากำลังเตรียมทุกอย่างให้คุณ
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-6xl mb-4">🚀</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Start Daytona Preview
+                  </h3>
+                  <p className="text-gray-600 mb-6 max-w-md">
+                    Click "Start Preview" to create a Daytona sandbox and begin editing your code with live updates.
                   </p>
                   <button
-                    onClick={handleRefresh}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+                    onClick={startPreview}
+                    disabled={loading || templateFiles.length === 0}
+                    className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                   >
-                    ลองใหม่
+                    {loading ? getCurrentLoadingMessage() : 'Start Preview'}
                   </button>
-                </div>
-              </div>
-            ) : !previewUrl ? (
-              <div className="flex flex-col items-center space-y-4 p-8">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Eye className="w-8 h-8 text-gray-400" />
-                </div>
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">ยังไม่มี Preview</h3>
-                  <p className="text-gray-600 mb-4">
-                    Preview จะถูกสร้างขึ้นหลังจากสร้างหรือแก้ไขเว็บไซต์
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div 
-                className="w-full h-full"
-                style={{ 
-                  width: getDeviceWidth(),
-                  maxWidth: deviceType === 'desktop' ? '100%' : getDeviceWidth(),
-                  margin: '0 auto'
-                }}
-              >
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full border-0"
-                  title="Project Preview"
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                  onLoad={() => console.log('✅ Preview loaded:', previewUrl)}
-                  onError={() => console.error('❌ Preview failed to load:', previewUrl)}
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className={`grid gap-4 h-full ${
+            isCodeEditorVisible 
+              ? 'grid-cols-1 lg:grid-cols-3' 
+              : 'grid-cols-1'
+          }`}>
+            {/* Code Editor */}
+            {isCodeEditorVisible && (
+              <div className="lg:col-span-2">
+                <CodeEditor
+                  sandboxId={sandboxId}
+                  projectId={ProjectId}    // 🔄 TODO: เปลี่ยนเป็น projectId จริง
+                  initialFiles={templateFiles} // 🔄 TODO: เปลี่ยนเป็นไฟล์จาก DB
+                  className="h-full"
                 />
               </div>
             )}
+
+            {/* Live Preview */}
+            <div className={isCodeEditorVisible ? "lg:col-span-1" : "col-span-1"}>
+              <div className="h-full bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div className="p-3 border-b border-gray-200 bg-gray-50">
+                  <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+                    🔴 Live Preview
+                    <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                      Connected
+                    </span>
+                    {!isCodeEditorVisible && (
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                        Full Screen
+                      </span>
+                    )}
+                  </h3>
+                </div>
+                
+                <div className="h-full">
+                  {previewUrl ? (
+                    <div 
+                      className="w-full h-full"
+                      style={{ 
+                        width: getDeviceWidth(),
+                        maxWidth: deviceType === 'desktop' ? '100%' : getDeviceWidth(),
+                        margin: '0 auto'
+                      }}
+                    >
+                      <iframe
+                        src={previewUrl}
+                        className="w-full h-full border-0"
+                        title="Project Preview"
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                        referrerPolicy="no-referrer"
+                        allow="clipboard-read; clipboard-write"
+                        onLoad={() => console.log('✅ ProjectPreview loaded:', previewUrl)}
+                        onError={() => console.error('❌ ProjectPreview failed to load:', previewUrl)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">🔄</div>
+                        <div>Loading preview...</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Preview Footer */}
@@ -227,29 +385,18 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
               Publish
             </button>
           </div>
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
-            {/* ✅ Dynamic status indicator */}
-            <span className={`px-2 py-1 rounded-full text-xs ${
-              status === 'running' ? 'bg-green-100 text-green-800' :
-              status === 'creating' ? 'bg-yellow-100 text-yellow-800' :
-              status === 'error' ? 'bg-red-100 text-red-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {status === 'running' ? 'Live' :
-               status === 'creating' ? 'Building' :
-               status === 'error' ? 'Error' :
-               'Offline'}
-            </span>
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div>
+              <span className="font-medium">Files:</span> {templateFiles.length} | 
+              <span className="font-medium ml-2">Status:</span> {status} |
+              {sandboxId && (
+                <>
+                  <span className="font-medium ml-2">Sandbox:</span> {sandboxId.substring(0, 12)}...
+                </>
+              )}
+            </div>
             
-            {/* ✅ Show last updated time or sandbox ID */}
-            <span>
-              {lastUpdated ? 
-                `Last updated: ${new Date(lastUpdated).toLocaleString('th-TH')}` :
-                sandboxId ? 
-                  `Sandbox: ${sandboxId.slice(0, 8)}...` :
-                  'No preview available'
-              }
-            </span>
+          
           </div>
         </div>
       </div>
