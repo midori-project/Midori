@@ -35,7 +35,7 @@ interface ExecutionStatus {
 }
 
 // Real agent clients - Call actual agent implementations
-import { run as frontendAgent } from '../../frontend/runners/run';
+import { runFrontendAgentV2 as frontendAgent } from '../../frontend-v2/runners/run';
 
 class RealAgentClient {
   constructor(private agentName: string) {}
@@ -109,57 +109,57 @@ class RealAgentClient {
   }
   
   /**
-   * Transform Task to FrontendTask format with minimal data for template-based approach
+   * Transform Task to FrontendTaskV2 format for the new template system
    */
   private async transformToFrontendTask(task: Task): Promise<any> {
     const projectContext = task.payload.projectContext || null;
     
-    // Generate component name based on task type and project context
-    let componentName = '';
-    if (task.action === 'select_template') {
-      componentName = `${projectContext?.projectType || 'default'}Template`;
-    } else if (task.action === 'customize_template') {
-      componentName = `${projectContext?.projectType || 'default'}CustomizedTemplate`;
-    } else {
-      componentName = task.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    }
+    // Map orchestrator actions to Frontend-V2 task types
+    const taskTypeMap: Record<string, string> = {
+      'select_template': 'generate_website',
+      'customize_template': 'customize_component',
+      'create_component': 'create_page',
+      'update_styling': 'update_styling',
+      'regenerate_content': 'regenerate_content',
+      'create_preview': 'create_preview'
+    };
     
-    // Extract style preferences
-    const stylePreferences = await this.extractStylePreferences(task.payload?.userInput || '');
-    console.log('🎨 Style preferences extracted for frontend:', stylePreferences);
+    // Let Frontend-V2 handle business category detection
+    
+    // Extract keywords from user input
+    const keywords = this.extractKeywords(task.payload?.userInput || '');
+    
+    // Let Frontend-V2 handle style detection internally
+    console.log('🎨 Letting Frontend-V2 handle style detection internally');
     
     return {
       taskId: task.taskId,
-      taskType: task.action,
-      action: this.extractAction(task),
-      componentName: componentName, // ✅ เพิ่ม componentName
-      userInput: task.payload?.userInput || '', // ✅ เพิ่ม userInput
-      requirements: {
-        templateType: projectContext?.projectType || 'default',
-        features: ['responsive', 'seo', 'accessibility'],
-        customizations: this.extractCustomizations(projectContext),
-        stylePreferences: stylePreferences, // ✅ ส่ง style preferences ที่ถูกต้อง
-        type: 'functional',
-        props: [],
-        styling: 'tailwind',
-        tests: true
+      taskType: taskTypeMap[task.action] || 'generate_website',
+      // Let Frontend-V2 handle business category detection
+      businessCategory: undefined,
+      keywords: keywords,
+      // Let Frontend-V2 handle customizations internally
+      customizations: {},
+      target: projectContext?.projectId || undefined,
+      includePreview: true,
+      validation: {
+        enabled: true,
+        strictMode: false,
+        accessibilityLevel: 'AA'
       },
-      // ✅ ส่งเฉพาะข้อมูลที่จำเป็นสำหรับ template selection
-      projectContext: projectContext ? {
-        projectId: projectContext.projectId,
-        projectType: projectContext.projectType,
-        category: projectContext.projectType, // ใช้ projectType เป็น category
-        templateCategory: projectContext.projectType,
-        status: projectContext.status,
-        userPreferences: {
-          theme: projectContext.userPreferences?.theme || 'light',
-          language: projectContext.userPreferences?.language || 'th'
-        },
-        conversationHistory: {
-          currentContext: projectContext.conversationHistory?.currentContext || '',
-          lastIntent: projectContext.conversationHistory?.lastIntent || ''
-        }
-      } : null
+      aiSettings: {
+        model: 'gpt-5-nano',
+        temperature: 1,
+        language: projectContext?.userPreferences?.language || 'th'
+      },
+      priority: 'medium',
+      metadata: {
+        userId: projectContext?.userId || 'orchestrator',
+        projectId: projectContext?.projectId,
+        timestamp: new Date().toISOString(),
+        dependencies: [],
+        tags: [projectContext?.projectType || 'default']
+      }
     };
   }
 
@@ -284,46 +284,22 @@ class RealAgentClient {
   }
 
   /**
-   * Extract style preferences from user input using StyleDetectionService
+   * Extract keywords from user input for Frontend-V2
    */
-  private async extractStylePreferences(userInput: string): Promise<any> {
-    try {
-      console.log('🎨 Orchestrator extracting style preferences for:', userInput);
-      
-      if (!userInput) {
-        console.log('❌ No user input provided for style extraction');
-        return {
-          style: 'default',
-          colorTone: 'default',
-          colors: [],
-          mood: 'default',
-          theme: 'default',
-          confidence: 0.1,
-          reasoning: 'No user input provided'
-        };
-      }
-
-      // Import StyleDetectionService
-      const { StyleDetectionService } = await import('../services/styleDetectionService');
-      const styleDetectionService = StyleDetectionService.getInstance();
-      
-      const result = await styleDetectionService.detectStylePreferences(userInput);
-      console.log('🎨 Orchestrator style detection result:', result);
-      
-      return result;
-    } catch (error) {
-      console.error('❌ Failed to extract style preferences:', error);
-      return {
-        style: 'default',
-        colorTone: 'default',
-        colors: [],
-        mood: 'default',
-        theme: 'default',
-        confidence: 0.1,
-        reasoning: 'Style extraction failed'
-      };
-    }
+  private extractKeywords(userInput: string): string[] {
+    if (!userInput) return ['website'];
+    
+    // Simple keyword extraction
+    const keywords = userInput
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 2)
+      .filter(word => !['สร้าง', 'ทำ', 'ต้องการ', 'อยาก', 'ให้', 'เป็น', 'แบบ', 'สี', 'สไตล์'].includes(word))
+      .slice(0, 5); // Limit to 5 keywords
+    
+    return keywords.length > 0 ? keywords : ['website'];
   }
+
 
   /**
    * Extract brand name from project context - Minimal approach

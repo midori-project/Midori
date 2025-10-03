@@ -1,0 +1,51 @@
+{
+  "name": "@midori/frontend-v2-agent",
+  "version": "2.0.0",
+  "description": "Modern frontend development agent using Template System + AI Integration",
+  "main": "runners/run.ts",
+  "types": "runners/run.ts",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "dev": "ts-node runners/run.ts",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "openai": "^4.104.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.19",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.4.4",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "frontend",
+    "agent",
+    "template-system",
+    "ai",
+    "react",
+    "typescript",
+    "website-generation"
+  ],
+  "author": "Midori Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/midori/frontend-v2-agent"
+  },
+  "bugs": {
+    "url": "https://github.com/midori/frontend-v2-agent/issues"
+  },
+  "homepage": "https://github.com/midori/frontend-v2-agent#readme"
+}
