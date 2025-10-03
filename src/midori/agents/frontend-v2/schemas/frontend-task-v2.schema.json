@@ -1,0 +1,166 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Frontend Task V2",
+  "description": "Schema for modern frontend development tasks using Template System",
+  "type": "object",
+  "required": ["taskId", "taskType", "businessCategory", "keywords"],
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "description": "Unique identifier for the task",
+      "pattern": "^[a-zA-Z0-9-_]+$"
+    },
+    "taskType": {
+      "type": "string",
+      "enum": [
+        "generate_website",
+        "customize_component", 
+        "create_page",
+        "update_styling",
+        "regenerate_content",
+        "create_preview"
+      ],
+      "description": "Type of frontend task to execute"
+    },
+    "businessCategory": {
+      "type": "string",
+      "enum": ["restaurant", "ecommerce", "portfolio", "healthcare", "education", "real_estate"],
+      "description": "Business category for template selection"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Keywords for AI content generation and business category detection"
+    },
+    "customizations": {
+      "type": "object",
+      "properties": {
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["blue", "green", "purple", "pink", "orange", "red", "yellow", "indigo"]
+          },
+          "maxItems": 2,
+          "description": "Preferred color scheme"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["modern", "classic", "minimal", "creative", "professional"],
+          "default": "modern",
+          "description": "Visual theme preference"
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["single-page", "multi-page", "landing", "dashboard"],
+          "default": "single-page",
+          "description": "Layout preference"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "hero_section",
+              "about_section", 
+              "contact_form",
+              "gallery",
+              "testimonials",
+              "pricing",
+              "blog",
+              "ecommerce"
+            ]
+          },
+          "description": "Required page features"
+        }
+      },
+      "description": "Customization options for the generated website"
+    },
+    "target": {
+      "type": "string",
+      "description": "Target directory for generated files",
+      "default": "/components"
+    },
+    "includePreview": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to generate real-time preview"
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "strictMode": {
+          "type": "boolean",
+          "default": true
+        },
+        "accessibilityLevel": {
+          "type": "string",
+          "enum": ["A", "AA", "AAA"],
+          "default": "AA"
+        }
+      },
+      "description": "Validation settings"
+    },
+    "aiSettings": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "enum": ["gpt-5-nano", "gpt-4o-mini", "gpt-4o"],
+          "default": "gpt-5-nano"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "default": 1
+        },
+        "language": {
+          "type": "string",
+          "enum": ["th", "en", "auto"],
+          "default": "th"
+        }
+      },
+      "description": "AI generation settings"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "default": "medium"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,242 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Component Result V2",
+  "description": "Schema for template-based component generation results",
+  "type": "object",
+  "required": ["success", "result", "files", "metadata"],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "Whether the generation was successful"
+    },
+    "result": {
+      "type": "object",
+      "required": ["businessCategory", "templateUsed", "blocksGenerated"],
+      "properties": {
+        "businessCategory": {
+          "type": "string",
+          "description": "Detected or selected business category"
+        },
+        "templateUsed": {
+          "type": "string",
+          "description": "Template system used for generation"
+        },
+        "blocksGenerated": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of generated component blocks"
+        },
+        "aiContentGenerated": {
+          "type": "boolean",
+          "description": "Whether AI was used for content generation"
+        },
+        "customizationsApplied": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of applied customizations"
+        },
+        "overridesApplied": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of applied overrides"
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "content", "type", "size"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path relative to project root"
+          },
+          "content": {
+            "type": "string",
+            "description": "File content"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["component", "style", "config", "test", "documentation"],
+            "description": "Type of generated file"
+          },
+          "size": {
+            "type": "number",
+            "description": "File size in bytes"
+          },
+          "blockId": {
+            "type": "string",
+            "description": "Associated template block ID"
+          },
+          "customized": {
+            "type": "boolean",
+            "description": "Whether file was customized"
+          }
+        }
+      }
+    },
+    "preview": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Preview URL"
+        },
+        "sandboxId": {
+          "type": "string",
+          "description": "Sandbox identifier"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "ready", "error"],
+          "description": "Preview status"
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if preview failed"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "properties": {
+        "generationTime": {
+          "type": "number",
+          "description": "Total generation time in milliseconds"
+        },
+        "templateRenderingTime": {
+          "type": "number",
+          "description": "Template rendering time in milliseconds"
+        },
+        "aiGenerationTime": {
+          "type": "number",
+          "description": "AI content generation time in milliseconds"
+        },
+        "totalFiles": {
+          "type": "number",
+          "description": "Total number of generated files"
+        },
+        "totalSize": {
+          "type": "string",
+          "description": "Total size of generated files"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "isValid": {
+          "type": "boolean",
+          "description": "Whether generated content is valid"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "line": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "accessibilityScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Accessibility compliance score"
+        },
+        "typescriptErrors": {
+          "type": "number",
+          "description": "Number of TypeScript errors"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["executionTime", "timestamp", "agent", "version"],
+      "properties": {
+        "executionTime": {
+          "type": "number",
+          "description": "Total execution time in milliseconds"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "agent": {
+          "type": "string",
+          "default": "frontend-v2"
+        },
+        "version": {
+          "type": "string",
+          "default": "2.0.0"
+        },
+        "templateSystemVersion": {
+          "type": "string",
+          "description": "Version of template system used"
+        },
+        "aiModelUsed": {
+          "type": "string",
+          "description": "AI model used for content generation"
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "details": {
+          "type": "string"
+        },
+        "recoveryAttempted": {
+          "type": "boolean",
+          "description": "Whether error recovery was attempted"
+        }
+      }
+    }
+  }
+}

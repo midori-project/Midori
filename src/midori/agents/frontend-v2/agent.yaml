@@ -1,0 +1,123 @@
+name: frontend-v2
+version: "2.0.0"
+role: "Template-based Frontend Generator with AI Integration"
+description: "Modern frontend development agent using Template System + AI for website generation"
+
+# Input/Output Contracts
+consumes: ["frontend-task-v2.schema.json", "template-request.schema.json"]
+produces: [
+  "component-result-v2.schema.json",
+  "website-result.schema.json",
+  "preview-result.schema.json"
+]
+
+# Agent Capabilities
+capabilities:
+  - template_based_generation    # สร้างเว็บไซต์จาก template system
+  - ai_content_generation       # สร้างเนื้อหาด้วย AI
+  - business_category_detection # ระบุประเภทธุรกิจ
+  - responsive_design          # ออกแบบ responsive
+  - real_time_preview          # preview แบบ real-time
+  - customization_override     # ปรับแต่งตามความต้องการ
+  - performance_optimization   # ปรับปรุงประสิทธิภาพ
+  - accessibility_compliance   # รองรับ accessibility
+
+# Model Configuration
+model:
+  provider: openai
+  name: gpt-5-nano
+  temperature: 1
+  max_completion_tokens: 8000
+  timeout: 120
+  fallback:
+    name: gpt-4o-mini
+    temperature: 0.3
+    max_tokens: 4000
+    timeout: 60
+  retry_policy:
+    max_retries: 3
+    fallback_on_failure: true
+    fallback_triggers: ["rate_limit", "timeout", "api_error"]
+
+# Tools Available
+tools:
+  - template_engine           # Template System Engine
+  - ai_content_generator     # AI Content Generation
+  - business_category_matcher # Business Category Detection
+  - preview_generator        # Real-time Preview
+  - performance_auditor      # Performance Analysis
+  - accessibility_checker    # A11y Compliance Check
+
+# Constraints and Safety
+constraints:
+  - "no secrets in output"
+  - "validate all schemas before output"
+  - "enforce accessibility standards (WCAG 2.1 AA)"
+  - "maintain TypeScript strict mode compliance"
+  - "follow React best practices"
+  - "ensure responsive design principles"
+  - "use template system for consistency"
+  - "generate clean, maintainable code"
+
+# Quality Configuration
+quality:
+  smoke_checks: true
+  contract_validation: true
+  accessibility_compliance: true
+  performance_audit: true
+  typescript_strict: true
+  template_validation: true
+
+# Execution Policies
+policies:
+  max_parallel_tasks: 5
+  max_execution_time: 1200  # 20 minutes
+  retry_attempts: 3
+  escalation_threshold: 2   # failures before escalation
+  
+  # Frontend-v2 specific policies
+  min_template_coverage: 90
+  accessibility_level: "AA"
+  performance_budget: 90  # Lighthouse score
+  ai_response_validation: true
+
+# Response Templates
+response_templates:
+  website_generated:
+    en: "✅ Website generated successfully using template system for '{businessCategory}' category"
+    th: "✅ สร้างเว็บไซต์เรียบร้อยแล้วด้วย template system สำหรับประเภทธุรกิจ '{businessCategory}'"
+  template_applied:
+    en: "🎨 Applied template '{templateName}' with {overrides} customizations"
+    th: "🎨 ใช้ template '{templateName}' พร้อมการปรับแต่ง {overrides} รายการ"
+  ai_content_created:
+    en: "🤖 Generated AI content for {blocks} blocks with {keywords} keywords"
+    th: "🤖 สร้างเนื้อหาด้วย AI สำหรับ {blocks} บล็อกด้วยคำสำคัญ {keywords}"
+  preview_ready:
+    en: "👀 Preview ready at {previewUrl} - Performance score: {score}"
+    th: "👀 Preview พร้อมใช้งานที่ {previewUrl} - คะแนนประสิทธิภาพ: {score}"
+
+# Template System Integration
+template_integration:
+  shared_blocks: true
+  business_categories: true
+  override_system: true
+  ai_generation: true
+  real_time_preview: true
+
+# Performance Targets
+performance:
+  lighthouse_score_min: 90
+  first_contentful_paint: "< 1.5s"
+  largest_contentful_paint: "< 2.5s"
+  cumulative_layout_shift: "< 0.1"
+  template_rendering_time: "< 2s"
+  ai_generation_time: "< 10s"
+
+# AI Integration
+ai_integration:
+  content_generation: true
+  keyword_processing: true
+  business_category_detection: true
+  color_preference_extraction: true
+  multilingual_support: true
+  fallback_content: true

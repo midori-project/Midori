@@ -703,6 +703,22 @@ export class OrchestratorAI {
     
     // Update project context if task was successful and we have project context
     if (taskResult.success && command.payload.projectContext) {
+      // ถ้า Frontend-V2 ส่ง projectType กลับมา ให้อัปเดต project context
+      if (taskResult.metadata && 'executionResult' in taskResult.metadata) {
+        const executionResult = (taskResult.metadata as any).executionResult;
+        if (executionResult?.results?.[0]?.result?.projectType) {
+          const frontendResult = executionResult.results[0].result;
+          const detectedProjectType = this.getProjectTypeFromFrontendResult(frontendResult);
+          
+          console.log('🔄 Updating project type based on Frontend-V2 result:', detectedProjectType);
+          
+          // อัปเดต project context ด้วย projectType ที่ถูกต้อง
+          await this.updateProjectContext(command.payload.projectContext.projectId, {
+            status: 'template_selected' as 'created' | 'in_progress' | 'completed' | 'paused' | 'cancelled' | 'template_selected'
+          });
+        }
+      }
+      
       await this.updateProjectContextAfterTask(command.payload.projectContext.projectId, taskResult);
     }
     
@@ -807,7 +823,6 @@ export class OrchestratorAI {
     
     // ถ้าเป็น GPT-5 model ต้องใช้ temperature = 1 เท่านั้น
     if (currentModel.includes('gpt-5')) {
-      console.log(`⚠️ Model ${currentModel} requires temperature = 1, removing custom temperature`);
       const { temperature, ...optionsWithoutTemp } = options;
       return optionsWithoutTemp; // ไม่ส่ง temperature parameter
     }
@@ -908,8 +923,8 @@ export class OrchestratorAI {
         console.log(`✅ Using project ID from home page: ${projectId}`);
       }
       
-      const projectTypeString = await this.detectProjectTypeFromInput(message.content);
-      const projectType = projectTypeString as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
+      // ใช้ default project type - Frontend-V2 จะส่ง projectType กลับมา
+      const projectType = 'e_commerce' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
       
       // สร้าง Project record ก่อน (เฉพาะเมื่อสร้าง project ID ใหม่)
       if (!message.context?.currentProject) {
@@ -1634,69 +1649,13 @@ ${executionResults.map((result: any) =>
 
 
   /**
-   * Detect project type from user input using AI-powered category detection
+   * Get project type from Frontend-V2 result
    */
-  private async detectProjectTypeFromInput(input: string): Promise<string> {
-    try {
-      // Import category detection service
-      const { categoryDetectionService } = await import('./services/categoryDetectionService');
-      
-      console.log('🔍 Detecting project type for:', input);
-      
-      // Use AI-powered category detection
-      const result = await categoryDetectionService.detectCategory(input);
-      
-      console.log('🎯 Category detection result:', {
-        category: result.category.name,
-        confidence: result.confidence,
-        reasoning: result.reasoning
-      });
-      
-      // Map category ID to project type
-      const projectTypeMapping: Record<string, string> = {
-        'e_commerce_food': 'e_commerce',
-        'e_commerce_fashion': 'e_commerce', 
-        'e_commerce_general': 'e_commerce',
-        'restaurant': 'restaurant',
-        'coffee_shop': 'coffee_shop',
-        'business': 'business',
-        'portfolio': 'portfolio',
-        'blog': 'blog',
-        'landing_page': 'landing_page',
-        'education': 'education',
-        'healthcare': 'healthcare',
-        'hotel': 'hotel',
-        'accommodation': 'hotel',
-        'travel': 'hotel'
-      };
-      
-      const projectType = (projectTypeMapping[result.category.id] || 'e_commerce') as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal' | 'healthcare' | 'hotel';
-      
-      console.log('✅ Project type detected:', projectType);
-      return projectType;
-      
-    } catch (error) {
-      console.error('❌ Category detection failed, using fallback:', error);
-      
-      // Fallback to simple keyword matching
-      const lowerInput = input.toLowerCase();
-      
-      if (lowerInput.includes('ร้านกาแฟ') || lowerInput.includes('coffee')) {
-        return 'coffee_shop' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
-      } else if (lowerInput.includes('ร้านอาหาร') || lowerInput.includes('restaurant')) {
-        return 'restaurant' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
-      } else if (lowerInput.includes('ขาย') || lowerInput.includes('shop') || lowerInput.includes('store')) {
-        return 'e_commerce' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
-      } else if (lowerInput.includes('portfolio') || lowerInput.includes('ผลงาน')) {
-        return 'portfolio' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
-      } else if (lowerInput.includes('blog') || lowerInput.includes('บล็อก')) {
-        return 'blog' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
-      } else if (lowerInput.includes('ธุรกิจ') || lowerInput.includes('business')) {
-        return 'business' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
-      }
-      
-      return 'e_commerce' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal'; // Default to e_commerce for selling businesses
-    }
+  private getProjectTypeFromFrontendResult(frontendResult: any): string {
+    console.log('🔍 Getting project type from Frontend-V2 result:', frontendResult?.result?.projectType);
+    
+    // Use projectType from Frontend-V2 result, fallback to 'e_commerce'
+    return frontendResult?.result?.projectType || 'e_commerce';
   }
 
   /**
