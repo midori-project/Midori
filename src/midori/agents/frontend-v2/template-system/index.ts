@@ -12,9 +12,17 @@ export * from './shared-blocks';
 // Re-export business categories
 export * from './business-categories';
 
+// Re-export project templates
+export * from './project-templates';
+
+// Re-export project structure generator
+export * from './project-structure-generator';
+
 // Main exports for easy access
 export { OverrideSystem, createOverrideSystem } from './override-system';
 export { SHARED_BLOCKS } from './shared-blocks';
 export { 
   BUSINESS_CATEGORIES
 } from './business-categories';
+export { PROJECT_TEMPLATES, getProjectTemplate, getProjectTemplateByType } from './project-templates';
+export { ProjectStructureGenerator, createProjectStructureGenerator } from './project-structure-generator';

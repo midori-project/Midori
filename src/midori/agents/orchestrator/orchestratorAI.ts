@@ -19,6 +19,7 @@ import type { ProjectContextData } from './types/projectContext';
 import { projectContextStore } from './stores/projectContextStore';
 import { projectContextSync } from './sync/projectContextSync';
 import { ConversationService, type ConversationData, type MessageData } from './services/conversationService';
+import { FrontendV2ProjectContextMapper } from './mappers/frontendV2ProjectContextMapper';
 import { randomUUID } from 'crypto';
 
 // Create singleton instance
@@ -1499,7 +1500,41 @@ ${executionResults.map((result: any) =>
         return;
       }
 
-      // Extract changes from task results
+      // Check if this is a Frontend-V2 result
+      if (taskResult.metadata?.executionResult?.results?.[0]?.result) {
+        const frontendResult = taskResult.metadata.executionResult.results[0].result;
+        
+        console.log(`🎯 Detected Frontend-V2 result, mapping to Project Context format`);
+        
+        // Use Frontend-V2 mapper to convert result
+        const mappedData = FrontendV2ProjectContextMapper.mapResultToProjectContext(frontendResult);
+        
+        // Update project context with mapped data
+        const updatedContext = await projectContextStore.updateProjectContext(projectId, {
+          frontendV2Data: mappedData.frontendV2Data,
+          components: mappedData.components,
+          pages: mappedData.pages,
+          preview: mappedData.preview,
+          status: 'template_selected'
+        });
+        
+        if (updatedContext) {
+          console.log(`✅ Updated project context with Frontend-V2 data for ${projectId}`);
+          
+          // Update conversation context
+          await this.updateConversationContextAfterTask(projectId, {
+            lastTaskResult: taskResult,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Broadcast changes to all subscribers
+          await projectContextSync.broadcastUpdate(projectId, updatedContext);
+        }
+        
+        return;
+      }
+
+      // Extract changes from task results (legacy approach)
       const changes = this.extractChangesFromTaskResult(taskResult);
       
       if (changes.hasChanges) {

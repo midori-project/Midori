@@ -13,18 +13,21 @@ import {
 import { FrontendTaskV2, ComponentResultV2 } from '../schemas/types';
 import { AIService, AIGenerationRequest } from '../services/ai-service';
 import { categoryService } from '../services/category-service';
+import { ProjectStructureGenerator, createProjectStructureGenerator } from '../template-system/project-structure-generator';
 
 export class TemplateAdapter {
   private overrideSystem: OverrideSystem;
   private sharedBlocks: any[];
   private businessCategories: any[];
   private aiService: AIService;
+  private projectStructureGenerator: ProjectStructureGenerator;
 
   constructor() {
     this.sharedBlocks = SHARED_BLOCKS;
     this.businessCategories = BUSINESS_CATEGORIES;
     this.overrideSystem = createOverrideSystem(this.sharedBlocks, this.businessCategories);
     this.aiService = new AIService();
+    this.projectStructureGenerator = createProjectStructureGenerator();
   }
 
   /**
@@ -201,7 +204,8 @@ export class TemplateAdapter {
         agent: 'frontend-v2',
         version: '2.0.0',
         templateSystemVersion: '1.0.0',
-        aiModelUsed: task.aiSettings?.model || 'gpt-5-nano'
+        aiModelUsed: task.aiSettings?.model || 'gpt-5-nano',
+        aiGeneratedData: templateResult.aiGeneratedData || null
       }
     };
   }
@@ -305,6 +309,9 @@ export class TemplateAdapter {
       templateRequest.validationEnabled
     );
 
+    // Add AI-generated data to template result
+    templateResult.aiGeneratedData = aiGeneratedData;
+
       console.log('✅ Template generation completed:', {
         filesGenerated: Object.keys(templateResult.files).length,
         processingTime: templateResult.processingTime
@@ -316,6 +323,11 @@ export class TemplateAdapter {
       // 4. เพิ่ม preview ถ้าต้องการ
       if (task.includePreview) {
         result.preview = await this.createPreview(result.files);
+      }
+
+      // 5. เพิ่ม project structure ถ้าต้องการ
+      if (task.includeProjectStructure !== false) {
+        result.projectStructure = await this.generateProjectStructure(result, task);
       }
 
       console.log('🎉 Frontend generation completed successfully!');
@@ -341,6 +353,31 @@ export class TemplateAdapter {
       status: 'ready',
       createdAt: new Date().toISOString()
     };
+  }
+
+  /**
+   * สร้าง Project Structure
+   */
+  private async generateProjectStructure(result: ComponentResultV2, task: FrontendTaskV2): Promise<any> {
+    try {
+      console.log('🏗️ Generating project structure...');
+      
+      const projectStructure = this.projectStructureGenerator.generateProjectStructure(
+        result,
+        'vite-react-typescript',
+        task.metadata?.projectId
+      );
+      
+      console.log('✅ Project structure generated:', {
+        projectName: projectStructure.projectStructure.name,
+        filesCount: projectStructure.files.length
+      });
+      
+      return projectStructure;
+    } catch (error) {
+      console.error('❌ Failed to generate project structure:', error);
+      return null;
+    }
   }
 
   /**

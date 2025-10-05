@@ -356,7 +356,7 @@ Generate content that matches the schema exactly. Return JSON with the following
     "palette": {
       "primary": "choose appropriate color based on keywords and business type",
       "secondary": "choose complementary color based on keywords and business type", 
-      "bgTone": "choose appropriate background tone (50-900)"
+      "bgTone": "choose appropriate background tone number (50, 100, 200, 300, 400, 500, 600, 700, 800, 900)"
     },
     "tokens": {
       "radius": "${businessCategory.globalSettings.tokens.radius}",
@@ -424,6 +424,9 @@ Rules:
 Color Guidelines:
 - Available colors: blue, green, purple, pink, orange, red, yellow, indigo
 - Available bgTones: 50, 100, 200, 300, 400, 500, 600, 700, 800, 900
+- CRITICAL: bgTone must be a NUMBER (50-900), NOT a color name
+- For blue theme: use bgTone "100" or "200" for light blue background
+- For dark themes: use bgTone "700" or "800" for dark backgrounds
 - Thai color keywords mapping:
   * ฟ้า, น้ำเงิน = blue
   * เขียว, เขียวอ่อน = green  

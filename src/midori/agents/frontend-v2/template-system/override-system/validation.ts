@@ -130,6 +130,21 @@ export class SchemaValidator {
       palette.secondary = thaiColorMap[palette.secondary];
     }
 
+    // Convert color names to bgTone numbers
+    if (palette.bgTone && validColors.includes(palette.bgTone)) {
+      const colorToToneMap: Record<string, string> = {
+        'blue': '100',
+        'green': '100', 
+        'purple': '100',
+        'pink': '100',
+        'orange': '100',
+        'red': '100',
+        'yellow': '100',
+        'indigo': '100'
+      };
+      palette.bgTone = colorToToneMap[palette.bgTone] || '100';
+    }
+
     if (palette.primary) {
       if (!validColors.includes(palette.primary)) {
         errors.push({

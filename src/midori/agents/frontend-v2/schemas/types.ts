@@ -15,6 +15,8 @@ export interface FrontendTaskV2 {
   };
   target?: string;
   includePreview?: boolean;
+  includeProjectStructure?: boolean;
+  projectType?: 'vite-react-typescript' | 'nextjs' | 'create-react-app';
   validation?: {
     enabled?: boolean;
     strictMode?: boolean;
@@ -61,6 +63,19 @@ export interface ComponentResultV2 {
     error?: string;
     createdAt: string;
   };
+  projectStructure?: {
+    projectStructure: {
+      name: string;
+      type: string;
+      description: string;
+    };
+    files: Array<{
+      path: string;
+      content: string;
+      type: string;
+      language: string;
+    }>;
+  };
   performance: {
     generationTime: number;
     templateRenderingTime: number;
@@ -91,6 +106,7 @@ export interface ComponentResultV2 {
     version: string;
     templateSystemVersion?: string;
     aiModelUsed?: string;
+    aiGeneratedData?: any;
   };
   error?: {
     message: string;

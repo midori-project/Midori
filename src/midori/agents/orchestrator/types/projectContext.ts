@@ -22,6 +22,8 @@ export interface ProjectContextData {
   conversationHistory: ConversationHistoryData;
   userPreferences: UserPreferencesData;
   preview?: PreviewData | null;  // ✅ Add preview data for Daytona integration
+  // ✅ Add Frontend-V2 support
+  frontendV2Data?: FrontendV2ProjectData | null;
   lastModified: Date;
   createdAt: Date;
 }
@@ -391,3 +393,89 @@ export type PreviewStatus =
   | 'error'         // Preview failed
   | 'stopped'       // Preview was manually stopped
   | 'expired';      // Preview expired (auto-cleanup)
+
+// ============================
+// Frontend-V2 Integration Types
+// ============================
+
+export interface FrontendV2ProjectData {
+  businessCategory: string;
+  projectType: string;
+  templateUsed: string;
+  blocksGenerated: string[];
+  aiContentGenerated: boolean;
+  customizationsApplied: string[];
+  overridesApplied: string[];
+  files: FrontendV2FileData[];
+  projectStructure?: FrontendV2ProjectStructure | null;
+  preview?: FrontendV2PreviewData | null;
+  performance: FrontendV2PerformanceData;
+  validation: FrontendV2ValidationData;
+  metadata: FrontendV2Metadata;
+}
+
+export interface FrontendV2FileData {
+  path: string;
+  content: string;
+  type: 'component' | 'style' | 'config' | 'test' | 'documentation';
+  size: number;
+  blockId: string;
+  customized: boolean;
+}
+
+export interface FrontendV2ProjectStructure {
+  projectStructure: {
+    name: string;
+    type: string;
+    description: string;
+  };
+  files: Array<{
+    path: string;
+    content: string;
+    type: string;
+    language: string;
+  }>;
+}
+
+export interface FrontendV2PreviewData {
+  url: string;
+  sandboxId: string;
+  status: 'pending' | 'ready' | 'error';
+  error?: string;
+  createdAt: string;
+}
+
+export interface FrontendV2PerformanceData {
+  generationTime: number;
+  templateRenderingTime: number;
+  aiGenerationTime: number;
+  totalFiles: number;
+  totalSize: string;
+}
+
+export interface FrontendV2ValidationData {
+  isValid: boolean;
+  errors: Array<{
+    type: string;
+    message: string;
+    file: string;
+    line: number;
+  }>;
+  warnings: Array<{
+    type: string;
+    message: string;
+    file: string;
+  }>;
+  accessibilityScore: number;
+  typescriptErrors: number;
+}
+
+export interface FrontendV2Metadata {
+  executionTime: number;
+  timestamp: string;
+  agent: string;
+  version: string;
+  templateSystemVersion?: string;
+  aiModelUsed?: string;
+  aiGeneratedData?: any;
+}

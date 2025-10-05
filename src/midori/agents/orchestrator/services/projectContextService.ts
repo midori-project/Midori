@@ -109,6 +109,96 @@ export class ProjectContextService {
     return this.mapProjectContext(projectContext);
   }
 
+  // ============================
+  // Frontend-V2 Data Management
+  // ============================
+
+  /**
+   * Update Frontend-V2 data in project context
+   */
+  static async updateFrontendV2Data(
+    projectId: string,
+    frontendV2Data: any
+  ): Promise<ProjectContextData> {
+    const projectContext = await prisma.projectContext.update({
+      where: { projectId },
+      data: {
+        frontendV2Data: JSON.parse(JSON.stringify(frontendV2Data)),
+        lastModified: new Date()
+      }
+    });
+
+    return this.mapProjectContext(projectContext);
+  }
+
+  /**
+   * Get Frontend-V2 data from project context
+   */
+  static async getFrontendV2Data(projectId: string): Promise<any | null> {
+    const projectContext = await this.getProjectContext(projectId);
+    return projectContext?.frontendV2Data || null;
+  }
+
+  /**
+   * Update Frontend-V2 components in project context
+   */
+  static async updateFrontendV2Components(
+    projectId: string,
+    components: any[]
+  ): Promise<ProjectContextData> {
+    const projectContext = await this.getProjectContext(projectId);
+    if (!projectContext) {
+      throw new Error('Project context not found');
+    }
+
+    const updatedFrontendV2Data = {
+      ...projectContext.frontendV2Data,
+      components
+    };
+
+    return this.updateFrontendV2Data(projectId, updatedFrontendV2Data);
+  }
+
+  /**
+   * Update Frontend-V2 pages in project context
+   */
+  static async updateFrontendV2Pages(
+    projectId: string,
+    pages: any[]
+  ): Promise<ProjectContextData> {
+    const projectContext = await this.getProjectContext(projectId);
+    if (!projectContext) {
+      throw new Error('Project context not found');
+    }
+
+    const updatedFrontendV2Data = {
+      ...projectContext.frontendV2Data,
+      pages
+    };
+
+    return this.updateFrontendV2Data(projectId, updatedFrontendV2Data);
+  }
+
+  /**
+   * Update Frontend-V2 preview in project context
+   */
+  static async updateFrontendV2Preview(
+    projectId: string,
+    preview: any
+  ): Promise<ProjectContextData> {
+    const projectContext = await this.getProjectContext(projectId);
+    if (!projectContext) {
+      throw new Error('Project context not found');
+    }
+
+    const updatedFrontendV2Data = {
+      ...projectContext.frontendV2Data,
+      preview
+    };
+
+    return this.updateFrontendV2Data(projectId, updatedFrontendV2Data);
+  }
+
   static async deleteProjectContext(projectId: string): Promise<void> {
     await prisma.projectContext.delete({
       where: { projectId }
@@ -493,6 +583,9 @@ export class ProjectContextService {
       styling: projectContext.styling,
       conversationHistory: projectContext.conversationHistory,
       userPreferences: projectContext.userPreferences,
+      preview: projectContext.preview,
+      // ✅ Add Frontend-V2 data mapping
+      frontendV2Data: projectContext.frontendV2Data,
       lastModified: projectContext.lastModified,
       createdAt: projectContext.createdAt
     };
