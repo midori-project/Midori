@@ -37,13 +37,15 @@ export const SHARED_BLOCKS: SharedBlock[] = [
     name: 'Basic Hero Section',
     description: 'Standard hero section with heading, subheading, and CTA buttons',
     category: 'content',
-    template: `export default function Hero(){
+    template: `import { Link } from "react-router-dom";
+
+export default function Hero(){
     return (
       <section className="relative py-20 bg-gradient-to-br from-{primary}-50 via-{primary}-100 to-{primary}-200 overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiN7cHJpbWFyeX0yMCIgZmlsbC1vcGFjaXR5PSIwLjEiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjIiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
         
-        <div className="relative container mx-auto text-center px-4">
+        <div className="relative max-w-screen-2xl mx-auto text-center px-4">
           {/* Badge */}
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-{primary}-200 text-{primary}-700 text-sm font-medium mb-6">
             <span className="w-2 h-2 bg-{primary}-500 rounded-full mr-2 animate-pulse"></span>
@@ -64,20 +66,20 @@ export const SHARED_BLOCKS: SharedBlock[] = [
           
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a className="group relative inline-flex items-center px-8 py-4 bg-gradient-to-r from-{secondary}-500 to-{secondary}-600 text-white font-bold text-lg rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+            <Link to="/menu" className="group relative inline-flex items-center px-8 py-4 bg-gradient-to-r from-{secondary}-500 to-{secondary}-600 text-white font-bold text-lg rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
               <span className="relative z-10">{ctaLabel}</span>
               <div className="absolute inset-0 bg-gradient-to-r from-{secondary}-600 to-{secondary}-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-            </a>
+            </Link>
             
-            <a className="inline-flex items-center px-8 py-4 border-2 border-{primary}-300 text-{primary}-700 font-semibold text-lg rounded-full hover:bg-{primary}-50 hover:border-{primary}-400 transition-all duration-300">
+            <Link to="/about" className="inline-flex items-center px-8 py-4 border-2 border-{primary}-300 text-{primary}-700 font-semibold text-lg rounded-full hover:bg-{primary}-50 hover:border-{primary}-400 transition-all duration-300">
               <svg className="mr-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m6-6a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {secondaryCta}
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -128,23 +130,23 @@ export const SHARED_BLOCKS: SharedBlock[] = [
     name: 'Basic Navigation',
     description: 'Standard navigation bar with logo, menu, and CTA button',
     category: 'navigation',
-    template: `"use client";
-import { useState } from "react";
+    template: `import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Navbar(){
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     
     return (
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-{primary}-200/50 shadow-sm">
-        <div className="container mx-auto px-4">
+        <div className="max-w-screen-2xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo/Brand */}
-            <div className="flex items-center space-x-2">
+            <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-{primary}-500 to-{secondary}-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">{brandFirstChar}</span>
               </div>
               <span className="text-{primary}-700 font-bold text-xl">{brand}</span>
-            </div>
+            </Link>
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-8">
@@ -153,9 +155,9 @@ export default function Navbar(){
               </ul>
               
               {/* CTA Button */}
-              <button className="bg-gradient-to-r from-{primary}-500 to-{secondary}-500 text-white px-6 py-2 rounded-full font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300">
+              <Link to="/contact" className="bg-gradient-to-r from-{primary}-500 to-{secondary}-500 text-white px-6 py-2 rounded-full font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300">
                 {ctaButton}
-              </button>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -184,9 +186,9 @@ export default function Navbar(){
               
               {/* Mobile CTA Button */}
               <div className="pt-4">
-                <button className="w-full bg-gradient-to-r from-{primary}-500 to-{secondary}-500 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transition-all duration-300">
+                <Link to="/contact" className="w-full inline-block text-center bg-gradient-to-r from-{primary}-500 to-{secondary}-500 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transition-all duration-300">
                   {ctaButton}
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -209,13 +211,13 @@ export default function Navbar(){
     name: 'Basic Footer',
     description: 'Basic footer with company info, links, and contact details',
     category: 'layout',
-    template: `"use client";
-import { useState } from "react";
+    template: `import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
     <footer className="bg-{primary}-900 text-white py-12">
-      <div className="container mx-auto px-4">
+      <div className="max-w-screen-2xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="md:col-span-1">
@@ -277,8 +279,8 @@ export default function Footer() {
               &copy; 2024 {companyName}. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="/privacy" className="text-{primary}-300 hover:text-white text-sm transition-colors">นโยบายความเป็นส่วนตัว</a>
-              <a href="/terms" className="text-{primary}-300 hover:text-white text-sm transition-colors">ข้อกำหนดการใช้งาน</a>
+              <Link to="/privacy" className="text-{primary}-300 hover:text-white text-sm transition-colors">นโยบายความเป็นส่วนตัว</Link>
+              <Link to="/terms" className="text-{primary}-300 hover:text-white text-sm transition-colors">ข้อกำหนดการใช้งาน</Link>
             </div>
           </div>
         </div>
@@ -304,7 +306,7 @@ export default function Footer() {
     template: `export default function About() {
   return (
     <section className="py-16 bg-{primary}-50">
-      <div className="container mx-auto px-4">
+      <div className="max-w-screen-2xl mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-{primary}-900 mb-6">{title}</h2>
           <p className="text-lg text-{primary}-700 mb-8 leading-relaxed">{description}</p>
@@ -335,8 +337,7 @@ export default function Footer() {
     name: 'Basic Contact Section',
     description: 'Basic contact section with contact info and form',
     category: 'content',
-    template: `"use client";
-import { useState } from "react";
+    template: `import { useState } from "react";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -478,7 +479,7 @@ export default function Contact() {
     template: `export default function Menu() {
     return (
       <section className="py-20 bg-gradient-to-br from-{primary}-50 to-white">
-        <div className="container mx-auto px-4">
+        <div className="max-w-screen-2xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-{primary}-900 mb-4">
               {title}

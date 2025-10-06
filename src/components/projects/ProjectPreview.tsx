@@ -5,6 +5,7 @@ import { useDaytonaPreview } from '@/hooks/useDaytonaPreview';
 import { CodeEditor } from '@/components/CodeEditor/CodeEditor';
 import { Monitor, Smartphone, Tablet, RefreshCw, Code, Eye, Settings } from 'lucide-react';
 import testCafeData from '@/components/preview/test/test-cafe-complete.json';
+import exportedJson from '@/components/preview/test/exportedJson.json';
 
 // Client-side only time display component
 function TimeDisplay() {
@@ -72,13 +73,20 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   const projectName = testCafeData.projectStructure.name;
   
   // 🔄 TODO: แทนที่ด้วยการดึงข้อมูลจาก API/DB
-  // แปลงไฟล์จาก JSON เป็นรูปแบบที่ API ต้องการ
+  // ใช้ exportedJson เป็นแหล่งไฟล์หลักในการพรีวิว (fallback เป็น testCafeData ถ้าไม่พร้อม)
   const templateFiles = useMemo(() => {
-    return testCafeData.files.map((f: any) => ({
+    const useExported = true;
+    const sourceFiles = useExported
+      ? (exportedJson as any)?.exportedJson?.files || []
+      : (testCafeData as any)?.files || [];
+
+    const files = (sourceFiles.length > 0 ? sourceFiles : (testCafeData as any)?.files || []);
+
+    return files.map((f: any) => ({
       path: f.path,
       content: f.content,
       type: f.type || f.language,
-    }))
+    }));
   }, []);
   
   // ✅ ใช้ useDaytonaPreview เหมือนใน editor page

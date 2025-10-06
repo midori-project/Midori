@@ -340,7 +340,7 @@ export class TemplateRenderer {
   }
 
   /**
-   * Generate navbar menu links (simple <li><a>…)</a></li>
+   * Generate navbar menu links (using React Router Link)
    */
   private generateNavbarMenuItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
     const items = userData['Navbar']?.menuItems
@@ -351,9 +351,47 @@ export class TemplateRenderer {
       return '';
     }
 
+    // Define valid routes base on default pages
+    const validBaseRoutes = new Set<string>(['/', '/menu', '/about', '/contact']);
+
+    // Extend valid routes using common category routes (best-effort; safe whitelist)
+    const category = (userData?.businessCategory || userData?.category || '').toLowerCase();
+    const categoryRoutes: Record<string, string[]> = {
+      restaurant: ['/reservation', '/chef-profile', '/dish-gallery'],
+      ecommerce: ['/products', '/categories', '/cart', '/checkout'],
+      portfolio: ['/portfolio', '/projects'],
+      healthcare: ['/services', '/doctors', '/appointment'],
+      pharmacy: ['/products', '/services', '/about', '/contact']
+    };
+    for (const r of (categoryRoutes[category] || [])) validBaseRoutes.add(r);
+
     const primary = colorMap['primary'] || 'blue';
-    return items.map((item: any) =>
-      `<li><a className="text-${primary}-700 hover:text-${primary}-900" href="${this.escapeHtml(item.href || '#')}">${this.escapeHtml(item.label || 'Menu')}</a></li>`
+    const filtered = items.filter((item: any) => {
+      const href = typeof item?.href === 'string' ? item.href : '';
+      return validBaseRoutes.has(href);
+    });
+
+    // Ensure core routes are present (append if missing)
+    const coreRouteLabels: Record<string, string> = {
+      '/': 'หน้าแรก',
+      '/menu': 'เมนู',
+      '/about': 'เกี่ยวกับ',
+      '/contact': 'ติดต่อเรา'
+    };
+    const coreRoutes = new Set<string>(['/', '/about', '/contact']);
+    if (category === 'restaurant') coreRoutes.add('/menu');
+
+    const existingHrefs = new Set<string>(filtered.map((i: any) => i?.href).filter(Boolean));
+    for (const route of coreRoutes) {
+      if (validBaseRoutes.has(route) && !existingHrefs.has(route)) {
+        filtered.push({ label: coreRouteLabels[route] || route, href: route });
+      }
+    }
+
+    if (filtered.length === 0) return '';
+
+    return filtered.map((item: any) =>
+      `<li><Link to="${this.escapeHtml(item.href)}" className="text-${primary}-700 hover:text-${primary}-900">${this.escapeHtml(item.label || 'Menu')}</Link></li>`
     ).join('\n                ');
   }
 
@@ -395,21 +433,27 @@ export class TemplateRenderer {
   }
 
   /**
-   * Generate quick links HTML
+   * Generate quick links HTML (using React Router Link)
    * 🚀 OPTIMIZATION 3: Pre-resolved colors
    */
   private generateQuickLinks(userData: Record<string, any>, colorMap: Record<string, string>): string {
-    const quickLinks = userData.Footer?.quickLinks 
+    let quickLinks = userData.Footer?.quickLinks 
       || userData['footer-basic']?.quickLinks 
       || [];
     
+    // Provide sensible defaults if none supplied
     if (!Array.isArray(quickLinks) || quickLinks.length === 0) {
-      return '';
+      quickLinks = [
+        { label: 'หน้าแรก', href: '/' },
+        { label: 'เมนู', href: '/menu' },
+        { label: 'เกี่ยวกับเรา', href: '/about' },
+        { label: 'ติดต่อ', href: '/contact' }
+      ];
     }
 
     const primary = colorMap['primary'] || 'blue';
     return quickLinks.map((link: any) => 
-      `<li><a href="${this.escapeHtml(link.href || '#')}" className="text-${primary}-300 hover:text-white transition-colors">${this.escapeHtml(link.label || 'Link')}</a></li>`
+      `<li><Link to="${this.escapeHtml(link.href || '#')}" className="text-${primary}-300 hover:text-white transition-colors">${this.escapeHtml(link.label || 'Link')}</Link></li>`
     ).join('\n              ');
   }
 
