@@ -239,22 +239,23 @@ root.render(
         path: 'src/App.tsx',
         content: `import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
+import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import {appRoutes}
+import Menu from './components/Menu';
 
 const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-{bgTone}-50">
-      <Header restaurantName="{restaurantName}" tagline="{tagline}" />
+      <Navbar />
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/menu" element={<Menu />} />
           {routeElements}
         </Routes>
       </main>
-      <Footer restaurantName="{restaurantName}" address="{address}" phone="{phone}" socialLinks={[{ platform: 'Facebook', url: '#' }, { platform: 'Instagram', url: '#' }]} />
+      <Footer />
     </div>
   );
 };
@@ -264,6 +265,31 @@ export default App;`,
         language: 'typescript',
         required: true,
         description: 'Main App component with routing'
+      },
+      'src/pages/Home.tsx': {
+        path: 'src/pages/Home.tsx',
+        content: `import React from 'react';
+import Hero from '@/components/Hero';
+import About from '@/components/About';
+import Menu from '@/components/Menu';
+import Contact from '@/components/Contact';
+
+const Home: React.FC = () => {
+  return (
+    <div className="min-h-screen">
+      <Hero />
+      <About />
+      <Menu />
+      <Contact />
+    </div>
+  );
+};
+
+export default Home;`,
+        type: 'page',
+        language: 'typescript',
+        required: true,
+        description: 'Basic Home page scaffold'
       },
       'src/index.css': {
         path: 'src/index.css',

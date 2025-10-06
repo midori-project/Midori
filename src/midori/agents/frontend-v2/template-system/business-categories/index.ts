@@ -54,7 +54,7 @@ export const BUSINESS_CATEGORIES: BusinessCategoryManifest[] = [
     id: 'restaurant',
     name: 'Restaurant',
     description: 'Restaurant and food service websites',
-    keywords: ['restaurant', 'food', 'dining', 'cafe', 'bistro', 'menu', 'reservation', 'ร้านอาหาร', 'อาหาร', 'หมูย่าง', 'ขายอาหาร', 'ร้านขายอาหาร', 'ภัตตาคาร', 'คาเฟ่', 'ร้านกาแฟ'],
+    keywords: ['restaurant', 'food', 'dining', 'cafe', 'bistro', 'menu', 'reservation', 'ร้านอาหาร', 'อาหาร', 'หมูย่าง', 'หมูกรอบ', 'ขายอาหาร', 'ร้านขายอาหาร', 'ภัตตาคาร', 'คาเฟ่', 'ร้านกาแฟ'],
     blocks: [
       {
         blockId: 'navbar-basic',
@@ -102,6 +102,19 @@ export const BUSINESS_CATEGORIES: BusinessCategoryManifest[] = [
             { number: '1000+', label: 'ลูกค้าพึงพอใจ' },
             { number: '50+', label: 'เมนูหลากหลาย' },
             { number: '24/7', label: 'บริการส่ง' }
+          ]
+        }
+      },
+      {
+        blockId: 'menu-basic',
+        required: true,
+        customizations: {
+          title: 'เมนูอาหาร',
+          menuItems: [
+            { name: 'ข้าวผัดกุ้ง', price: '120', description: 'ข้าวผัดกุ้งสด ใส่ผักสด' },
+            { name: 'ผัดไทย', price: '80', description: 'ผัดไทยแท้ รสชาติดั้งเดิม' },
+            { name: 'ต้มยำกุ้ง', price: '150', description: 'ต้มยำกุ้งเผ็ดร้อน' },
+            { name: 'แกงเขียวหวาน', price: '100', description: 'แกงเขียวหวานไก่' }
           ]
         }
       },
@@ -261,6 +274,19 @@ export const BUSINESS_CATEGORIES: BusinessCategoryManifest[] = [
         }
       },
       {
+        blockId: 'menu-basic',
+        required: true,
+        customizations: {
+          title: 'สินค้าของเรา',
+          menuItems: [
+            { name: 'หนังสือใหม่', price: '299', description: 'หนังสือขายดีล่าสุด' },
+            { name: 'หนังสือเก่า', price: '199', description: 'หนังสือคุณภาพดี ราคาถูก' },
+            { name: 'อุปกรณ์เขียน', price: '50', description: 'ปากกา ดินสอ สมุด' },
+            { name: 'ของเล่น', price: '399', description: 'ของเล่นเสริมพัฒนาการ' }
+          ]
+        }
+      },
+      {
         blockId: 'contact-basic',
         required: false,
         customizations: {
@@ -390,6 +416,19 @@ export const BUSINESS_CATEGORIES: BusinessCategoryManifest[] = [
             { number: '3+', label: 'ปีประสบการณ์' },
             { number: '100%', label: 'ความพึงพอใจ' },
             { number: '24/7', label: 'พร้อมทำงาน' }
+          ]
+        }
+      },
+      {
+        blockId: 'menu-basic',
+        required: true,
+        customizations: {
+          title: 'ผลงานของฉัน',
+          menuItems: [
+            { name: 'Web Design', price: '15,000', description: 'ออกแบบเว็บไซต์สวยงาม' },
+            { name: 'Mobile App', price: '25,000', description: 'พัฒนาแอปมือถือ' },
+            { name: 'Logo Design', price: '5,000', description: 'ออกแบบโลโก้' },
+            { name: 'Branding', price: '20,000', description: 'สร้างแบรนด์ครบวงจร' }
           ]
         }
       },
@@ -531,6 +570,19 @@ export const BUSINESS_CATEGORIES: BusinessCategoryManifest[] = [
             { number: '1000+', label: 'ผู้ป่วย' },
             { number: '24/7', label: 'บริการฉุกเฉิน' },
             { number: '100%', label: 'ความปลอดภัย' }
+          ]
+        }
+      },
+      {
+        blockId: 'menu-basic',
+        required: true,
+        customizations: {
+          title: 'บริการของเรา',
+          menuItems: [
+            { name: 'ตรวจสุขภาพ', price: '500', description: 'ตรวจสุขภาพทั่วไป' },
+            { name: 'ตรวจเลือด', price: '300', description: 'ตรวจเลือดครบถ้วน' },
+            { name: 'X-Ray', price: '800', description: 'เอกซเรย์ปอด' },
+            { name: 'วัคซีน', price: '1,200', description: 'วัคซีนป้องกันโรค' }
           ]
         }
       },
@@ -684,6 +736,19 @@ export const BUSINESS_CATEGORIES: BusinessCategoryManifest[] = [
           phone: '02-123-4567',
           email: 'info@pharmacy.com',
           businessHours: 'จันทร์-อาทิตย์ 8:00-20:00'
+        }
+      },
+      {
+        blockId: 'menu-basic',
+        required: true,
+        customizations: {
+          title: 'สินค้ายา',
+          menuItems: [
+            { name: 'ยาแก้ไข้', price: '50', description: 'ยาแก้ไข้ลดไข้' },
+            { name: 'วิตามิน', price: '200', description: 'วิตามินเสริมสุขภาพ' },
+            { name: 'ครีมทาผิว', price: '150', description: 'ครีมบำรุงผิว' },
+            { name: 'อุปกรณ์การแพทย์', price: '300', description: 'อุปกรณ์ตรวจสุขภาพ' }
+          ]
         }
       },
       {

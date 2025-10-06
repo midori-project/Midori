@@ -27,7 +27,8 @@ export class ProjectStructureGenerator {
   generateProjectStructure(
     componentResult: ComponentResultV2,
     projectType: string = 'vite-react-typescript',
-    projectName?: string
+    projectName?: string,
+    renderedFiles?: Record<string, string>
   ): ProjectStructure {
     const template = getProjectTemplateByType(projectType);
     if (!template) {
@@ -37,8 +38,10 @@ export class ProjectStructureGenerator {
     const projectName_ = projectName || this.generateProjectName(componentResult);
     const projectTitle = this.generateProjectTitle(componentResult);
     
-    // Generate project files
-    const files = this.generateProjectFiles(template, componentResult, projectName_, projectTitle);
+    // Generate project files - ใช้ rendered files ถ้ามี
+    const files = renderedFiles 
+      ? this.mergeRenderedFilesWithTemplate(template, renderedFiles, componentResult, projectName_, projectTitle)
+      : this.generateProjectFiles(template, componentResult, projectName_, projectTitle);
     
     return {
       projectStructure: {
@@ -74,15 +77,50 @@ export class ProjectStructureGenerator {
 
     // Generate component files from component result
     for (const file of componentResult.files) {
+      const normalized = this.normalizeComponentFile(file.path, file.content, this.mapFileType(file.type));
       files.push({
-        path: file.path,
-        content: file.content,
-        type: this.mapFileType(file.type),
-        language: this.getLanguageFromPath(file.path)
+        path: normalized.path,
+        content: normalized.content,
+        type: normalized.type,
+        language: this.getLanguageFromPath(normalized.path)
       });
     }
 
     return files;
+  }
+
+  /**
+   * Normalize component filenames/paths and simple content fixes
+   */
+  private normalizeComponentFile(
+    path: string,
+    content: string,
+    type: string
+  ): { path: string; content: string; type: string } {
+    let p = path;
+    let c = content;
+    let t = type;
+
+    // Ensure components live under src/components
+    if (!p.startsWith('src/components/') && p.endsWith('.tsx')) {
+      const nameOnly = p.split('/').pop() || p;
+      p = `src/components/${nameOnly}`;
+    }
+
+    // Rename about-basic.tsx -> About.tsx, contact-basic.tsx -> Contact.tsx, menu-basic.tsx -> Menu.tsx
+    if (p.endsWith('about-basic.tsx')) p = p.replace('about-basic.tsx', 'About.tsx');
+    if (p.endsWith('contact-basic.tsx')) p = p.replace('contact-basic.tsx', 'Contact.tsx');
+    if (p.endsWith('menu-basic.tsx')) p = p.replace('menu-basic.tsx', 'Menu.tsx');
+
+    // Keep Navbar name as-is (use Navbar component)
+
+    // Theme css under src/styles if not already
+    if (p === 'theme.css') {
+      p = 'src/styles/theme.css';
+      t = 'style';
+    }
+
+    return { path: p, content: c, type: t };
   }
 
   /**
@@ -460,6 +498,85 @@ import About from './pages/About';`
     
     return null;
   }
+
+  /**
+   * Merge rendered files from override system with project template
+   */
+  private mergeRenderedFilesWithTemplate(
+    template: ProjectTemplate,
+    renderedFiles: Record<string, string>,
+    componentResult: ComponentResultV2,
+    projectName: string,
+    projectTitle: string
+  ): Array<{ path: string; content: string; type: string; language: string }> {
+    const files: Array<{ path: string; content: string; type: string; language: string }> = [];
+    
+    // 1. ใช้ template files เป็น base
+    for (const [filePath, fileTemplate] of Object.entries(template.files)) {
+      let content = fileTemplate.content;
+      
+      // 2. Replace basic placeholders ที่ยังไม่ได้ replace
+      const placeholders = {
+        '{projectName}': projectName,
+        '{projectTitle}': projectTitle,
+        '{primaryColor}': this.getPrimaryColor(componentResult),
+        '{secondaryColor}': this.getSecondaryColor(componentResult),
+        '{accentColor}': this.getAccentColor(componentResult),
+        '{backgroundColor}': this.getBackgroundColor(componentResult),
+        '{primaryColorHex}': this.getPrimaryColorHex(componentResult),
+        '{bgTone}': this.getBgTone(componentResult),
+        '{businessName}': this.getBusinessName(componentResult),
+        '{tagline}': this.getTagline(componentResult),
+        '{address}': this.getAddress(componentResult),
+        '{phone}': this.getPhone(componentResult),
+        '{appRoutes}': this.generateAppRoutes(componentResult),
+        '{routeElements}': this.generateRouteElements(componentResult)
+      };
+
+      for (const [placeholder, value] of Object.entries(placeholders)) {
+        content = content.replace(new RegExp(placeholder, 'g'), value);
+      }
+      
+      files.push({
+        path: filePath,
+        content,
+        type: fileTemplate.type,
+        language: this.getLanguageFromPath(filePath)
+      });
+    }
+    
+    // 3. เพิ่ม rendered files จาก override system (จะ override template files)
+    for (const [filePath, content] of Object.entries(renderedFiles)) {
+      // Normalize file path
+      const normalized = this.normalizeComponentFile(filePath, content, 'component');
+      
+      // หา existing file หรือสร้างใหม่
+      const existingFileIndex = files.findIndex(f => f.path === normalized.path);
+      const fileType = this.mapFileType('component');
+      const language = this.getLanguageFromPath(normalized.path);
+      
+      if (existingFileIndex >= 0) {
+        // Override existing file
+        files[existingFileIndex] = {
+          path: normalized.path,
+          content: normalized.content,
+          type: fileType,
+          language
+        };
+      } else {
+        // Add new file
+        files.push({
+          path: normalized.path,
+          content: normalized.content,
+          type: fileType,
+          language
+        });
+      }
+    }
+    
+    return files;
+  }
+
 }
 
 export function createProjectStructureGenerator(): ProjectStructureGenerator {

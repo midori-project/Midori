@@ -471,6 +471,33 @@ export default function Contact() {
     }
   },
   {
+    id: 'menu-basic',
+    name: 'Basic Menu Section',
+    description: 'Menu/product listing section with items and categories',
+    category: 'content',
+    template: `export default function Menu() {
+    return (
+      <section className="py-20 bg-gradient-to-br from-{primary}-50 to-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-{primary}-900 mb-4">
+              {title}
+            </h2>
+            <div className="w-24 h-1 bg-{primary}-500 mx-auto rounded-full"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {menuItems}
+          </div>
+        </div>
+      </section>
+    );
+  }`,
+    placeholders: {
+      title: { type: 'string', required: true, description: 'Menu section title' },
+      menuItems: { type: 'array', required: true, description: 'Array of menu items' }
+    }
+  },
+  {
     id: 'theme-basic',
     name: 'Basic Theme',
     description: 'Basic CSS theme with color palette and spacing tokens',

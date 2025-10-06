@@ -141,8 +141,8 @@ Respond with ONLY valid JSON:
 {
   "global": {
     "palette": {
-      "primary": "orange",
-      "secondary": "red", 
+      "primary": "green",
+      "secondary": "green", 
       "bgTone": "100"
     },
     "tokens": {
@@ -158,8 +158,8 @@ Respond with ONLY valid JSON:
     "secondaryCta": "Secondary CTA"
   },
   "navbar-basic": {
-    "brand": "Brand name",
-    "brandFirstChar": "First letter",
+    "brand": "เจได",
+    "brandFirstChar": "จ",
     "ctaButton": "Action button",
     "menuItems": [
       {"label": "Menu item", "href": "/path"}
@@ -169,10 +169,15 @@ Respond with ONLY valid JSON:
     "title": "About title",
     "description": "About description",
     "features": [
-      {"title": "Feature", "description": "Description"}
+      {"title": "คุณสมบัติ 1", "description": "คำอธิบาย"},
+      {"title": "คุณสมบัติ 2", "description": "คำอธิบาย"},
+      {"title": "คุณสมบัติ 3", "description": "คำอธิบาย"}
     ],
     "stats": [
-      {"number": "10+", "label": "Years"}
+      {"number": "100+", "label": "ลูกค้า"},
+      {"number": "5★", "label": "รีวิว"},
+      {"number": "24/7", "label": "บริการ"},
+      {"number": "100%", "label": "ความพึงพอใจ"}
     ]
   },
   "contact-basic": {
@@ -182,6 +187,15 @@ Respond with ONLY valid JSON:
     "phone": "Phone number",
     "email": "Email address",
     "businessHours": "Business hours"
+  },
+  "menu-basic": {
+    "title": "Menu title",
+    "menuItems": [
+      {"name": "Item name", "price": "100", "description": "Item description"},
+      {"name": "Item name", "price": "150", "description": "Item description"},
+      {"name": "Item name", "price": "200", "description": "Item description"},
+      {"name": "Item name", "price": "250", "description": "Item description"}
+    ]
   },
   "footer-basic": {
     "companyName": "Company name",
@@ -193,8 +207,8 @@ Respond with ONLY valid JSON:
     "email": "Email"
   },
   "theme-basic": {
-    "primary": "orange",
-    "secondary": "red", 
+    "primary": "green",
+    "secondary": "green", 
     "bgTone": "100",
     "radius": "8px",
     "spacing": "1rem"
@@ -207,7 +221,18 @@ IMPORTANT:
 - Use only these color names: blue, green, purple, pink, orange, red, yellow, indigo
 - Do NOT use hex codes like #FFB300 or #D32F2F
 - Keep badge text under 40 characters
-- Make badge text short and catchy`;
+- Make badge text short and catchy
+- Color selection rules:
+  * If keywords mention only ONE color (like "โทนสีเขียว"), use that color for BOTH primary and secondary (same color family)
+  * If keywords mention TWO colors (like "ฟ้า เขียว"), use the first color as primary and second as secondary
+  * If no specific colors mentioned, choose appropriate colors for the business type
+  * For single color requests, use the SAME color for both primary and secondary (e.g., both "green")
+  * This creates a cohesive monochromatic color scheme
+- Brand name rules:
+  * If keywords mention a specific brand name (like "ชื่อ เจได"), extract ONLY the brand name part (e.g., "เจได")
+  * Do NOT include words like "ชื่อ" in the brand name
+  * Keep the brand name simple and clean as requested
+  * Examples: "ชื่อ เจได" → "เจได", "ชื่อ ครัวไทย" → "ครัวไทย"`;
   }
 
   /**
@@ -219,6 +244,12 @@ IMPORTANT:
     Always respond with valid JSON format ONLY - no markdown, no explanations.
     Use appropriate colors, text, and content for the business category.
     Make content engaging and professional.
+    
+    CRITICAL RULES:
+    - If keywords mention a specific brand name (like "ชื่อ เจได"), extract ONLY the brand name part (e.g., "เจได")
+    - Do NOT include words like "ชื่อ" in the brand name
+    - Keep brand names simple and clean as requested
+    
     IMPORTANT: Your response must be valid JSON that can be parsed directly.`;
   }
 
@@ -291,6 +322,14 @@ IMPORTANT:
           email: 'info@kruathai.com',
           businessHours: 'ทุกวัน 10:00-22:00'
         },
+        'menu-basic': {
+          title: 'เมนูอาหาร',
+          menuItems: [
+            { name: 'ข้าวผัดกุ้ง', price: '120', description: 'ข้าวผัดกุ้งสด' },
+            { name: 'ผัดไทย', price: '80', description: 'ผัดไทยแท้' },
+            { name: 'ต้มยำกุ้ง', price: '150', description: 'ต้มยำกุ้งเผ็ดร้อน' }
+          ]
+        },
         'footer-basic': {
           companyName: 'ครัวไทย',
           description: 'ร้านอาหารไทย',
@@ -342,6 +381,13 @@ IMPORTANT:
         phone: 'Default Phone',
         email: 'Default Email',
         businessHours: 'Default Hours'
+      },
+      'menu-basic': {
+        title: 'Default Menu',
+        menuItems: [
+          { name: 'Default Item', price: '100', description: 'Default description' },
+          { name: 'Default Item', price: '150', description: 'Default description' }
+        ]
       },
       'footer-basic': {
         companyName: 'Default Company',

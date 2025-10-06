@@ -132,7 +132,7 @@ export class TemplateRenderer {
     const colorMap = this.getColorMap(userData.global);
     
     // Step 3: Apply special placeholders with pre-resolved colors
-    template = this.applySpecialPlaceholders(template, userData, colorMap);
+    template = this.applySpecialPlaceholders(block.id, template, userData, colorMap);
 
     // Step 4: Batch replace all placeholders
     template = this.batchReplace(template, {
@@ -212,14 +212,19 @@ export class TemplateRenderer {
    * Apply special placeholders that need custom handling
    * 🚀 OPTIMIZATION 2: Pre-resolve colors before generating HTML
    */
-  private applySpecialPlaceholders(template: string, userData: Record<string, any>, colorMap: Record<string, string>): string {
+  private applySpecialPlaceholders(currentBlockId: string, template: string, userData: Record<string, any>, colorMap: Record<string, string>): string {
     let result = template;
 
     // 🎯 Generate special content WITHOUT color placeholders (pre-resolved)
     const specialReplacements: Record<string, string> = {};
 
     if (template.includes('{menuItems}')) {
-      specialReplacements['menuItems'] = this.generateMenuItems(userData, colorMap);
+      // Use navbar-specific renderer for navbar block; product cards for menu block
+      if (currentBlockId === 'navbar-basic') {
+        specialReplacements['menuItems'] = this.generateNavbarMenuItems(userData, colorMap);
+      } else {
+        specialReplacements['menuItems'] = this.generateMenuItems(userData, colorMap);
+      }
     }
 
     if (template.includes('{features}')) {
@@ -229,6 +234,8 @@ export class TemplateRenderer {
     if (template.includes('{stats}')) {
       specialReplacements['stats'] = this.generateStats(userData, colorMap);
     }
+
+    // (duplicate menuItems handler removed)
 
     if (template.includes('{socialLinks}')) {
       specialReplacements['socialLinks'] = this.generateSocialLinks(userData, colorMap);
@@ -246,28 +253,6 @@ export class TemplateRenderer {
     return result;
   }
 
-  /**
-   * Generate menu items HTML
-   * 🚀 OPTIMIZATION 3: Pre-resolved colors, no placeholder replacement needed
-   */
-  private generateMenuItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
-    let menuItems = userData.Navbar?.menuItems 
-      || userData['navbar-basic']?.menuItems 
-      || userData.menuItems;
-    
-    if (!menuItems || !Array.isArray(menuItems)) {
-      menuItems = [
-        { label: 'หน้าแรก', href: '/' },
-        { label: 'เกี่ยวกับเรา', href: '/about' },
-        { label: 'ติดต่อ', href: '/contact' }
-      ];
-    }
-
-    const primary = colorMap['primary'] || 'blue';
-    return menuItems.map((item: any) => 
-      `<li><a className="text-${primary}-700 hover:text-${primary}-900" href="${this.escapeHtml(item.href || '#')}">${this.escapeHtml(item.label || 'Menu Item')}</a></li>`
-    ).join('\n                ');
-  }
 
   /**
    * Generate features HTML
@@ -314,6 +299,77 @@ export class TemplateRenderer {
         <div className="text-${primary}-700">${this.escapeHtml(stat.label || 'Label')}</div>
       </div>`
     ).join('\n            ');
+  }
+
+  /**
+   * Generate menu items HTML
+   * 🚀 OPTIMIZATION 3: Pre-resolved colors
+   */
+  private generateMenuItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
+    const menuItems = userData['Menu-basic']?.menuItems 
+      || userData['menu-basic']?.menuItems 
+      || [];
+    
+    if (!Array.isArray(menuItems) || menuItems.length === 0) {
+      return '';
+    }
+
+    const primary = colorMap['primary'] || 'blue';
+    return menuItems.map((item: any) => 
+      `<div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-${primary}-100">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-${primary}-900 group-hover:text-${primary}-700 transition-colors">${this.escapeHtml(item.name || 'Item')}</h3>
+            <div className="w-12 h-12 bg-${primary}-100 rounded-full flex items-center justify-center group-hover:bg-${primary}-200 transition-colors">
+              <span className="text-${primary}-600 text-lg">${this.getCategoryIcon(userData) }</span>
+            </div>
+          </div>
+          <p className="text-gray-600 mb-6 leading-relaxed">${this.escapeHtml(item.description || 'Description')}</p>
+          <div className="flex items-center justify-between">
+            <div className="text-3xl font-bold text-${primary}-600 group-hover:text-${primary}-700 transition-colors">
+              ${this.escapeHtml(item.price || '0')} บาท
+            </div>
+            <button className="px-4 py-2 bg-${primary}-500 text-white rounded-full hover:bg-${primary}-600 font-semibold text-sm group-hover:scale-105 transform transition-all duration-300">
+              เลือก
+            </button>
+          </div>
+        </div>
+        <div className="h-1 bg-gradient-to-r from-${primary}-400 to-${primary}-600 group-hover:from-${primary}-500 group-hover:to-${primary}-700 transition-all"></div>
+      </div>`
+    ).join('\n            ');
+  }
+
+  /**
+   * Generate navbar menu links (simple <li><a>…)</a></li>
+   */
+  private generateNavbarMenuItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
+    const items = userData['Navbar']?.menuItems
+      || userData['navbar-basic']?.menuItems
+      || [];
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return '';
+    }
+
+    const primary = colorMap['primary'] || 'blue';
+    return items.map((item: any) =>
+      `<li><a className="text-${primary}-700 hover:text-${primary}-900" href="${this.escapeHtml(item.href || '#')}">${this.escapeHtml(item.label || 'Menu')}</a></li>`
+    ).join('\n                ');
+  }
+
+  /**
+   * Choose icon by business category (used by menu cards)
+   */
+  private getCategoryIcon(userData: Record<string, any>): string {
+    const category = (userData?.businessCategory || userData?.category || '').toLowerCase();
+    const iconMap: Record<string, string> = {
+      ecommerce: '📚',
+      restaurant: '🍽️',
+      healthcare: '🏥',
+      pharmacy: '💊',
+      portfolio: '💼'
+    };
+    return iconMap[category] || '📚';
   }
 
   /**
@@ -666,4 +722,5 @@ export class TemplateRenderer {
       steps: []
     };
   }
+
 }

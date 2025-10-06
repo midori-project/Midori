@@ -14,6 +14,7 @@ import { FrontendTaskV2, ComponentResultV2 } from '../schemas/types';
 import { AIService, AIGenerationRequest } from '../services/ai-service';
 import { categoryService } from '../services/category-service';
 import { ProjectStructureGenerator, createProjectStructureGenerator } from '../template-system/project-structure-generator';
+import { persistFrontendV2Result } from '../services/persistence-service';
 
 export class TemplateAdapter {
   private overrideSystem: OverrideSystem;
@@ -57,6 +58,7 @@ export class TemplateAdapter {
       keywords: task.keywords,
       customizations: task.customizations,
       aiSettings: task.aiSettings,
+      businessCategory: businessCategoryId, // เพิ่ม businessCategory เพื่อให้ getCategoryIcon ทำงาน
       ...task.metadata
     };
 
@@ -310,7 +312,7 @@ export class TemplateAdapter {
     );
 
     // Add AI-generated data to template result
-    templateResult.aiGeneratedData = aiGeneratedData;
+    (templateResult as any).aiGeneratedData = aiGeneratedData;
 
       console.log('✅ Template generation completed:', {
         filesGenerated: Object.keys(templateResult.files).length,
@@ -328,6 +330,19 @@ export class TemplateAdapter {
       // 5. เพิ่ม project structure ถ้าต้องการ
       if (task.includeProjectStructure !== false) {
         result.projectStructure = await this.generateProjectStructure(result, task);
+      }
+
+      // 6. Persist to database if projectId is provided
+      if (task.metadata?.projectId) {
+        try {
+          await persistFrontendV2Result(result, task, {
+            projectId: task.metadata.projectId,
+            userId: (task as any).metadata?.userId,
+          });
+          console.log('💾 Persisted frontend-v2 result to database');
+        } catch (err) {
+          console.warn('⚠️ Failed to persist frontend-v2 result:', err);
+        }
       }
 
       console.log('🎉 Frontend generation completed successfully!');
@@ -362,10 +377,17 @@ export class TemplateAdapter {
     try {
       console.log('🏗️ Generating project structure...');
       
+      // Convert result.files array to Record<string, string> format
+      const renderedFiles: Record<string, string> = {};
+      for (const file of result.files) {
+        renderedFiles[file.path] = file.content;
+      }
+      
       const projectStructure = this.projectStructureGenerator.generateProjectStructure(
         result,
         'vite-react-typescript',
-        task.metadata?.projectId
+        task.metadata?.projectId,
+        renderedFiles // ส่ง files ที่ render แล้วจาก override system
       );
       
       console.log('✅ Project structure generated:', {
