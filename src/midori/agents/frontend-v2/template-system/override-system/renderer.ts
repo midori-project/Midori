@@ -302,8 +302,8 @@ export class TemplateRenderer {
   }
 
   /**
-   * Generate menu items HTML
-   * 🚀 OPTIMIZATION 3: Pre-resolved colors
+   * Generate menu items HTML with images
+   * 🚀 OPTIMIZATION 3: Pre-resolved colors + Images
    */
   private generateMenuItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
     const menuItems = userData['Menu-basic']?.menuItems 
@@ -317,14 +317,37 @@ export class TemplateRenderer {
     const primary = colorMap['primary'] || 'blue';
     return menuItems.map((item: any) => 
       `<div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-${primary}-100">
+        {/* Image Section */}
+        <div className="relative h-48 overflow-hidden">
+          <img 
+            src="${this.escapeHtml(item.image || 'https://via.placeholder.com/400x300?text=Image+Not+Available')}" 
+            alt="${this.escapeHtml(item.imageAlt || item.name || 'Food item')}"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute top-4 right-4">
+            <span className="px-3 py-1 bg-${primary}-500 text-white text-xs font-semibold rounded-full">
+              ${this.escapeHtml(item.category || 'food')}
+            </span>
+          </div>
+        </div>
+        
+        {/* Content Section */}
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-${primary}-900 group-hover:text-${primary}-700 transition-colors">${this.escapeHtml(item.name || 'Item')}</h3>
+            <h3 className="text-xl font-bold text-${primary}-900 group-hover:text-${primary}-700 transition-colors">
+              ${this.escapeHtml(item.name || 'Item')}
+            </h3>
             <div className="w-12 h-12 bg-${primary}-100 rounded-full flex items-center justify-center group-hover:bg-${primary}-200 transition-colors">
-              <span className="text-${primary}-600 text-lg">${this.getCategoryIcon(userData) }</span>
+              <span className="text-${primary}-600 text-lg">${this.getCategoryIcon(userData)}</span>
             </div>
           </div>
-          <p className="text-gray-600 mb-6 leading-relaxed">${this.escapeHtml(item.description || 'Description')}</p>
+          
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            ${this.escapeHtml(item.description || 'Description')}
+          </p>
+          
           <div className="flex items-center justify-between">
             <div className="text-3xl font-bold text-${primary}-600 group-hover:text-${primary}-700 transition-colors">
               ${this.escapeHtml(item.price || '0')} บาท
@@ -334,6 +357,7 @@ export class TemplateRenderer {
             </button>
           </div>
         </div>
+        
         <div className="h-1 bg-gradient-to-r from-${primary}-400 to-${primary}-600 group-hover:from-${primary}-500 group-hover:to-${primary}-700 transition-all"></div>
       </div>`
     ).join('\n            ');
@@ -401,13 +425,13 @@ export class TemplateRenderer {
   private getCategoryIcon(userData: Record<string, any>): string {
     const category = (userData?.businessCategory || userData?.category || '').toLowerCase();
     const iconMap: Record<string, string> = {
-      ecommerce: '📚',
+      ecommerce: '🛒',
       restaurant: '🍽️',
       healthcare: '🏥',
       pharmacy: '💊',
       portfolio: '💼'
     };
-    return iconMap[category] || '📚';
+    return iconMap[category] || '🛒';
   }
 
   /**

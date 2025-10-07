@@ -394,11 +394,43 @@ Generate content that matches the schema exactly. Return JSON with the following
 
 IMPORTANT: You MUST include data for ALL components in your response:
 - Navbar: brand, brandFirstChar, ctaButton, menuItems
-- Hero: badge, heading, subheading, ctaLabel, secondaryCta
+- Hero: badge, heading, subheading, ctaLabel, secondaryCta, heroImage, heroImageAlt
 - About: title, description, features (array), stats (array)
 - Contact: title, subtitle, address, phone, email, businessHours
 - Footer: companyName, description, socialLinks (array), quickLinks (array), address, phone, email
+- Menu: title, menuItems (array with name, price, description, image, imageAlt, category)
 - Theme: radius, spacing
+
+Menu Items Rules:
+- Each menu item MUST include: name, price, description, image, imageAlt, category
+- image: Use placeholder URLs like "https://via.placeholder.com/400x300?text=Item+Name"
+- imageAlt: Describe the item in Thai
+- category: Choose appropriate category based on business type:
+  * Restaurant: food, rice, noodles, soup, curry, meat, vegetarian
+  * E-commerce: product, book, stationery, toy, clothing, electronics
+  * Healthcare: medicine, health, medical, pharmacy, wellness
+  * Portfolio: design, creative, development, art, professional
+- Choose appropriate images that match the item name and business type
+- For restaurant business: Use food-related images
+- For e-commerce business: Use product-related images
+- For healthcare business: Use health/wellness related images
+- For portfolio business: Use design/creative related images
+- IMPORTANT: Generate 4-6 menu items for a complete menu
+
+Hero Image Rules:
+- heroImage: Use placeholder URLs like "https://via.placeholder.com/1920x1080?text=Hero+Image"
+- heroImageAlt: Describe the hero background image in Thai
+- Choose images that represent the business type and keywords
+- Images should be landscape orientation (1920x1080)
+- Use descriptive alt text for accessibility
+
+Image Guidelines:
+- Use high-quality Unsplash images
+- Images should be 400x300 pixels with crop=center for menu items
+- Hero images should be 1920x1080 pixels for full background
+- Choose images that represent the actual food/product/business
+- Ensure images are appropriate for the business category
+- Use descriptive alt text for accessibility
 
 Rules:
 - Use Thai language
@@ -476,6 +508,10 @@ function getArrayExample(placeholder: string, blockId: string): string {
         '{ "title": "คุณสมบัติ 1", "description": "คำอธิบาย" }, { "title": "คุณสมบัติ 2", "description": "คำอธิบาย" }, { "title": "คุณสมบัติ 3", "description": "คำอธิบาย" }',
       stats:
         '{ "number": "100+", "label": "ลูกค้า" }, { "number": "5★", "label": "รีวิว" }, { "number": "24/7", "label": "บริการ" }, { "number": "100%", "label": "ความพึงพอใจ" }',
+    },
+    "menu-basic": {
+      menuItems:
+        '{ "name": "อาหารจาน 1", "price": "120", "description": "คำอธิบายอาหาร", "image": "https://via.placeholder.com/400x300?text=Food+1", "imageAlt": "อาหารจาน 1", "category": "food" }, { "name": "สินค้า 1", "price": "150", "description": "คำอธิบายสินค้า", "image": "https://via.placeholder.com/400x300?text=Product+1", "imageAlt": "สินค้า 1", "category": "product" }, { "name": "บริการ 1", "price": "200", "description": "คำอธิบายบริการ", "image": "https://via.placeholder.com/400x300?text=Service+1", "imageAlt": "บริการ 1", "category": "service" }, { "name": "งานสร้างสรรค์ 1", "price": "250", "description": "คำอธิบายงานสร้างสรรค์", "image": "https://via.placeholder.com/400x300?text=Creative+1", "imageAlt": "งานสร้างสรรค์ 1", "category": "design" }',
     },
     "footer-basic": {
       socialLinks:

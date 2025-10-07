@@ -5,6 +5,7 @@
 
 import { config } from 'dotenv';
 import OpenAI from 'openai';
+import { UnsplashService, UnsplashImage } from './unsplash-service';
 
 // Load .env from root
 config({ path: '../../../../.env' });
@@ -35,9 +36,11 @@ export interface AIGenerationResponse {
 export class AIService {
   private openai: OpenAI | null = null;
   private isInitialized = false;
+  private unsplashService: UnsplashService;
 
   constructor() {
     this.initialize();
+    this.unsplashService = new UnsplashService();
   }
 
   private initialize() {
@@ -59,12 +62,192 @@ export class AIService {
   }
 
   /**
-   * Generate content using AI
+   * Get image for menu item using Unsplash API
+   */
+  async getImageForMenuItem(
+    itemName: string, 
+    category: string, 
+    businessCategory: string
+  ): Promise<{ image: string; imageAlt: string }> {
+    try {
+      const unsplashImage = await this.unsplashService.getImageForMenuItem(
+        itemName, 
+        category, 
+        businessCategory
+      );
+      
+      const imageUrl = this.unsplashService.generateImageUrl(unsplashImage, {
+        width: 400,
+        height: 300,
+        quality: 80
+      });
+      
+      return {
+        image: imageUrl,
+        imageAlt: unsplashImage.alt_description || itemName
+      };
+    } catch (error) {
+      console.error('❌ Error getting image for menu item:', error);
+      return {
+        image: 'https://via.placeholder.com/400x300?text=Image+Not+Available',
+        imageAlt: itemName
+      };
+    }
+  }
+
+  /**
+   * Get hero background image using Unsplash API
+   */
+  async getHeroImage(
+    businessCategory: string,
+    keywords: string[]
+  ): Promise<{ heroImage: string; heroImageAlt: string }> {
+    try {
+      // Create search query based on business category and keywords
+      const searchQuery = this.buildHeroSearchQuery(businessCategory, keywords);
+      
+      const unsplashImage = await this.unsplashService.searchImages(searchQuery, {
+        perPage: 5,
+        orientation: 'landscape',
+        orderBy: 'relevant'
+      });
+
+      if (unsplashImage.length > 0) {
+        // Randomly select an image for variety
+        const randomIndex = Math.floor(Math.random() * unsplashImage.length);
+        const selectedImage = unsplashImage[randomIndex];
+        
+        if (selectedImage) {
+          const imageUrl = this.unsplashService.generateImageUrl(selectedImage, {
+            width: 1920,
+            height: 1080,
+            quality: 85
+          });
+          
+          return {
+            heroImage: imageUrl,
+            heroImageAlt: selectedImage.alt_description || `${businessCategory} hero image`
+          };
+        }
+      }
+
+      // Fallback
+      return {
+        heroImage: 'https://via.placeholder.com/1920x1080?text=Hero+Image',
+        heroImageAlt: `${businessCategory} hero image`
+      };
+    } catch (error) {
+      console.error('❌ Error getting hero image:', error);
+      return {
+        heroImage: 'https://via.placeholder.com/1920x1080?text=Hero+Image',
+        heroImageAlt: `${businessCategory} hero image`
+      };
+    }
+  }
+
+  /**
+   * Build search query for hero image with randomization
+   */
+  private buildHeroSearchQuery(businessCategory: string, keywords: string[]): string {
+    const businessKeywords: Record<string, string[]> = {
+      restaurant: [
+        'restaurant', 'food', 'dining', 'kitchen', 'chef', 'cuisine',
+        'thai restaurant', 'asian food', 'street food', 'fine dining',
+        'restaurant interior', 'dining room', 'food service', 'culinary',
+        'restaurant kitchen', 'food preparation', 'restaurant staff'
+      ],
+      ecommerce: [
+        'shopping', 'store', 'retail', 'products', 'marketplace', 'commerce',
+        'online shopping', 'ecommerce', 'shopping mall', 'retail store',
+        'product display', 'shopping cart', 'storefront', 'retail space'
+      ],
+      healthcare: [
+        'health', 'medical', 'hospital', 'wellness', 'care', 'medicine',
+        'healthcare', 'medical center', 'clinic', 'hospital interior',
+        'medical equipment', 'healthcare professional', 'patient care'
+      ],
+      pharmacy: [
+        'pharmacy', 'medicine', 'health', 'medical', 'drugs', 'wellness',
+        'pharmaceutical', 'drugstore', 'pharmacy interior', 'medication',
+        'healthcare products', 'medical supplies'
+      ],
+      portfolio: [
+        'design', 'creative', 'art', 'professional', 'work', 'studio',
+        'creative workspace', 'design studio', 'art studio', 'office',
+        'professional work', 'creative environment', 'workspace'
+      ]
+    };
+
+    const categoryKeywords = businessKeywords[businessCategory] || ['business', 'professional'];
+    
+    // Randomize keywords for variety
+    const shuffledCategoryKeywords = this.shuffleArray([...categoryKeywords]);
+    const shuffledUserKeywords = this.shuffleArray([...keywords]);
+    
+    // Combine and randomize all keywords
+    const allKeywords = [...shuffledCategoryKeywords, ...shuffledUserKeywords];
+    const shuffledAllKeywords = this.shuffleArray(allKeywords);
+    
+    // Use more keywords for better variety (5-7 keywords)
+    return shuffledAllKeywords.slice(0, Math.min(7, shuffledAllKeywords.length)).join(' ');
+  }
+
+  /**
+   * Shuffle array for randomization
+   */
+  private shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = shuffled[i]!;
+      shuffled[i] = shuffled[j]!;
+      shuffled[j] = temp;
+    }
+    return shuffled;
+  }
+
+
+  /**
+   * Generate category based on item name
+   */
+  private generateCategory(itemName: string, businessCategory: string): string {
+    const categoryMap: Record<string, string> = {
+      'restaurant': this.getFoodCategory(itemName),
+      'ecommerce': this.getProductCategory(itemName),
+      'healthcare': 'health',
+      'pharmacy': 'medicine',
+      'portfolio': 'design'
+    };
+    
+    return categoryMap[businessCategory] || 'general';
+  }
+
+  private getFoodCategory(itemName: string): string {
+    const name = itemName.toLowerCase();
+    if (name.includes('ข้าว') || name.includes('rice')) return 'rice';
+    if (name.includes('ผัด') || name.includes('noodle')) return 'noodles';
+    if (name.includes('ต้ม') || name.includes('soup')) return 'soup';
+    if (name.includes('แกง') || name.includes('curry')) return 'curry';
+    if (name.includes('ทอด') || name.includes('fried')) return 'fried';
+    return 'food';
+  }
+
+  private getProductCategory(itemName: string): string {
+    const name = itemName.toLowerCase();
+    if (name.includes('หนังสือ') || name.includes('book')) return 'books';
+    if (name.includes('ปากกา') || name.includes('ดินสอ') || name.includes('pen')) return 'stationery';
+    if (name.includes('ของเล่น') || name.includes('toy')) return 'toys';
+    if (name.includes('เสื้อ') || name.includes('shirt')) return 'clothing';
+    return 'product';
+  }
+
+  /**
+   * Generate content using AI with dynamic images
    */
   async generateContent(request: AIGenerationRequest): Promise<AIGenerationResponse> {
     if (!this.isInitialized || !this.openai) {
-      console.log('🔄 AI Service not available, using mock data');
-      return this.getMockData(request);
+      console.log('🔄 AI Service not available, using mock data with dynamic images');
+      return this.getMockDataWithImages(request);
     }
 
     try {
@@ -117,7 +300,42 @@ export class AIService {
         throw new Error('No content generated by AI');
       }
 
-      return this.parseAIResponse(content, request.businessCategory);
+      const aiResponse = this.parseAIResponse(content, request.businessCategory);
+      
+      // Enhance hero section with dynamic image
+      if (aiResponse['hero-basic']) {
+        console.log('🖼️ Enhancing hero section with dynamic image...');
+        const heroImageData = await this.getHeroImage(request.businessCategory, request.keywords);
+        aiResponse['hero-basic'] = {
+          ...aiResponse['hero-basic'],
+          heroImage: heroImageData.heroImage,
+          heroImageAlt: heroImageData.heroImageAlt
+        };
+        console.log('✅ Hero section enhanced with dynamic image');
+      }
+      
+      // Enhance menu items with dynamic images
+      if (aiResponse['menu-basic']?.menuItems) {
+        console.log('🖼️ Enhancing menu items with dynamic images...');
+        const enhancedMenuItems = await Promise.all(
+          aiResponse['menu-basic'].menuItems.map(async (item: any) => {
+            const category = this.generateCategory(item.name, request.businessCategory);
+            const imageData = await this.getImageForMenuItem(item.name, category, request.businessCategory);
+            
+            return {
+              ...item,
+              image: imageData.image,
+              imageAlt: imageData.imageAlt,
+              category: category
+            };
+          })
+        );
+        
+        aiResponse['menu-basic'].menuItems = enhancedMenuItems;
+        console.log('✅ Menu items enhanced with dynamic images');
+      }
+      
+      return aiResponse;
     } catch (error) {
       console.error('❌ AI generation failed:', error);
       console.log('🔄 Falling back to mock data');
@@ -155,7 +373,9 @@ Respond with ONLY valid JSON:
     "heading": "Main heading", 
     "subheading": "Subheading text",
     "ctaLabel": "Primary CTA",
-    "secondaryCta": "Secondary CTA"
+    "secondaryCta": "Secondary CTA",
+    "heroImage": "https://via.placeholder.com/1920x1080?text=Hero+Image",
+    "heroImageAlt": "Hero background image"
   },
   "navbar-basic": {
     "brand": "เจได",
@@ -189,12 +409,40 @@ Respond with ONLY valid JSON:
     "businessHours": "Business hours"
   },
   "menu-basic": {
-    "title": "Menu title",
+    "title": "Menu/Products/Services title",
     "menuItems": [
-      {"name": "Item name", "price": "100", "description": "Item description"},
-      {"name": "Item name", "price": "150", "description": "Item description"},
-      {"name": "Item name", "price": "200", "description": "Item description"},
-      {"name": "Item name", "price": "250", "description": "Item description"}
+      {
+        "name": "Food Item 1", 
+        "price": "100", 
+        "description": "Delicious food description",
+        "image": "https://via.placeholder.com/400x300?text=Food+1",
+        "imageAlt": "Food item 1",
+        "category": "food"
+      },
+      {
+        "name": "Product Item 1", 
+        "price": "150", 
+        "description": "Quality product description",
+        "image": "https://via.placeholder.com/400x300?text=Product+1",
+        "imageAlt": "Product item 1",
+        "category": "product"
+      },
+      {
+        "name": "Service Item 1", 
+        "price": "200", 
+        "description": "Professional service description",
+        "image": "https://via.placeholder.com/400x300?text=Service+1",
+        "imageAlt": "Service item 1",
+        "category": "service"
+      },
+      {
+        "name": "Creative Item 1", 
+        "price": "250", 
+        "description": "Creative work description",
+        "image": "https://via.placeholder.com/400x300?text=Creative+1",
+        "imageAlt": "Creative item 1",
+        "category": "design"
+      }
     ]
   },
   "footer-basic": {
@@ -222,6 +470,15 @@ IMPORTANT:
 - Do NOT use hex codes like #FFB300 or #D32F2F
 - Keep badge text under 40 characters
 - Make badge text short and catchy
+- For menu items, include placeholder image URLs
+- Image URLs should be: https://via.placeholder.com/400x300?text=Item+Name
+- imageAlt should describe the item in ${language}
+- category should be appropriate for the business type:
+  * Restaurant: food, rice, noodles, soup, curry, meat, vegetarian
+  * E-commerce: product, book, stationery, toy, clothing, electronics
+  * Healthcare: medicine, health, medical, pharmacy, wellness
+  * Portfolio: design, creative, development, art, professional
+- IMPORTANT: Generate 4-6 menu items for a complete menu
 - Color selection rules:
   * If keywords mention only ONE color (like "โทนสีเขียว"), use that color for BOTH primary and secondary (same color family)
   * If keywords mention TWO colors (like "ฟ้า เขียว"), use the first color as primary and second as secondary
@@ -274,6 +531,44 @@ IMPORTANT:
       console.log('🔄 Using mock data instead');
       return this.getMockData({ businessCategory, keywords: [], language: 'en' });
     }
+  }
+
+  /**
+   * Get mock data with dynamic images as fallback
+   */
+  private async getMockDataWithImages(request: AIGenerationRequest): Promise<AIGenerationResponse> {
+    const mockData = this.getMockData(request);
+    
+    // Enhance hero section with dynamic image
+    if (mockData['hero-basic']) {
+      const heroImageData = await this.getHeroImage(request.businessCategory, request.keywords);
+      mockData['hero-basic'] = {
+        ...mockData['hero-basic'],
+        heroImage: heroImageData.heroImage,
+        heroImageAlt: heroImageData.heroImageAlt
+      };
+    }
+    
+    // Enhance menu items with dynamic images
+    if (mockData['menu-basic']?.menuItems) {
+      const enhancedMenuItems = await Promise.all(
+        mockData['menu-basic'].menuItems.map(async (item: any) => {
+          const category = this.generateCategory(item.name, request.businessCategory);
+          const imageData = await this.getImageForMenuItem(item.name, category, request.businessCategory);
+          
+          return {
+            ...item,
+            image: imageData.image,
+            imageAlt: imageData.imageAlt,
+            category: category
+          };
+        })
+      );
+      
+      mockData['menu-basic'].menuItems = enhancedMenuItems;
+    }
+    
+    return mockData;
   }
 
   /**

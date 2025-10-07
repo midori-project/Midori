@@ -41,26 +41,37 @@ export const SHARED_BLOCKS: SharedBlock[] = [
 
 export default function Hero(){
     return (
-      <section className="relative py-20 bg-gradient-to-br from-{primary}-50 via-{primary}-100 to-{primary}-200 overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiN7cHJpbWFyeX0yMCIgZmlsbC1vcGFjaXR5PSIwLjEiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjIiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+      <section className="relative py-20 overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="{heroImage}" 
+            alt="{heroImageAlt}"
+            className="w-full h-full object-cover"
+            loading="eager"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-{primary}-900/80 via-{primary}-800/70 to-{primary}-700/80"></div>
+        </div>
+        
+        {/* Background Pattern Overlay */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiN7cHJpbWFyeX0yMCIgZmlsbC1vcGFjaXR5PSIwLjEiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjIiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
         
         <div className="relative max-w-screen-2xl mx-auto text-center px-4">
           {/* Badge */}
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-{primary}-200 text-{primary}-700 text-sm font-medium mb-6">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/90 backdrop-blur-sm border border-white/30 text-{primary}-700 text-sm font-medium mb-6 shadow-lg">
             <span className="w-2 h-2 bg-{primary}-500 rounded-full mr-2 animate-pulse"></span>
             {badge}
           </div>
           
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-{primary}-900 mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-{primary}-600 to-{secondary}-600 bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight drop-shadow-2xl">
+            <span className="bg-gradient-to-r from-white to-{primary}-100 bg-clip-text text-transparent">
               {heading}
             </span>
           </h1>
           
           {/* Subheading */}
-          <p className="text-xl md:text-2xl text-{primary}-700 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
             {subheading}
           </p>
           
@@ -74,7 +85,7 @@ export default function Hero(){
               </svg>
             </Link>
             
-            <Link to="/about" className="inline-flex items-center px-8 py-4 border-2 border-{primary}-300 text-{primary}-700 font-semibold text-lg rounded-full hover:bg-{primary}-50 hover:border-{primary}-400 transition-all duration-300">
+            <Link to="/about" className="inline-flex items-center px-8 py-4 bg-white/90 backdrop-blur-sm border-2 border-white/50 text-{primary}-700 font-semibold text-lg rounded-full hover:bg-white hover:border-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
               <svg className="mr-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m6-6a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -90,7 +101,9 @@ export default function Hero(){
       heading: { type: 'string', required: true, maxLength: 80, description: 'Main hero heading' },
       subheading: { type: 'string', required: true, maxLength: 160, description: 'Hero subheading' },
       ctaLabel: { type: 'string', required: true, maxLength: 24, description: 'Primary CTA button text' },
-      secondaryCta: { type: 'string', required: true, maxLength: 24, description: 'Secondary CTA button text' }
+      secondaryCta: { type: 'string', required: true, maxLength: 24, description: 'Secondary CTA button text' },
+      heroImage: { type: 'string', required: true, description: 'Hero background image URL from Unsplash' },
+      heroImageAlt: { type: 'string', required: true, maxLength: 100, description: 'Hero image alt text for accessibility' }
     },
     variants: [
       {
@@ -474,7 +487,7 @@ export default function Contact() {
   {
     id: 'menu-basic',
     name: 'Basic Menu Section',
-    description: 'Menu/product listing section with items and categories',
+    description: 'Menu/product listing section with items, categories, and images',
     category: 'content',
     template: `export default function Menu() {
     return (
@@ -495,7 +508,7 @@ export default function Contact() {
   }`,
     placeholders: {
       title: { type: 'string', required: true, description: 'Menu section title' },
-      menuItems: { type: 'array', required: true, description: 'Array of menu items' }
+      menuItems: { type: 'array', required: true, description: 'Array of menu items with images' }
     }
   },
   {
