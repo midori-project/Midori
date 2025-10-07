@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Daytona } from '@daytonaio/sdk'
 import { getDaytonaClient } from '@/config/daytona'
+import { prisma } from '@/libs/prisma/prisma'
 
 // ใช้ Node APIs ได้
 export const runtime = 'nodejs'
@@ -40,6 +41,11 @@ export async function PATCH(req: NextRequest) {
     
     if (!operations || !Array.isArray(operations) || operations.length === 0) {
       return NextResponse.json({ error: 'No patch operations provided' }, { status: 400 })
+    }
+    
+    // ✅ Validate projectId (recommended for database sync)
+    if (!projectId) {
+      console.warn(`⚠️ [PATCH] No projectId provided - changes won't be saved to database`)
     }
 
     console.log(`🔧 [PATCH] Applying ${operations.length} patch operations to ${path}`)
@@ -153,6 +159,159 @@ export async function PATCH(req: NextRequest) {
       console.warn(`⚠️ [PATCH] Failed to delete session: ${deleteError}`)
     }
     
+    // ✅ ✨ บันทึกกลับไปที่ database
+    let savedToDatabase = false
+    if (projectId) {
+      try {
+        console.log(`💾 [DB-SAVE] Starting database save for project: ${projectId}`)
+        console.log(`💾 [DB-SAVE] File to update: ${path}`)
+        console.log(`💾 [DB-SAVE] New content length: ${newContent.length} characters`)
+        
+        // 1. ดึง snapshot ล่าสุด
+        console.log(`🔍 [DB-SAVE] Fetching latest snapshot...`)
+        const latestSnapshot = await prisma.snapshot.findFirst({
+          where: { projectId },
+          orderBy: { createdAt: 'desc' }
+        })
+        
+        if (latestSnapshot) {
+          console.log(`✅ [DB-SAVE] Found snapshot: ${latestSnapshot.id}`)
+          console.log(`📅 [DB-SAVE] Snapshot created at: ${latestSnapshot.createdAt}`)
+          console.log(`🏷️ [DB-SAVE] Snapshot label: ${latestSnapshot.label || 'No label'}`)
+          
+          // 2. อัพเดตไฟล์ใน snapshot
+          const snapshotFiles = latestSnapshot.files as any
+          let currentFiles: any[] = []
+          
+          // ดึงไฟล์จาก snapshot (รองรับหลายรูปแบบ)
+          if (Array.isArray(snapshotFiles)) {
+            currentFiles = [...snapshotFiles]
+            console.log(`📦 [DB-SAVE] Snapshot files format: Array (${currentFiles.length} files)`)
+          } else if (snapshotFiles && typeof snapshotFiles === 'object') {
+            currentFiles = snapshotFiles.files || []
+            console.log(`📦 [DB-SAVE] Snapshot files format: Object (${currentFiles.length} files)`)
+          } else {
+            console.log(`📦 [DB-SAVE] Snapshot files format: Empty or unknown`)
+          }
+          
+          console.log(`📊 [DB-SAVE] Total files in snapshot before update: ${currentFiles.length}`)
+          
+          const fileIndex = currentFiles.findIndex((f: any) => 
+            f.path === path || f.filePath === path
+          )
+          
+          if (fileIndex >= 0) {
+            // อัพเดตไฟล์ที่มีอยู่
+            const oldContentLength = currentFiles[fileIndex].content?.length || 0
+            currentFiles[fileIndex] = {
+              ...currentFiles[fileIndex],
+              content: newContent,
+              path: path,
+              updatedAt: new Date().toISOString()
+            }
+            console.log(`📝 [DB-SAVE] Updated existing file at index ${fileIndex}`)
+            console.log(`📝 [DB-SAVE] Content changed: ${oldContentLength} → ${newContent.length} characters`)
+          } else {
+            // เพิ่มไฟล์ใหม่ (ถ้ายังไม่มี)
+            currentFiles.push({ 
+              path, 
+              content: newContent, 
+              type: 'code',
+              createdAt: new Date().toISOString()
+            })
+            console.log(`➕ [DB-SAVE] Added new file to snapshot (total files: ${currentFiles.length})`)
+          }
+          
+          // 3. อัพเดต snapshot
+          const currentTemplateData = (latestSnapshot.templateData as any) || {}
+          const newPartialUpdateCount = (currentTemplateData.partialUpdateCount || 0) + 1
+          
+          console.log(`🔄 [DB-SAVE] Updating snapshot in database...`)
+          console.log(`📊 [DB-SAVE] Partial update count: ${currentTemplateData.partialUpdateCount || 0} → ${newPartialUpdateCount}`)
+          
+          await prisma.snapshot.update({
+            where: { id: latestSnapshot.id },
+            data: { 
+              files: currentFiles,
+              templateData: {
+                ...currentTemplateData,
+                lastPartialUpdate: new Date().toISOString(),
+                partialUpdateCount: newPartialUpdateCount,
+                lastPartialUpdateFile: path
+              }
+            }
+          })
+          
+          console.log(`✅ [DB-SAVE] Snapshot ${latestSnapshot.id} updated successfully`)
+          console.log(`✅ [DB-SAVE] Total files after update: ${currentFiles.length}`)
+        } else {
+          console.warn(`⚠️ [DB-SAVE] No snapshot found for project ${projectId}`)
+          console.warn(`⚠️ [DB-SAVE] Cannot save changes to database - snapshot required`)
+        }
+        
+        // 4. บันทึก PatchSet (สำหรับ history tracking)
+        console.log(`📚 [DB-SAVE] Creating PatchSet for history tracking...`)
+        console.log(`📚 [DB-SAVE] Operations to track: ${operations.length}`)
+        
+        const patchSet = await prisma.patchSet.create({
+          data: {
+            projectId: projectId,
+            meta: {
+              sandboxId,
+              sessionId,
+              timestamp: new Date().toISOString(),
+              appliedOperations,
+              totalOperations: operations.length,
+              errors: errors.length > 0 ? errors : undefined,
+              source: 'partial-update'
+            }
+          }
+        })
+        
+        console.log(`✅ [DB-SAVE] PatchSet created: ${patchSet.id}`)
+        
+        // 5. สร้าง Patch record
+        console.log(`📝 [DB-SAVE] Creating Patch record for file: ${path}`)
+        console.log(`📝 [DB-SAVE] Operations breakdown:`)
+        operations.forEach((op, idx) => {
+          console.log(`   ${idx + 1}. ${op.type} at line ${op.line} (content length: ${op.content?.length || 0})`)
+        })
+        
+        await prisma.patch.create({
+          data: {
+            patchSetId: patchSet.id,
+            filePath: path,
+            changeType: 'update',
+            hunks: operations.map(op => ({
+              type: op.type,
+              line: op.line,
+              content: op.content,
+              oldContent: op.oldContent || null
+            }))
+          }
+        })
+        
+        console.log(`✅ [DB-SAVE] Patch record created successfully`)
+        console.log(`✅ [DB-SAVE] PatchSet ${patchSet.id} linked to project ${projectId}`)
+        savedToDatabase = true
+        
+        console.log(`🎉 [DB-SAVE] Database save completed successfully!`)
+        console.log(`📊 [DB-SAVE] Summary:`)
+        console.log(`   - Snapshot updated: ✓`)
+        console.log(`   - PatchSet created: ${patchSet.id}`)
+        console.log(`   - File tracked: ${path}`)
+        console.log(`   - Operations applied: ${appliedOperations}/${operations.length}`)
+        
+      } catch (dbError: any) {
+        console.error(`❌ [DB-SAVE] Failed to save to database!`)
+        console.error(`❌ [DB-SAVE] Error: ${dbError?.message || dbError}`)
+        console.error(`❌ [DB-SAVE] Stack trace:`, dbError?.stack)
+        // ไม่ throw error เพื่อไม่ให้กระทบ response หลัก
+      }
+    } else {
+      console.log(`⏭️ [DB-SAVE] Skipping database save - no projectId provided`)
+    }
+    
     console.log(`✅ [PATCH] Successfully applied ${appliedOperations}/${operations.length} operations to ${path}`)
     
     return NextResponse.json({
@@ -162,7 +321,13 @@ export async function PATCH(req: NextRequest) {
       totalOperations: operations.length,
       errors: errors.length > 0 ? errors : undefined,
       message: `Successfully applied ${appliedOperations} patch operations to ${path}`,
-      projectId
+      projectId,
+      savedToDatabase,
+      databaseMessage: savedToDatabase 
+        ? 'Changes saved to snapshot and patch history' 
+        : projectId 
+          ? 'Failed to save to database (check logs)' 
+          : 'No projectId provided - changes only in sandbox'
     }, {
       headers: {
         'Access-Control-Allow-Origin': '*',
