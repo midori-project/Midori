@@ -378,8 +378,8 @@ Respond with ONLY valid JSON:
     "heroImageAlt": "Hero background image"
   },
   "navbar-basic": {
-    "brand": "เจได",
-    "brandFirstChar": "จ",
+    "brand": "<your brand>",
+    "brandFirstChar": "B",
     "ctaButton": "Action button",
     "menuItems": [
       {"label": "Menu item", "href": "/path"}
