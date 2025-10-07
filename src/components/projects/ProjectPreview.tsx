@@ -4,8 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDaytonaPreview } from '@/hooks/useDaytonaPreview';
 import { CodeEditor } from '@/components/CodeEditor/CodeEditor';
 import { Monitor, Smartphone, Tablet, RefreshCw, Code, Eye, Settings } from 'lucide-react';
-import testCafeData from '@/components/preview/test/test-cafe-complete.json';
-import exportedJson from '@/components/preview/test/exportedJson.json';
 
 // Client-side only time display component
 function TimeDisplay() {
@@ -42,14 +40,40 @@ interface ProjectPreviewProps {
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
+interface ProjectData {
+  snapshot: {
+    id: string;
+    label: string | null;
+    createdAt: string;
+  };
+  project: {
+    id: string;
+    name: string;
+    description: string | null;
+  };
+  templateData: any;
+  files: Array<{
+    path: string;
+    content: string;
+    type: string;
+  }>;
+  filesCount: number;
+}
+
 const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
   
-  // State สำหรับ toggle Code Editor (เหมือนใน editor page)
+  // State สำหรับ toggle Code Editor
   const [isCodeEditorVisible, setIsCodeEditorVisible] = useState(true);
   
-  // 🔄 TODO: สามารถปรับแต่ง loading messages ได้ตามต้องการ
-  // Mock loading messages ที่เล่นวนไปเรื่อยๆ
+  // ✅ State สำหรับข้อมูลจริงจาก DB
+  const [projectData, setProjectData] = useState<ProjectData | null>(null);
+  const [projectFiles, setProjectFiles] = useState<Array<{path: string, content: string, type: string}>>([]);
+  const [projectName, setProjectName] = useState<string>('');
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
+  
+  // Loading messages ที่เล่นวนไปเรื่อยๆ
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const loadingMessages = [
     "กินกาแฟ...",
@@ -63,34 +87,54 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
     "กินข้าวผัดหมู...",
   ];
   
-  // 🔄 TODO: แทนที่ mock data ด้วยข้อมูลจริงจาก DB
-  // เพิ่ม state สำหรับข้อมูลจริงจาก DB:
-  // const [projectData, setProjectData] = useState(null);
-  // const [projectFiles, setProjectFiles] = useState([]);
+  // ✅ ดึงข้อมูลจาก API/DB
+  useEffect(() => {
+    const fetchProjectData = async () => {
+      if (!projectId) {
+        setDataError('ไม่พบ Project ID');
+        setIsLoadingData(false);
+        return;
+      }
+
+      try {
+        setIsLoadingData(true);
+        setDataError(null);
+
+        const response = await fetch(`/api/projects/${projectId}/snapshot`);
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || result.error || 'ไม่สามารถดึงข้อมูลได้');
+        }
+
+        if (result.success && result.data) {
+          setProjectData(result.data);
+          setProjectFiles(result.data.files || []);
+          setProjectName(result.data.project?.name || projectId);
+          console.log(`✅ โหลดข้อมูลจาก DB สำเร็จ: ${result.data.filesCount} ไฟล์`);
+        } else {
+          throw new Error('รูปแบบข้อมูลไม่ถูกต้อง');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching project data:', error);
+        setDataError(error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการดึงข้อมูล');
+        // ตั้งค่าเริ่มต้นเมื่อเกิด error
+        setProjectFiles([]);
+        setProjectName(projectId);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchProjectData();
+  }, [projectId]);
   
-  // ใช้ mock data จาก test-cafe-complete.json เหมือนใน editor page
-  const ProjectId = projectId || "mock-project-123";
-  const projectName = testCafeData.projectStructure.name;
-  
-  // 🔄 TODO: แทนที่ด้วยการดึงข้อมูลจาก API/DB
-  // ใช้ exportedJson เป็นแหล่งไฟล์หลักในการพรีวิว (fallback เป็น testCafeData ถ้าไม่พร้อม)
+  // ✅ ใช้ข้อมูลจริงจาก DB แทน mock data
   const templateFiles = useMemo(() => {
-    const useExported = true;
-    const sourceFiles = useExported
-      ? (exportedJson as any)?.exportedJson?.files || []
-      : (testCafeData as any)?.files || [];
-
-    const files = (sourceFiles.length > 0 ? sourceFiles : (testCafeData as any)?.files || []);
-
-    return files.map((f: any) => ({
-      path: f.path,
-      content: f.content,
-      type: f.type || f.language,
-    }));
-  }, []);
+    return projectFiles;
+  }, [projectFiles]);
   
-  // ✅ ใช้ useDaytonaPreview เหมือนใน editor page
-  // 🔄 TODO: แทนที่ mockProjectId ด้วย projectId จริง
+  // ✅ ใช้ useDaytonaPreview กับข้อมูลจาก DB
   const {
     sandboxId,
     status,
@@ -100,8 +144,8 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
     startPreview,
     stopPreview,
   } = useDaytonaPreview({ 
-    projectId: projectId,  // 🔄 TODO: เปลี่ยนเป็น projectId จริง
-    files: templateFiles       // 🔄 TODO: เปลี่ยนเป็นไฟล์จาก DB
+    projectId: projectId,  // ✅ ใช้ projectId จริง
+    files: templateFiles   // ✅ ใช้ไฟล์จาก DB
   });
   
   // Extract data from preview
@@ -116,22 +160,17 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   const isError = status === 'error';
   const lastUpdated = null; // This hook doesn't provide lastUpdated
 
-  // 🔄 TODO: เพิ่ม useEffect สำหรับดึงข้อมูลจาก API/DB
-  // useEffect(() => {
-  //   const fetchProjectData = async () => {
-  //     const response = await fetch(`/api/projects/${projectId}`);
-  //     const data = await response.json();
-  //     setProjectData(data);
-  //     setProjectFiles(data.files);
-  //   };
-  //   fetchProjectData();
-  // }, [projectId]);
-
-  // Log ข้อมูลเมื่อโหลด component (เหมือนใน editor page)
+  // ✅ Log ข้อมูลเมื่อโหลด component จาก DB
   useEffect(() => {
-    console.log(`✅ ProjectPreview loaded ${templateFiles.length} files from test-cafe-complete.json`);
-    console.log(`📦 Project: ${projectName} (ID: ${ProjectId})`);
-  }, [templateFiles.length, projectName, ProjectId]);
+    if (!isLoadingData && templateFiles.length > 0) {
+      console.log(`✅ ProjectPreview loaded ${templateFiles.length} files from database`);
+      console.log(`📦 Project: ${projectName} (ID: ${projectId})`);
+      if (projectData) {
+        console.log(`📸 Snapshot ID: ${projectData.snapshot.id}`);
+        console.log(`📅 Created: ${new Date(projectData.snapshot.createdAt).toLocaleString('th-TH')}`);
+      }
+    }
+  }, [isLoadingData, templateFiles.length, projectName, projectId, projectData]);
 
   // คีย์ลัดสำหรับ toggle Code Editor (เหมือนใน editor page)
   useEffect(() => {
@@ -183,11 +222,17 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
-                {/* 🔄 TODO: แทนที่ด้วยชื่อโปรเจคจริงจาก DB */}
-                {projectId}
+                {/* ✅ แสดงชื่อโปรเจคจริงจาก DB */}
+                {isLoadingData ? 'กำลังโหลด...' : projectName || projectId}
               </h2>
               <p className="text-sm text-gray-500">
-                {previewUrl ? 'Live preview' : 'No preview available'}
+                {dataError ? (
+                  <span className="text-red-500">❌ {dataError}</span>
+                ) : previewUrl ? (
+                  'Live preview'
+                ) : (
+                  'No preview available'
+                )}
               </p>
             </div>
           </div>
@@ -196,12 +241,13 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
             {/* Action Buttons */}
             <button
               onClick={startPreview}
-              disabled={loading || status === 'running' || templateFiles.length === 0}
+              disabled={isLoadingData || loading || status === 'running' || templateFiles.length === 0 || !!dataError}
               className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${loading || isLoadingData ? 'animate-spin' : ''}`} />
               <span>
-                {status === 'running' ? 'Running' : 
+                {isLoadingData ? 'กำลังโหลดข้อมูล...' :
+                 status === 'running' ? 'Running' : 
                  loading ? getCurrentLoadingMessage() : 
                  'Start Preview'}
               </span>
@@ -209,7 +255,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
 
             <button
               onClick={stopPreview}
-              disabled={loading || status !== 'running'}
+              disabled={isLoadingData || loading || status !== 'running'}
               className="px-3 py-1.5 text-sm bg-rose-600 text-white rounded-md hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
             >
               <span>Stop Preview</span>
@@ -217,7 +263,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
             
             <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
               <Code className="w-4 h-4" />
-              <span>Files ({templateFiles.length})</span>
+              <span>Files ({isLoadingData ? '...' : templateFiles.length})</span>
             </button>
             
             <button
@@ -272,7 +318,41 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
 
       {/* Preview Content */}
       <div className="flex-1 overflow-hidden bg-gray-100 p-4">
-        {status !== 'running' ? (
+        {/* แสดง Loading state เมื่อกำลังโหลดข้อมูล */}
+        {isLoadingData ? (
+          <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
+            <div className="text-center">
+              <div className="text-6xl mb-4 animate-pulse">📦</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2 animate-pulse">
+                กำลังโหลดข้อมูลโปรเจค...
+              </h3>
+              <div className="flex justify-center mb-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              </div>
+              <p className="text-gray-500 text-sm">
+                กรุณารอสักครู่... กำลังดึงข้อมูลจากฐานข้อมูล
+              </p>
+            </div>
+          </div>
+        ) : dataError ? (
+          <div className="flex items-center justify-center h-full bg-white rounded-lg border border-red-200">
+            <div className="text-center">
+              <div className="text-6xl mb-4">❌</div>
+              <h3 className="text-xl font-semibold text-red-900 mb-2">
+                เกิดข้อผิดพลาด
+              </h3>
+              <p className="text-red-600 mb-6 max-w-md">
+                {dataError}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                โหลดใหม่
+              </button>
+            </div>
+          </div>
+        ) : status !== 'running' ? (
           <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
             <div className="text-center">
               {loading ? (
@@ -294,8 +374,11 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     Start Daytona Preview
                   </h3>
-                  <p className="text-gray-600 mb-6 max-w-md">
+                  <p className="text-gray-600 mb-2 max-w-md">
                     Click "Start Preview" to create a Daytona sandbox and begin editing your code with live updates.
+                  </p>
+                  <p className="text-gray-500 mb-6 text-sm">
+                    พบ {templateFiles.length} ไฟล์พร้อมใช้งาน
                   </p>
                   <button
                     onClick={startPreview}
@@ -319,8 +402,8 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
               <div className="lg:col-span-2">
                 <CodeEditor
                   sandboxId={sandboxId}
-                  projectId={ProjectId}    // 🔄 TODO: เปลี่ยนเป็น projectId จริง
-                  initialFiles={templateFiles} // 🔄 TODO: เปลี่ยนเป็นไฟล์จาก DB
+                  projectId={projectId}    // ✅ ใช้ projectId จริง
+                  initialFiles={templateFiles} // ✅ ใช้ไฟล์จาก DB
                   className="h-full"
                 />
               </div>
