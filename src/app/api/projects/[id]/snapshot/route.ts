@@ -53,12 +53,25 @@ export async function GET(
 
     // ตรวจสอบว่ามี snapshot หรือไม่
     const latestSnapshot = project.snapshots[0]
+    
+    // ✅ กรณีไม่มี snapshot: ส่ง success=true แต่ hasSnapshot=false
     if (!latestSnapshot) {
       return NextResponse.json({
-        success: false,
-        message: 'No snapshot found for this project',
-        data: null
-      }, { status: 404 })
+        success: true,
+        hasSnapshot: false,
+        message: 'ยังไม่มีเทมเพลตสำหรับโปรเจคนี้ กรุณาสร้างเทมเพลตจาก Chat ก่อน',
+        data: {
+          project: {
+            id: project.id,
+            name: project.name,
+            description: project.description,
+          },
+          snapshot: null,
+          templateData: null,
+          files: [],
+          filesCount: 0,
+        }
+      })
     }
 
     // ดึงข้อมูลจาก templateData
@@ -90,6 +103,8 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
+      hasSnapshot: true,
+      message: 'ดึงข้อมูลสำเร็จ',
       data: {
         snapshot: {
           id: latestSnapshot.id,

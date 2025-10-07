@@ -72,6 +72,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   const [projectName, setProjectName] = useState<string>('');
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [hasSnapshot, setHasSnapshot] = useState<boolean>(false);
   
   // Loading messages ที่เล่นวนไปเรื่อยๆ
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
@@ -87,46 +88,55 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
     "กินข้าวผัดหมู...",
   ];
   
-  // ✅ ดึงข้อมูลจาก API/DB
-  useEffect(() => {
-    const fetchProjectData = async () => {
-      if (!projectId) {
-        setDataError('ไม่พบ Project ID');
-        setIsLoadingData(false);
-        return;
+  // ✅ ฟังก์ชันดึงข้อมูลจาก API/DB (แยกออกมาเพื่อใช้ซ้ำได้)
+  const fetchProjectData = async () => {
+    if (!projectId) {
+      setDataError('ไม่พบ Project ID');
+      setIsLoadingData(false);
+      return;
+    }
+
+    try {
+      setIsLoadingData(true);
+      setDataError(null);
+
+      const response = await fetch(`/api/projects/${projectId}/snapshot`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || result.error || 'ไม่สามารถดึงข้อมูลได้');
       }
 
-      try {
-        setIsLoadingData(true);
-        setDataError(null);
-
-        const response = await fetch(`/api/projects/${projectId}/snapshot`);
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.message || result.error || 'ไม่สามารถดึงข้อมูลได้');
-        }
-
-        if (result.success && result.data) {
-          setProjectData(result.data);
-          setProjectFiles(result.data.files || []);
-          setProjectName(result.data.project?.name || projectId);
+      if (result.success && result.data) {
+        setProjectData(result.data);
+        setProjectFiles(result.data.files || []);
+        setProjectName(result.data.project?.name || projectId);
+        setHasSnapshot(result.hasSnapshot !== false); // ✅ เช็คว่ามี snapshot หรือไม่
+        
+        if (result.hasSnapshot) {
           console.log(`✅ โหลดข้อมูลจาก DB สำเร็จ: ${result.data.filesCount} ไฟล์`);
         } else {
-          throw new Error('รูปแบบข้อมูลไม่ถูกต้อง');
+          console.log(`⚠️ ${result.message}`);
         }
-      } catch (error) {
-        console.error('❌ Error fetching project data:', error);
-        setDataError(error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการดึงข้อมูล');
-        // ตั้งค่าเริ่มต้นเมื่อเกิด error
-        setProjectFiles([]);
-        setProjectName(projectId);
-      } finally {
-        setIsLoadingData(false);
+      } else {
+        throw new Error('รูปแบบข้อมูลไม่ถูกต้อง');
       }
-    };
+    } catch (error) {
+      console.error('❌ Error fetching project data:', error);
+      setDataError(error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการดึงข้อมูล');
+      setHasSnapshot(false);
+      // ตั้งค่าเริ่มต้นเมื่อเกิด error
+      setProjectFiles([]);
+      setProjectName(projectId);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
 
+  // ✅ เรียกครั้งแรกเมื่อ component โหลด
+  useEffect(() => {
     fetchProjectData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
   
   // ✅ ใช้ข้อมูลจริงจาก DB แทน mock data
@@ -228,6 +238,8 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
               <p className="text-sm text-gray-500">
                 {dataError ? (
                   <span className="text-red-500">❌ {dataError}</span>
+                ) : !hasSnapshot ? (
+                  <span className="text-amber-600">⚠️ ยังไม่มีเทมเพลต</span>
                 ) : previewUrl ? (
                   'Live preview'
                 ) : (
@@ -238,15 +250,28 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
           </div>
           
           <div className="flex items-center space-x-2">
+            {/* Refresh Data Button */}
+            <button
+              onClick={fetchProjectData}
+              disabled={isLoadingData}
+              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+              title="รีเฟรชข้อมูลจาก Database"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoadingData ? 'animate-spin' : ''}`} />
+              <span>{isLoadingData ? 'กำลังโหลด...' : 'รีเฟรช'}</span>
+            </button>
+
             {/* Action Buttons */}
             <button
               onClick={startPreview}
-              disabled={isLoadingData || loading || status === 'running' || templateFiles.length === 0 || !!dataError}
-              className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
+              disabled={isLoadingData || loading || status === 'running' || !hasSnapshot || templateFiles.length === 0 || !!dataError}
+              className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+              title={!hasSnapshot ? 'กรุณาสร้างเทมเพลตก่อน' : 'เริ่ม Preview'}
             >
-              <RefreshCw className={`w-4 h-4 ${loading || isLoadingData ? 'animate-spin' : ''}`} />
+              <Eye className="w-4 h-4" />
               <span>
                 {isLoadingData ? 'กำลังโหลดข้อมูล...' :
+                 !hasSnapshot ? 'ยังไม่มีเทมเพลต' :
                  status === 'running' ? 'Running' : 
                  loading ? getCurrentLoadingMessage() : 
                  'Start Preview'}
@@ -256,12 +281,16 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
             <button
               onClick={stopPreview}
               disabled={isLoadingData || loading || status !== 'running'}
-              className="px-3 py-1.5 text-sm bg-rose-600 text-white rounded-md hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
+              className="px-3 py-1.5 text-sm bg-rose-600 text-white rounded-md hover:bg-rose-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
             >
               <span>Stop Preview</span>
             </button>
             
-            <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
+            <button 
+              className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1"
+              disabled={!hasSnapshot}
+              title={!hasSnapshot ? 'ยังไม่มีไฟล์' : `มี ${templateFiles.length} ไฟล์`}
+            >
               <Code className="w-4 h-4" />
               <span>Files ({isLoadingData ? '...' : templateFiles.length})</span>
             </button>
@@ -331,6 +360,61 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
               </div>
               <p className="text-gray-500 text-sm">
                 กรุณารอสักครู่... กำลังดึงข้อมูลจากฐานข้อมูล
+              </p>
+            </div>
+          </div>
+        ) : !hasSnapshot ? (
+          /* ✅ UI พิเศษเมื่อไม่มี snapshot */
+          <div className="flex items-center justify-center h-full bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border-2 border-dashed border-purple-300">
+            <div className="text-center max-w-2xl px-8">
+              <div className="text-8xl mb-6 animate-bounce">🐸</div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                ยังไม่มีเทมเพลตสำหรับโปรเจคนี้
+              </h3>
+              <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+                กรุณาสร้างเทมเพลตผ่านทาง <span className="font-semibold text-purple-600">Chat Interface</span> ทางด้านซ้าย
+                โดยพิมพ์คำสั่งเช่น "สร้างเว็บไซต์คาเฟ่" หรือ "สร้าง landing page"
+              </p>
+              <div className="bg-white rounded-xl p-6 shadow-md mb-6">
+                <h4 className="font-semibold text-gray-800 mb-3 flex items-center justify-center">
+                  <span className="text-2xl mr-2">💡</span>
+                  ตัวอย่างคำสั่งที่คุณสามารถใช้ได้:
+                </h4>
+                <div className="space-y-2 text-left">
+                  <div className="flex items-start">
+                    <span className="text-purple-500 mr-2">•</span>
+                    <span className="text-gray-600">"สร้างเว็บไซต์ร้านกาแฟสไตล์โมเดิร์น"</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-purple-500 mr-2">•</span>
+                    <span className="text-gray-600">"สร้าง landing page สำหรับร้านอาหาร"</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-purple-500 mr-2">•</span>
+                    <span className="text-gray-600">"สร้าง portfolio สำหรับนักออกแบบ"</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-purple-500 mr-2">•</span>
+                    <span className="text-gray-600">"สร้างเว็บไซต์ e-commerce"</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-center space-x-2 text-sm text-gray-500 mb-6">
+                <span className="inline-block w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                <span>Midori AI พร้อมช่วยคุณสร้างเว็บไซต์แล้ว</span>
+              </div>
+              
+              {/* ปุ่มรีเฟรชหลังสร้างเทมเพลต */}
+              <button
+                onClick={fetchProjectData}
+                disabled={isLoadingData}
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center space-x-2 mx-auto"
+              >
+                <RefreshCw className={`w-5 h-5 ${isLoadingData ? 'animate-spin' : ''}`} />
+                <span>ตรวจสอบเทมเพลตใหม่</span>
+              </button>
+              <p className="text-xs text-gray-500 mt-3">
+                คลิกปุ่มนี้หลังจากสร้างเทมเพลตจาก Chat แล้ว
               </p>
             </div>
           </div>
