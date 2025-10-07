@@ -202,33 +202,31 @@ export class UnsplashService {
     const shuffledBusinessKeywords = this.shuffleArray(businessKeywords[businessCategory] || []);
     const shuffledCategoryKeywords = this.shuffleArray(categoryKeywords[category] || []);
     
-    // Build query with multiple strategies and randomization
+    // Prioritize item name (AI translation) for most specific results
     const queries = [
-      // Strategy 1: Item name + randomized business context
-      `${itemName} ${shuffledBusinessKeywords.slice(0, 3).join(' ')}`,
-      
-      // Strategy 2: Category + randomized business context
-      `${category} ${shuffledBusinessKeywords.slice(0, 3).join(' ')}`,
-      
-      // Strategy 3: Item name + randomized category keywords
-      `${itemName} ${shuffledCategoryKeywords.slice(0, 2).join(' ')}`,
-      
-      // Strategy 4: Randomized business + category keywords
-      `${shuffledBusinessKeywords.slice(0, 2).join(' ')} ${shuffledCategoryKeywords.slice(0, 2).join(' ')}`,
-      
-      // Strategy 5: Just item name
+      // Strategy 1: Just item name (most specific)
       itemName,
       
-      // Strategy 6: Just category
-      category
+      // Strategy 2: Item name + business context
+      `${itemName} ${shuffledBusinessKeywords.slice(0, 2).join(' ')}`,
+      
+      // Strategy 3: Item name + category context
+      `${itemName} ${shuffledCategoryKeywords.slice(0, 2).join(' ')}`,
+      
+      // Strategy 4: Item name + both contexts
+      `${itemName} ${shuffledBusinessKeywords.slice(0, 1).join(' ')} ${shuffledCategoryKeywords.slice(0, 1).join(' ')}`,
+      
+      // Fallback: Category + business context (only if itemName is too generic)
+      `${category} ${shuffledBusinessKeywords.slice(0, 2).join(' ')}`
     ];
 
-    // Randomly select a query strategy for variety
+    // Prefer specific queries, fallback to generic ones
     const validQueries = queries.filter(q => q.trim().length > 0);
-    const randomQuery = validQueries[Math.floor(Math.random() * validQueries.length)];
+    const randomQuery = validQueries[0]; // Always use the most specific query first
     
     return randomQuery || 'food';
   }
+
 
   /**
    * Shuffle array for randomization

@@ -140,6 +140,9 @@ export class TemplateRenderer {
       ...colorMap
     });
 
+    // Step 5: Localization pass for any residual static Thai strings inside templates
+    template = this.localizeStaticStrings(template, userData);
+
     this.addProcessingStep(`renderBlock-${block.id}`, stepStart, true);
     return template;
   }
@@ -315,6 +318,7 @@ export class TemplateRenderer {
     }
 
     const primary = colorMap['primary'] || 'blue';
+    const lang = this.getLanguage(userData);
     return menuItems.map((item: any) => 
       `<div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-${primary}-100">
         {/* Image Section */}
@@ -350,10 +354,10 @@ export class TemplateRenderer {
           
           <div className="flex items-center justify-between">
             <div className="text-3xl font-bold text-${primary}-600 group-hover:text-${primary}-700 transition-colors">
-              ${this.escapeHtml(item.price || '0')} บาท
+              ${this.formatPrice(item.price, lang)}
             </div>
             <button className="px-4 py-2 bg-${primary}-500 text-white rounded-full hover:bg-${primary}-600 font-semibold text-sm group-hover:scale-105 transform transition-all duration-300">
-              เลือก
+              ${this.getI18n(lang).select}
             </button>
           </div>
         </div>
@@ -390,17 +394,19 @@ export class TemplateRenderer {
     for (const r of (categoryRoutes[category] || [])) validBaseRoutes.add(r);
 
     const primary = colorMap['primary'] || 'blue';
+    const lang = this.getLanguage(userData);
     const filtered = items.filter((item: any) => {
       const href = typeof item?.href === 'string' ? item.href : '';
       return validBaseRoutes.has(href);
     });
 
     // Ensure core routes are present (append if missing)
+    const i18n = this.getI18n(lang);
     const coreRouteLabels: Record<string, string> = {
-      '/': 'หน้าแรก',
-      '/menu': 'เมนู',
-      '/about': 'เกี่ยวกับ',
-      '/contact': 'ติดต่อเรา'
+      '/': i18n.home,
+      '/menu': i18n.menu,
+      '/about': i18n.about,
+      '/contact': i18n.contact
     };
     const coreRoutes = new Set<string>(['/', '/about', '/contact']);
     if (category === 'restaurant') coreRoutes.add('/menu');
@@ -467,11 +473,13 @@ export class TemplateRenderer {
     
     // Provide sensible defaults if none supplied
     if (!Array.isArray(quickLinks) || quickLinks.length === 0) {
+      const lang = this.getLanguage(userData);
+      const i18n = this.getI18n(lang);
       quickLinks = [
-        { label: 'หน้าแรก', href: '/' },
-        { label: 'เมนู', href: '/menu' },
-        { label: 'เกี่ยวกับเรา', href: '/about' },
-        { label: 'ติดต่อ', href: '/contact' }
+        { label: i18n.home, href: '/' },
+        { label: i18n.menu, href: '/menu' },
+        { label: i18n.about, href: '/about' },
+        { label: i18n.contact, href: '/contact' }
       ];
     }
 
@@ -479,6 +487,95 @@ export class TemplateRenderer {
     return quickLinks.map((link: any) => 
       `<li><Link to="${this.escapeHtml(link.href || '#')}" className="text-${primary}-300 hover:text-white transition-colors">${this.escapeHtml(link.label || 'Link')}</Link></li>`
     ).join('\n              ');
+  }
+
+  /**
+   * Determine language from user data
+   */
+  private getLanguage(userData: Record<string, any>): 'th' | 'en' {
+    const pref = (userData?.global?.language || userData?.aiSettings?.language || '').toLowerCase();
+    if (pref === 'en' || pref === 'th') return pref as 'th' | 'en';
+    // Heuristic
+    const text = JSON.stringify(userData || {});
+    const hasThai = /[\u0E00-\u0E7F]/.test(text);
+    return hasThai ? 'th' : 'en';
+  }
+
+  /**
+   * Simple i18n dictionary
+   */
+  private getI18n(lang: 'th' | 'en') {
+    if (lang === 'en') {
+      return {
+        select: 'Select',
+        home: 'Home',
+        menu: 'Menu',
+        about: 'About',
+        contact: 'Contact',
+        newsletter: 'Subscribe for news and promotions',
+        emailPlaceholder: 'Your email',
+        subscribe: 'Subscribe'
+      };
+    }
+    return {
+      select: 'เลือก',
+      home: 'หน้าแรก',
+      menu: 'เมนู',
+      about: 'เกี่ยวกับเรา',
+      contact: 'ติดต่อเรา',
+      newsletter: 'สมัครรับข่าวสารและโปรโมชั่น',
+      emailPlaceholder: 'อีเมลของคุณ',
+      subscribe: 'สมัคร'
+    };
+  }
+
+  /**
+   * Currency/price formatter by language
+   */
+  private formatPrice(price: any, lang: 'th' | 'en'): string {
+    const n = Number(price ?? 0);
+    if (Number.isFinite(n)) {
+      if (lang === 'en') {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(n);
+      }
+      return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(n);
+    }
+    return lang === 'en' ? '0 THB' : '0 บาท';
+  }
+
+  /**
+   * Replace common Thai static strings inside templates when language is English
+   */
+  private localizeStaticStrings(template: string, userData: Record<string, any>): string {
+    const lang = this.getLanguage(userData);
+    const i18n = this.getI18n(lang);
+    let result = template;
+    // Replace placeholder tokens
+    result = result
+      .replace(/\{quickLinksTitle\}/g, lang === 'en' ? 'Quick Links' : 'ลิงก์ด่วน')
+      .replace(/\{contactTitle\}/g, i18n.contact)
+      .replace(/\{newsletterTitle\}/g, lang === 'en' ? 'Newsletter' : 'รับข่าวสาร')
+      .replace(/\{newsletterSubtitle\}/g, i18n.newsletter)
+      .replace(/\{newsletterEmailPlaceholder\}/g, i18n.emailPlaceholder)
+      .replace(/\{newsletterCta\}/g, i18n.subscribe)
+      .replace(/\{privacyPolicy\}/g, lang === 'en' ? 'Privacy Policy' : 'นโยบายความเป็นส่วนตัว')
+      .replace(/\{termsOfUse\}/g, lang === 'en' ? 'Terms of Use' : 'ข้อกำหนดการใช้งาน')
+      .replace(/\{contactFormTitle\}/g, lang === 'en' ? 'Send a Message' : 'ส่งข้อความ')
+      .replace(/\{contactFormCta\}/g, lang === 'en' ? 'Send' : 'ส่งข้อความ');
+
+    // Replace common static Thai strings to English when needed
+    if (lang === 'en') {
+      result = result.replace(/ติดต่อเรา/g, i18n.contact)
+                     .replace(/สมัครรับข่าวสารและโปรโมชั่น/g, i18n.newsletter)
+                     .replace(/อีเมลของคุณ/g, i18n.emailPlaceholder)
+                     .replace(/สมัคร(?![\w-])/g, i18n.subscribe)
+                     .replace(/เกี่ยวกับเรา/g, i18n.about)
+                     .replace(/หน้าแรก/g, i18n.home)
+                     .replace(/เมนู(?![\w-])/g, i18n.menu)
+                     .replace(/เลือก/g, i18n.select)
+                     .replace(/ บาท/g, ' THB');
+    }
+    return result;
   }
 
   /**

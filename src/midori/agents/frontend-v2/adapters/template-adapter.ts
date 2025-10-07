@@ -81,11 +81,19 @@ export class TemplateAdapter {
     const businessCategory = aiPromptConfig.businessCategory.id;
     const keywords = aiPromptConfig.keywords;
     
+    // Detect language from user input/keywords (fallback to user setting, then Thai)
+    const preferredLanguage = aiPromptConfig?.userData?.aiSettings?.language as string | undefined;
+    const detectedLanguage = this.detectLanguage(
+      keywords,
+      (aiPromptConfig?.userData?.userInput as string) || keywords?.join(' ') || '',
+      preferredLanguage
+    );
+    
     // Create AI generation request
     const request: AIGenerationRequest = {
       businessCategory,
       keywords,
-      language: 'th', // Default to Thai, can be made configurable
+      language: detectedLanguage,
       model: 'gpt-5-nano',
       temperature: 1
     };
@@ -435,6 +443,21 @@ export class TemplateAdapter {
     if (path.endsWith('.json')) return 'config';
     if (path.endsWith('.test.ts') || path.endsWith('.spec.ts')) return 'test';
     return 'documentation';
+  }
+
+  /**
+   * Very lightweight language detector
+   * - If user explicitly sets language (en/th), use it
+   * - Else detect by characters: any Thai range => 'th', otherwise 'en'
+   */
+  private detectLanguage(keywords: string[] = [], userInput: string = '', preferred?: string): 'th' | 'en' {
+    const normalizedPref = (preferred || '').toLowerCase();
+    if (normalizedPref === 'th' || normalizedPref === 'en') return normalizedPref as 'th' | 'en';
+
+    const text = `${userInput} ${keywords.join(' ')}`.trim();
+    // Thai unicode range: \u0E00-\u0E7F
+    const hasThai = /[\u0E00-\u0E7F]/.test(text);
+    return hasThai ? 'th' : 'en';
   }
 
   private extractBlockId(path: string): string {

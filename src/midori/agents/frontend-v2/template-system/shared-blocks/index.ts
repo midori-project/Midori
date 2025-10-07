@@ -243,7 +243,7 @@ export default function Footer() {
           
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold mb-4 text-{primary}-100">ลิงก์ด่วน</h4>
+            <h4 className="font-semibold mb-4 text-{primary}-100">{quickLinksTitle}</h4>
             <ul className="space-y-2">
               {quickLinks}
             </ul>
@@ -251,7 +251,7 @@ export default function Footer() {
           
           {/* Contact Info */}
           <div>
-            <h4 className="font-semibold mb-4 text-{primary}-100">ติดต่อเรา</h4>
+            <h4 className="font-semibold mb-4 text-{primary}-100">{contactTitle}</h4>
             <div className="space-y-3">
               <div className="flex items-start">
                 <span className="text-{primary}-400 mr-3 mt-1">📍</span>
@@ -270,16 +270,16 @@ export default function Footer() {
           
           {/* Newsletter */}
           <div>
-            <h4 className="font-semibold mb-4 text-{primary}-100">รับข่าวสาร</h4>
-            <p className="text-{primary}-200 mb-4">สมัครรับข่าวสารและโปรโมชั่น</p>
+            <h4 className="font-semibold mb-4 text-{primary}-100">{newsletterTitle}</h4>
+            <p className="text-{primary}-200 mb-4">{newsletterSubtitle}</p>
             <div className="flex">
               <input 
                 type="email" 
-                placeholder="อีเมลของคุณ" 
+                placeholder="{newsletterEmailPlaceholder}" 
                 className="flex-1 px-3 py-2 bg-{primary}-800 border border-{primary}-700 rounded-l-lg text-white placeholder-{primary}-300 focus:outline-none focus:ring-2 focus:ring-{secondary}-500"
               />
               <button className="px-4 py-2 bg-{secondary}-600 hover:bg-{secondary}-700 text-white rounded-r-lg transition-colors">
-                สมัคร
+                {newsletterCta}
               </button>
             </div>
           </div>
@@ -292,8 +292,8 @@ export default function Footer() {
               &copy; 2024 {companyName}. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link to="/privacy" className="text-{primary}-300 hover:text-white text-sm transition-colors">นโยบายความเป็นส่วนตัว</Link>
-              <Link to="/terms" className="text-{primary}-300 hover:text-white text-sm transition-colors">ข้อกำหนดการใช้งาน</Link>
+              <Link to="/privacy" className="text-{primary}-300 hover:text-white text-sm transition-colors">{privacyPolicy}</Link>
+              <Link to="/terms" className="text-{primary}-300 hover:text-white text-sm transition-colors">{termsOfUse}</Link>
             </div>
           </div>
         </div>
@@ -423,7 +423,7 @@ export default function Contact() {
             
             {/* Contact Form */}
             <div>
-              <h3 className="text-2xl font-semibold mb-6 text-{primary}-900">ส่งข้อความ</h3>
+              <h3 className="text-2xl font-semibold mb-6 text-{primary}-900">{contactFormTitle}</h3>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-{primary}-700 mb-2">ชื่อ</label>
@@ -465,7 +465,7 @@ export default function Contact() {
                   type="submit"
                   className="w-full bg-{primary}-600 text-white py-3 px-6 rounded-lg hover:bg-{primary}-700 transition-colors font-semibold"
                 >
-                  ส่งข้อความ
+                  {contactFormCta}
                 </button>
               </form>
             </div>

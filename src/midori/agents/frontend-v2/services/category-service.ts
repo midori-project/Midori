@@ -192,7 +192,7 @@ Respond with ONLY the category ID (e.g., "ecommerce" or "restaurant"):`;
             content: prompt
           }
         ],
-        max_completion_tokens: 8000,
+        max_completion_tokens: 16000,
         temperature: 1 // Low temperature for consistent results
       });
       
