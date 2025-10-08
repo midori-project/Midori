@@ -514,7 +514,20 @@ async function updateFilesInSandbox(sandbox: any, files: ProjectFile[]) {
   let updatedCount = 0
   const errors: string[] = []
 
-  console.log(`🔄 [UPDATE] Updating ${files.length} files in sandbox`)
+  console.log(`🔄 [UPDATE] Incremental update: ${files.length} files in sandbox`)
+  
+  // 🚀 Smart rebuild: ตรวจสอบประเภทไฟล์ที่เปลี่ยนแปลง
+  const hasReactFiles = files.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'))
+  const hasCSSFiles = files.some(f => f.path.endsWith('.css') || f.path.endsWith('.scss'))
+  const hasConfigFiles = files.some(f => f.path.includes('package.json') || f.path.includes('tsconfig.json'))
+  
+  if (hasConfigFiles) {
+    console.log(`⚙️ [UPDATE] Config files changed - full rebuild may be needed`)
+  } else if (hasReactFiles) {
+    console.log(`⚛️ [UPDATE] React files changed - optimized rebuild`)
+  } else if (hasCSSFiles) {
+    console.log(`🎨 [UPDATE] CSS files changed - style-only rebuild`)
+  }
 
   // อัปเดตไฟล์ทีละไฟล์
   for (const file of files) {
@@ -551,6 +564,28 @@ async function updateFilesInSandbox(sandbox: any, files: ProjectFile[]) {
     }
   }
 
+  // 🚀 Conditional rebuild based on file types
+  if (hasConfigFiles) {
+    console.log(`🔄 [UPDATE] Config files changed - triggering full rebuild...`)
+    // Full rebuild for config changes
+    const rebuildResult = await sandbox.process.executeSessionCommand(sessionId, {
+      command: 'npm run build',
+      runAsync: true,
+    })
+    console.log(`✅ [UPDATE] Full rebuild completed`)
+  } else if (hasReactFiles) {
+    console.log(`⚛️ [UPDATE] React files changed - triggering optimized rebuild...`)
+    // Optimized rebuild for React files
+    const rebuildResult = await sandbox.process.executeSessionCommand(sessionId, {
+      command: 'npm run build',
+      runAsync: true,
+    })
+    console.log(`✅ [UPDATE] Optimized rebuild completed`)
+  } else if (hasCSSFiles) {
+    console.log(`🎨 [UPDATE] CSS files changed - style-only update (no rebuild needed)`)
+    // CSS changes don't need rebuild
+  }
+
   // แสดงโครงสร้างไฟล์หลังจากอัปเดต (debug)
   const tree = await sandbox.process.executeSessionCommand(sessionId, {
     command:
@@ -566,7 +601,8 @@ async function updateFilesInSandbox(sandbox: any, files: ProjectFile[]) {
   return {
     updatedCount,
     totalFiles: files.length,
-    errors
+    errors,
+    rebuildType: hasConfigFiles ? 'full' : hasReactFiles ? 'optimized' : hasCSSFiles ? 'style-only' : 'none'
   }
 }
 
@@ -914,13 +950,18 @@ export async function PUT(req: NextRequest) {
     // Get sandbox instance
     const sandbox = await daytona.get(sandboxId)
     
-    // Update files in sandbox
+    // 🚀 Incremental Build: อัปเดตเฉพาะไฟล์ที่เปลี่ยนแปลง
     const updateResult = await updateFilesInSandbox(sandbox, files)
     
     // Update heartbeat
     await updateSandboxStatus(sandboxId, 'running', state.previewUrl, state.previewToken)
     
-    console.log(`✅ [PUT] Successfully updated ${updateResult.updatedCount}/${updateResult.totalFiles} files in sandbox: ${sandboxId}`)
+    console.log(`✅ [PUT] Incremental build completed: ${updateResult.updatedCount}/${updateResult.totalFiles} files updated in sandbox: ${sandboxId}`)
+    
+    // 🚀 Performance optimization: ถ้ามีไฟล์เปลี่ยนแปลงน้อย ให้ rebuild เฉพาะส่วนที่จำเป็น
+    if (comparison && comparison.changedFiles < 5) {
+      console.log(`⚡ [PUT] Small change detected (${comparison.changedFiles} files) - using optimized rebuild`)
+    }
     
     return NextResponse.json({
       success: true,

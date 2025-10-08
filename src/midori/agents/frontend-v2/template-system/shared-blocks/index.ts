@@ -5,7 +5,7 @@ export interface SharedBlock {
   id: string;
   name: string;
   description: string;
-  category: 'layout' | 'content' | 'navigation' | 'interaction' | 'visual';
+  category: "layout" | "content" | "navigation" | "interaction" | "visual";
   template: string;
   placeholders: Record<string, PlaceholderConfig>;
   dependencies?: string[]; // Other block IDs this block depends on
@@ -13,7 +13,7 @@ export interface SharedBlock {
 }
 
 export interface PlaceholderConfig {
-  type: 'string' | 'number' | 'boolean' | 'array' | 'object' | 'enum';
+  type: "string" | "number" | "boolean" | "array" | "object" | "enum";
   required: boolean;
   maxLength?: number;
   minLength?: number;
@@ -33,10 +33,11 @@ export interface BlockVariant {
 // Shared Block Definitions
 export const SHARED_BLOCKS: SharedBlock[] = [
   {
-    id: 'hero-basic',
-    name: 'Basic Hero Section',
-    description: 'Standard hero section with heading, subheading, and CTA buttons',
-    category: 'content',
+    id: "hero-basic",
+    name: "Basic Hero Section",
+    description:
+      "Standard hero section with heading, subheading, and CTA buttons",
+    category: "content",
     template: `import { Link } from "react-router-dom";
 
 export default function Hero(){
@@ -97,19 +98,53 @@ export default function Hero(){
     );
   }`,
     placeholders: {
-      badge: { type: 'string', required: true, maxLength: 40, description: 'Hero badge text' },
-      heading: { type: 'string', required: true, maxLength: 80, description: 'Main hero heading' },
-      subheading: { type: 'string', required: true, maxLength: 160, description: 'Hero subheading' },
-      ctaLabel: { type: 'string', required: true, maxLength: 24, description: 'Primary CTA button text' },
-      secondaryCta: { type: 'string', required: true, maxLength: 24, description: 'Secondary CTA button text' },
-      heroImage: { type: 'string', required: true, description: 'Hero background image URL from Unsplash' },
-      heroImageAlt: { type: 'string', required: true, maxLength: 100, description: 'Hero image alt text for accessibility' }
+      badge: {
+        type: "string",
+        required: true,
+        maxLength: 40,
+        description: "Hero badge text",
+      },
+      heading: {
+        type: "string",
+        required: true,
+        maxLength: 80,
+        description: "Main hero heading",
+      },
+      subheading: {
+        type: "string",
+        required: true,
+        maxLength: 160,
+        description: "Hero subheading",
+      },
+      ctaLabel: {
+        type: "string",
+        required: true,
+        maxLength: 24,
+        description: "Primary CTA button text",
+      },
+      secondaryCta: {
+        type: "string",
+        required: true,
+        maxLength: 24,
+        description: "Secondary CTA button text",
+      },
+      heroImage: {
+        type: "string",
+        required: true,
+        description: "Hero background image URL from Unsplash",
+      },
+      heroImageAlt: {
+        type: "string",
+        required: true,
+        maxLength: 100,
+        description: "Hero image alt text for accessibility",
+      },
     },
     variants: [
       {
-        id: 'hero-stats',
-        name: 'Hero with Statistics',
-        description: 'Hero section with statistics section',
+        id: "hero-stats",
+        name: "Hero with Statistics",
+        description: "Hero section with statistics section",
         template: `{hero-basic}
           
           {/* Stats Section */}
@@ -128,21 +163,21 @@ export default function Hero(){
             </div>
           </div>`,
         overrides: {
-          stat1: { type: 'string', required: true, maxLength: 20 },
-          stat1Label: { type: 'string', required: true, maxLength: 40 },
-          stat2: { type: 'string', required: true, maxLength: 20 },
-          stat2Label: { type: 'string', required: true, maxLength: 40 },
-          stat3: { type: 'string', required: true, maxLength: 20 },
-          stat3Label: { type: 'string', required: true, maxLength: 40 }
-        }
-      }
-    ]
+          stat1: { type: "string", required: true, maxLength: 20 },
+          stat1Label: { type: "string", required: true, maxLength: 40 },
+          stat2: { type: "string", required: true, maxLength: 20 },
+          stat2Label: { type: "string", required: true, maxLength: 40 },
+          stat3: { type: "string", required: true, maxLength: 20 },
+          stat3Label: { type: "string", required: true, maxLength: 40 },
+        },
+      },
+    ],
   },
   {
-    id: 'navbar-basic',
-    name: 'Basic Navigation',
-    description: 'Standard navigation bar with logo, menu, and CTA button',
-    category: 'navigation',
+    id: "navbar-basic",
+    name: "Basic Navigation",
+    description: "Standard navigation bar with logo, menu, and CTA button",
+    category: "navigation",
     template: `import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -213,17 +248,36 @@ export default function Navbar(){
     );
   }`,
     placeholders: {
-      brand: { type: 'string', required: true, minLength: 1, description: 'Brand name' },
-      brandFirstChar: { type: 'string', required: true, minLength: 1, description: 'First character of brand name' },
-      ctaButton: { type: 'string', required: true, maxLength: 20, description: 'CTA button text' },
-      menuItems: { type: 'array', required: true, description: 'Menu items array' }
-    }
+      brand: {
+        type: "string",
+        required: true,
+        minLength: 1,
+        description: "Brand name",
+      },
+      brandFirstChar: {
+        type: "string",
+        required: true,
+        minLength: 1,
+        description: "First character of brand name",
+      },
+      ctaButton: {
+        type: "string",
+        required: true,
+        maxLength: 20,
+        description: "CTA button text",
+      },
+      menuItems: {
+        type: "array",
+        required: true,
+        description: "Menu items array",
+      },
+    },
   },
   {
-    id: 'footer-basic',
-    name: 'Basic Footer',
-    description: 'Basic footer with company info, links, and contact details',
-    category: 'layout',
+    id: "footer-basic",
+    name: "Basic Footer",
+    description: "Basic footer with company info, links, and contact details",
+    category: "layout",
     template: `import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -302,20 +356,40 @@ export default function Footer() {
   );
 }`,
     placeholders: {
-      companyName: { type: 'string', required: true, description: 'Company name' },
-      description: { type: 'string', required: true, description: 'Company description' },
-      socialLinks: { type: 'array', required: true, description: 'Social media links' },
-      quickLinks: { type: 'array', required: true, description: 'Quick links array' },
-      address: { type: 'string', required: true, description: 'Company address' },
-      phone: { type: 'string', required: true, description: 'Phone number' },
-      email: { type: 'string', required: true, description: 'Email address' }
-    }
+      companyName: {
+        type: "string",
+        required: true,
+        description: "Company name",
+      },
+      description: {
+        type: "string",
+        required: true,
+        description: "Company description",
+      },
+      socialLinks: {
+        type: "array",
+        required: true,
+        description: "Social media links",
+      },
+      quickLinks: {
+        type: "array",
+        required: true,
+        description: "Quick links array",
+      },
+      address: {
+        type: "string",
+        required: true,
+        description: "Company address",
+      },
+      phone: { type: "string", required: true, description: "Phone number" },
+      email: { type: "string", required: true, description: "Email address" },
+    },
   },
   {
-    id: 'about-basic',
-    name: 'Basic About Section',
-    description: 'Basic about section with company info and features',
-    category: 'content',
+    id: "about-basic",
+    name: "Basic About Section",
+    description: "Basic about section with company info and features",
+    category: "content",
     template: `export default function About() {
   return (
     <section className="py-16 bg-{primary}-50">
@@ -339,17 +413,29 @@ export default function Footer() {
   );
 }`,
     placeholders: {
-      title: { type: 'string', required: true, description: 'About section title' },
-      description: { type: 'string', required: true, description: 'About description' },
-      features: { type: 'array', required: true, description: 'Features array' },
-      stats: { type: 'array', required: true, description: 'Statistics array' }
-    }
+      title: {
+        type: "string",
+        required: true,
+        description: "About section title",
+      },
+      description: {
+        type: "string",
+        required: true,
+        description: "About description",
+      },
+      features: {
+        type: "array",
+        required: true,
+        description: "Features array",
+      },
+      stats: { type: "array", required: true, description: "Statistics array" },
+    },
   },
   {
-    id: 'contact-basic',
-    name: 'Basic Contact Section',
-    description: 'Basic contact section with contact info and form',
-    category: 'content',
+    id: "contact-basic",
+    name: "Basic Contact Section",
+    description: "Basic contact section with contact info and form",
+    category: "content",
     template: `import { useState } from "react";
 
 export default function Contact() {
@@ -476,19 +562,36 @@ export default function Contact() {
   );
 }`,
     placeholders: {
-      title: { type: 'string', required: true, description: 'Contact section title' },
-      subtitle: { type: 'string', required: true, description: 'Contact section subtitle' },
-      address: { type: 'string', required: true, description: 'Company address' },
-      phone: { type: 'string', required: true, description: 'Phone number' },
-      email: { type: 'string', required: true, description: 'Email address' },
-      businessHours: { type: 'string', required: true, description: 'Business hours' }
-    }
+      title: {
+        type: "string",
+        required: true,
+        description: "Contact section title",
+      },
+      subtitle: {
+        type: "string",
+        required: true,
+        description: "Contact section subtitle",
+      },
+      address: {
+        type: "string",
+        required: true,
+        description: "Company address",
+      },
+      phone: { type: "string", required: true, description: "Phone number" },
+      email: { type: "string", required: true, description: "Email address" },
+      businessHours: {
+        type: "string",
+        required: true,
+        description: "Business hours",
+      },
+    },
   },
   {
-    id: 'menu-basic',
-    name: 'Basic Menu Section',
-    description: 'Menu/product listing section with items, categories, and images',
-    category: 'content',
+    id: "menu-basic",
+    name: "Basic Menu Section",
+    description:
+      "Menu/product listing section with items, categories, and images",
+    category: "content",
     template: `export default function Menu() {
     return (
       <section className="py-20 bg-gradient-to-br from-{primary}-50 to-white">
@@ -507,15 +610,23 @@ export default function Contact() {
     );
   }`,
     placeholders: {
-      title: { type: 'string', required: true, description: 'Menu section title' },
-      menuItems: { type: 'array', required: true, description: 'Array of menu items with images' }
-    }
+      title: {
+        type: "string",
+        required: true,
+        description: "Menu section title",
+      },
+      menuItems: {
+        type: "array",
+        required: true,
+        description: "Array of menu items with images",
+      },
+    },
   },
   {
-    id: 'theme-basic',
-    name: 'Basic Theme',
-    description: 'Basic CSS theme with color palette and spacing tokens',
-    category: 'visual',
+    id: "theme-basic",
+    name: "Basic Theme",
+    description: "Basic CSS theme with color palette and spacing tokens",
+    category: "visual",
     template: `:root {
   --radius: {radius};
   --spacing: {spacing};
@@ -534,16 +645,28 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }`,
     placeholders: {
-      radius: { type: 'enum', required: true, enum: ['6px', '8px', '10px'], defaultValue: '8px', description: 'Border radius' },
-      spacing: { type: 'enum', required: true, enum: ['0.75rem', '1rem', '1.25rem'], defaultValue: '1rem', description: 'Base spacing unit' }
-    }
-  }
+      radius: {
+        type: "enum",
+        required: true,
+        enum: ["6px", "8px", "10px"],
+        defaultValue: "8px",
+        description: "Border radius",
+      },
+      spacing: {
+        type: "enum",
+        required: true,
+        enum: ["0.75rem", "1rem", "1.25rem"],
+        defaultValue: "1rem",
+        description: "Base spacing unit",
+      },
+    },
+  },
 ];
 
 export function getSharedBlock(id: string): SharedBlock | undefined {
-  return SHARED_BLOCKS.find(block => block.id === id);
+  return SHARED_BLOCKS.find((block) => block.id === id);
 }
 
 export function getSharedBlocksByCategory(category: string): SharedBlock[] {
-  return SHARED_BLOCKS.filter(block => block.category === category);
+  return SHARED_BLOCKS.filter((block) => block.category === category);
 }

@@ -54,8 +54,38 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
   const lastHeartbeatRef = useRef<number>(0)
   const heartbeatAbortControllerRef = useRef<AbortController | null>(null)
   
+  // Request debouncing to prevent rate limiting
+  const lastRequestRef = useRef<number>(0)
+  const requestDebounceMs = 1000 // 1 second debounce
+  
   // File state management for comparison
   const fileStatesRef = useRef<Map<string, FileState>>(new Map())
+  
+  // Preview cache management
+  const previewCacheRef = useRef<{
+    sandboxId?: string
+    previewUrl?: string
+    previewToken?: string
+    filesHash?: string
+    lastUpdated?: number
+  }>({})
+
+  // Load cache from localStorage on mount
+  useEffect(() => {
+    if (projectId) {
+      const cacheKey = `preview-cache-${projectId}`
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        try {
+          const cacheData = JSON.parse(cached)
+          previewCacheRef.current = cacheData
+          console.log(`💾 [CACHE] Loaded cache from localStorage for project: ${projectId}`)
+        } catch (error) {
+          console.warn(`⚠️ [CACHE] Failed to parse cache from localStorage:`, error)
+        }
+      }
+    }
+  }, [projectId])
 
   // File Comparison utilities
   const generateHash = useCallback((content: string): string => {
@@ -99,6 +129,54 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
     fileStatesRef.current.set(path, newState)
     return newState
   }, [createFileState])
+
+  // Cache validation utilities
+  const generateFilesHash = useCallback((files: ProjectFile[]): string => {
+    const filesContent = files
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .map(f => `${f.path}:${f.content}`)
+      .join('|')
+    return generateHash(filesContent)
+  }, [generateHash])
+
+  const isCacheValid = useCallback((files: ProjectFile[]): boolean => {
+    const cache = previewCacheRef.current
+    if (!cache.sandboxId || !cache.previewUrl || !cache.filesHash) {
+      return false
+    }
+
+    const currentFilesHash = generateFilesHash(files)
+    const isHashMatch = cache.filesHash === currentFilesHash
+    const isRecent = cache.lastUpdated ? (Date.now() - cache.lastUpdated) < 300000 : false // 5 minutes
+
+    console.log(`🔍 [CACHE] Validation: hash=${isHashMatch}, recent=${isRecent}, cacheAge=${cache.lastUpdated ? Date.now() - cache.lastUpdated : 'unknown'}ms`)
+    return isHashMatch && isRecent
+  }, [generateFilesHash])
+
+  const updateCache = useCallback((sandboxId: string, previewUrl: string, previewToken: string, files: ProjectFile[]) => {
+    const cacheData = {
+      sandboxId,
+      previewUrl,
+      previewToken,
+      filesHash: generateFilesHash(files),
+      lastUpdated: Date.now()
+    }
+    
+    previewCacheRef.current = cacheData
+    
+    // Save to localStorage for persistence
+    if (projectId) {
+      const cacheKey = `preview-cache-${projectId}`
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+        console.log(`💾 [CACHE] Saved cache to localStorage for project: ${projectId}`)
+      } catch (error) {
+        console.warn(`⚠️ [CACHE] Failed to save cache to localStorage:`, error)
+      }
+    }
+    
+    console.log(`💾 [CACHE] Updated cache for sandbox: ${sandboxId}`)
+  }, [generateFilesHash, projectId])
 
   const previewUrlWithToken = useMemo(() => {
     if (!previewUrl) return undefined
@@ -243,6 +321,26 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
       return
     }
 
+    // 🚀 Cache check: ตรวจสอบว่า preview ยังใช้ได้หรือไม่
+    if (isCacheValid(files)) {
+      console.log(`💾 [CACHE] Using cached preview - no rebuild needed`)
+      setSandboxId(previewCacheRef.current.sandboxId!)
+      setPreviewUrl(previewCacheRef.current.previewUrl!)
+      setPreviewToken(previewCacheRef.current.previewToken!)
+      setStatus('running')
+      setLoading(false)
+      return
+    }
+
+    // 🚀 Request debouncing: ป้องกัน rate limiting
+    const now = Date.now()
+    if (now - lastRequestRef.current < requestDebounceMs) {
+      console.log(`⏳ [DEBOUNCE] Request too soon, skipping...`)
+      setLoading(false)
+      return
+    }
+    lastRequestRef.current = now
+
     setLoading(true)
     setStatus('creating')
     setError(undefined)
@@ -261,7 +359,16 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
         })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || 'Failed to create sandbox')
+      
+      if (!res.ok) {
+        if (res.status === 429) {
+          console.warn(`🚫 [RATE_LIMIT] Rate limit exceeded, retrying in ${data.retryAfter || 60} seconds...`)
+          setError(`Rate limit exceeded. Please wait ${data.retryAfter || 60} seconds before trying again.`)
+          setStatus('error')
+          return
+        }
+        throw new Error(data?.error || 'Failed to create sandbox')
+      }
 
       console.log(`✅ [FRONTEND] Preview created successfully: ${data.sandboxId}`)
       
@@ -278,6 +385,11 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
       setPreviewToken(data.token)
       setStatus('running')
       lastHeartbeatRef.current = Date.now()
+      
+      // 💾 Update cache with new preview data
+      if (files) {
+        updateCache(data.sandboxId, data.url, data.token, files)
+      }
     } catch (e: any) {
       console.error(`❌ [FRONTEND] Preview creation failed:`, e)
       setError(e?.message || 'Unexpected error')
@@ -375,6 +487,32 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
         message: 'No files to update - all files are unchanged'
       }
     }
+
+    // 🚀 Invalidate cache when files change
+    console.log(`🔄 [CACHE] Files changed - invalidating cache`)
+    previewCacheRef.current = {}
+    if (projectId) {
+      const cacheKey = `preview-cache-${projectId}`
+      localStorage.removeItem(cacheKey)
+    }
+
+    // 🚀 Request debouncing: ป้องกัน rate limiting
+    const now = Date.now()
+    if (now - lastRequestRef.current < requestDebounceMs) {
+      console.log(`⏳ [DEBOUNCE] Update request too soon, skipping...`)
+      setLoading(false)
+      return {
+        success: true,
+        updatedFiles: 0,
+        totalFiles: newFiles.length,
+        skippedFiles: skippedFiles.length,
+        message: 'Request debounced - too soon'
+      }
+    }
+    lastRequestRef.current = now
+
+    // 🚀 Incremental Build: ส่งเฉพาะไฟล์ที่เปลี่ยนแปลง
+    console.log(`🚀 [FRONTEND] Starting incremental build for ${changedFiles.length} changed files...`)
     
     try {
       const res = await fetch(`/api/preview/daytona?sandboxId=${encodeURIComponent(sandboxId)}`, {
@@ -394,7 +532,20 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
       })
       
       const data = await res.json()
+      
       if (!res.ok) {
+        if (res.status === 429) {
+          console.warn(`🚫 [RATE_LIMIT] Rate limit exceeded during update, retrying in ${data.retryAfter || 60} seconds...`)
+          setError(`Rate limit exceeded. Please wait ${data.retryAfter || 60} seconds before trying again.`)
+          setStatus('error')
+          return {
+            success: false,
+            updatedFiles: 0,
+            totalFiles: newFiles.length,
+            skippedFiles: skippedFiles.length,
+            message: `Rate limit exceeded. Retry in ${data.retryAfter || 60} seconds.`
+          }
+        }
         throw new Error(data?.error || 'Failed to update files')
       }
       

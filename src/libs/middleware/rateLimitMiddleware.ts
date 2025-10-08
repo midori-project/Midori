@@ -8,7 +8,10 @@ const RATE_LIMIT_CONFIG = {
   '/api/auth/validate': { max: 30, window: 60 * 1000 }, // 30 validations per minute
   
   // General API
-  '/api/': { max: 100, window: 60 * 1000 }, // 100 requests per minute
+  '/api/': { max: 200, window: 60 * 1000 }, // 200 requests per minute (increased)
+  
+  // Preview API - more lenient for development
+  '/api/preview/daytona': { max: 50, window: 60 * 1000 }, // 50 requests per minute
 };
 
 // In-memory store (ใน production ควรใช้ Redis)

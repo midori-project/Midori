@@ -74,6 +74,10 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   const [dataError, setDataError] = useState<string | null>(null);
   const [hasSnapshot, setHasSnapshot] = useState<boolean>(false);
   
+  // WebSocket connection state
+  const [wsConnected, setWsConnected] = useState<boolean>(false);
+  const [wsError, setWsError] = useState<string | null>(null);
+  
   // Loading messages ที่เล่นวนไปเรื่อยๆ
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const loadingMessages = [
@@ -138,6 +142,57 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
     fetchProjectData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
+
+  // ✅ WebSocket integration for real-time snapshot monitoring
+  useEffect(() => {
+    if (!projectId) return;
+
+    const wsUrl = process.env.NODE_ENV === 'production' 
+      ? `wss://${window.location.host}/api/project-context/ws`
+      : `ws://localhost:3000/api/project-context/ws`;
+    
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      console.log('🔌 WebSocket connected for project:', projectId);
+      setWsConnected(true);
+      setWsError(null);
+      // Subscribe to project updates
+      ws.send(JSON.stringify({
+        type: 'subscribe',
+        projectId: projectId
+      }));
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📡 WebSocket message received:', data);
+        
+        if (data.type === 'snapshot_created' || data.type === 'project_updated') {
+          console.log('🔄 Snapshot detected, refreshing project data...');
+          fetchProjectData();
+        }
+      } catch (error) {
+        /* console.error('❌ Error parsing WebSocket message:', error); */
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('🔌 WebSocket disconnected');
+      setWsConnected(false);
+    };
+
+    ws.onerror = (error) => {
+      /* console.error('❌ WebSocket error:', error); */
+      setWsConnected(false);
+      setWsError('WebSocket connection failed');
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [projectId]);
   
   // ✅ ใช้ข้อมูลจริงจาก DB แทน mock data
   const templateFiles = useMemo(() => {
@@ -157,6 +212,14 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
     projectId: projectId,  // ✅ ใช้ projectId จริง
     files: templateFiles   // ✅ ใช้ไฟล์จาก DB
   });
+
+  // ✅ Auto-preview when snapshot is available
+  useEffect(() => {
+    if (hasSnapshot && templateFiles.length > 0 && status !== 'running' && !loading) {
+      console.log('🚀 Auto-starting preview for available snapshot...');
+      startPreview();
+    }
+  }, [hasSnapshot, templateFiles.length, status, loading, startPreview]);
   
   // Extract data from preview
   const previewUrl = previewUrlWithToken;
@@ -241,7 +304,14 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
                 ) : !hasSnapshot ? (
                   <span className="text-amber-600">⚠️ ยังไม่มีเทมเพลต</span>
                 ) : previewUrl ? (
-                  'Live preview'
+                  <span className="flex items-center space-x-2">
+                    <span>Live preview</span>
+                    {wsConnected ? (
+                      <span className="text-green-500 text-xs">🔌 Connected</span>
+                    ) : (
+                      <span className="text-red-500 text-xs">🔌 Disconnected</span>
+                    )}
+                  </span>
                 ) : (
                   'No preview available'
                 )}

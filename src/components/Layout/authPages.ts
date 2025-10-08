@@ -10,10 +10,11 @@ export const authPages: AuthPageEntry[] = [
   '/forgot-password',
   '/info',
   '/chat',
-  '/projects',
   '/template',
   '/test',
   '/editor'
+  // ไม่ใส่ /projects เพื่อให้ projects/workspace มี navbar
+  // แต่ต้องการซ่อน navbar เฉพาะ projects/[id] เท่านั้น
   
   // info pages: allow scroll in some cases; default not set (false)
 ];
