@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDaytonaPreview } from '@/hooks/useDaytonaPreview';
 import { CodeEditor } from '@/components/CodeEditor/CodeEditor';
-import { Monitor, Smartphone, Tablet, RefreshCw, Code, Eye, Settings } from 'lucide-react';
+import { Monitor, Smartphone, Tablet, RefreshCw, Code, Eye, Settings, Rocket, ExternalLink, CheckCircle, XCircle, Loader } from 'lucide-react';
 
 // Client-side only time display component
 function TimeDisplay() {
@@ -78,6 +78,23 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   const [wsConnected, setWsConnected] = useState<boolean>(false);
   const [wsError, setWsError] = useState<string | null>(null);
   
+  // ✅ State สำหรับ Deployment
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deploymentError, setDeploymentError] = useState<string | null>(null);
+  const [deploymentSuccess, setDeploymentSuccess] = useState<{
+    url: string;
+    subdomain: string;
+    deployedAt: string;
+  } | null>(null);
+  const [deploymentHistory, setDeploymentHistory] = useState<Array<{
+    id: string;
+    url: string;
+    state: string;
+    meta: any;
+    createdAt: string;
+  }>>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  
   // Loading messages ที่เล่นวนไปเรื่อยๆ
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const loadingMessages = [
@@ -137,9 +154,39 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
     }
   };
 
+  // ✅ ฟังก์ชันดึงประวัติ deployment
+  const fetchDeploymentHistory = async () => {
+    if (!projectId) return;
+    
+    try {
+      setIsLoadingHistory(true);
+      const response = await fetch(`/api/projects/${projectId}/deploy`);
+      const result = await response.json();
+      
+      if (result.success && result.deployments) {
+        setDeploymentHistory(result.deployments);
+        
+        // ถ้ามี deployment ที่สำเร็จล่าสุด ให้เซ็ตเป็น default
+        const latestSuccess = result.deployments.find((d: any) => d.state === 'ready');
+        if (latestSuccess && latestSuccess.meta?.subdomain) {
+          setDeploymentSuccess({
+            url: latestSuccess.url,
+            subdomain: latestSuccess.meta.subdomain,
+            deployedAt: latestSuccess.createdAt,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error fetching deployment history:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
   // ✅ เรียกครั้งแรกเมื่อ component โหลด
   useEffect(() => {
     fetchProjectData();
+    fetchDeploymentHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
@@ -193,6 +240,67 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
       ws.close();
     };
   }, [projectId]);
+  
+  // ✅ แปลงชื่อโปรเจคเป็น subdomain format
+  const generateSubdomain = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // เอาตัวอักษรพิเศษออก
+      .replace(/\s+/g, '-') // แปลง space เป็น hyphen
+      .replace(/-+/g, '-') // แปลง hyphen ซ้ำเป็นตัวเดียว
+      .substring(0, 50) // จำกัดความยาว
+      .replace(/^-|-$/g, ''); // เอา hyphen หน้าหลังออก
+  };
+
+  // ✅ ฟังก์ชัน Deploy โปรเจค
+  const handleDeploy = async () => {
+    // ใช้ชื่อโปรเจคเป็น subdomain อัตโนมัติ
+    const autoSubdomain = generateSubdomain(projectName || projectId);
+    
+    if (!autoSubdomain) {
+      setDeploymentError('ไม่สามารถสร้าง subdomain จากชื่อโปรเจคได้');
+      return;
+    }
+
+    setIsDeploying(true);
+    setDeploymentError(null);
+    setDeploymentSuccess(null);
+
+    try {
+      console.log(`🚀 Starting deployment for ${projectId} with subdomain: ${autoSubdomain}`);
+
+      const response = await fetch(`/api/projects/${projectId}/deploy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ subdomain: autoSubdomain }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'เกิดข้อผิดพลาดในการ deploy');
+      }
+
+      console.log('✅ Deployment successful:', result);
+
+      setDeploymentSuccess({
+        url: result.deployment.url,
+        subdomain: result.deployment.subdomain,
+        deployedAt: result.deployment.deployedAt,
+      });
+      
+      // รีเฟรชประวัติ deployment
+      await fetchDeploymentHistory();
+      
+    } catch (error: any) {
+      console.error('❌ Deployment failed:', error);
+      setDeploymentError(error.message || 'เกิดข้อผิดพลาดในการ deploy');
+    } finally {
+      setIsDeploying(false);
+    }
+  };
   
   // ✅ ใช้ข้อมูลจริงจาก DB แทน mock data
   const templateFiles = useMemo(() => {
@@ -371,6 +479,26 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
               title={isCodeEditorVisible ? "Hide Code Editor" : "Show Code Editor"}
             >
               <span>{isCodeEditorVisible ? '👁️ Hide Editor' : '👁️ Show Editor'}</span>
+            </button>
+            
+            {/* ปุ่ม Deploy */}
+            <button
+              onClick={handleDeploy}
+              disabled={!hasSnapshot || isLoadingData || !!dataError || isDeploying}
+              className="px-3 py-1.5 text-sm bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 shadow-md"
+              title={!hasSnapshot ? 'กรุณาสร้างเทมเพลตก่อน' : `Deploy ไปยัง ${generateSubdomain(projectName || projectId)}.midori.lol`}
+            >
+              {isDeploying ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  <span>กำลัง Deploy...</span>
+                </>
+              ) : (
+                <>
+                  <Rocket className="w-4 h-4" />
+                  <span>{!hasSnapshot ? 'ยังไม่มีเทมเพลต' : 'Deploy'}</span>
+                </>
+              )}
             </button>
             
             <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
@@ -626,9 +754,38 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
             <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium">
               Upgrade
             </button>
-            <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium">
-              Publish
-            </button>
+            
+            {/* แสดง deployment status */}
+            {deploymentSuccess ? (
+              <a 
+                href={deploymentSuccess.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center space-x-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Deployed: {deploymentSuccess.subdomain}</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            ) : (
+              <button 
+                onClick={handleDeploy}
+                disabled={!hasSnapshot || isDeploying}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeploying ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    <span>กำลัง Deploy...</span>
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="w-4 h-4" />
+                    <span>Deploy</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div>
@@ -640,11 +797,34 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
                 </>
               )}
             </div>
-            
-          
           </div>
         </div>
       </div>
+
+      {/* Toast Notifications */}
+      {deploymentError && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-md animate-slide-up">
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-lg p-4">
+            <div className="flex items-start">
+              <XCircle className="w-5 h-5 text-red-600 mr-3 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="text-red-800 font-semibold mb-1">
+                  Deployment Failed
+                </h4>
+                <p className="text-red-700 text-sm">
+                  {deploymentError}
+                </p>
+              </div>
+              <button
+                onClick={() => setDeploymentError(null)}
+                className="text-red-400 hover:text-red-600 ml-2"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
