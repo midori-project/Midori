@@ -1,98 +1,92 @@
-# 🚀 Frontend-V2 Agent
+# Frontend-V2 Agent
 
-Frontend Agent รุ่นใหม่ที่ใช้ **Template System + AI Integration** สำหรับการสร้างเว็บไซต์แบบอัตโนมัติ
+## ภาพรวม (Overview)
 
-## 🎯 ภาพรวม
+Frontend-V2 Agent เป็นระบบสร้างเว็บไซต์อัตโนมัติที่ใช้ Template System ร่วมกับ AI Integration สำหรับการสร้างเว็บไซต์ที่ทันสมัยและมีประสิทธิภาพ
 
-Frontend-V2 Agent เป็นการปรับปรุงจาก Frontend Agent ตัวเก่า โดยใช้:
-- **Template System**: ระบบ template ที่ยืดหยุ่นและมีประสิทธิภาพ
-- **AI Integration**: ใช้ AI ในการสร้างเนื้อหาและปรับแต่ง
-- **Business Categories**: รองรับหลายประเภทธุรกิจ
-- **Real-time Preview**: ดูผลลัพธ์แบบ real-time
+### ✨ คุณสมบัติหลัก
 
-## 🏗️ โครงสร้าง
+- 🎨 **Template-based Generation** - สร้างเว็บไซต์จากระบบ Template ที่มีโครงสร้างชัดเจน
+- 🤖 **AI Content Generation** - สร้างเนื้อหาด้วย AI ตาม keywords และ business category
+- 🏢 **Business Category Detection** - ระบุประเภทธุรกิจอัตโนมัติ
+- 📱 **Responsive Design** - ออกแบบที่รองรับทุกอุปกรณ์
+- 👀 **Real-time Preview** - ดูผลลัพธ์แบบ real-time
+- ⚙️ **Customization Override** - ปรับแต่งตามความต้องการ
+- 🚀 **Performance Optimization** - ปรับปรุงประสิทธิภาพ
+- ♿ **Accessibility Compliance** - รองรับมาตรฐาน accessibility
+
+## 🏗️ สถาปัตยกรรม (Architecture)
 
 ```
-frontend-v2/
-├── agent.yaml                    # Agent configuration
-├── package.json                  # Package configuration
-├── tsconfig.json                 # TypeScript configuration
-├── jest.config.js                # Jest configuration
-├── adapters/
-│   └── template-adapter.ts      # Template System integration
-├── runners/
-│   └── run.ts                   # Main runner function
-├── schemas/
-│   ├── frontend-task-v2.schema.json
-│   ├── component-result-v2.schema.json
-│   └── types.ts                 # TypeScript types
-├── template-system/              # Self-contained template system
-│   ├── index.ts                 # Main export
-│   ├── override-system/         # Override system
-│   ├── shared-blocks/           # Shared blocks
-│   └── business-categories/     # Business categories
-├── tests/
-│   ├── setup.ts                 # Test setup
-│   ├── integration.test.ts      # Integration tests
-│   ├── independence.test.ts     # Independence tests
-│   └── example-usage.ts         # Usage examples
-├── MIGRATION.md                 # Migration guide
-└── README.md                    # เอกสารนี้
+Frontend-V2 Agent
+├── 🎯 Core Runner (runners/run.ts)
+├── 🔌 Template Adapter (adapters/template-adapter.ts)
+├── 🤖 AI Service (services/ai-service.ts)
+├── 🏢 Category Service (services/category-service.ts)
+├── 💾 Persistence Service (services/persistence-service.ts)
+├── 📸 Unsplash Service (services/unsplash-service.ts)
+├── 🧩 Template System
+│   ├── Override System
+│   ├── Shared Blocks
+│   ├── Business Categories
+│   ├── Project Templates
+│   └── Project Structure Generator
+├── 📋 Schemas
+└── 🧪 Tests
 ```
 
-## 🔒 Self-Contained & Independent
+## 🚀 การติดตั้ง (Installation)
 
-Frontend-V2 Agent เป็น **self-contained** และ **independent**:
-- ✅ **ไม่พึ่งพา External Dependencies** - มี template system ในตัว
-- ✅ **Portable** - ย้ายไปที่ไหนก็ได้
-- ✅ **Isolated** - ไม่กระทบกับระบบอื่น
-- ✅ **Maintainable** - ง่ายต่อการบำรุงรักษา
+### Prerequisites
 
-### **Template System ในตัว:**
+- Node.js 18+
+- TypeScript 5.9+
+- OpenAI API Key (สำหรับ AI features)
+
+### Setup
+
+```bash
+# ติดตั้ง dependencies
+npm install
+
+# Build project
+npm run build
+
+# Run tests
+npm test
+
+# Development mode
+npm run dev
 ```
-template-system/
-├── index.ts                 # Main export
-├── override-system/         # Override system (local copy)
-├── shared-blocks/           # Shared blocks (local copy)
-└── business-categories/     # Business categories (local copy)
+
+### Environment Variables
+
+สร้างไฟล์ `.env` ใน root directory:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+UNSPLASH_ACCESS_KEY=your_unsplash_access_key_here
+FRONTEND_AI_MODEL=gpt-5-nano
 ```
 
-## 🚀 การใช้งาน
+## 📖 การใช้งาน (Usage)
 
-### **Basic Usage**
+### Basic Usage
 
 ```typescript
 import { runFrontendAgentV2 } from './runners/run';
+import { FrontendTaskV2 } from './schemas/types';
 
-const task = {
+const task: FrontendTaskV2 = {
   taskId: 'website-001',
   taskType: 'generate_website',
   businessCategory: 'restaurant',
-  keywords: ['restaurant', 'food', 'thai'],
+  keywords: ['restaurant', 'food', 'thai', 'อร่อย'],
   customizations: {
     colors: ['orange', 'red'],
     theme: 'modern',
+    layout: 'single-page',
     features: ['hero_section', 'about_section', 'contact_form']
-  },
-  includePreview: true
-};
-
-const result = await runFrontendAgentV2(task);
-```
-
-### **Advanced Usage**
-
-```typescript
-const advancedTask = {
-  taskId: 'advanced-001',
-  taskType: 'generate_website',
-  businessCategory: 'ecommerce',
-  keywords: ['shop', 'online', 'store'],
-  customizations: {
-    colors: ['blue', 'purple'],
-    theme: 'professional',
-    layout: 'multi-page',
-    features: ['hero_section', 'gallery', 'pricing', 'contact_form']
   },
   includePreview: true,
   validation: {
@@ -104,227 +98,294 @@ const advancedTask = {
     model: 'gpt-5-nano',
     temperature: 1,
     language: 'th'
-  },
-  priority: 'high',
-  metadata: {
-    userId: 'user-123',
-    projectId: 'project-456',
-    tags: ['ecommerce', 'shop']
   }
 };
 
-const result = await runFrontendAgentV2(advancedTask);
+const result = await runFrontendAgentV2(task);
 ```
 
-## 📋 Task Types
-
-### **1. generate_website**
-สร้างเว็บไซต์ใหม่จากศูนย์
+### Advanced Usage
 
 ```typescript
-{
-  taskType: 'generate_website',
-  businessCategory: 'restaurant',
-  keywords: ['restaurant', 'food', 'thai']
-}
-```
+// Batch processing
+import { runBatchFrontendAgentV2 } from './runners/run';
 
-### **2. customize_component**
-ปรับแต่ง component ที่มีอยู่
-
-```typescript
-{
-  taskType: 'customize_component',
-  businessCategory: 'restaurant',
-  keywords: ['restaurant', 'food'],
-  customizations: {
-    colors: ['blue', 'green'],
-    theme: 'modern'
-  }
-}
-```
-
-### **3. create_page**
-สร้างหน้าใหม่
-
-```typescript
-{
-  taskType: 'create_page',
-  businessCategory: 'ecommerce',
-  keywords: ['product', 'catalog'],
-  customizations: {
-    features: ['gallery', 'pricing']
-  }
-}
-```
-
-## 🏢 Business Categories
-
-### **รองรับประเภทธุรกิจ:**
-- `restaurant` - ร้านอาหาร
-- `ecommerce` - ร้านค้าออนไลน์
-- `portfolio` - ผลงาน
-- `healthcare` - สุขภาพและการแพทย์
-- `education` - การศึกษา
-- `real_estate` - อสังหาริมทรัพย์
-
-### **ตัวอย่างการใช้งาน:**
-
-```typescript
-// ร้านอาหาร
-const restaurantTask = {
-  businessCategory: 'restaurant',
-  keywords: ['restaurant', 'food', 'thai', 'อร่อย']
-};
-
-// E-commerce
-const ecommerceTask = {
-  businessCategory: 'ecommerce',
-  keywords: ['shop', 'online', 'store', 'ขายของ']
-};
-
-// Portfolio
-const portfolioTask = {
-  businessCategory: 'portfolio',
-  keywords: ['portfolio', 'creative', 'design', 'ผลงาน']
-};
-```
-
-## 🎨 Customizations
-
-### **Colors**
-```typescript
-customizations: {
-  colors: ['orange', 'red']  // Primary, Secondary
-}
-```
-
-### **Theme**
-```typescript
-customizations: {
-  theme: 'modern'  // modern, classic, minimal, creative, professional
-}
-```
-
-### **Layout**
-```typescript
-customizations: {
-  layout: 'single-page'  // single-page, multi-page, landing, dashboard
-}
-```
-
-### **Features**
-```typescript
-customizations: {
-  features: [
-    'hero_section',
-    'about_section',
-    'contact_form',
-    'gallery',
-    'testimonials',
-    'pricing',
-    'blog',
-    'ecommerce'
-  ]
-}
-```
-
-## 🤖 AI Settings
-
-### **Model Selection**
-```typescript
-aiSettings: {
-  model: 'gpt-5-nano'  // gpt-5-nano, gpt-4o-mini, gpt-4o
-}
-```
-
-### **Temperature**
-```typescript
-aiSettings: {
-  temperature: 1  // 0-2, higher = more creative
-}
-```
-
-### **Language**
-```typescript
-aiSettings: {
-  language: 'th'  // th, en, auto
-}
-```
-
-## 📊 Results
-
-### **Success Result**
-```typescript
-{
-  success: true,
-  result: {
+const tasks: FrontendTaskV2[] = [
+  {
+    taskId: 'restaurant-001',
+    taskType: 'generate_website',
     businessCategory: 'restaurant',
-    templateUsed: 'template-system-v2',
-    blocksGenerated: ['hero-basic', 'navbar-basic', 'footer-basic'],
-    aiContentGenerated: true,
-    customizationsApplied: ['color_override', 'theme_override'],
-    overridesApplied: ['hero-stats', 'restaurant-menu']
+    keywords: ['restaurant', 'food']
   },
-  files: [
-    {
-      path: 'src/components/Hero.tsx',
-      content: 'export default function Hero() { ... }',
-      type: 'component',
-      size: 1234,
-      blockId: 'hero-basic',
-      customized: false
-    }
-  ],
-  performance: {
-    generationTime: 2500,
-    templateRenderingTime: 800,
-    aiGenerationTime: 1200,
-    totalFiles: 5,
-    totalSize: '15.2KB'
-  },
-  validation: {
-    isValid: true,
-    errors: [],
-    warnings: [],
-    accessibilityScore: 95,
-    typescriptErrors: 0
-  },
-  preview: {
-    url: 'https://preview.example.com/sandbox/123',
-    sandboxId: 'sandbox-123',
-    status: 'ready',
-    createdAt: '2024-01-01T00:00:00Z'
+  {
+    taskId: 'ecommerce-001',
+    taskType: 'generate_website',
+    businessCategory: 'ecommerce',
+    keywords: ['shop', 'online']
   }
+];
+
+const results = await runBatchFrontendAgentV2(tasks);
+```
+
+### Health Check
+
+```typescript
+import { healthCheck } from './runners/run';
+
+const health = await healthCheck();
+console.log('System status:', health.status);
+```
+
+## 📋 Schema Reference
+
+### FrontendTaskV2
+
+```typescript
+interface FrontendTaskV2 {
+  taskId: string;                    // รหัสงาน
+  taskType: 'generate_website' | 'customize_component' | 'create_page' | 'update_styling' | 'regenerate_content' | 'create_preview';
+  businessCategory: 'restaurant' | 'ecommerce' | 'portfolio' | 'healthcare' | 'education' | 'real_estate';
+  keywords: string[];                // คำสำคัญสำหรับ AI
+  customizations?: {
+    colors?: string[];               // สีที่ต้องการ
+    theme?: 'modern' | 'classic' | 'minimal' | 'creative' | 'professional';
+    layout?: 'single-page' | 'multi-page' | 'landing' | 'dashboard';
+    features?: string[];             // ฟีเจอร์ที่ต้องการ
+  };
+  target?: string;                   // เป้าหมายการสร้างไฟล์
+  includePreview?: boolean;          // สร้าง preview หรือไม่
+  validation?: {
+    enabled?: boolean;
+    strictMode?: boolean;
+    accessibilityLevel?: 'A' | 'AA' | 'AAA';
+  };
+  aiSettings?: {
+    model?: 'gpt-5-nano' | 'gpt-4o-mini' | 'gpt-4o';
+    temperature?: number;
+    language?: 'th' | 'en' | 'auto';
+  };
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  metadata?: {
+    userId?: string;
+    projectId?: string;
+    timestamp?: string;
+    dependencies?: string[];
+    tags?: string[];
+  };
 }
 ```
 
-### **Error Result**
+### ComponentResultV2
+
 ```typescript
-{
-  success: false,
-  error: {
-    message: 'Invalid business category',
-    code: 'TASK_VALIDATION_ERROR',
-    details: 'Business category must be one of: restaurant, ecommerce, portfolio, healthcare, education, real_estate',
-    recoveryAttempted: false
-  }
+interface ComponentResultV2 {
+  success: boolean;
+  result: {
+    businessCategory: string;
+    projectType: string;
+    templateUsed: string;
+    blocksGenerated: string[];
+    aiContentGenerated: boolean;
+    customizationsApplied: string[];
+    overridesApplied: string[];
+  };
+  files: Array<{
+    path: string;
+    content: string;
+    type: 'component' | 'style' | 'config' | 'test' | 'documentation';
+    size: number;
+    blockId?: string;
+    customized?: boolean;
+  }>;
+  preview?: {
+    url: string;
+    sandboxId: string;
+    status: 'pending' | 'ready' | 'error';
+    error?: string;
+    createdAt: string;
+  };
+  performance: {
+    generationTime: number;
+    templateRenderingTime: number;
+    aiGenerationTime: number;
+    totalFiles: number;
+    totalSize: string;
+  };
+  validation: {
+    isValid: boolean;
+    errors: Array<{
+      type: string;
+      message: string;
+      file: string;
+      line: number;
+    }>;
+    warnings: Array<{
+      type: string;
+      message: string;
+      file: string;
+    }>;
+    accessibilityScore: number;
+    typescriptErrors: number;
+  };
+  metadata: {
+    executionTime: number;
+    timestamp: string;
+    agent: string;
+    version: string;
+    templateSystemVersion?: string;
+    aiModelUsed?: string;
+  };
+  error?: {
+    message: string;
+    code: string;
+    details: string;
+    recoveryAttempted: boolean;
+  };
 }
+```
+
+## 🎨 Template System
+
+### Business Categories
+
+ระบบรองรับ business categories ต่อไปนี้:
+
+- **restaurant** - ร้านอาหาร
+- **ecommerce** - ร้านค้าออนไลน์
+- **portfolio** - แฟ้มผลงาน
+- **healthcare** - สุขภาพ
+- **education** - การศึกษา
+- **real_estate** - อสังหาริมทรัพย์
+
+### Shared Blocks
+
+ระบบมี shared blocks หลัก:
+
+- **hero-basic** - ส่วน Hero
+- **navbar-basic** - Navigation Bar
+- **about-basic** - เกี่ยวกับเรา
+- **contact-basic** - ติดต่อ
+- **menu-basic** - เมนู/สินค้า
+- **footer-basic** - Footer
+- **theme-basic** - ธีมสี
+
+### Customization Options
+
+#### Colors
+รองรับสี: `blue`, `green`, `purple`, `pink`, `orange`, `red`, `yellow`, `indigo`
+
+#### Themes
+- **modern** - สไตล์ทันสมัย
+- **classic** - สไตล์คลาสสิก
+- **minimal** - สไตล์มินิมอล
+- **creative** - สไตล์สร้างสรรค์
+- **professional** - สไตล์มืออาชีพ
+
+#### Layouts
+- **single-page** - หน้าเดียว
+- **multi-page** - หลายหน้า
+- **landing** - Landing page
+- **dashboard** - Dashboard
+
+## 🤖 AI Integration
+
+### Supported Models
+
+- **gpt-5-nano** (Default) - รวดเร็ว, ประหยัด
+- **gpt-4o-mini** - Fallback model
+- **gpt-4o** - คุณภาพสูง
+
+### AI Features
+
+- **Content Generation** - สร้างเนื้อหาตาม keywords
+- **Image Generation** - สร้างรูปภาพจาก Unsplash
+- **Language Detection** - ตรวจจับภาษาไทย/อังกฤษ
+- **Business Category Detection** - ระบุประเภทธุรกิจ
+- **Color Preference Extraction** - ดึงความต้องการสี
+
+### Image Integration
+
+ระบบใช้ Unsplash API สำหรับรูปภาพ:
+
+- **Hero Images** - รูปพื้นหลังหลัก
+- **Menu Item Images** - รูปเมนูอาหาร/สินค้า
+- **Category-based Search** - ค้นหาตามหมวดหมู่
+- **Automatic Translation** - แปลคำค้นหาเป็นอังกฤษ
+
+## ⚙️ Configuration
+
+### Agent Configuration (agent.yaml)
+
+```yaml
+name: frontend-v2
+version: "2.0.0"
+role: "Template-based Frontend Generator with AI Integration"
+
+# Model Configuration
+model:
+  provider: openai
+  name: gpt-5-nano
+  temperature: 1
+  max_completion_tokens: 8000
+  timeout: 120
+  fallback:
+    name: gpt-4o-mini
+    temperature: 0.3
+    max_tokens: 4000
+    timeout: 60
+
+# Performance Targets
+performance:
+  lighthouse_score_min: 90
+  first_contentful_paint: "< 1.5s"
+  largest_contentful_paint: "< 2.5s"
+  cumulative_layout_shift: "< 0.1"
+  template_rendering_time: "< 2s"
+  ai_generation_time: "< 10s"
+```
+
+### Quality Configuration
+
+```yaml
+quality:
+  smoke_checks: true
+  contract_validation: true
+  accessibility_compliance: true
+  performance_audit: true
+  typescript_strict: true
+  template_validation: true
 ```
 
 ## 🧪 Testing
 
-### **Run Tests**
+### Run Tests
+
 ```bash
-npm test frontend-v2
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run in watch mode
+npm run test:watch
 ```
 
-### **Integration Tests**
+### Test Categories
+
+- **Unit Tests** - ทดสอบแต่ละ component
+- **Integration Tests** - ทดสอบการทำงานร่วมกัน
+- **Independence Tests** - ทดสอบความอิสระของระบบ
+- **Project Structure Tests** - ทดสอบโครงสร้างโปรเจค
+
+### Example Test
+
 ```typescript
-import { runFrontendAgentV2 } from './runners/run';
+import { runFrontendAgentV2 } from '../runners/run';
 
 describe('Frontend-V2 Agent', () => {
-  it('should generate website successfully', async () => {
+  it('should generate restaurant website', async () => {
     const task = {
       taskId: 'test-001',
       taskType: 'generate_website',
@@ -333,133 +394,213 @@ describe('Frontend-V2 Agent', () => {
     };
 
     const result = await runFrontendAgentV2(task);
+    
     expect(result.success).toBe(true);
+    expect(result.files.length).toBeGreaterThan(0);
+    expect(result.result.businessCategory).toBe('restaurant');
   });
 });
 ```
 
-## 🔧 Health Check
+## 📊 Performance
 
-### **Check System Status**
-```typescript
-import { healthCheck } from './runners/run';
+### Benchmarks
 
-const health = await healthCheck();
-console.log(health);
-// {
-//   status: 'healthy',
-//   templateSystem: {
-//     available: true,
-//     sharedBlocksCount: 15,
-//     businessCategoriesCount: 6
-//   },
-//   agent: {
-//     version: '2.0.0',
-//     status: 'running'
-//   }
-// }
+- **Generation Time**: < 10 วินาที
+- **Template Rendering**: < 2 วินาที
+- **AI Generation**: < 8 วินาที
+- **File Generation**: 10-20 ไฟล์
+- **Total Size**: 50-200KB
+
+### Optimization Features
+
+- **Template Caching** - เก็บ template ใน cache
+- **AI Response Caching** - เก็บ AI response
+- **Image Optimization** - ปรับขนาดรูปภาพ
+- **Code Minification** - บีบอัดโค้ด
+- **Lazy Loading** - โหลดเมื่อจำเป็น
+
+## 🔧 Development
+
+### Project Structure
+
+```
+src/midori/agents/frontend-v2/
+├── adapters/           # Template Adapter
+├── runners/            # Main Runner
+├── services/           # AI, Category, Persistence Services
+├── schemas/            # TypeScript Schemas
+├── template-system/    # Template System
+│   ├── override-system/
+│   ├── shared-blocks/
+│   ├── business-categories/
+│   ├── project-templates/
+│   └── project-structure-generator/
+├── tests/              # Test Files
+├── agent.yaml          # Agent Configuration
+├── package.json        # Dependencies
+└── tsconfig.json       # TypeScript Config
 ```
 
-### **Get Available Templates**
-```typescript
-import { getAvailableTemplates } from './runners/run';
+### Adding New Features
 
-const templates = getAvailableTemplates();
-console.log(templates);
-// {
-//   sharedBlocks: [
-//     { id: 'hero-basic', name: 'Hero Basic', category: 'component' },
-//     { id: 'navbar-basic', name: 'Navbar Basic', category: 'component' }
-//   ],
-//   businessCategories: [
-//     { id: 'restaurant', name: 'Restaurant', description: 'Template for restaurant business category' },
-//     { id: 'ecommerce', name: 'Ecommerce', description: 'Template for ecommerce business category' }
-//   ]
-// }
-```
+1. **New Business Category**:
+   - เพิ่มใน `business-categories/index.ts`
+   - อัปเดต schema validation
+   - เพิ่ม test cases
 
-## 🚀 Migration จาก Frontend Agent เก่า
+2. **New Shared Block**:
+   - เพิ่มใน `shared-blocks/index.ts`
+   - สร้าง template files
+   - อัปเดต AI prompts
 
-### **ข้อดีของการอัพเกรด:**
-1. **Performance ดีขึ้น** - ใช้ Template System ที่มีประสิทธิภาพ
-2. **AI Integration** - ใช้ AI ในการสร้างเนื้อหา
-3. **Error Handling ดีขึ้น** - จัดการ error ได้ดีกว่า
-4. **Maintainability** - โค้ดสะอาดและง่ายต่อการบำรุงรักษา
-5. **Flexibility** - ปรับแต่งได้ตามความต้องการ
+3. **New AI Feature**:
+   - เพิ่มใน `services/ai-service.ts`
+   - อัปเดต prompt templates
+   - เพิ่ม fallback logic
 
-### **การ Migration:**
-```typescript
-// เก่า
-import { runFrontendAgent } from '../frontend/runners/run';
+### Code Style
 
-// ใหม่
-import { runFrontendAgentV2 } from '../frontend-v2/runners/run';
-```
-
-## 📈 Performance
-
-### **Benchmarks:**
-- **Generation Time**: < 3 seconds
-- **Template Rendering**: < 1 second
-- **AI Generation**: < 2 seconds
-- **File Size**: < 50KB per website
-- **Accessibility Score**: > 90%
-
-### **Optimization Tips:**
-1. ใช้ `includePreview: false` ถ้าไม่ต้องการ preview
-2. ใช้ `validation.strictMode: false` สำหรับการทดสอบ
-3. ใช้ `aiSettings.temperature: 0.7` สำหรับเนื้อหาที่สม่ำเสมอ
-4. ใช้ batch processing สำหรับหลายเว็บไซต์
+- ใช้ TypeScript strict mode
+- ใช้ ESLint configuration
+- เขียน tests สำหรับทุก feature
+- ใช้ meaningful variable names
+- เขียน comments เป็นภาษาไทย
 
 ## 🐛 Troubleshooting
 
-### **Common Issues:**
+### Common Issues
 
-#### **1. Template System Not Available**
+1. **AI Service Not Available**
+   ```
+   Error: AI Service not available, using mock data
+   ```
+   - ตรวจสอบ OPENAI_API_KEY
+   - ตรวจสอบ network connection
+
+2. **Template Resolution Failed**
+   ```
+   Error: Template resolution failed
+   ```
+   - ตรวจสอบ business category
+   - ตรวจสอบ shared blocks
+
+3. **Validation Errors**
+   ```
+   Error: Schema validation failed
+   ```
+   - ตรวจสอบ input data
+   - ตรวจสอบ required fields
+
+### Debug Mode
+
 ```typescript
-// Check health
+// Enable debug logging
+process.env.DEBUG = 'frontend-v2:*';
+
+// Check system health
 const health = await healthCheck();
-if (!health.templateSystem.available) {
-  console.error('Template System not available');
-}
+console.log('Health status:', health);
 ```
 
-#### **2. AI Generation Failed**
+## 📚 API Reference
+
+### Main Functions
+
+#### `runFrontendAgentV2(task: FrontendTaskV2): Promise<ComponentResultV2>`
+
+สร้างเว็บไซต์ตาม task ที่กำหนด
+
+**Parameters:**
+- `task` - FrontendTaskV2 object
+
+**Returns:**
+- `ComponentResultV2` - ผลลัพธ์การสร้างเว็บไซต์
+
+#### `runBatchFrontendAgentV2(tasks: FrontendTaskV2[]): Promise<ComponentResultV2[]>`
+
+สร้างเว็บไซต์หลายเว็บพร้อมกัน
+
+**Parameters:**
+- `tasks` - Array of FrontendTaskV2 objects
+
+**Returns:**
+- `ComponentResultV2[]` - Array of results
+
+#### `healthCheck(): Promise<HealthStatus>`
+
+ตรวจสอบสถานะระบบ
+
+**Returns:**
+- `HealthStatus` - สถานะระบบ
+
+#### `getAvailableTemplates(): TemplateInfo`
+
+ดู templates ที่มีอยู่
+
+**Returns:**
+- `TemplateInfo` - ข้อมูล templates
+
+### Services
+
+#### `AIService`
+
+จัดการการเรียกใช้ OpenAI API
+
 ```typescript
-// Check AI settings
-const task = {
-  // ... other settings
-  aiSettings: {
-    model: 'gpt-4o-mini',  // Try fallback model
-    temperature: 0.7       // Lower temperature
-  }
-};
+const aiService = new AIService();
+const content = await aiService.generateContent(request);
 ```
 
-#### **3. Validation Errors**
+#### `CategoryService`
+
+จัดการ business category detection
+
 ```typescript
-// Check validation settings
-const task = {
-  // ... other settings
-  validation: {
-    enabled: true,
-    strictMode: false,  // Try non-strict mode
-    accessibilityLevel: 'A'  // Try lower level
-  }
-};
+const category = await categoryService.detectCategory({
+  keywords: ['restaurant', 'food'],
+  userInput: 'ร้านอาหารไทย',
+  useLLM: true
+});
 ```
 
-## 📚 Examples
+#### `UnsplashService`
 
-ดูตัวอย่างการใช้งานเพิ่มเติมใน `tests/example-usage.ts`
+จัดการรูปภาพจาก Unsplash
+
+```typescript
+const image = await unsplashService.getImageForMenuItem(
+  'ข้าวผัดกุ้ง',
+  'food',
+  'restaurant'
+);
+```
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create feature branch
-3. Add tests
+1. Fork repository
+2. สร้าง feature branch
+3. เขียน tests
 4. Submit pull request
+
+### Development Guidelines
+
+- ใช้ TypeScript
+- เขียน tests ครอบคลุม
+- ใช้ meaningful commit messages
+- ตรวจสอบ code quality
+- อัปเดต documentation
 
 ## 📄 License
 
-MIT License
+MIT License - ดู [LICENSE](LICENSE) สำหรับรายละเอียด
+
+## 🆘 Support
+
+- **Issues**: [GitHub Issues](https://github.com/midori/frontend-v2-agent/issues)
+- **Documentation**: [Wiki](https://github.com/midori/frontend-v2-agent/wiki)
+- **Discussions**: [GitHub Discussions](https://github.com/midori/frontend-v2-agent/discussions)
+
+---
+
+**Frontend-V2 Agent** - สร้างเว็บไซต์ด้วย AI และ Template System 🚀
