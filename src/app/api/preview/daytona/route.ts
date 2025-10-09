@@ -128,6 +128,11 @@ class DaytonaCleanupService {
     console.log(`✅ [EXPIRED CLEANUP] Completed: cleaned ${cleanedCount}/${totalStates} expired sandbox states in ${duration}ms`)
   }
 
+  /**
+   * ทำความสะอาด idle sandboxes
+   * - ถ้าหน้าเว็บยังเปิดอยู่ (มี heartbeat ทุก 2 นาที) → ไม่ลบ
+   * - ถ้าหน้าเว็บปิดแล้ว (ไม่มี heartbeat มากกว่า 5 นาที) → ลบ
+   */
   static async cleanupIdleSandboxes(): Promise<void> {
     const startTime = Date.now()
     
@@ -171,6 +176,9 @@ class DaytonaCleanupService {
     // ✅ อัปเดตเวลาล่าสุด
     this.lastIdleCleanupTime = startTime
     const now = Date.now()
+    // ⏱️ Idle timeout: 5 นาที (frontend ส่ง heartbeat ทุก 2 นาที)
+    // ดังนั้น ถ้าหน้าเว็บยังเปิดอยู่ จะมี heartbeat มาเรื่อยๆ และไม่ถูกลบ
+    // แต่ถ้าปิดหน้าเว็บไปแล้ว จะไม่มี heartbeat และหลัง 5 นาที sandbox จะถูกลบ
     const idleTimeout = 5 * 60 * 1000 // 5 นาที
     let cleanedCount = 0
     let errorCount = 0

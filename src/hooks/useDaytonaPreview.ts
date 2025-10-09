@@ -231,10 +231,10 @@ export function useDaytonaPreview({ projectId, files }: UseDaytonaPreviewProps =
       // Send initial heartbeat
       sendHeartbeat()
       
-      // Set up interval (every 5 minutes)
+      // Set up interval (every 2 minutes) - ส่ง heartbeat บ่อยกว่า idle timeout (5 นาที) เพื่อให้แน่ใจว่าไม่ถูกลบ
       heartbeatIntervalRef.current = setInterval(() => {
         sendHeartbeat()
-      }, 5 * 60 * 1000)
+      }, 2 * 60 * 1000)
     } else {
       // Clear heartbeat when not running
       if (heartbeatIntervalRef.current) {
