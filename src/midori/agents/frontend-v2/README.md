@@ -7,10 +7,11 @@ Frontend-V2 Agent เป็นระบบสร้างเว็บไซต�
 ### ✨ คุณสมบัติหลัก
 
 - 🎨 **Template-based Generation** - สร้างเว็บไซต์จากระบบ Template ที่มีโครงสร้างชัดเจน
+- 🧩 **14 Block Variants** - Hero (6), Menu (4), Footer (4) สำหรับ layout หลากหลาย
 - 🤖 **AI Content Generation** - สร้างเนื้อหาด้วย AI ตาม keywords และ business category
 - 🏢 **Business Category Detection** - ระบุประเภทธุรกิจอัตโนมัติ
 - 📱 **Responsive Design** - ออกแบบที่รองรับทุกอุปกรณ์
-- 👀 **Real-time Preview** - ดูผลลัพธ์แบบ real-time
+- 👀 **Real-time Preview** - ดูผลลัพธ์แบบ real-time ผ่าน Daytona
 - ⚙️ **Customization Override** - ปรับแต่งตามความต้องการ
 - 🚀 **Performance Optimization** - ปรับปรุงประสิทธิภาพ
 - ♿ **Accessibility Compliance** - รองรับมาตรฐาน accessibility
@@ -390,7 +391,11 @@ interface ComponentResultV2 {
 - **footer-basic** - Footer
 - **theme-basic** - ธีมสี
 
-#### Hero Block Variants
+#### Block Variants
+
+ระบบรองรับ variants สำหรับหลาย blocks เพื่อความหลากหลายของ layout:
+
+### Hero Block Variants
 
 Block `hero-basic` มี **5 variants** ให้เลือกใช้:
 
@@ -440,6 +445,54 @@ Block `hero-basic` มี **5 variants** ให้เลือกใช้:
 }
 ```
 
+### Menu Block Variants
+
+Block `menu-basic` มี **3 variants** ให้เลือกใช้:
+
+##### 1. **menu-basic** (Default - Grid)
+- Grid layout 4 คอลัมน์
+- รองรับรูปภาพขนาดใหญ่
+- เหมาะสำหรับ showcase สินค้า/เมนู
+
+##### 2. **menu-list**
+- List layout แนวตั้ง
+- เรียบง่าย สะอาดตา
+- เหมาะสำหรับเมนูอาหาร, price list
+
+##### 3. **menu-masonry**
+- Masonry grid (Pinterest-style)
+- Dynamic และทันสมัย
+- เหมาะสำหรับ portfolio, gallery
+
+##### 4. **menu-carousel**
+- Horizontal scrolling carousel
+- Interactive และน่าสนใจ
+- เหมาะสำหรับ featured items
+
+### Footer Block Variants
+
+Block `footer-basic` มี **3 variants** ให้เลือกใช้:
+
+##### 1. **footer-basic** (Default)
+- 4 คอลัมน์พร้อม newsletter
+- ครบครันทุกข้อมูล
+- เหมาะสำหรับ website ทั่วไป
+
+##### 2. **footer-minimal**
+- Minimal one-line footer
+- สะอาดตา เรียบง่าย
+- เหมาะสำหรับ minimal design
+
+##### 3. **footer-centered**
+- Centered layout
+- สง่างาม เน้นความสมดุล
+- เหมาะสำหรับ luxury brands
+
+##### 4. **footer-mega**
+- 5 คอลัมน์พร้อมข้อมูลเพิ่มเติม
+- ครอบคลุมทุกรายละเอียด
+- เหมาะสำหรับ large websites
+
 ### Customization Options
 
 #### Colors
@@ -469,6 +522,23 @@ Block `hero-basic` มี **5 variants** ให้เลือกใช้:
 | **restaurant-luxury** | hero-fullscreen | Gray/Amber | หรูหรา | Fine Dining | Fullscreen Overlay |
 | **restaurant-minimal** | hero-minimal | Gray/Stone | เรียบง่าย | Japanese, Simple | Clean & Minimal |
 | **restaurant-casual** | hero-cards | Orange/Yellow | อบอุ่น | Family, Street Food | Hero + 3 Cards |
+
+---
+
+### 📦 Available Block Variants Summary
+
+| Block | Variants | Use Cases |
+|-------|----------|-----------|
+| **hero-basic** | 6 variants: `hero-basic`, `hero-stats`, `hero-split`, `hero-fullscreen`, `hero-minimal`, `hero-cards` | Landing pages, About pages |
+| **menu-basic** | 4 variants: `menu-basic` (grid), `menu-list`, `menu-masonry`, `menu-carousel` | Products, Menus, Portfolios |
+| **footer-basic** | 4 variants: `footer-basic`, `footer-minimal`, `footer-centered`, `footer-mega` | All page footers |
+| **navbar-basic** | 1 variant | Navigation |
+| **about-basic** | 1 variant | About sections |
+| **contact-basic** | 1 variant | Contact forms |
+
+**📌 สามารถผสม variants ต่างๆ ได้เพื่อสร้าง layout ที่หลากหลาย!**
+
+---
 
 ### 🎯 How AI Chooses Layout
 

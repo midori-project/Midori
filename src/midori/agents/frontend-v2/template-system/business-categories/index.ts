@@ -393,6 +393,7 @@ export const BUSINESS_CATEGORIES: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'menu-basic',
+        variantId: 'menu-carousel',
         required: true,
         customizations: {
           title: 'Signature Dishes',
@@ -418,6 +419,7 @@ export const BUSINESS_CATEGORIES: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'footer-basic',
+        variantId: 'footer-mega',
         required: true,
         customizations: {
           companyName: 'Luxury Restaurant',
