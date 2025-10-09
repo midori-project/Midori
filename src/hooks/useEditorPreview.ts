@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { editorPreviewService, EditorPreviewService } from '@/services/editorPreviewService'
+import { editorPreviewService, EditorPreviewService } from '@/libs/services/editorPreviewService'
 
 interface EditorPreviewData {
   sandboxId?: string
