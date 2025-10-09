@@ -74,7 +74,19 @@ function validateTask(task: FrontendTaskV2): void {
   }
 
   // Validate business category
-  const validCategories = ['restaurant', 'ecommerce', 'portfolio', 'healthcare', 'education', 'real_estate'];
+  const validCategories = [
+    'restaurant',
+    'restaurant-modern',
+    'restaurant-luxury',
+    'restaurant-minimal',
+    'restaurant-casual',
+    'ecommerce',
+    'portfolio',
+    'healthcare',
+    'education',
+    'real_estate',
+    'pharmacy'
+  ];
   if (task.businessCategory && !validCategories.includes(task.businessCategory)) {
     throw new Error(`Invalid business category: ${task.businessCategory}. Valid categories: ${validCategories.join(', ')}`);
   }

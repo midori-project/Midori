@@ -36,12 +36,24 @@ export class TemplateRenderer {
     this.processingStats.startTime = startTime;
 
     try {
+      // Step 0: Add fallback values for variant-specific placeholders
+      const enhancedUserData = this.addVariantFallbacks(config.concreteManifest, config.userData);
+      
       // Step 1: Validate User Data (ถ้าเปิดใช้งาน)
       let validationResults: ValidationResult | undefined;
       if (config.validationEnabled !== false) {
-        validationResults = this.validateUserData(config.concreteManifest, config.userData);
+        validationResults = this.validateUserData(config.concreteManifest, enhancedUserData);
         if (!validationResults.isValid) {
-          throw new Error(`Validation failed: ${validationResults.errors.map(e => e.message).join(', ')}`);
+          // แสดง warning แทน error สำหรับ variant-specific placeholders
+          const criticalErrors = validationResults.errors.filter(e => 
+            !this.isVariantSpecificPlaceholder(e.field)
+          );
+          
+          if (criticalErrors.length > 0) {
+            throw new Error(`Validation failed: ${criticalErrors.map(e => e.message).join(', ')}`);
+          } else {
+            console.warn('⚠️ Non-critical validation warnings:', validationResults.errors.map(e => e.message).join(', '));
+          }
         }
       }
 
@@ -51,7 +63,7 @@ export class TemplateRenderer {
 
       for (const block of config.concreteManifest.blocks) {
         try {
-          const renderedTemplate = this.renderBlock(block, config.userData);
+          const renderedTemplate = this.renderBlock(block, enhancedUserData);
           const fileName = this.getFileNameForBlock(block.id);
           files[fileName] = renderedTemplate;
           appliedOverrides.push(...block.appliedOverrides);
@@ -886,6 +898,193 @@ export class TemplateRenderer {
       duration: 0,
       steps: []
     };
+  }
+
+  /**
+   * แปลง Block ID เป็น Data Key
+   */
+  private getBlockDataKey(blockId: string): string {
+    const keyMap: Record<string, string> = {
+      "hero-basic": "Hero",
+      "navbar-basic": "Navbar",
+      "theme-basic": "Theme",
+      "footer-basic": "Footer",
+      "about-basic": "About-basic",
+      "contact-basic": "Contact-basic",
+      "menu-basic": "Menu-basic"
+    };
+
+    return keyMap[blockId] || blockId.charAt(0).toUpperCase() + blockId.slice(1);
+  }
+
+  /**
+   * ✨ AUTO-DETECT: เพิ่ม fallback values สำหรับ variant-specific required placeholders
+   * 
+   * กฏ: ถ้า variant มี required placeholders พิเศษที่ไม่มีใน userData
+   *      ระบบจะเพิ่ม fallback values อัตโนมัติ
+   */
+  private addVariantFallbacks(
+    concreteManifest: ConcreteManifest,
+    userData: Record<string, any>
+  ): Record<string, any> {
+    const enhanced = { ...userData };
+    
+    // วนลูปทุก block เพื่อเช็ค variant-specific placeholders
+    for (const block of concreteManifest.blocks) {
+      const variantId = block.metadata?.variantId;
+      if (!variantId) continue;
+      
+      const blockKey = this.getBlockDataKey(block.id);
+      const blockData = enhanced[blockKey] || {};
+      
+      // หา required placeholders ที่มาจาก variant
+      const variantRequiredPlaceholders = this.getVariantSpecificRequiredPlaceholders(block);
+      
+      if (variantRequiredPlaceholders.length === 0) continue;
+      
+      // เช็คว่ามีค่าครบหรือไม่
+      const missingPlaceholders = variantRequiredPlaceholders.filter(p => !(p in blockData));
+      
+      if (missingPlaceholders.length > 0) {
+        console.log(`🔄 Adding fallback values for variant '${variantId}' (${missingPlaceholders.join(', ')})`);
+        
+        // เพิ่ม fallback values
+        const fallbacks = this.generateFallbackValues(missingPlaceholders, block.id);
+        
+        enhanced[blockKey] = {
+          ...blockData,
+          ...fallbacks
+        };
+      }
+    }
+    
+    return enhanced;
+  }
+
+  /**
+   * หา variant-specific required placeholders
+   */
+  private getVariantSpecificRequiredPlaceholders(block: any): string[] {
+    const basePlaceholders = [
+      'badge', 'heading', 'subheading', 
+      'ctaLabel', 'secondaryCta',
+      'heroImage', 'heroImageAlt',
+      'brand', 'brandFirstChar', 'ctaButton', 'menuItems',
+      'title', 'description', 'features', 'stats',
+      'address', 'phone', 'email', 'businessHours',
+      'companyName', 'socialLinks', 'quickLinks',
+      'radius', 'spacing'
+    ];
+    
+    const variantSpecific: string[] = [];
+    
+    for (const [placeholder, config] of Object.entries(block.placeholders)) {
+      const configTyped = config as any;
+      
+      if (configTyped.required && !basePlaceholders.includes(placeholder)) {
+        variantSpecific.push(placeholder);
+      }
+    }
+    
+    return variantSpecific;
+  }
+
+  /**
+   * Generate fallback values สำหรับ placeholders ที่หายไป
+   */
+  private generateFallbackValues(placeholders: string[], blockId: string): Record<string, any> {
+    const fallbacks: Record<string, any> = {};
+    
+    // Fallback map สำหรับ placeholder patterns ต่างๆ
+    const fallbackMap: Record<string, any> = {
+      // Stats pattern
+      'stat1': '15+',
+      'stat1Label': 'ปีประสบการณ์',
+      'stat2': '1000+',
+      'stat2Label': 'ลูกค้าพึงพอใจ',
+      'stat3': '50+',
+      'stat3Label': 'เมนูหลากหลาย',
+      'stat4': '24/7',
+      'stat4Label': 'บริการ',
+      
+      // Testimonials
+      'testimonials': [
+        { name: 'สมชาย ใจดี', quote: 'อาหารอร่อยมาก', role: 'ลูกค้าประจำ' },
+        { name: 'สมหญิง สบายดี', quote: 'บริการดีเยี่ยม', role: 'ลูกค้า' }
+      ],
+      
+      // Video
+      'videoUrl': 'https://via.placeholder.com/1920x1080/000/fff?text=Video',
+      
+      // Gallery
+      'gallery': [
+        { image: 'https://via.placeholder.com/800x600', alt: 'Gallery 1' },
+        { image: 'https://via.placeholder.com/800x600', alt: 'Gallery 2' }
+      ],
+      
+      // Team members
+      'teamMembers': [
+        { name: 'John Doe', role: 'Chef', image: 'https://via.placeholder.com/400x400', bio: 'Expert chef' }
+      ]
+    };
+    
+    for (const placeholder of placeholders) {
+      if (placeholder in fallbackMap) {
+        fallbacks[placeholder] = fallbackMap[placeholder];
+      } else {
+        // Generic fallback
+        fallbacks[placeholder] = this.getGenericFallback(placeholder);
+      }
+    }
+    
+    return fallbacks;
+  }
+
+  /**
+   * Get generic fallback สำหรับ placeholder ที่ไม่มีใน map
+   */
+  private getGenericFallback(placeholder: string): any {
+    // ถ้าเป็น array (ลงท้ายด้วย s หรือมี Items/Links)
+    if (placeholder.endsWith('s') || placeholder.includes('Items') || placeholder.includes('Links')) {
+      return [];
+    }
+    
+    // ถ้าเป็น Label
+    if (placeholder.includes('Label')) {
+      return 'Label';
+    }
+    
+    // ถ้าเป็น URL
+    if (placeholder.includes('Url') || placeholder.includes('url')) {
+      return 'https://example.com';
+    }
+    
+    // Default
+    return 'Default Value';
+  }
+
+  /**
+   * ✨ AUTO-DETECT: เช็คว่า placeholder เป็น variant-specific หรือไม่
+   * 
+   * กฏ: placeholder ที่ไม่ใช่ base placeholders = variant-specific
+   */
+  private isVariantSpecificPlaceholder(field: string): boolean {
+    const basePlaceholders = [
+      'badge', 'heading', 'subheading', 
+      'ctaLabel', 'secondaryCta',
+      'heroImage', 'heroImageAlt',
+      'brand', 'brandFirstChar', 'ctaButton', 'menuItems',
+      'title', 'description', 'features', 'stats',
+      'address', 'phone', 'email', 'businessHours',
+      'companyName', 'socialLinks', 'quickLinks',
+      'radius', 'spacing'
+    ];
+    
+    // Extract placeholder name from field (field อาจมีรูปแบบ "Hero.stat1" หรือ "stat1")
+    const placeholderName = field.includes('.') ? field.split('.').pop() || '' : field;
+    
+    // ถ้าไม่ใช่ base placeholder → เป็น variant-specific
+    return !basePlaceholders.includes(placeholderName);
   }
 
 }

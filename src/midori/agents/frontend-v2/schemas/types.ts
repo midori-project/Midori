@@ -5,7 +5,7 @@
 export interface FrontendTaskV2 {
   taskId: string;
   taskType: 'generate_website' | 'customize_component' | 'create_page' | 'update_styling' | 'regenerate_content' | 'create_preview';
-  businessCategory: string;
+  businessCategory: 'restaurant' | 'restaurant-modern' | 'restaurant-luxury' | 'restaurant-minimal' | 'restaurant-casual' | 'ecommerce' | 'portfolio' | 'healthcare' | 'education' | 'real_estate' | 'pharmacy';
   keywords: string[];
   customizations?: {
     colors?: string[];

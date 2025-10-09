@@ -106,6 +106,57 @@ const result = await runFrontendAgentV2(task);
 
 ### Advanced Usage
 
+#### Using Layout Variants (Sub-Categories)
+
+```typescript
+// Modern Restaurant - Split Layout
+const modernTask: FrontendTaskV2 = {
+  taskId: 'restaurant-modern-001',
+  taskType: 'generate_website',
+  businessCategory: 'restaurant-modern',  // ใช้ modern layout
+  keywords: ['restaurant', 'modern', 'contemporary', 'fusion']
+};
+
+// Luxury Restaurant - Fullscreen Layout
+const luxuryTask: FrontendTaskV2 = {
+  taskId: 'restaurant-luxury-001',
+  taskType: 'generate_website',
+  businessCategory: 'restaurant-luxury',  // ใช้ luxury layout
+  keywords: ['fine dining', 'premium', 'elegant']
+};
+
+// Minimal Restaurant - Clean Layout
+const minimalTask: FrontendTaskV2 = {
+  taskId: 'restaurant-minimal-001',
+  taskType: 'generate_website',
+  businessCategory: 'restaurant-minimal',  // ใช้ minimal layout
+  keywords: ['restaurant', 'simple', 'clean']
+};
+
+// Casual Restaurant - Cards Layout
+const casualTask: FrontendTaskV2 = {
+  taskId: 'restaurant-casual-001',
+  taskType: 'generate_website',
+  businessCategory: 'restaurant-casual',  // ใช้ casual layout
+  keywords: ['restaurant', 'family', 'friendly']
+};
+```
+
+#### Auto-Detection with Keywords
+
+```typescript
+// AI จะเลือก layout อัตโนมัติจาก keywords
+const autoTask: FrontendTaskV2 = {
+  taskId: 'restaurant-auto-001',
+  taskType: 'generate_website',
+  // ไม่ระบุ businessCategory - ให้ AI เลือก
+  keywords: ['restaurant', 'luxury', 'fine dining', 'elegant']
+  // AI จะเลือก 'restaurant-luxury' จาก keywords
+};
+```
+
+#### Batch Processing with Multiple Layouts
+
 ```typescript
 // Batch processing
 import { runBatchFrontendAgentV2 } from './runners/run';
@@ -114,8 +165,14 @@ const tasks: FrontendTaskV2[] = [
   {
     taskId: 'restaurant-001',
     taskType: 'generate_website',
-    businessCategory: 'restaurant',
-    keywords: ['restaurant', 'food']
+    businessCategory: 'restaurant-modern',
+    keywords: ['restaurant', 'modern']
+  },
+  {
+    taskId: 'restaurant-002',
+    taskType: 'generate_website',
+    businessCategory: 'restaurant-luxury',
+    keywords: ['fine dining', 'premium']
   },
   {
     taskId: 'ecommerce-001',
@@ -251,24 +308,137 @@ interface ComponentResultV2 {
 
 ระบบรองรับ business categories ต่อไปนี้:
 
-- **restaurant** - ร้านอาหาร
+#### Main Categories
+
+- **restaurant** - ร้านอาหาร (แบบพื้นฐาน)
 - **ecommerce** - ร้านค้าออนไลน์
 - **portfolio** - แฟ้มผลงาน
 - **healthcare** - สุขภาพ
 - **education** - การศึกษา
 - **real_estate** - อสังหาริมทรัพย์
+- **pharmacy** - ร้านขายยา
+
+#### Restaurant Sub-Categories (Layout Variants)
+
+ระบบมี 4 แบบ layout สำหรับร้านอาหาร เพื่อความหลากหลายและเหมาะกับสไตล์ต่างๆ:
+
+##### 1. **restaurant-modern** - ร้านอาหารโมเดิร์น
+- **Layout**: Split Layout (hero-split) - แบ่งครึ่งจอ
+- **สี**: Blue & Indigo (สีน้ำเงินสดใส)
+- **บรรยากาศ**: ทันสมัย สะอาดตา เป็นระเบียบ
+- **เหมาะกับ**: ร้านอาหารสไตล์โมเดิร์น, Cafe ร่วมสมัย, Fusion Restaurant
+- **Keywords**: `modern`, `contemporary`, `trendy`, `ร้านอาหารโมเดิร์น`, `ทันสมัย`
+
+```typescript
+{
+  businessCategory: 'restaurant-modern',
+  keywords: ['restaurant', 'modern', 'contemporary']
+}
+```
+
+##### 2. **restaurant-luxury** - ร้านอาหารหรูหรา
+- **Layout**: Fullscreen Layout (hero-fullscreen) - เต็มจอพร้อม overlay
+- **สี**: Gray & Amber (สีเทาเข้มกับทอง)
+- **บรรยากาศ**: หรูหรา พรีเมียม สง่างาม
+- **เหมาะกับ**: Fine Dining, ร้านอาหารระดับไมเชลิน, Premium Restaurant
+- **Keywords**: `luxury`, `fine dining`, `premium`, `elegant`, `ร้านอาหารหรูหรา`
+
+```typescript
+{
+  businessCategory: 'restaurant-luxury',
+  keywords: ['restaurant', 'luxury', 'fine dining']
+}
+```
+
+##### 3. **restaurant-minimal** - ร้านอาหารมินิมอล
+- **Layout**: Minimal Layout (hero-minimal) - เรียบง่าย สะอาดตา
+- **สี**: Gray & Stone (สีเทาอ่อน นู้ด)
+- **บรรยากาศ**: เรียบง่าย สะอาด มุ่งเน้นเนื้อหา
+- **เหมาะกับ**: ร้านอาหารมินิมอล, Japanese Restaurant, Simple Cafe
+- **Keywords**: `minimal`, `simple`, `clean`, `ร้านอาหารมินิมอล`, `เรียบง่าย`
+
+```typescript
+{
+  businessCategory: 'restaurant-minimal',
+  keywords: ['restaurant', 'minimal', 'clean']
+}
+```
+
+##### 4. **restaurant-casual** - ร้านอาหารสบายๆ
+- **Layout**: Cards Layout (hero-cards) - มี feature cards เด่น
+- **สี**: Orange & Yellow (สีส้มอบอุ่น)
+- **บรรยากาศ**: อบอุ่น เป็นกันเอง เหมาะกับครอบครัว
+- **เหมาะกับ**: ร้านอาหารสบายๆ, ร้านอาหารครอบครัว, Street Food
+- **Keywords**: `casual`, `friendly`, `family`, `cozy`, `ร้านอาหารสบายๆ`
+
+```typescript
+{
+  businessCategory: 'restaurant-casual',
+  keywords: ['restaurant', 'casual', 'family']
+}
+```
 
 ### Shared Blocks
 
 ระบบมี shared blocks หลัก:
 
-- **hero-basic** - ส่วน Hero
+- **hero-basic** - ส่วน Hero (มี 5 variants)
 - **navbar-basic** - Navigation Bar
 - **about-basic** - เกี่ยวกับเรา
 - **contact-basic** - ติดต่อ
 - **menu-basic** - เมนู/สินค้า
 - **footer-basic** - Footer
 - **theme-basic** - ธีมสี
+
+#### Hero Block Variants
+
+Block `hero-basic` มี **5 variants** ให้เลือกใช้:
+
+##### 1. **hero-basic** (Default)
+- Standard hero พร้อม gradient background
+- รองรับ badge, heading, subheading, 2 CTA buttons
+- มีรูปภาพพื้นหลัง
+
+##### 2. **hero-stats**
+- Hero พร้อมส่วนแสดงสถิติ (Statistics)
+- เหมาะสำหรับแสดงความน่าเชื่อถือ
+- ต้องการ: `stat1`, `stat1Label`, `stat2`, `stat2Label`, `stat3`, `stat3Label`
+
+##### 3. **hero-split** (Modern)
+- Layout แบบแบ่งครึ่งจอ (เนื้อหา 50% + รูป 50%)
+- ดูทันสมัย สะอาดตา
+- มี decorative elements (gradient blobs)
+
+##### 4. **hero-fullscreen** (Luxury)
+- เต็มจอพร้อม overlay สีเข้ม
+- Dramatic และสง่างาม
+- มี scroll indicator
+- เหมาะสำหรับ luxury brands
+
+##### 5. **hero-minimal** (Clean)
+- เรียบง่าย สะอาดตา
+- รูปอยู่ด้านล่าง
+- เน้นเนื้อหาและ typography
+
+##### 6. **hero-cards** (Engaging)
+- Hero พร้อม 3 feature cards ด้านล่าง
+- เหมาะสำหรับแสดงจุดเด่นหลักๆ
+- ต้องการ: `stat1-3` + labels
+
+**ตัวอย่างการระบุ Variant:**
+```typescript
+{
+  blockId: 'hero-basic',
+  variantId: 'hero-split',  // ระบุ variant ที่ต้องการ
+  customizations: {
+    badge: 'Modern Restaurant',
+    heading: 'Contemporary Dining',
+    subheading: 'Experience modern cuisine',
+    ctaLabel: 'View Menu',
+    secondaryCta: 'Book Table'
+  }
+}
+```
 
 ### Customization Options
 
@@ -287,6 +457,44 @@ interface ComponentResultV2 {
 - **multi-page** - หลายหน้า
 - **landing** - Landing page
 - **dashboard** - Dashboard
+
+### 📊 Layout Comparison Table
+
+เปรียบเทียบ Restaurant Sub-Categories แต่ละแบบ:
+
+| Category | Variant | สี | บรรยากาศ | เหมาะกับ | Layout Style |
+|----------|---------|-----|----------|---------|-------------|
+| **restaurant** | hero-stats | Orange/Red | ทั่วไป | ร้านอาหารทั่วไป | Standard + Stats |
+| **restaurant-modern** | hero-split | Blue/Indigo | ทันสมัย | Cafe, Fusion | Split 50/50 |
+| **restaurant-luxury** | hero-fullscreen | Gray/Amber | หรูหรา | Fine Dining | Fullscreen Overlay |
+| **restaurant-minimal** | hero-minimal | Gray/Stone | เรียบง่าย | Japanese, Simple | Clean & Minimal |
+| **restaurant-casual** | hero-cards | Orange/Yellow | อบอุ่น | Family, Street Food | Hero + 3 Cards |
+
+### 🎯 How AI Chooses Layout
+
+การเลือก layout ทำงาน **2 แบบ**:
+
+#### 1. **Manual Selection** (แนะนำ)
+```typescript
+{
+  businessCategory: 'restaurant-modern',  // เลือกเอง
+  keywords: ['restaurant', 'food']
+}
+```
+
+#### 2. **Auto-Detection** (ใช้ AI)
+```typescript
+{
+  // ไม่ระบุ businessCategory
+  keywords: ['restaurant', 'luxury', 'fine dining']
+  // AI จะวิเคราะห์ keywords และเลือก 'restaurant-luxury'
+}
+```
+
+**AI Detection Logic:**
+- **Keyword Matching** - เปรียบเทียบ keywords กับ category keywords
+- **LLM Classification** - ใช้ GPT-5-nano วิเคราะห์ context
+- **Score-based Selection** - เลือก category ที่มีคะแนนสูงสุด
 
 ## 🤖 AI Integration
 
@@ -312,6 +520,57 @@ interface ComponentResultV2 {
 - **Menu Item Images** - รูปเมนูอาหาร/สินค้า
 - **Category-based Search** - ค้นหาตามหมวดหมู่
 - **Automatic Translation** - แปลคำค้นหาเป็นอังกฤษ
+
+### Daytona Preview Integration
+
+ระบบรองรับการสร้าง **Live Preview** บน Daytona อัตโนมัติ:
+
+#### 🚀 Auto-Preview Flow
+
+```
+1. Generate Website
+   ↓ (5-15 วินาที)
+2. ✅ Website Generated
+   ↓ (auto-trigger)
+3. Create Daytona Sandbox
+   ↓ (30-60 วินาที)
+4. 🟢 Preview Ready
+   ↓ (one click)
+5. 🌐 Open in Browser
+```
+
+#### Features
+
+- **Auto-Creation** - สร้าง preview อัตโนมัติหลัง generate สำเร็จ
+- **Real-time Status** - แสดงสถานะการสร้าง sandbox
+- **One-click Access** - คลิกเดียวเปิดเว็บไซต์
+- **Auto-stop** - หยุด sandbox อัตโนมัติเมื่อออกจากหน้า
+- **Error Recovery** - สามารถลองใหม่ได้ถ้าล้มเหลว
+
+#### Preview States
+
+- 🟡 **Creating** - กำลังสร้าง Daytona sandbox
+- 🟢 **Running** - Preview พร้อมใช้งาน
+- 🔴 **Error** - เกิดข้อผิดพลาด
+- ⚫ **Stopped** - Sandbox ถูกหยุดแล้ว
+
+#### ตัวอย่างการใช้
+
+```typescript
+// Preview จะถูกสร้างอัตโนมัติหลังจาก generate สำเร็จ
+const task = {
+  taskId: 'restaurant-001',
+  taskType: 'generate_website',
+  businessCategory: 'restaurant-modern',
+  keywords: ['restaurant', 'modern'],
+  includeProjectStructure: true  // ✅ จำเป็นสำหรับ Daytona preview
+};
+
+const result = await runFrontendAgentV2(task);
+
+// ระบบจะ auto-create Daytona preview ทันที
+// ไม่ต้องเรียก API แยก
+```
 
 ## ⚙️ Configuration
 
@@ -357,9 +616,84 @@ quality:
   template_validation: true
 ```
 
-## 🧪 Testing
+## 🧪 Testing & Demo
 
-### Run Tests
+### 🌐 Web-based Layout Tester (แนะนำที่สุด!)
+
+ทดสอบ layout variants ผ่านหน้าเว็บแบบ interactive:
+
+```bash
+# เปิดหน้าเว็บ
+http://localhost:3000/layout-tester
+```
+
+**Features:**
+- 🎨 UI สวยงาม ใช้งานง่าย
+- 🖱️ คลิกเลือก layout ได้เลย
+- 📊 แสดงผลลัพธ์แบบ real-time
+- 📁 ดูรายการไฟล์ที่สร้างทันที
+- 🔑 เพิ่ม keywords เองได้
+- ⚡ ไม่ต้องใช้ command line
+- 👀 **Auto-create Daytona Preview** - สร้าง preview อัตโนมัติ
+- 🌐 **One-click Preview** - เปิดเว็บไซต์ที่สร้างได้ทันที
+
+**วิธีใช้:**
+1. เปิด browser ไปที่ `http://localhost:3000/layout-tester`
+2. คลิกเลือก layout card ที่ต้องการทดสอบ
+3. (Optional) ใส่ keywords เพิ่มเติม
+4. คลิก "สร้างเว็บไซต์เลย"
+5. รอระบบ generate (5-15 วินาที)
+6. ✨ **Daytona Preview จะถูกสร้างอัตโนมัติ** (30-60 วินาที)
+7. คลิก "🌐 เปิด Preview ในแท็บใหม่" เพื่อดูเว็บไซต์ที่สร้างจริงๆ
+
+### 💻 CLI Interactive Layout Testing
+
+ทดสอบ layout variants แบบ interactive ผ่าน CLI:
+
+```bash
+cd src/midori/agents/frontend-v2
+npx ts-node demo/interactive-layout-selector.ts
+```
+
+**Features:**
+- 🎨 เมนูเลือก layout แบบ visual
+- 🔑 เพิ่ม keywords เอง
+- 🤖 โหมด Auto-detection
+- 📊 แสดงผลลัพธ์แบบละเอียด
+- 🔄 Generate หลายครั้งติดกัน
+
+**ตัวอย่าง:**
+```
+╔════════════════════════════════════════════════════════════════╗
+║     🎨 Frontend-V2 Interactive Layout Selector                ║
+╚════════════════════════════════════════════════════════════════╝
+
+1. 🔷 Modern (Split Layout)
+2. 💎 Luxury (Fullscreen Layout)
+3. ⬜ Minimal (Clean Layout)
+4. 🍕 Casual (Cards Layout)
+5. 🍽️  Standard (Stats Layout)
+6. 🤖 Let AI Choose (Auto-Detection)
+
+👉 Enter your choice (0-6):
+```
+
+### Automated Layout Testing
+
+ทดสอบทุก layout พร้อมกันแบบอัตโนมัติ:
+
+```bash
+npx ts-node demo/layout-variants-demo.ts
+```
+
+จะรัน 5 tests:
+1. Restaurant Modern (Split Layout)
+2. Restaurant Luxury (Fullscreen Layout)
+3. Restaurant Minimal (Clean Layout)
+4. Restaurant Casual (Cards Layout)
+5. Auto-Detection Test
+
+### Run Unit Tests
 
 ```bash
 # Run all tests
@@ -374,10 +708,11 @@ npm run test:watch
 
 ### Test Categories
 
+- **Demo Scripts** - ทดสอบแบบ interactive และ automated
 - **Unit Tests** - ทดสอบแต่ละ component
 - **Integration Tests** - ทดสอบการทำงานร่วมกัน
 - **Independence Tests** - ทดสอบความอิสระของระบบ
-- **Project Structure Tests** - ทดสอบโครงสร้างโปรเจค
+- **Layout Variant Tests** - ทดสอบทุก layout variants
 
 ### Example Test
 
@@ -398,6 +733,35 @@ describe('Frontend-V2 Agent', () => {
     expect(result.success).toBe(true);
     expect(result.files.length).toBeGreaterThan(0);
     expect(result.result.businessCategory).toBe('restaurant');
+  });
+
+  it('should generate modern layout variant', async () => {
+    const task = {
+      taskId: 'test-002',
+      taskType: 'generate_website',
+      businessCategory: 'restaurant-modern',
+      keywords: ['restaurant', 'modern']
+    };
+
+    const result = await runFrontendAgentV2(task);
+    
+    expect(result.success).toBe(true);
+    expect(result.result.businessCategory).toBe('restaurant-modern');
+    expect(result.files.some(f => f.path.includes('Hero'))).toBe(true);
+  });
+
+  it('should auto-detect luxury layout from keywords', async () => {
+    const task = {
+      taskId: 'test-003',
+      taskType: 'generate_website',
+      businessCategory: 'restaurant', // base category
+      keywords: ['restaurant', 'luxury', 'fine dining', 'premium']
+    };
+
+    const result = await runFrontendAgentV2(task);
+    
+    expect(result.success).toBe(true);
+    // AI should detect and use luxury-related category
   });
 });
 ```
@@ -444,17 +808,56 @@ src/midori/agents/frontend-v2/
 
 ### Adding New Features
 
-1. **New Business Category**:
+#### 1. **New Business Category**:
    - เพิ่มใน `business-categories/index.ts`
    - อัปเดต schema validation
    - เพิ่ม test cases
 
-2. **New Shared Block**:
+#### 2. **New Shared Block**:
    - เพิ่มใน `shared-blocks/index.ts`
    - สร้าง template files
    - อัปเดต AI prompts
 
-3. **New AI Feature**:
+#### 3. **New Block Variant** ⭐ (รองรับ Auto-Detection!)
+
+**Simple Variant** (ไม่มี required placeholders พิเศษ):
+```typescript
+// เพิ่มใน shared-blocks/index.ts เท่านั้น!
+{
+  id: "hero-parallax",
+  name: "Hero with Parallax",
+  template: `...`,
+  overrides: {}  // ✅ ว่างเปล่า
+}
+```
+✅ **ไม่ต้องแก้ Override System** - ใช้ได้เลย!
+
+**Special Variant** (มี required placeholders พิเศษ):
+```typescript
+// 1. เพิ่มใน shared-blocks/index.ts
+{
+  id: "hero-video",
+  name: "Hero with Video",
+  template: `...<video src="{videoUrl}">...`,
+  overrides: {
+    videoUrl: { type: "string", required: true }  // ✨ พิเศษ
+  }
+}
+
+// 2. เพิ่ม fallback ใน renderer.ts (บรรทัด ~999)
+'videoUrl': 'https://via.placeholder.com/1920x1080'
+```
+✅ **ระบบจะ detect และสร้าง AI instructions อัตโนมัติ!**
+
+**🎯 Auto-Detection Rules:**
+- ระบบจะ detect required placeholders ที่ไม่ใช่ base placeholders
+- สร้าง AI instructions อัตโนมัติ
+- เพิ่ม fallback values อัตโนมัติ
+- Validation จะยืดหยุ่นกับ variant-specific placeholders
+
+**📚 ดูรายละเอียดใน:** `template-system/VARIANT_GUIDE.md`
+
+#### 4. **New AI Feature**:
    - เพิ่มใน `services/ai-service.ts`
    - อัปเดต prompt templates
    - เพิ่ม fallback logic

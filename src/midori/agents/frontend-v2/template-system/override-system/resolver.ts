@@ -156,12 +156,34 @@ export class ManifestResolver {
       throw new Error(`Shared block '${blockUsage.blockId}' not found`);
     }
 
-    // 2. Apply Business Category Overrides
-    const categoryOverrides = businessCategory.overrides[blockUsage.blockId];
+    // 2. Determine which variant to use
+    // Priority: customOverride.variantId > blockUsage.variantId > default (no variant)
+    const customOverride = customOverrides.find(o => o.blockId === blockUsage.blockId);
+    const variantId = customOverride?.variantId || blockUsage.variantId;
+    
     let finalTemplate = sharedBlock.template;
     let finalPlaceholders = { ...sharedBlock.placeholders };
     const appliedOverrides: string[] = [];
 
+    // 2a. Apply Variant if specified (ต้องทำก่อน Business Category Overrides!)
+    if (variantId && sharedBlock.variants) {
+      const variant = sharedBlock.variants.find(v => v.id === variantId);
+      if (variant) {
+        console.log(`✨ Applying variant '${variantId}' for block '${blockUsage.blockId}'`);
+        finalTemplate = variant.template;
+        // Merge variant overrides with base placeholders
+        finalPlaceholders = this.mergePlaceholderConfigs(
+          finalPlaceholders,
+          variant.overrides
+        );
+        appliedOverrides.push(`variant-${variantId}`);
+      } else {
+        console.warn(`⚠️ Variant '${variantId}' not found for block '${blockUsage.blockId}', using default template`);
+      }
+    }
+
+    // 3. Apply Business Category Overrides
+    const categoryOverrides = businessCategory.overrides[blockUsage.blockId];
     if (categoryOverrides) {
       // Apply placeholder overrides
       if (categoryOverrides.placeholders) {
@@ -172,29 +194,15 @@ export class ManifestResolver {
         appliedOverrides.push('business-category-placeholders');
       }
 
-      // Apply template overrides
-      if (categoryOverrides.template) {
+      // Apply template overrides (only if no variant was used)
+      if (categoryOverrides.template && !variantId) {
         finalTemplate = categoryOverrides.template;
         appliedOverrides.push('business-category-template');
       }
     }
 
-    // 3. Apply Custom Overrides
-    const customOverride = customOverrides.find(o => o.blockId === blockUsage.blockId);
+    // 4. Apply Custom Overrides
     if (customOverride) {
-      // Apply variant selection
-      if (customOverride.variantId) {
-        const variant = sharedBlock.variants?.find(v => v.id === customOverride.variantId);
-        if (variant) {
-          finalTemplate = variant.template;
-          finalPlaceholders = this.mergePlaceholderConfigs(
-            finalPlaceholders,
-            variant.overrides
-          );
-          appliedOverrides.push(`variant-${customOverride.variantId}`);
-        }
-      }
-
       // Apply custom template overrides
       if (customOverride.templateOverrides) {
         for (const [placeholder, replacement] of Object.entries(customOverride.templateOverrides)) {
@@ -216,7 +224,7 @@ export class ManifestResolver {
       }
     }
 
-    // 4. Create Concrete Block
+    // 5. Create Concrete Block
     const concreteBlock: ConcreteBlock = {
       id: sharedBlock.id,
       name: sharedBlock.name,
@@ -228,7 +236,7 @@ export class ManifestResolver {
       dependencies: sharedBlock.dependencies || [],
       metadata: {
         sourceBlockId: sharedBlock.id,
-        variantId: customOverride?.variantId || '',
+        variantId: variantId || '',
         appliedOverrides,
         placeholderCount: Object.keys(finalPlaceholders).length,
         templateLength: finalTemplate.length

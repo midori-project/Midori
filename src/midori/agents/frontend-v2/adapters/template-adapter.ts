@@ -296,6 +296,14 @@ export class TemplateAdapter {
 
     // 2. สร้าง AI Prompt และ Generate User Data
     console.log('🤖 Generating AI content...');
+    
+    // Debug: แสดง variants ที่ใช้
+    const heroBlock = templateRequest.concreteManifest.blocks.find(b => b.id === 'hero-basic');
+    if (heroBlock) {
+      console.log(`🎨 Hero variant: ${heroBlock.metadata?.variantId || 'default'}`);
+      console.log(`📋 Hero placeholders:`, Object.keys(heroBlock.placeholders));
+    }
+    
     const aiPromptConfig = this.overrideSystem.createAIPromptConfig(
       templateRequest.businessCategoryId,
       templateRequest.concreteManifest,

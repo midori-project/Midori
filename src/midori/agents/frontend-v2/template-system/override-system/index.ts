@@ -387,6 +387,14 @@ Generate content that matches the schema exactly. Return JSON with the following
 
     prompt += `
   }`;
+    
+    // ✨ AUTO-DETECT: เพิ่ม AI instructions อัตโนมัติสำหรับ variant-specific required placeholders
+    if (block.metadata?.variantId) {
+      const variantInstructions = generateVariantInstructions(block, blockKey);
+      if (variantInstructions) {
+        prompt += variantInstructions;
+      }
+    }
   }
 
   prompt += `
@@ -584,6 +592,125 @@ function extractColorKeywords(keywords: string[]): string[] {
   }
 
   return [...new Set(foundColors)]; // Remove duplicates
+}
+
+/**
+ * ✨ AUTO-DETECT: สร้าง AI instructions สำหรับ variant-specific required placeholders
+ * 
+ * กฏ: ถ้า variant มี required placeholders ที่ไม่มีใน base block
+ *      ระบบจะสร้าง instructions ให้ AI อัตโนมัติ
+ */
+function generateVariantInstructions(block: any, blockKey: string): string | null {
+  const variantId = block.metadata?.variantId;
+  if (!variantId) return null;
+  
+  // หา required placeholders ที่มาจาก variant (ไม่ใช่ base block)
+  const variantSpecificRequired: Record<string, any> = {};
+  
+  for (const [placeholder, config] of Object.entries(block.placeholders)) {
+    const configTyped = config as any;
+    
+    // เช็คว่า placeholder นี้:
+    // 1. Required = true
+    // 2. มาจาก variant (ไม่ใช่ base placeholders)
+    if (configTyped.required && !isBasePlaceholder(placeholder)) {
+      variantSpecificRequired[placeholder] = configTyped;
+    }
+  }
+  
+  // ถ้าไม่มี variant-specific required placeholders → ไม่ต้องเพิ่ม instructions
+  if (Object.keys(variantSpecificRequired).length === 0) {
+    return null;
+  }
+  
+  // สร้าง instructions
+  let instructions = `\n\n  ⚠️ IMPORTANT: This ${blockKey} block uses variant '${variantId}' which REQUIRES additional fields:\n`;
+  
+  // Group placeholders by pattern (เช่น stat1/stat1Label)
+  const groups = groupPlaceholders(variantSpecificRequired);
+  
+  for (const [groupName, placeholders] of Object.entries(groups)) {
+    instructions += `  - ${groupName}: `;
+    
+    // สร้างตัวอย่าง
+    const examples = generateExamples(groupName, placeholders);
+    instructions += examples + '\n';
+  }
+  
+  instructions += `  You MUST include these in the ${blockKey} object above!`;
+  
+  return instructions;
+}
+
+/**
+ * เช็คว่า placeholder เป็น base placeholder หรือไม่
+ */
+function isBasePlaceholder(placeholder: string): boolean {
+  const basePlaceholders = [
+    'badge', 'heading', 'subheading', 
+    'ctaLabel', 'secondaryCta',
+    'heroImage', 'heroImageAlt',
+    'brand', 'brandFirstChar', 'ctaButton', 'menuItems',
+    'title', 'description', 'features', 'stats',
+    'address', 'phone', 'email', 'businessHours',
+    'companyName', 'socialLinks', 'quickLinks',
+    'radius', 'spacing'
+  ];
+  
+  return basePlaceholders.includes(placeholder);
+}
+
+/**
+ * จัดกลุ่ม placeholders ตามรูปแบบ (เช่น stat1/stat1Label → stats)
+ */
+function groupPlaceholders(placeholders: Record<string, any>): Record<string, string[]> {
+  const groups: Record<string, string[]> = {};
+  const processed = new Set<string>();
+  
+  for (const placeholder of Object.keys(placeholders)) {
+    if (processed.has(placeholder)) continue;
+    
+    // Pattern: stat1, stat1Label, stat2, stat2Label, ...
+    if (/^stat\d+$/.test(placeholder)) {
+      if (!groups['stats']) groups['stats'] = [];
+      
+      const num = placeholder.match(/\d+/)?.[0];
+      groups['stats'].push(placeholder);
+      processed.add(placeholder);
+      
+      const labelKey = `stat${num}Label`;
+      if (labelKey in placeholders) {
+        groups['stats'].push(labelKey);
+        processed.add(labelKey);
+      }
+    }
+    // Pattern: testimonials (array)
+    else if (placeholder === 'testimonials') {
+      groups['testimonials'] = [placeholder];
+      processed.add(placeholder);
+    }
+    // Pattern: อื่นๆ
+    else {
+      groups[placeholder] = [placeholder];
+      processed.add(placeholder);
+    }
+  }
+  
+  return groups;
+}
+
+/**
+ * สร้างตัวอย่างสำหรับแต่ละกลุ่ม
+ */
+function generateExamples(groupName: string, placeholders: string[]): string {
+  const exampleMap: Record<string, string> = {
+    'stats': 'stat1: "15+", stat1Label: "ปีประสบการณ์", stat2: "1000+", stat2Label: "ลูกค้าพึงพอใจ", stat3: "50+", stat3Label: "เมนูหลากหลาย"',
+    'testimonials': '[{ name: "สมชาย ใจดี", quote: "อาหารอร่อยมาก", role: "ลูกค้าประจำ" }, { name: "สมหญิง สบายดี", quote: "บริการดีเยี่ยม", role: "ลูกค้า" }]',
+    'videoUrl': '"https://example.com/video.mp4"',
+    'gallery': '[{ image: "https://...", alt: "..." }, ...]'
+  };
+  
+  return exampleMap[groupName] || placeholders.map(p => `${p}: "value"`).join(', ');
 }
 
 /**
