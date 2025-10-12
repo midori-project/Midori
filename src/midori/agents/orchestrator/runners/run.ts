@@ -650,11 +650,25 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
     // 1. Validate input command
     const command = validateCommand(rawCommand);
     
-    // 2. Template-First: Use simple planning for template commands
+    // 2. Check if we should use Component-Based instead of Template-Based
     if (command.commandType === CommandType.SELECT_TEMPLATE || 
         command.commandType === CommandType.CUSTOMIZE_TEMPLATE) {
-      console.log('🎯 Using Template-First approach for:', command.commandType);
-      return await handleTemplateCommand(command, startTime, warnings, validationErrors);
+      
+      // Check if Enhanced Context exists (indicates Component-Based)
+      const projectContext = command.payload?.projectContext;
+      const hasEnhancedContext = projectContext && 
+        (projectContext as any).themePack !== undefined || 
+        (projectContext as any).blueprint !== undefined;
+      
+      if (hasEnhancedContext) {
+        console.log('🎯 Enhanced Context detected - Using Component-Based approach');
+        console.log('- ThemePack:', (projectContext as any).themePack ? 'Yes' : 'No');
+        console.log('- Blueprint:', (projectContext as any).blueprint ? 'Yes' : 'No');
+        // Continue to AI processing for component-based approach
+      } else {
+        console.log('🎯 Using Template-First approach for:', command.commandType);
+        return await handleTemplateCommand(command, startTime, warnings, validationErrors);
+      }
     }
     
     // 2. Process with AI for intelligent planning (for other commands)

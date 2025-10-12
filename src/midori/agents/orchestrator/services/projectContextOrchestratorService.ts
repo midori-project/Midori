@@ -1,9 +1,11 @@
 /**
  * Project Context Orchestrator Service
  * เชื่อมต่อ Project Context กับ Orchestrator AI
+ * ✅ Enhanced with Component-Based Architecture support
  */
 
 import { ProjectContextService } from './projectContextService';
+import { EnhancedProjectContextService } from './enhancedProjectContextService';
 import { ProjectContextFactory } from '../factories/projectContextFactory';
 import { ProjectType, ProjectStatus, ComponentType, PageType } from '@prisma/client';
 import type {
@@ -22,12 +24,65 @@ import type {
   CreateStylingStateInput,
   UpdateStylingStateInput
 } from '../types/projectContext';
+import type {
+  EnhancedProjectContextData,
+  CreateEnhancedProjectContextInput
+} from '../types/enhancedProjectContext';
 
 export class ProjectContextOrchestratorService {
   // ============================
   // Project Context Management
   // ============================
 
+  /**
+   * ✅ NEW: Initialize project with Enhanced Context (Component-Based)
+   */
+  static async initializeEnhancedProject(
+    projectId: string,
+    name: string,
+    businessCategory: string,
+    userInput: string,
+    options?: {
+      useComponentBased?: boolean;
+      themePack?: any;
+      blueprint?: any;
+    }
+  ): Promise<EnhancedProjectContextData> {
+    console.log('🆕 Initializing Enhanced Project Context...');
+    console.log('- Project ID:', projectId);
+    console.log('- Business Category:', businessCategory);
+    console.log('- Component-Based:', options?.useComponentBased ?? true);
+
+    // สร้าง Enhanced Project Context
+    const input: CreateEnhancedProjectContextInput = {
+      projectId,
+      projectName: name,
+      businessCategory,
+      userInput,
+      themePack: options?.themePack,
+      blueprint: options?.blueprint,
+      migrationStatus: 'migrated'
+    };
+
+    const enhancedContext = await EnhancedProjectContextService.createEnhancedProjectContext(input);
+
+    console.log('✅ Enhanced Project Context created successfully');
+    return enhancedContext;
+  }
+
+  /**
+   * ✅ NEW: Get Enhanced Project Context
+   */
+  static async getEnhancedProjectContext(
+    projectId: string
+  ): Promise<EnhancedProjectContextData | null> {
+    return await EnhancedProjectContextService.getEnhancedProjectContext(projectId);
+  }
+
+  /**
+   * ✅ LEGACY: Initialize project with Legacy Context (Template-Based)
+   * @deprecated Use initializeEnhancedProject instead
+   */
   static async initializeProject(
     projectId: string,
     specBundleId: string,

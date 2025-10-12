@@ -138,6 +138,8 @@ class RealAgentClient {
       // Let Frontend-V2 handle business category detection
       businessCategory: undefined,
       keywords: keywords,
+      // Pass projectId from project context to Frontend-V2
+      projectId: projectContext?.projectId,
       // Let Frontend-V2 handle customizations internally
       customizations: {},
       target: projectContext?.projectId || undefined,

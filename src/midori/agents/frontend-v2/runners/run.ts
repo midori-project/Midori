@@ -1,9 +1,10 @@
 /**
  * Frontend-V2 Agent Runner
- * ใช้ Template System สำหรับการสร้างเว็บไซต์
+ * Supports both Template System and Component-Based Generation
  */
 
 import { TemplateAdapter } from '../adapters/template-adapter';
+import { ComponentAdapter } from '../adapters/component-adapter';
 import { FrontendTaskV2, ComponentResultV2 } from '../schemas/types';
 
 /**
@@ -22,26 +23,40 @@ export async function runFrontendAgentV2(task: FrontendTaskV2): Promise<Componen
     // 1. Validate Task
     validateTask(task);
 
-    // 2. Initialize Template Adapter
-    const adapter = new TemplateAdapter();
-    console.log('✅ Template Adapter initialized');
+    // 2. Determine which adapter to use
+    const useComponentBased = shouldUseComponentBased(task);
 
-    // 3. Log Template System Stats
-    const stats = adapter.getTemplateSystemStats();
-    console.log('📊 Template System Stats:', stats);
+    if (useComponentBased) {
+      console.log('✅ Using Component-Based Generation (Component Library)');
+      const adapter = new ComponentAdapter();
+      const result = await adapter.generateFrontend(task);
+      
+      console.log('📈 Component Generation Results:', {
+        success: result.success,
+        filesGenerated: result.files.length,
+        executionTime: result.metadata.executionTime,
+        totalSize: result.performance.totalSize
+      });
+      
+      return result;
+      
+    } else {
+      console.log('✅ Using Template-Based Generation (Template System)');
+      const adapter = new TemplateAdapter();
+      const stats = adapter.getTemplateSystemStats();
+      console.log('📊 Template System Stats:', stats);
 
-    // 4. Generate Frontend
-    const result = await adapter.generateFrontend(task);
+      const result = await adapter.generateFrontend(task);
 
-    // 5. Log Results
-    console.log('📈 Generation Results:', {
-      success: result.success,
-      filesGenerated: result.files.length,
-      executionTime: result.metadata.executionTime,
-      totalSize: result.performance.totalSize
-    });
+      console.log('📈 Template Generation Results:', {
+        success: result.success,
+        filesGenerated: result.files.length,
+        executionTime: result.metadata.executionTime,
+        totalSize: result.performance.totalSize
+      });
 
-    return result;
+      return result;
+    }
 
   } catch (error) {
     console.error('❌ Frontend-V2 Agent Error:', error);
@@ -51,6 +66,36 @@ export async function runFrontendAgentV2(task: FrontendTaskV2): Promise<Componen
     // Return error result
     return createErrorResult(error as Error, task);
   }
+}
+
+/**
+ * Determine if task should use component-based generation
+ */
+function shouldUseComponentBased(task: FrontendTaskV2): boolean {
+  // 1. Check for explicit component-based indicators
+  if (task.customizations?.theme) {
+    console.log('🎯 Using Component-Based (task has theme customization)');
+    return true;
+  }
+
+  // 2. Check for Enhanced Context indicators in task
+  if ((task as any).themePack || (task as any).blueprint) {
+    console.log('🎯 Using Component-Based (Enhanced Context detected)');
+    return true;
+  }
+
+  // 3. Check keywords for component-based indicators
+  const keywords = task.keywords.map(k => k.toLowerCase());
+  const componentKeywords = ['component', 'modern', 'ทันสมัย', 'โมเดิร์น'];
+  
+  if (keywords.some(k => componentKeywords.some(ck => k.includes(ck)))) {
+    console.log('🎯 Using Component-Based (detected from keywords)');
+    return true;
+  }
+
+  // 4. 🆕 ALWAYS use Component-Based for new projects (default behavior)
+  console.log('🎯 Using Component-Based (default for new projects)');
+  return true;
 }
 
 /**

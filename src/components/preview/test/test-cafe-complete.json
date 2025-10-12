@@ -1,5 +1,5 @@
 {
-  "projectStructure": {
+"projectStructure": {
     "name": "food-delivery-table-reservation",
     "type": "vite-react-typescript",
     "description": "Food delivery and table reservation app with Vite + React + TypeScript + Tailwind CSS"

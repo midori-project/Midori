@@ -101,6 +101,41 @@ export async function GET(
       type: file.type || file.language || 'code',
     }))
 
+    // ✅ ส่งเฉพาะ exportedJson ที่มี format ถูกต้อง (ตาม test-cafe-complete.json)
+    let exportedJson = templateData?.exportedJson || {
+      projectStructure: {
+        name: project.name || 'project',
+        type: 'vite-react-typescript',
+        description: project.description || 'Generated project'
+      },
+      files: formattedFiles
+    }
+
+    // 🔧 FIX: Unwrap if exportedJson has nested "exportedJson" wrapper
+    if (exportedJson?.exportedJson && typeof exportedJson.exportedJson === 'object') {
+      console.warn('⚠️ Detected nested exportedJson wrapper, unwrapping...')
+      exportedJson = exportedJson.exportedJson
+    }
+
+    // 🔧 Ensure correct format: must have projectStructure and files at root level
+    if (!exportedJson.projectStructure || !exportedJson.files) {
+      console.warn('⚠️ Missing projectStructure or files, reconstructing from available data...')
+      exportedJson = {
+        projectStructure: exportedJson.projectStructure || {
+          name: project.name || 'project',
+          type: 'vite-react-typescript',
+          description: project.description || 'Generated project'
+        },
+        files: exportedJson.files || formattedFiles
+      }
+    }
+
+    // 🔧 Extract ONLY projectStructure and files (matching test-cafe-complete.json)
+    const cleanExportedJson = {
+      projectStructure: exportedJson.projectStructure,
+      files: exportedJson.files
+    }
+
     return NextResponse.json({
       success: true,
       hasSnapshot: true,
@@ -116,9 +151,11 @@ export async function GET(
           name: project.name,
           description: project.description,
         },
-        templateData: templateData || {},
-        files: formattedFiles,
-        filesCount: formattedFiles.length,
+        // ส่งเฉพาะ projectStructure และ files (format ตาม test-cafe-complete.json)
+        ...cleanExportedJson,
+        filesCount: cleanExportedJson.files.length,
+        // เก็บ templateData ไว้สำหรับ backward compatibility (optional)
+        _templateData: templateData || {},
       }
     })
 

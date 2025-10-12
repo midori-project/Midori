@@ -6,6 +6,48 @@ type PersistOptions = {
   userId?: string | undefined;
 };
 
+// ---- Helpers: วางไว้ด้านบนไฟล์ ----
+function parseJsonMaybe<T>(raw: unknown): T | undefined {
+  try {
+    if (typeof raw === 'string') return JSON.parse(raw) as T;
+    return raw as T;
+  } catch {
+    return undefined;
+  }
+}
+
+/** แตก bundle ที่ path === "files" (content = array ของไฟล์จริง) แล้วคืนรายการไฟล์ทั้งหมดเป็นอาเรย์แบน */
+function flattenFilesBundle(files: Array<any>): Array<any> {
+  const out: any[] = [];
+  for (const f of files) {
+    if (f?.path === 'files') {
+      const inner = parseJsonMaybe<any[]>(f.content);
+      if (Array.isArray(inner)) {
+        for (const it of inner) {
+          if (it?.path && it?.content != null) out.push(it);
+        }
+      }
+      // ข้ามไม่ push ตัวห่อเอง
+      continue;
+    }
+    if (f?.path && f?.content != null) out.push(f);
+  }
+  return out;
+}
+
+/** ลบไฟล์ซ้ำ โดยใช้ key = path (ตัวท้ายสุดเป็นตัวจริง) และกัน placeholder แปลก ๆ ออก */
+function dedupeAndNormalizeFiles(files: Array<any>): Array<any> {
+  const byPath = new Map<string, any>();
+  for (const f of files) {
+    // กันเอกสารเมตาบางอย่าง
+    if (f.path === 'metadata') continue;
+    // กันโฟลเดอร์เปล่า/ออบเจ็กต์ไม่ครบ
+    if (!f.path || f.content == null) continue;
+    byPath.set(f.path, f);
+  }
+  return Array.from(byPath.values());
+}
+
 export async function persistFrontendV2Result(
   result: ComponentResultV2,
   task: FrontendTaskV2,
@@ -25,6 +67,9 @@ export async function persistFrontendV2Result(
     return;
   }
 
+  // 0) Ensure Project exists (create if not found)
+  await ensureProjectExists(projectId, validUserId, task);
+
   // 1) Create Generation (one per run)
   let generation = await createGenerationSafe({
     projectId,
@@ -43,14 +88,43 @@ export async function persistFrontendV2Result(
   });
 
   // 2) Upsert Files to Project Files and record GenerationFile entries
-  const filesToPersist = (result as any).projectStructure?.files ?? result.files;
+  // รวมแหล่งไฟล์ให้ครบ → แตกไฟล์ที่ถูก "ห่อ" ใน path === "files" → ลบซ้ำตาม path
+  const rawA = (result as any).projectStructure?.files ?? [];
+  const rawB = Array.isArray(result.files) ? result.files : [];
+  const merged = [...rawA, ...rawB];
+  const flattened = flattenFilesBundle(merged);
+  const filesToPersist = dedupeAndNormalizeFiles(flattened);
+  
+  // ✅ Validation: ตรวจสอบ component files ที่จำเป็น
+  const componentFiles = filesToPersist.filter(f => f.path?.startsWith('src/components/'));
+  const componentNames = componentFiles.map(f => f.path?.split('/').pop()?.replace('.tsx', ''));
+  
+  // ตรวจสอบ App.tsx imports
+  const appFile = filesToPersist.find(f => f.path === 'src/App.tsx');
+  if (appFile) {
+    const appContent = appFile.content || '';
+    const importMatches = appContent.match(/import\s+(\w+)\s+from\s+['"]\.\/components\/(\w+)['"]/g) || [];
+    const importedComponents = importMatches.map((match: string) => {
+      const [, componentName] = match.match(/import\s+(\w+)\s+from\s+['"]\.\/components\/(\w+)['"]/) || [];
+      return componentName;
+    });
+    
+    const missingComponents = importedComponents.filter((name: string) => 
+      name && !componentNames.includes(name)
+    );
+    
+    if (missingComponents.length > 0) {
+      console.warn(`⚠️ Missing component files: ${missingComponents.join(', ')}`);
+    }
+  }
+  
   // Build exported JSON compatible with test-cafe-complete.json
   const exportedJson = buildExportedJson(result, filesToPersist);
   const generationFilesPayload: Array<Promise<unknown>> = [];
   for (const file of filesToPersist) {
     const path = file.path;
     const type = mapFileType(file.type);
-    const content = file.content;
+    const content = typeof file.content === 'string' ? file.content : JSON.stringify(file.content);
 
     // Upsert Project File
     generationFilesPayload.push(
@@ -71,58 +145,67 @@ export async function persistFrontendV2Result(
       })
     );
 
-    // Record GenerationFile
-    generationFilesPayload.push(
-      prisma.generationFile.create({
-        data: {
-          generationId: generation.id,
-          filePath: path,
-          fileContent: content,
-          changeType: 'create',
-        },
-      })
-    );
+    // Skip GenerationFile creation for Component System (causes errors)
+    // generationFilesPayload.push(
+    //   prisma.generationFile.create({
+    //     data: {
+    //       generationId: generation.id,
+    //       filePath: path,
+    //       fileContent: content,
+    //       changeType: 'create',
+    //     },
+    //   })
+    // );
   }
 
+  // ✅ ต้อง await ให้เสร็จก่อน
   await Promise.all(generationFilesPayload);
 
-  // 3) Create Snapshot from current result
+  // 3) Create Snapshot and related data in transaction
   const snapshotFiles = filesToPersist.map((f: any) => ({ path: f.path, type: f.type, content: f.content }));
-  const snapshot = await prisma.snapshot.create({
-    data: {
-      projectId,
-      label: `frontend-v2-${new Date().toISOString()}`,
-      files: snapshotFiles as unknown as Prisma.InputJsonValue,
-      fromGenerationId: generation.id,
-      templateData: {
-        businessCategory: result.result.businessCategory,
-        blocksGenerated: result.result.blocksGenerated,
-        aiContentGenerated: result.result.aiContentGenerated,
-        projectStructure: (result as any).projectStructure?.projectStructure ?? null,
-        // Exported payload matching test-cafe-complete.json
-        exportedJson,
-        exportFormatVersion: 'v1',
-      } as unknown as Prisma.InputJsonValue,
-    },
-  });
-
-  // 4) Create PreviewSession if present
-  if (result.preview?.url) {
-    await prisma.previewSession.create({
+  
+  const snapshot = await prisma.$transaction(async (tx: any) => {
+    // Create snapshot
+    const snapshot = await tx.snapshot.create({
       data: {
         projectId,
-        snapshotId: snapshot.id,
-        url: result.preview.url,
-        state: 'ready',
-        buildTimeMs: result.performance?.generationTime ?? null,
-        meta: {
-          sandboxId: result.preview.sandboxId,
-          status: result.preview.status,
-          createdAt: result.preview.createdAt,
-        },
+        label: `frontend-v2-${new Date().toISOString()}`,
+        files: snapshotFiles as unknown as Prisma.InputJsonValue,
+        fromGenerationId: generation.id,
+        templateData: {
+          businessCategory: result.result.businessCategory,
+          blocksGenerated: result.result.blocksGenerated,
+          aiContentGenerated: result.result.aiContentGenerated,
+          projectStructure: exportedJson.projectStructure,
+          // Exported payload matching test-cafe-complete.json
+          exportedJson,
+          exportFormatVersion: 'v1',
+        } as unknown as Prisma.InputJsonValue,
       },
     });
-  }
+
+    // Create preview session if present
+    if (result.preview?.url) {
+      await tx.previewSession.create({
+        data: {
+          projectId,
+          snapshotId: snapshot.id,
+          url: result.preview.url,
+          state: 'ready',
+          buildTimeMs: result.performance?.generationTime ? Math.round(result.performance.generationTime * 1000) : null,
+          meta: {
+            sandboxId: result.preview.sandboxId,
+            status: result.preview.status,
+            createdAt: result.preview.createdAt,
+          },
+        },
+      });
+    }
+
+    return snapshot;
+  });
+
+  // 4) PreviewSession already created in transaction above
 
   // 5) Update ProjectContext.frontendV2Data summary
   try {
@@ -130,7 +213,7 @@ export async function persistFrontendV2Result(
       where: { projectId },
       update: {
         frontendV2Data: {
-          ...(buildFrontendV2Data(result) as any),
+          ...(buildFrontendV2Data(result, filesToPersist) as any),
           exportedJson,
           exportFormatVersion: 'v1',
         } as unknown as Prisma.InputJsonValue,
@@ -148,7 +231,7 @@ export async function persistFrontendV2Result(
         conversationHistory: {} as unknown as Prisma.InputJsonValue,
         userPreferences: {} as unknown as Prisma.InputJsonValue,
         frontendV2Data: {
-          ...(buildFrontendV2Data(result) as any),
+          ...(buildFrontendV2Data(result, filesToPersist) as any),
           exportedJson,
           exportFormatVersion: 'v1',
         } as unknown as Prisma.InputJsonValue,
@@ -177,19 +260,23 @@ function mapProjectType(category: string): any {
     healthcare: 'healthcare',
     pharmacy: 'healthcare',
   };
-  return (map[category] as any) || 'e_commerce';
+  return (map[category] as any) || 'unknown';
 }
 
-function buildFrontendV2Data(result: ComponentResultV2) {
+function buildFrontendV2Data(result: ComponentResultV2, filesToPersist: Array<any>) {
   return {
     result: result.result,
     performance: result.performance,
     validation: result.validation,
     metadata: result.metadata,
-    files: result.files.map(f => ({ path: f.path, type: f.type })),
+    files: filesToPersist.map(f => ({ path: f.path, type: f.type })),
   };
 }
 
+/**
+ * Build exported JSON compatible with test-cafe-complete.json format
+ * Format: { projectStructure, files }
+ */
 function buildExportedJson(result: ComponentResultV2, filesToPersist: Array<any>) {
   const projectStructure = (result as any).projectStructure?.projectStructure || {
     name: result.metadata?.projectName || result.result?.brandName || 'project',
@@ -215,30 +302,47 @@ function buildExportedJson(result: ComponentResultV2, filesToPersist: Array<any>
   const mapType = (file: any): string => {
     // Align with test-cafe format expectations
     const p: string = file.path || '';
-    // Force specific mappings to match reference JSON
+    
+    // Config files
+    if (p === 'package.json') return 'config';
+    if (p === 'tsconfig.json') return 'config';
     if (p === 'index.html') return 'config';
     if (p === 'vite.config.ts') return 'config';
     if (p === 'tailwind.config.js') return 'config';
     if (p === 'postcss.config.cjs') return 'config';
+    if (p === 'eslint.config.js') return 'config';
+    if (p === 'prettier.config.js') return 'config';
+    if (p === 'public/index.html') return 'config';
+    if (p.endsWith('.config.js') || p.endsWith('.config.ts')) return 'config';
+    if (p.endsWith('.json') && !p.includes('src/')) return 'config';
+    
+    // Page files
     if (p === 'src/main.tsx') return 'page';
     if (p === 'src/App.tsx') return 'page';
     if (p.startsWith('src/pages/')) return 'page';
-    // Then fall back to origin type or inference
-    if (file.type && !p.endsWith('.html')) return file.type;
-    if (p.endsWith('.css')) return 'style';
-    if (p.endsWith('.html')) return 'config';
-    if (p.endsWith('.json')) return 'config';
-    return 'component';
+    
+    // Component files
+    if (p.startsWith('src/components/')) return 'component';
+    
+    // Style files
+    if (p.endsWith('.css') || p.endsWith('index.css')) return 'style';
+    
+    // Fallback to original type or default
+    return file.type || 'component';
   };
 
   const files = filesToPersist.map((f: any) => ({
     path: f.path,
-    content: f.content,
+    content: typeof f.content === 'string' ? f.content : JSON.stringify(f.content, null, 2),
     type: mapType(f),
     language: mapLanguage(f),
   }));
 
-  return { projectStructure, files };
+  // Return format matching test-cafe-complete.json (no wrapper)
+  return { 
+    projectStructure, 
+    files 
+  };
 }
 
 async function resolveValidUserId(userId: string | undefined, projectId: string) {
@@ -269,6 +373,43 @@ async function resolveValidUserId(userId: string | undefined, projectId: string)
   } catch {}
 
   return undefined;
+}
+
+async function ensureProjectExists(projectId: string, userId: string, task: FrontendTaskV2) {
+  const prisma: any = (globalThis as any).prisma;
+  try {
+    // Check if project exists
+    const existingProject = await prisma.project.findUnique({
+      where: { id: projectId }
+    });
+
+    if (!existingProject) {
+      // Create project if it doesn't exist
+      console.log('📝 Creating project:', projectId);
+      await prisma.project.create({
+        data: {
+          id: projectId,
+          name: `Project ${projectId}`,
+          description: `Generated by Component System - ${task.businessCategory}`,
+          ownerId: userId,
+          options: {
+            componentSystem: {
+              version: 'v1.0.0',
+              businessCategory: task.businessCategory,
+              keywords: task.keywords,
+              lastUpdated: new Date().toISOString()
+            }
+          }
+        }
+      });
+      console.log('✅ Project created successfully');
+    } else {
+      console.log('✅ Project already exists');
+    }
+  } catch (error) {
+    console.error('❌ Error ensuring project exists:', error);
+    throw error;
+  }
 }
 
 async function createGenerationSafe(args: {

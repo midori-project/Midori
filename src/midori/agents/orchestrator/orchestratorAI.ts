@@ -16,6 +16,8 @@ import { ChatPromptLoader } from './prompts/chatPromptLoader';
 import { getResponseConfig, toLLMOptions } from './configs/responseConfig';
 import { ProjectContextOrchestratorService } from './services/projectContextOrchestratorService';
 import type { ProjectContextData } from './types/projectContext';
+import { ProjectInitializationHelper } from './helpers/projectInitializationHelper';
+import { EnhancedContextAdapter } from './adapters/enhancedContextAdapter';
 import { projectContextStore } from './stores/projectContextStore';
 import { projectContextSync } from './sync/projectContextSync';
 import { ConversationService, type ConversationData, type MessageData } from './services/conversationService';
@@ -903,11 +905,21 @@ export class OrchestratorAI {
     
     console.log('🎯 Selected command type:', commandType, 'for message:', message.content);
 
-    // Get project context if available
+    // Get project context if available (รองรับทั้ง Enhanced และ Legacy)
     let projectContext: ProjectContextData | null = null;
     if (message.context?.currentProject) {
-      projectContext = await this.getProjectContext(message.context.currentProject);
       console.log(`🔍 Looking for existing project context: ${message.context.currentProject}`);
+      
+      // 🆕 ใช้ Smart Project Retrieval (รองรับทั้ง Enhanced และ Legacy)
+      projectContext = await ProjectInitializationHelper.getSmartProject(message.context.currentProject);
+      
+      if (projectContext) {
+        if (EnhancedContextAdapter.isEnhancedContext(projectContext)) {
+          console.log('✅ Found Enhanced Project Context');
+        } else {
+          console.log('✅ Found Legacy Project Context');
+        }
+      }
     }
     
     // ถ้าไม่มี project context และเป็น task ให้สร้างใหม่
@@ -924,22 +936,28 @@ export class OrchestratorAI {
         console.log(`✅ Using project ID from home page: ${projectId}`);
       }
       
-      // ใช้ default project type - Frontend-V2 จะส่ง projectType กลับมา
-      const projectType = 'e_commerce' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
-      
       // สร้าง Project record ก่อน (เฉพาะเมื่อสร้าง project ID ใหม่)
       if (!message.context?.currentProject) {
         await this.createProjectRecord(projectId, this.extractProjectName(message.content));
       }
       
-      projectContext = await this.initializeProject(
+      // 🆕 ใช้ Smart Project Initialization (รองรับทั้ง Enhanced และ Legacy)
+      projectContext = await ProjectInitializationHelper.initializeSmartProject({
         projectId,
-        'default_spec',
-        projectType,
-        this.extractProjectName(message.content),
-        message.content
-      );
+        projectName: this.extractProjectName(message.content),
+        userInput: message.content,
+        useEnhanced: true  // ใช้ Enhanced Context โดย default
+      });
       console.log(`✅ Created new project context: ${projectId}`);
+      
+      // Check if it's Enhanced Context
+      if (EnhancedContextAdapter.isEnhancedContext(projectContext)) {
+        console.log('🆕 Using Enhanced Project Context');
+        console.log('- Business Category:', (projectContext as any).themePack?.metadata?.category || 'N/A');
+      } else {
+        console.log('🏛️ Using Legacy Project Context');
+        console.log('- Project Type:', projectContext.projectType);
+      }
     }
 
     return {

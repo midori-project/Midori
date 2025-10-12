@@ -22,15 +22,15 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./",
-    "baseUrl": "./",
+    "baseUrl": "../..",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["../*"]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "../orchestrator/types/*.ts"
   ],
   "exclude": [
     "node_modules",

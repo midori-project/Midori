@@ -7,6 +7,7 @@ export interface FrontendTaskV2 {
   taskType: 'generate_website' | 'customize_component' | 'create_page' | 'update_styling' | 'regenerate_content' | 'create_preview';
   businessCategory: string;
   keywords: string[];
+  projectId?: string; // Optional projectId from project context
   customizations?: {
     colors?: string[];
     theme?: 'modern' | 'classic' | 'minimal' | 'creative' | 'professional';
