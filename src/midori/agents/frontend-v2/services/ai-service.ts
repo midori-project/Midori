@@ -6,6 +6,7 @@
 import { config } from "dotenv";
 import OpenAI from "openai";
 import { UnsplashService, UnsplashImage } from "./unsplash-service";
+import { PropDefinition } from "../component-library/types";
 
 // Load .env from root
 config({ path: "../../../../.env" });
@@ -16,6 +17,21 @@ export interface AIGenerationRequest {
   language: string;
   model?: string;
   temperature?: number;
+  // Component-based system integration
+  selectedComponents?: Array<{
+    id: string;
+    name: string;
+    category: string;
+    propsSchema: Record<string, PropDefinition>;
+    template: string;
+  }>;
+  componentSelection?: {
+    selectedComponents: Array<{
+      componentId: string;
+      variantId: string;
+      props: Record<string, any>;
+    }>;
+  };
 }
 
 export interface AIGenerationResponse {
@@ -30,7 +46,13 @@ export interface AIGenerationResponse {
       spacing: string;
     };
   };
-  [key: string]: any; // Dynamic block data
+  // Component-based response format
+  components: Record<string, {
+    props: Record<string, any>;
+    content?: string;
+  }>;
+  // Legacy support for template-based system
+  [key: string]: any;
 }
 
 export class AIService {
@@ -39,6 +61,8 @@ export class AIService {
   private unsplashService: UnsplashService;
   // Simple in-memory cache for translated keywords
   private translationCache: Map<string, string> = new Map();
+  // Cache for images to avoid repeated API calls
+  private imageCache: Map<string, { image: string; imageAlt: string }> = new Map();
 
   constructor() {
     this.initialize();
@@ -74,14 +98,18 @@ export class AIService {
     businessCategory: string
   ): Promise<{ image: string; imageAlt: string }> {
     try {
+      // Check cache first
+      const cacheKey = `${itemName}-${category}-${businessCategory}`;
+      if (this.imageCache.has(cacheKey)) {
+        return this.imageCache.get(cacheKey)!;
+      }
+      
       // Translate itemName to English for better Unsplash results (if needed)
       const itemNameEn = await this.translateToEnglishIfThai(itemName, {
         category,
         businessCategory,
       });
-      console.log(
-        `📸 Menu item image search: "${itemName}" → query: "${itemNameEn}"`
-      );
+      // console.log(`📸 Menu item image search: "${itemName}" → query: "${itemNameEn}"`); // Reduced logging
 
       const unsplashImage = await this.unsplashService.getImageForMenuItem(
         itemNameEn,
@@ -95,10 +123,15 @@ export class AIService {
         quality: 80,
       });
 
-      return {
+      const result = {
         image: imageUrl,
         imageAlt: unsplashImage.alt_description || itemName,
       };
+      
+      // Cache the result
+      this.imageCache.set(cacheKey, result);
+      
+      return result;
     } catch (error) {
       console.error("❌ Error getting image for menu item:", error);
       return {
@@ -528,10 +561,10 @@ Translate now:`;
       const content = response.choices[0]?.message?.content;
       const finishReason = response.choices[0]?.finish_reason;
       
-      console.log("🤖 AI Response content:", content);
-      console.log("🤖 AI Response choices:", response.choices);
-      console.log("🤖 Finish reason:", finishReason);
-      console.log("🤖 Usage:", response.usage);
+      // console.log("🤖 AI Response content:", content); // Reduced logging
+      // console.log("🤖 AI Response choices:", response.choices); // Reduced logging
+      // console.log("🤖 Finish reason:", finishReason); // Reduced logging
+      // console.log("🤖 Usage:", response.usage); // Reduced logging
       
       if (!content) {
         console.error("❌ No content in AI response:", {
@@ -601,6 +634,11 @@ Translate now:`;
         console.log("✅ Menu items enhanced with dynamic images");
       }
 
+      // Convert to component-based format if component selection is provided
+      if (request.componentSelection?.selectedComponents) {
+        return this.convertToComponentBasedResponse(aiResponse, request.componentSelection);
+      }
+
       return aiResponse;
     } catch (error) {
       console.error("❌ AI generation failed:", error);
@@ -610,15 +648,113 @@ Translate now:`;
   }
 
   /**
+   * Convert legacy AI response to component-based format
+   */
+  private convertToComponentBasedResponse(
+    legacyResponse: any,
+    componentSelection: {
+      selectedComponents: Array<{
+        componentId: string;
+        variantId: string;
+        props: Record<string, any>;
+      }>;
+    }
+  ): AIGenerationResponse {
+    const componentBasedResponse: AIGenerationResponse = {
+      global: legacyResponse.global || {
+        palette: {
+          primary: "orange",
+          secondary: "red",
+          bgTone: "light"
+        },
+        tokens: {
+          radius: "8px",
+          spacing: "16px"
+        }
+      },
+      components: {}
+    };
+
+    // Map legacy response to component IDs
+    const componentMapping: Record<string, string> = {
+      "hero-basic": "hero",
+      "menu-basic": "menu", 
+      "about-basic": "about",
+      "contact-basic": "contact",
+      "footer-basic": "footer",
+      "navbar-basic": "navbar"
+    };
+
+    // Convert each selected component
+    componentSelection.selectedComponents.forEach(selected => {
+      const componentId = selected.componentId;
+      const legacyKey = Object.keys(componentMapping).find(
+        key => componentMapping[key] === componentId
+      );
+
+      if (legacyKey && legacyResponse[legacyKey]) {
+        componentBasedResponse.components[componentId] = {
+          props: {
+            ...selected.props,
+            ...legacyResponse[legacyKey]
+          }
+        };
+      } else {
+        // Fallback for components not in legacy response
+        componentBasedResponse.components[componentId] = {
+          props: selected.props || {}
+        };
+      }
+    });
+
+    // Keep legacy format for backward compatibility
+    Object.keys(legacyResponse).forEach(key => {
+      if (key !== 'global' && !componentBasedResponse.components[key]) {
+        (componentBasedResponse as any)[key] = legacyResponse[key];
+      }
+    });
+
+    console.log("✅ Converted to component-based response:", componentBasedResponse);
+    return componentBasedResponse;
+  }
+
+  /**
+   * Normalize language to full name
+   */
+  private normalizeLanguage(language: string): string {
+    const normalized = language.toLowerCase();
+    if (normalized === 'th' || normalized === 'thai') return 'Thai';
+    if (normalized === 'en' || normalized === 'english') return 'English';
+    // Default to the original if not recognized
+    return language;
+  }
+
+  /**
    * Create prompt for AI
    */
   private createPrompt(request: AIGenerationRequest): string {
-    const { businessCategory, keywords, language } = request;
+    const { businessCategory, keywords, componentSelection } = request;
+    const language = this.normalizeLanguage(request.language);
+    
+    let componentContext = '';
+    if (componentSelection?.selectedComponents) {
+      componentContext = `
+
+COMPONENT CONTEXT:
+You are generating content for these specific components:
+${componentSelection.selectedComponents.map(comp => 
+  `- ${comp.componentId} (${comp.variantId}): ${JSON.stringify(comp.props)}`
+).join('\n')}
+
+Generate content that matches the component structure and props schema.`;
+    }
     
     return `Generate website content for a ${businessCategory} business.
 
 Keywords: ${keywords.join(", ")}
 Language: ${language}
+
+CRITICAL: Generate ALL content in ${language} language ONLY. This includes all titles, descriptions, labels, menu items, and any other text.${componentContext}
 
 Respond with ONLY valid JSON:
 
@@ -655,15 +791,15 @@ Respond with ONLY valid JSON:
     "title": "About title",
     "description": "About description",
     "features": [
-      {"title": "คุณสมบัติ 1", "description": "คำอธิบาย"},
-      {"title": "คุณสมบัติ 2", "description": "คำอธิบาย"},
-      {"title": "คุณสมบัติ 3", "description": "คำอธิบาย"}
+      {"title": "Feature 1", "description": "Feature description"},
+      {"title": "Feature 2", "description": "Feature description"},
+      {"title": "Feature 3", "description": "Feature description"}
     ],
     "stats": [
-      {"number": "100+", "label": "ลูกค้า"},
-      {"number": "5★", "label": "รีวิว"},
-      {"number": "24/7", "label": "บริการ"},
-      {"number": "100%", "label": "ความพึงพอใจ"}
+      {"number": "100+", "label": "Customers"},
+      {"number": "5★", "label": "Reviews"},
+      {"number": "24/7", "label": "Service"},
+      {"number": "100%", "label": "Satisfaction"}
     ]
   },
   "contact-basic": {
@@ -672,7 +808,13 @@ Respond with ONLY valid JSON:
     "address": "Full address",
     "phone": "Phone number",
     "email": "Email address",
-    "businessHours": "Business hours"
+    "businessHours": "Business hours",
+    "contactInfoTitle": "Contact Information",
+    "addressLabel": "Address",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "hoursLabel": "Business Hours",
+    "formTitle": "Send Us a Message"
   },
   "menu-basic": {
     "title": "Menu/Products/Services title",
@@ -718,7 +860,10 @@ Respond with ONLY valid JSON:
     "quickLinks": [],
     "address": "Address",
     "phone": "Phone",
-    "email": "Email"
+    "email": "Email",
+    "contactTitle": "Contact Us",
+    "phoneLabel": "Tel:",
+    "emailLabel": "Email:"
   },
   "theme-basic": {
     "primary": "green",
@@ -746,16 +891,20 @@ IMPORTANT:
   * Portfolio: design, creative, development, art, professional
 - IMPORTANT: Generate 4-6 menu items for a complete menu
 - Color selection rules:
-  * If keywords mention only ONE color (like "โทนสีเขียว"), use that color for BOTH primary and secondary (same color family)
-  * If keywords mention TWO colors (like "ฟ้า เขียว"), use the first color as primary and second as secondary
+  * If keywords mention only ONE color (like "green tone"), use that color for BOTH primary and secondary (same color family)
+  * If keywords mention TWO colors (like "blue green"), use the first color as primary and second as secondary
   * If no specific colors mentioned, choose appropriate colors for the business type
   * For single color requests, use the SAME color for both primary and secondary (e.g., both "green")
   * This creates a cohesive monochromatic color scheme
 - Brand name rules:
-  * If keywords mention a specific brand name (like "ชื่อ เจได"), extract ONLY the brand name part (e.g., "เจได")
-  * Do NOT include words like "ชื่อ" in the brand name
+  * If keywords mention a specific brand name (like "name JD"), extract ONLY the brand name part (e.g., "JD")
+  * Do NOT include words like "name" in the brand name
   * Keep the brand name simple and clean as requested
-  * Examples: "ชื่อ เจได" → "เจได", "ชื่อ ครัวไทย" → "ครัวไทย"`;
+  * Examples: "name JD" → "JD", "name Thai Kitchen" → "Thai Kitchen"
+- Contact and Footer labels MUST be in ${language}:
+  * For English: use "Contact Us", "Tel:", "Email:", "Contact Information", "Address", "Phone", "Business Hours", "Send Us a Message"
+  * For Thai: use "ติดต่อเรา", "โทร:", "อีเมล:", "ข้อมูลติดต่อ", "ที่อยู่", "โทรศัพท์", "เวลาทำการ", "ส่งข้อความถึงเรา"
+  * ALL label fields (contactTitle, phoneLabel, emailLabel, contactInfoTitle, addressLabel, hoursLabel, formTitle) must match the content language`;
   }
 
   /**
@@ -769,8 +918,12 @@ IMPORTANT:
     Make content engaging and professional.
     
     CRITICAL RULES:
-    - If keywords mention a specific brand name (like "ชื่อ เจได"), extract ONLY the brand name part (e.g., "เจได")
-    - Do NOT include words like "ชื่อ" in the brand name
+    - ALWAYS generate ALL content in the EXACT language specified in the user prompt
+    - If the language is "English", generate ALL text content in English
+    - If the language is "Thai", generate ALL text content in Thai
+    - The language applies to ALL fields: titles, descriptions, labels, menu items, etc.
+    - If keywords mention a specific brand name (like "name JD"), extract ONLY the brand name part (e.g., "JD")
+    - Do NOT include words like "name" in the brand name
     - Keep brand names simple and clean as requested
     
     IMPORTANT: Your response must be valid JSON that can be parsed directly.`;
@@ -816,6 +969,11 @@ IMPORTANT:
     request: AIGenerationRequest
   ): Promise<AIGenerationResponse> {
     const mockData = this.getMockData(request);
+    
+    // Convert to component-based format if component selection is provided
+    if (request.componentSelection?.selectedComponents) {
+      return this.convertToComponentBasedResponse(mockData, request.componentSelection);
+    }
 
     // Enhance hero section with dynamic image
     if (mockData["hero-basic"]) {
@@ -870,6 +1028,54 @@ IMPORTANT:
         global: {
           palette: { primary: "orange", secondary: "red", bgTone: "100" },
           tokens: { radius: "8px", spacing: "1rem" },
+        },
+        components: {
+          navbar: {
+            props: {
+              brandName: "ครัวไทย",
+              menuItems: [
+                { label: "หน้าแรก", link: "/" },
+                { label: "เมนู", link: "/menu" },
+                { label: "เกี่ยวกับเรา", link: "/about" },
+                { label: "ติดต่อ", link: "/contact" }
+              ]
+            }
+          },
+          hero: {
+            props: {
+              heading: "ลิ้มรสอาหารไทยแท้",
+              subheading: "ประสบการณ์ที่ไม่เหมือนใคร",
+              ctaLabel: "ดูเมนู"
+            }
+          },
+          about: {
+            props: {
+              title: "เกี่ยวกับเรา",
+              description: "ร้านอาหารไทยแท้ที่ให้บริการมากว่า 10 ปี",
+              features: [
+                { title: "สดใหม่", description: "ทุกวัน" },
+                { title: "รสชาติดั้งเดิม", description: "สูตรโบราณ" }
+              ]
+            }
+          },
+          contact: {
+            props: {
+              title: "ติดต่อเรา",
+              subtitle: "สอบถามข้อมูลเพิ่มเติม",
+              address: "123 ถ.สุขุมวิท กรุงเทพฯ",
+              phone: "02-123-4567",
+              email: "info@kruathai.com"
+            }
+          },
+          footer: {
+            props: {
+              brandName: "ครัวไทย",
+              description: "ร้านอาหารไทยแท้",
+              address: "123 ถ.สุขุมวิท กรุงเทพฯ",
+              phone: "02-123-4567",
+              copyright: "© 2024 ครัวไทย. สงวนลิขสิทธิ์"
+            }
+          }
         },
         "hero-basic": {
           badge: "ร้านอาหารไทยยอดนิยม",
@@ -938,6 +1144,7 @@ IMPORTANT:
         palette: { primary: "blue", secondary: "green", bgTone: "100" },
         tokens: { radius: "8px", spacing: "1rem" },
       },
+      components: {},
       "hero-basic": {
         badge: "Default Badge",
         heading: "Default Heading",

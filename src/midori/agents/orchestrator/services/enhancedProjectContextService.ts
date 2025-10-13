@@ -53,7 +53,7 @@ export class EnhancedProjectContextService {
         updatedAt: new Date()
       },
       userPreferences: {
-        language: 'th',
+        language: 'auto', // Auto-detect language from user input
         theme: 'light',
         autoSave: true,
         notifications: true,

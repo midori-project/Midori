@@ -152,7 +152,7 @@ class RealAgentClient {
       aiSettings: {
         model: 'gpt-5-nano',
         temperature: 1,
-        language: projectContext?.userPreferences?.language || 'th'
+        language: projectContext?.userPreferences?.language || 'auto'
       },
       priority: 'medium',
       metadata: {
@@ -280,7 +280,7 @@ class RealAgentClient {
       brandName: this.extractBrandName(projectContext),
       colorScheme: this.extractColorScheme(projectContext),
       layout: this.extractLayout(projectContext),
-      language: projectContext.userPreferences?.language || 'th',
+      language: projectContext.userPreferences?.language || 'auto', // Use 'auto' to let frontend detect language
       theme: projectContext.userPreferences?.theme || 'light'
     };
   }

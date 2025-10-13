@@ -601,7 +601,7 @@ export class FileStorageService {
       if (p === 'index.html') return 'config';
       if (p === 'vite.config.ts') return 'config';
       if (p === 'tailwind.config.js') return 'config';
-      if (p === 'postcss.config.cjs') return 'config';
+      if (p === 'postcss.config.js') return 'config';
       if (p === 'src/main.tsx') return 'page';
       if (p === 'src/App.tsx') return 'page';
       if (p.startsWith('src/pages/')) return 'page';

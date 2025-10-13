@@ -26,6 +26,7 @@ export interface ComponentVariant {
   previewImage?: string;
   tags: string[];
   score?: number;
+  propsSchema?: Record<string, any>; // Optional variant-specific props override
   metadata: VariantMetadata;
 }
 

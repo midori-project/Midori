@@ -171,9 +171,9 @@ export default defineConfig({
         required: true,
         description: 'TypeScript configuration'
       },
-      'postcss.config.cjs': {
-        path: 'postcss.config.cjs',
-        content: `module.exports = {
+      'postcss.config.js': {
+        path: 'postcss.config.js',
+        content: `export default {
   plugins: {
     tailwindcss: {},
     autoprefixer: {},

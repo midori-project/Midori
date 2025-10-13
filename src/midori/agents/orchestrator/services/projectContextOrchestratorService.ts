@@ -108,7 +108,7 @@ export class ProjectContextOrchestratorService {
     
     // สร้าง user preferences
     const userPreferences = ProjectContextFactory.createUserPreferences({
-      language: 'th',
+      language: 'auto', // Auto-detect language from user input
       theme: 'light'
     });
 

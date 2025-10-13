@@ -720,7 +720,7 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
                   templateType: command.payload.projectContext?.projectType || 'e_commerce',
                   customizations: {
                     theme: command.payload.projectContext?.userPreferences?.theme || 'light',
-                    language: command.payload.projectContext?.userPreferences?.language || 'th'
+                    language: command.payload.projectContext?.userPreferences?.language || 'auto'
                   },
                   projectContext: command.payload.projectContext
                 }

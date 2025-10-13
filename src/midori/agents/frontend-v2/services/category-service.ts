@@ -51,7 +51,7 @@ export class CategoryService {
   async detectCategory(options: CategoryDetectionOptions): Promise<BusinessCategoryManifest | undefined> {
     const { id, keywords, userInput, useLLM = false, fallbackToDefault = true } = options;
     
-    console.log('🔍 Category detection:', options);
+    // console.log('🔍 Category detection:', options); // Reduced logging
     
     // 1. If ID provided, find by ID
     if (id) {
@@ -93,7 +93,7 @@ export class CategoryService {
    * Keyword-based category detection with scoring
    */
   private async detectCategoryByKeywords(keywords: string[]): Promise<BusinessCategoryManifest | undefined> {
-    console.log('Matching keywords:', keywords);
+    // console.log('Matching keywords:', keywords); // Reduced logging
     
     let bestMatch: { category: BusinessCategoryManifest; score: number } | null = null;
     
@@ -139,7 +139,7 @@ export class CategoryService {
         }
       }
       
-      console.log(`Category ${category.id} score: ${score}`);
+      // console.log(`Category ${category.id} score: ${score}`); // Reduced logging
       
       if (score > 0 && (!bestMatch || score > bestMatch.score)) {
         bestMatch = { category, score };
@@ -147,7 +147,7 @@ export class CategoryService {
     }
     
     if (bestMatch && bestMatch.score >= 2) {
-      console.log(`Selected category: ${bestMatch.category.id} with score: ${bestMatch.score}`);
+      console.log(`✅ Selected category: ${bestMatch.category.id} (score: ${bestMatch.score})`);
       return bestMatch.category;
     }
     

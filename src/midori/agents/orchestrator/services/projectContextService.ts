@@ -75,8 +75,8 @@ export class ProjectContextService {
           updatedAt: new Date()
         })),
         userPreferences: JSON.parse(JSON.stringify(input.userPreferences || {
-          language: 'th',
-          theme: 'light',
+          language: 'auto', // Auto-detect language from user input
+          theme: 'auto',
           autoSave: true,
           notifications: true,
           customSettings: {},

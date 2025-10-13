@@ -10,6 +10,7 @@ import { ThemePackGenerator } from '../theme-pack';
 import { BlueprintSelector } from '../blueprint';
 import { AIService } from '../services/ai-service';
 import { ProjectStructureGenerator } from '../template-system/project-structure-generator';
+import { categoryService } from '../services/category-service';
 import type { FrontendTaskV2, ComponentResultV2 } from '../schemas/types';
 import type { SelectionContext, ComponentSelection } from '../component-library/types';
 import type { ThemePack, Blueprint } from '../../orchestrator/types/enhancedProjectContext';
@@ -19,6 +20,7 @@ export class ComponentAdapter {
   private projectGenerator: ProjectStructureGenerator;
   private componentRenderer: ComponentRenderer;
   private initialized: boolean = false;
+  private categoryCache: Map<string, string> = new Map(); // Cache for category detection
 
   constructor() {
     this.aiService = new AIService();
@@ -55,15 +57,15 @@ export class ComponentAdapter {
       this.initializeIfNeeded();
 
       // 2. Generate ThemePack
-      const themePack = this.generateThemePack(task);
+      const themePack = await this.generateThemePack(task);
       console.log('🎨 ThemePack generated:', themePack.name);
 
       // 3. Select Blueprint
-      const blueprint = this.selectBlueprint(task);
+      const blueprint = await this.selectBlueprint(task);
       console.log('🏗️ Blueprint selected:', blueprint.name);
 
       // 4. Create Selection Context
-      const selectionContext = this.createSelectionContext(task);
+      const selectionContext = await this.createSelectionContext(task);
       console.log('🎯 Selection Context:', selectionContext);
 
       // 5. Select Components
@@ -147,8 +149,8 @@ export class ComponentAdapter {
   /**
    * Create Selection Context from Task
    */
-  private createSelectionContext(task: FrontendTaskV2): SelectionContext {
-    const businessCategory = task.businessCategory || this.detectBusinessCategory(task.keywords || []);
+  private async createSelectionContext(task: FrontendTaskV2): Promise<SelectionContext> {
+    const businessCategory = task.businessCategory || await this.detectBusinessCategory(task.keywords || []);
     
     const context: SelectionContext = {
       businessCategory,
@@ -161,7 +163,7 @@ export class ComponentAdapter {
         colorScheme: this.detectColorScheme(task),
         layoutStyle: this.detectLayoutStyle(task),
         complexity: this.detectComplexity(task),
-        language: (task.aiSettings?.language === 'auto' ? 'th' : task.aiSettings?.language) || 'th'
+        language: this.detectLanguage(task) === 'English' ? 'en' : 'th'
       }
     };
     
@@ -309,6 +311,31 @@ export class ComponentAdapter {
   }
 
   /**
+   * Detect language from keywords or user input
+   */
+  private detectLanguage(task: FrontendTaskV2): string {
+    // If explicitly set and not 'auto', use that
+    if (task.aiSettings?.language && task.aiSettings.language !== 'auto') {
+      return task.aiSettings.language === 'en' ? 'English' : 'Thai';
+    }
+
+    // Detect from keywords
+    const keywords = task.keywords || [];
+    const allText = keywords.join(' ');
+    
+    // Check if contains Thai characters
+    const hasThaiChars = /[\u0E00-\u0E7F]/.test(allText);
+    
+    // If has Thai characters, use Thai
+    if (hasThaiChars) {
+      return 'Thai';
+    }
+    
+    // If all English (no Thai), use English
+    return 'English';
+  }
+
+  /**
    * Create AI request
    */
   private createAIRequest(
@@ -320,17 +347,25 @@ export class ComponentAdapter {
     language: string;
     model?: string | undefined;
     temperature?: number | undefined;
+    selectedComponents?: Array<{
+      id: string;
+      name: string;
+      category: string;
+      propsSchema: Record<string, any>;
+      template: string;
+    }>;
+    componentSelection?: {
+      selectedComponents: Array<{
+        componentId: string;
+        variantId: string;
+        props: Record<string, any>;
+      }>;
+    };
   } {
-    const request: {
-      businessCategory: string;
-      keywords: string[];
-      language: string;
-      model?: string;
-      temperature?: number;
-    } = {
+    const request: any = {
       businessCategory: task.businessCategory || 'business',
       keywords: task.keywords || [],
-      language: task.aiSettings?.language === 'auto' ? 'th' : (task.aiSettings?.language || 'th')
+      language: this.detectLanguage(task)
     };
     
     if (task.aiSettings?.model) {
@@ -340,6 +375,17 @@ export class ComponentAdapter {
     if (task.aiSettings?.temperature !== undefined) {
       request.temperature = task.aiSettings.temperature;
     }
+
+    // Add component context for AI
+    if (componentSelection?.selectedComponents) {
+      request.componentSelection = {
+        selectedComponents: componentSelection.selectedComponents.map(selected => ({
+          componentId: selected.componentId,
+          variantId: selected.variantId,
+          props: selected.props || {}
+        }))
+      };
+    }
     
     return request;
   }
@@ -347,13 +393,13 @@ export class ComponentAdapter {
   /**
    * Generate ThemePack from task
    */
-  private generateThemePack(task: FrontendTaskV2): ThemePack {
+  private async generateThemePack(task: FrontendTaskV2): Promise<ThemePack> {
     const styles = this.extractStyles(task);
     const style = styles[0] || 'modern';
     const tone = this.detectTone(task);
     
     // Detect business category from keywords if not provided
-    const businessCategory = task.businessCategory || this.detectBusinessCategory(task.keywords || []);
+    const businessCategory = task.businessCategory || await this.detectBusinessCategory(task.keywords || []);
     
     return ThemePackGenerator.generate({
       businessCategory,
@@ -367,8 +413,8 @@ export class ComponentAdapter {
   /**
    * Select Blueprint from task
    */
-  private selectBlueprint(task: FrontendTaskV2): Blueprint {
-    const businessCategory = task.businessCategory || this.detectBusinessCategory(task.keywords || []);
+  private async selectBlueprint(task: FrontendTaskV2): Promise<Blueprint> {
+    const businessCategory = task.businessCategory || await this.detectBusinessCategory(task.keywords || []);
     
     return BlueprintSelector.select({
       businessCategory,
@@ -378,25 +424,40 @@ export class ComponentAdapter {
   }
 
   /**
-   * Detect business category from keywords
+   * Detect business category using Category Service (LLM + Keyword matching) with caching
    */
-  private detectBusinessCategory(keywords: string[]): string {
-    const lowerKeywords = keywords.map(k => k.toLowerCase());
-    
-    if (lowerKeywords.some(k => k.includes('ร้านอาหาร') || k.includes('restaurant') || k.includes('อาหาร'))) {
-      return 'restaurant';
+  private async detectBusinessCategory(keywords: string[]): Promise<string> {
+    try {
+      const cacheKey = keywords.join('|');
+      
+      // Check cache first
+      if (this.categoryCache.has(cacheKey)) {
+        const cachedCategory = this.categoryCache.get(cacheKey)!;
+        console.log(`✅ Category from cache: ${cachedCategory}`);
+        return cachedCategory;
+      }
+      
+      const userInput = keywords.join(' ');
+      const category = await categoryService.detectCategory({
+        keywords,
+        userInput,
+        useLLM: true, // ใช้ LLM detection
+        fallbackToDefault: true
+      });
+      
+      if (category) {
+        // Cache the result
+        this.categoryCache.set(cacheKey, category.id);
+        console.log(`✅ Category detected: ${category.id}`);
+        return category.id;
+      }
+      
+      console.log('⚠️ No category detected, using default: business');
+      return 'business';
+    } catch (error) {
+      console.error('❌ Category detection failed:', error);
+      return 'business';
     }
-    if (lowerKeywords.some(k => k.includes('ขาย') || k.includes('ecommerce') || k.includes('shop'))) {
-      return 'ecommerce';
-    }
-    if (lowerKeywords.some(k => k.includes('portfolio') || k.includes('ผลงาน'))) {
-      return 'portfolio';
-    }
-    if (lowerKeywords.some(k => k.includes('สุขภาพ') || k.includes('healthcare'))) {
-      return 'healthcare';
-    }
-    
-    return 'business';
   }
 
   /**
@@ -416,7 +477,7 @@ export class ComponentAdapter {
     this.componentRenderer.registerComponents(allComponents);
 
     // 2. Generate blueprint and layout
-    const blueprint = this.selectBlueprint(task);
+    const blueprint = await this.selectBlueprint(task);
     const layout = this.generateLayoutConfig(blueprint);
 
     // 3. Apply AI generated data to component selection
@@ -670,13 +731,28 @@ export class ComponentAdapter {
   ): ComponentSelection {
     const enhancedSelection = { ...componentSelection };
     
-    enhancedSelection.selectedComponents = componentSelection.selectedComponents.map(comp => ({
-      ...comp,
-      props: {
-        ...comp.props,
-        ...aiGeneratedData[comp.componentId]
-      }
-    }));
+    // Map component IDs to AI data keys
+    const componentDataMap: Record<string, string> = {
+      'navbar': 'navbar-basic',
+      'hero': 'hero-basic',
+      'about': 'about-basic',
+      'contact': 'contact-basic',
+      'footer': 'footer-basic',
+      'menu': 'menu-basic'
+    };
+    
+    enhancedSelection.selectedComponents = componentSelection.selectedComponents.map(comp => {
+      const dataKey = componentDataMap[comp.componentId] || comp.componentId;
+      const aiData = aiGeneratedData[dataKey] || aiGeneratedData.components?.[comp.componentId]?.props || {};
+      
+      return {
+        ...comp,
+        props: {
+          ...comp.props,
+          ...aiData
+        }
+      };
+    });
 
     return enhancedSelection;
   }

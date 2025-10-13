@@ -52,30 +52,34 @@ export const NAVBAR_COMPONENTS: ComponentDefinition[] = [
         style: 'modern',
         layout: 'flex',
         tags: ['modern', 'horizontal'],
-        template: `
-          <nav className="bg-white shadow-md">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center h-16">
-                <div className="flex items-center">
-                  {logo && <img src="{logo}" alt="{logoAlt}" className="h-8 w-auto" />}
-                  <span className="ml-2 text-xl font-bold text-gray-800">{brandName}</span>
-                </div>
-                <div className="hidden md:flex space-x-8">
-                  {#each menuItems}
-                    <a href="{item.link}" className="text-gray-700 hover:text-blue-600 px-3 py-2">
-                      {item.label}
-                    </a>
-                  {/each}
-                </div>
-                {#if ctaLabel}
-                  <a href="{ctaLink}" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    {ctaLabel}
-                  </a>
-                {/if}
-              </div>
-            </div>
-          </nav>
-        `,
+        template: `export default function Navbar(props: any) {
+  const { logo, logoAlt, brandName, menuItems, ctaLabel, ctaLink } = props;
+  
+  return (
+    <nav className="bg-white shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            {logo && <img src={logo} alt={logoAlt} className="h-8 w-auto" />}
+            <span className="ml-2 text-xl font-bold text-gray-800">{brandName}</span>
+          </div>
+          <div className="hidden md:flex space-x-8">
+            {menuItems?.map((item, index) => (
+              <a key={index} href={item.link} className="text-gray-700 hover:text-primary-600 px-3 py-2">
+                {item.label}
+              </a>
+            ))}
+          </div>
+          {ctaLabel && (
+            <a href={ctaLink} className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded">
+              {ctaLabel}
+            </a>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}`,
         metadata: {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -91,38 +95,37 @@ export const NAVBAR_COMPONENTS: ComponentDefinition[] = [
         style: 'modern',
         layout: 'centered',
         tags: ['modern', 'centered'],
-        template: `
-          <nav className="bg-white shadow-md">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center h-16">
-                <div className="flex space-x-4">
-                  {#each menuItems}
-                    {#if index < menuItems.length / 2}
-                      <a href="{item.link}" className="text-gray-700 hover:text-blue-600 px-3 py-2">
-                        {item.label}
-                      </a>
-                    {/if}
-                  {/each}
-                </div>
-                <div className="flex items-center">
-                  {#if logo}
-                    <img src="{logo}" alt="{logoAlt}" className="h-10 w-auto" />
-                  {/if}
-                  <span className="ml-2 text-2xl font-bold text-gray-800">{brandName}</span>
-                </div>
-                <div className="flex space-x-4">
-                  {#each menuItems}
-                    {#if index >= menuItems.length / 2}
-                      <a href="{item.link}" className="text-gray-700 hover:text-blue-600 px-3 py-2">
-                        {item.label}
-                      </a>
-                    {/if}
-                  {/each}
-                </div>
-              </div>
-            </div>
-          </nav>
-        `,
+        template: `export default function Navbar(props: any) {
+  const { logo, logoAlt, brandName, menuItems } = props;
+  const halfIndex = Math.floor((menuItems?.length || 0) / 2);
+  
+  return (
+    <nav className="bg-white shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex space-x-4">
+            {menuItems?.slice(0, halfIndex).map((item, index) => (
+              <a key={index} href={item.link} className="text-gray-700 hover:text-primary-600 px-3 py-2">
+                {item.label}
+              </a>
+            ))}
+          </div>
+          <div className="flex items-center">
+            {logo && <img src={logo} alt={logoAlt} className="h-10 w-auto" />}
+            <span className="ml-2 text-2xl font-bold text-gray-800">{brandName}</span>
+          </div>
+          <div className="flex space-x-4">
+            {menuItems?.slice(halfIndex).map((item, index) => (
+              <a key={index + halfIndex} href={item.link} className="text-gray-700 hover:text-primary-600 px-3 py-2">
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}`,
         metadata: {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -138,22 +141,26 @@ export const NAVBAR_COMPONENTS: ComponentDefinition[] = [
         style: 'minimal',
         layout: 'flex',
         tags: ['minimal', 'clean'],
-        template: `
-          <nav className="border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center h-14">
-                <span className="text-lg font-semibold text-gray-900">{brandName}</span>
-                <div className="flex space-x-6">
-                  {#each menuItems}
-                    <a href="{item.link}" className="text-gray-600 hover:text-gray-900 text-sm">
-                      {item.label}
-                    </a>
-                  {/each}
-                </div>
-              </div>
-            </div>
-          </nav>
-        `,
+        template: `export default function Navbar(props: any) {
+  const { brandName, menuItems } = props;
+  
+  return (
+    <nav className="border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14">
+          <span className="text-lg font-semibold text-gray-900">{brandName}</span>
+          <div className="flex space-x-6">
+            {menuItems?.map((item, index) => (
+              <a key={index} href={item.link} className="text-gray-600 hover:text-gray-900 text-sm">
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}`,
         metadata: {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),

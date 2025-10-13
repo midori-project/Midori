@@ -76,7 +76,7 @@ export async function testViteReactProjectGeneration() {
           'vite.config.ts',
           'tsconfig.json',
           'tailwind.config.js',
-          'postcss.config.cjs',
+          'postcss.config.js',
           'index.html',
           'src/main.tsx',
           'src/App.tsx',

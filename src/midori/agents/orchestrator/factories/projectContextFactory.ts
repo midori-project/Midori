@@ -378,8 +378,8 @@ export class ProjectContextFactory {
     customPreferences?: Partial<UserPreferencesData>
   ): UserPreferencesData {
     return {
-      language: 'th',
-      theme: 'light',
+      language: 'auto', // Auto-detect language from user input
+      theme: 'auto',
       autoSave: true,
       notifications: true,
       customSettings: {},
