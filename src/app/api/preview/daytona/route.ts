@@ -179,7 +179,7 @@ class DaytonaCleanupService {
     // ⏱️ Idle timeout: 5 นาที (frontend ส่ง heartbeat ทุก 2 นาที)
     // ดังนั้น ถ้าหน้าเว็บยังเปิดอยู่ จะมี heartbeat มาเรื่อยๆ และไม่ถูกลบ
     // แต่ถ้าปิดหน้าเว็บไปแล้ว จะไม่มี heartbeat และหลัง 5 นาที sandbox จะถูกลบ
-    const idleTimeout = 5 * 60 * 1000 // 5 นาที
+    const idleTimeout = 10 * 60 * 1000 // 10 นาที
     let cleanedCount = 0
     let errorCount = 0
 

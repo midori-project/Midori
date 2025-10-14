@@ -1,5 +1,25 @@
 import { BusinessCategoryManifest } from "../index";
 
+// ===== Helper Function: Random Variant Selector =====
+/**
+ * สุ่ม variant ID จากรายการที่กำหนด
+ * @param variants - Array ของ variant IDs ที่ต้องการสุ่ม
+ * @returns variant ID ที่ถูกสุ่มเลือก
+ */
+function getRandomVariant(variants: string[]): string {
+  if (variants.length === 0) {
+    throw new Error('Variants array cannot be empty');
+  }
+  const randomIndex = Math.floor(Math.random() * variants.length);
+  return variants[randomIndex] as string;
+}
+
+// ===== Available Variants =====
+const HERO_VARIANTS = ['hero-stats', 'hero-split', 'hero-fullscreen', 'hero-minimal', 'hero-cards'];
+const ABOUT_VARIANTS = ['about-split', 'about-team', 'about-timeline', 'about-minimal'];
+const FOOTER_VARIANTS = ['footer-minimal', 'footer-centered', 'footer-mega'];
+const MENU_VARIANTS = ['menu-list', 'menu-masonry', 'menu-carousel'];
+
 // Restaurant Business Categories
 export const restaurantCategories: BusinessCategoryManifest[] = [
   {
@@ -22,7 +42,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'hero-basic',
-        variantId: 'hero-stats',
+        variantId: getRandomVariant(HERO_VARIANTS), // 🎲 Random variant ทุกครั้งที่โหลด
         required: true,
         customizations: {
           badge: 'ร้านอาหารคุณภาพ',
@@ -40,6 +60,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'about-basic',
+        variantId: getRandomVariant(ABOUT_VARIANTS), // 🎲 Random variant
         required: false,
         customizations: {
           title: 'เกี่ยวกับร้านอาหารของเรา',
@@ -59,6 +80,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'menu-basic',
+        variantId: getRandomVariant(MENU_VARIANTS), // 🎲 Random variant
         required: true,
         customizations: {
           title: 'เมนูอาหาร',
@@ -84,6 +106,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'footer-basic',
+        variantId: getRandomVariant(FOOTER_VARIANTS), // 🎲 Random variant
         required: true,
         customizations: {
           companyName: 'ร้านอาหารฟ้าสดใส',
