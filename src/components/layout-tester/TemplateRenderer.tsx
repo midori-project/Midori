@@ -3,14 +3,16 @@
 import React from 'react';
 import { BusinessCategoryManifest } from '@/midori/agents/frontend-v2/template-system/business-categories';
 import { BlockVariant } from '@/midori/agents/frontend-v2/template-system/shared-blocks/index';
+import { COLOR_MAP, getColorValue } from './ColorMapper';
 
 interface TemplateRendererProps {
   category: BusinessCategoryManifest;
   variant: BlockVariant;
+  customMockData?: Record<string, any>;
 }
 
 // Mock data ที่ใช้แทน placeholders
-const getMockData = (category: BusinessCategoryManifest) => ({
+const getMockData = (category: BusinessCategoryManifest, customData?: Record<string, any>) => ({
   badge: 'Sample Badge',
   heading: 'Sample Heading',
   subheading: 'This is a sample subheading that demonstrates how the template would look with real content.',
@@ -25,7 +27,9 @@ const getMockData = (category: BusinessCategoryManifest) => ({
   stat3: '5★',
   stat3Label: 'Rating',
   primary: category.globalSettings.palette.primary,
-  secondary: category.globalSettings.palette.secondary || category.globalSettings.palette.primary
+  secondary: category.globalSettings.palette.secondary || category.globalSettings.palette.primary,
+  // Override with custom data
+  ...customData,
 });
 
 // Component สำหรับ render template จริง
@@ -113,7 +117,7 @@ export function StaticTemplateRenderer({ category, variant }: TemplateRendererPr
   htmlTemplate = htmlTemplate.replace(/export default function.*?{/, '');
   
   // Extract JSX content (between return and closing brace)
-  const jsxMatch = htmlTemplate.match(/return\s*\((.*?)\)\s*;?\s*}\s*;?\s*$/s);
+  const jsxMatch = htmlTemplate.match(/return\s*\(([\s\S]*?)\)\s*;?\s*}\s*;?\s*$/);
   const jsxContent = jsxMatch ? jsxMatch[1] : htmlTemplate;
   
   // Convert JSX to HTML
@@ -136,24 +140,54 @@ export function StaticTemplateRenderer({ category, variant }: TemplateRendererPr
   );
 }
 
-// Enhanced renderer with better error handling
-export function EnhancedTemplateRenderer({ category, variant }: TemplateRendererProps) {
-  const mockData = getMockData(category);
+// แปลง Tailwind color classes เป็น inline styles
+function convertTailwindColorsToInlineStyles(html: string, primaryColor: string, secondaryColor: string): string {
+  let processed = html;
   
-  // Get the hero block customization from category
-  const heroBlock = category.blocks.find(block => block.blockId === 'hero-basic');
-  const customizations = heroBlock?.customizations || {};
+  // แปลง bg-{color}-{shade} เป็น inline style
+  processed = processed.replace(/class="([^"]*?)bg-([a-z]+)-(\d+)([^"]*?)"/g, (match, before, color, shade, after) => {
+    const actualColor = color === 'primary' ? primaryColor : color === 'secondary' ? secondaryColor : color;
+    const colorValue = getColorValue(actualColor, parseInt(shade));
+    const cleanClass = `${before}${after}`.trim();
+    return `class="${cleanClass}" style="background-color: ${colorValue}"`;
+  });
+  
+  // แปลง text-{color}-{shade}
+  processed = processed.replace(/class="([^"]*?)text-([a-z]+)-(\d+)([^"]*?)"/g, (match, before, color, shade, after) => {
+    const actualColor = color === 'primary' ? primaryColor : color === 'secondary' ? secondaryColor : color;
+    const colorValue = getColorValue(actualColor, parseInt(shade));
+    const cleanClass = `${before}${after}`.trim();
+    const existingStyle = match.match(/style="([^"]*)"/)?.[1] || '';
+    return `class="${cleanClass}" style="${existingStyle}; color: ${colorValue}".replace(/;+/g, ';').trim()`;
+  });
+  
+  // แปลง border-{color}-{shade}
+  processed = processed.replace(/class="([^"]*?)border-([a-z]+)-(\d+)([^"]*?)"/g, (match, before, color, shade, after) => {
+    const actualColor = color === 'primary' ? primaryColor : color === 'secondary' ? secondaryColor : color;
+    const colorValue = getColorValue(actualColor, parseInt(shade));
+    const cleanClass = `${before}${after}`.trim();
+    const existingStyle = match.match(/style="([^"]*)"/)?.[1] || '';
+    return `class="${cleanClass}" style="${existingStyle}; border-color: ${colorValue}".replace(/;+/g, ';').trim()`;
+  });
+  
+  return processed;
+}
+
+// Enhanced renderer with better error handling
+export function EnhancedTemplateRenderer({ category, variant, customMockData }: TemplateRendererProps) {
+  const mockData = getMockData(category, customMockData);
+  
+  // Get the block customization from category
+  const blockCustomization = category.blocks.find(block => 
+    block.blockId === variant.id.split('-')[0] + '-basic' || 
+    block.blockId === 'hero-basic'
+  );
+  const customizations = blockCustomization?.customizations || {};
   
   // Merge customizations with mock data
   const finalData = {
     ...mockData,
     ...customizations,
-    // Override with category-specific data
-    badge: customizations.badge || mockData.badge,
-    heading: customizations.heading || mockData.heading,
-    subheading: customizations.subheading || mockData.subheading,
-    ctaLabel: customizations.ctaLabel || mockData.ctaLabel,
-    secondaryCta: customizations.secondaryCta || mockData.secondaryCta,
   };
   
   // Process template
@@ -178,20 +212,42 @@ export function EnhancedTemplateRenderer({ category, variant }: TemplateRenderer
   processedTemplate = processedTemplate.replace(/export default function.*?{/, '');
   
   // Extract JSX content
-  const jsxMatch = processedTemplate.match(/return\s*\((.*?)\)\s*;?\s*}\s*;?\s*$/s);
+  const jsxMatch = processedTemplate.match(/return\s*\(([\s\S]*?)\)\s*;?\s*}\s*;?\s*$/);
   const jsxContent = jsxMatch ? jsxMatch[1] : processedTemplate;
   
-  // Convert JSX to HTML
+  // Convert JSX to HTML with better handling
   let htmlContent = jsxContent
     .replace(/className=/g, 'class=')
     .replace(/\/>/g, '/>')
     .replace(/\{([^}]+)\}/g, (match, content) => {
-      // Handle simple expressions
+      // Handle conditional expressions
       if (content.includes('&&')) {
         return ''; // Remove conditional rendering for static preview
       }
+      // Handle ternary operators
+      if (content.includes('?')) {
+        return ''; // Remove ternary for static preview
+      }
+      // Handle function calls
+      if (content.includes('(') && content.includes(')')) {
+        return ''; // Remove function calls for static preview
+      }
       return content;
-    });
+    })
+    // Remove onClick and other event handlers
+    .replace(/\s+onClick="[^"]*"/g, '')
+    .replace(/\s+onChange="[^"]*"/g, '')
+    .replace(/\s+onSubmit="[^"]*"/g, '')
+    // Remove useState and other React hooks
+    .replace(/const\s+\[[^\]]+\]\s*=\s*useState\([^)]*\);?\s*/g, '')
+    .replace(/const\s+\[[^\]]+\]\s*=\s*useEffect\([^)]*\);?\s*/g, '')
+    // Clean up template literals
+    .replace(/`[^`]*`/g, '')
+    // Remove style objects
+    .replace(/style=\{\{[^}]*\}\}/g, '');
+  
+  // แปลง Tailwind colors เป็น inline styles
+  htmlContent = convertTailwindColorsToInlineStyles(htmlContent, finalData.primary, finalData.secondary);
 
   // Fallback to mock preview if template processing fails
   const renderFallbackPreview = () => (
