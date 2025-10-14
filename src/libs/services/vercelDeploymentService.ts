@@ -6,11 +6,16 @@ const MAIN_DOMAIN = process.env.MAIN_DOMAIN || 'midori.lol';
 
 type FileItem = { file: string; data: string };
 
-export async function deployStaticSite(subdomain: string, files: FileItem[]) {
+export async function deployStaticSite(
+  subdomain: string, 
+  files: FileItem[],
+  customDomain?: string  // 🆕 รองรับ custom domain
+) {
   if (!VERCEL_TOKEN) throw new Error('Missing VERCEL_TOKEN');
 
   console.log(`🚀 Starting deployment for: ${subdomain}`);
   console.log(`📁 Files to deploy: ${files.length}`);
+  if (customDomain) console.log(`🌐 Custom domain: ${customDomain}`);
 
   const { data } = await axios.post(
     'https://api.vercel.com/v13/deployments',
@@ -34,7 +39,9 @@ export async function deployStaticSite(subdomain: string, files: FileItem[]) {
   const deploymentId = data.id;
   console.log(`✅ Deployment created: ${deploymentId}`);
 
-  const domain = `${subdomain}.${MAIN_DOMAIN}`;
+  // 🆕 ใช้ custom domain ถ้ามี ไม่งั้นใช้ subdomain ของ midori.lol
+  const domain = customDomain || `${subdomain}.${MAIN_DOMAIN}`;
+  
   try {
     await axios.post(
       `https://api.vercel.com/v9/projects/${subdomain}/domains`,
@@ -44,7 +51,7 @@ export async function deployStaticSite(subdomain: string, files: FileItem[]) {
         params: VERCEL_TEAM_ID ? { teamId: VERCEL_TEAM_ID } : undefined,
       }
     );
-    console.log(`✅ Custom domain added: ${domain}`);
+    console.log(`✅ Domain added: ${domain}`);
   } catch (e: any) {
     if (e?.response?.status !== 409) {
       console.warn(

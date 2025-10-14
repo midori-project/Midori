@@ -82,8 +82,9 @@ export function useDeployment(projectId: string, projectName: string) {
 
   /**
    * Deploy โปรเจค
+   * @param customDomain - (Optional) custom domain ของผู้ใช้ เช่น www.mawza.lol
    */
-  const deploy = useCallback(async () => {
+  const deploy = useCallback(async (customDomain?: string) => {
     const autoSubdomain = generateSubdomain(projectName || projectId);
 
     if (!autoSubdomain) {
@@ -96,14 +97,19 @@ export function useDeployment(projectId: string, projectName: string) {
     setDeploymentSuccess(null);
 
     try {
+      const deployDomain = customDomain || `${autoSubdomain}.midori.lol`;
       console.log(`🚀 Starting deployment for ${projectId} with subdomain: ${autoSubdomain}`);
+      if (customDomain) console.log(`🌐 Custom domain: ${customDomain}`);
 
       const response = await fetch(`/api/projects/${projectId}/deploy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ subdomain: autoSubdomain }),
+        body: JSON.stringify({ 
+          subdomain: autoSubdomain,
+          customDomain: customDomain || undefined,  // 🆕 ส่ง customDomain ไปด้วย
+        }),
       });
 
       const result = await response.json();
@@ -116,7 +122,7 @@ export function useDeployment(projectId: string, projectName: string) {
 
       setDeploymentSuccess({
         url: result.deployment.url,
-        subdomain: result.deployment.subdomain,
+        subdomain: result.deployment.customDomain || result.deployment.subdomain,  // แสดง custom domain ถ้ามี
         deployedAt: result.deployment.deployedAt,
       });
 

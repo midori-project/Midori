@@ -14,7 +14,7 @@ export async function POST(
 ) {
   try {
     const { id } = params;
-    const { subdomain } = await req.json();
+    const { subdomain, customDomain } = await req.json();
 
     // ✅ Validate subdomain format
     if (!subdomain || !/^[a-z0-9-]{1,50}$/.test(subdomain)) {
@@ -27,7 +27,22 @@ export async function POST(
       );
     }
 
+    // 🆕 Validate custom domain ถ้ามี
+    if (customDomain) {
+      // ตรวจสอบ format: www.example.com หรือ example.com หรือ subdomain.example.com
+      if (!/^([a-z0-9-]+\.)*[a-z0-9-]+\.[a-z]{2,}$/i.test(customDomain)) {
+        return NextResponse.json(
+          { 
+            success: false,
+            error: 'รูปแบบโดเมนไม่ถูกต้อง (ตัวอย่าง: www.mawza.lol หรือ mawza.lol)' 
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     console.log(`🚀 [DEPLOY] Starting deployment for project: ${id}, subdomain: ${subdomain}`);
+    if (customDomain) console.log(`🌐 [DEPLOY] Custom domain: ${customDomain}`);
 
     // ✅ ดึงข้อมูลโปรเจคและ snapshot ล่าสุด
     const project = await (prisma as any).project.findUnique({
@@ -95,8 +110,8 @@ export async function POST(
 
     console.log(`📦 [DEPLOY] Prepared files:`, vercelFiles.map((f: any) => f.file).slice(0, 10));
 
-    // ✅ เริ่ม deploy
-    const deployResult = await deployStaticSite(subdomain, vercelFiles);
+    // ✅ เริ่ม deploy พร้อม custom domain (ถ้ามี)
+    const deployResult = await deployStaticSite(subdomain, vercelFiles, customDomain);
     
     console.log(`✅ [DEPLOY] Deployment successful: ${deployResult.url}`);
 
@@ -117,6 +132,7 @@ export async function POST(
           state: 'ready',
           meta: {
             subdomain,
+            customDomain: customDomain || null,  // 🆕 เก็บ custom domain
             snapshotId: latestSnapshot.id,
             filesCount: files.length,
             deployedAt: new Date().toISOString(),
@@ -124,7 +140,7 @@ export async function POST(
           },
         },
       });
-      console.log(`💾 [DEPLOY] Deployment record updated: ${deployment.id} (ทับ subdomain เดิม)`);
+      console.log(`💾 [DEPLOY] Deployment record updated: ${deployment.id} (ทับ ${customDomain || 'subdomain'} เดิม)`);
     } else {
       // ✅ สร้าง deployment ใหม่
       deployment = await (prisma as any).deployment.create({
@@ -135,6 +151,7 @@ export async function POST(
           url: deployResult.url,
           meta: {
             subdomain,
+            customDomain: customDomain || null,  // 🆕 เก็บ custom domain
             snapshotId: latestSnapshot.id,
             filesCount: files.length,
             deployedAt: new Date().toISOString(),
@@ -142,7 +159,7 @@ export async function POST(
           },
         },
       });
-      console.log(`💾 [DEPLOY] Deployment record created: ${deployment.id} (subdomain ใหม่)`);
+      console.log(`💾 [DEPLOY] Deployment record created: ${deployment.id} (${customDomain ? 'custom domain' : 'subdomain'} ใหม่)`);
     }
 
     // ✅ ส่งผลลัพธ์กลับ
@@ -152,6 +169,7 @@ export async function POST(
         id: deployment.id,
         url: deployResult.url,
         subdomain,
+        customDomain: customDomain || null,  // 🆕 ส่ง custom domain กลับด้วย
         projectName: project.name,
         projectDescription: project.description,
         snapshotId: latestSnapshot.id,
@@ -167,7 +185,7 @@ export async function POST(
     try {
       const { id } = params;
       const body = await req.json();
-      const { subdomain } = body;
+      const { subdomain, customDomain } = body;
       
       await (prisma as any).deployment.create({
         data: {
@@ -176,6 +194,7 @@ export async function POST(
           state: 'failed',
           meta: {
             subdomain,
+            customDomain: customDomain || null,  // 🆕 เก็บ custom domain แม้จะ fail
             error: error.message,
             failedAt: new Date().toISOString(),
           },

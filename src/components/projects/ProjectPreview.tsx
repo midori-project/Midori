@@ -9,6 +9,7 @@ import { PreviewToolbar } from './PreviewToolbar';
 import { PreviewContent } from './PreviewContent';
 import { PreviewFooter } from './PreviewFooter';
 import { DeploymentToast } from './DeploymentToast';
+import { CustomDomainDialog } from './CustomDomainDialog';
 
 /**
  * ProjectPreview Component
@@ -48,6 +49,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
   const [isCodeEditorVisible, setIsCodeEditorVisible] = useState(true);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [isDeployDialogOpen, setIsDeployDialogOpen] = useState(false);  // 🆕 Dialog state
 
   // ==================== Custom Hooks ====================
   
@@ -171,7 +173,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
         onStartPreview={startPreview}
         onStopPreview={stopPreview}
         onToggleEditor={() => setIsCodeEditorVisible(!isCodeEditorVisible)}
-        onDeploy={deploy}
+        onDeploy={() => setIsDeployDialogOpen(true)}  // 🆕 เปิด dialog แทนที่จะ deploy ตรงๆ
         isDeploying={isDeploying}
         isCodeEditorVisible={isCodeEditorVisible}
         generateSubdomain={generateSubdomain}
@@ -202,11 +204,21 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
         deploymentSuccess={deploymentSuccess}
         isDeploying={isDeploying}
         hasSnapshot={hasSnapshot}
-        onDeploy={deploy}
+        onDeploy={() => setIsDeployDialogOpen(true)}  // 🆕 เปิด dialog ใน footer ด้วย
       />
 
       {/* Toast Notifications */}
       <DeploymentToast error={deploymentError} onClose={clearDeploymentError} />
+
+      {/* 🆕 Custom Domain Dialog */}
+      <CustomDomainDialog
+        isOpen={isDeployDialogOpen}
+        onClose={() => setIsDeployDialogOpen(false)}
+        onDeploy={deploy}
+        projectName={projectName || projectId}
+        generateSubdomain={generateSubdomain}
+        isDeploying={isDeploying}
+      />
     </div>
   );
 };

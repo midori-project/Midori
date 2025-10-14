@@ -56,7 +56,7 @@ class DaytonaCleanupService {
 
     // Cleanup idle sandboxes ทุก 5 นาที
     this.idleCheckInterval = setInterval(() => {
-      console.log(`🔄 [CLEANUP SERVICE] Scheduled idle cleanup triggered at ${new Date().toISOString()}`)
+      // ลบ log ออกเพราะ cleanupIdleSandboxes() จะ log เองเมื่อมีการทำงาน
       this.cleanupIdleSandboxes()
     }, 5 * 60 * 1000) // 5 minutes
 
@@ -136,13 +136,10 @@ class DaytonaCleanupService {
   static async cleanupIdleSandboxes(): Promise<void> {
     const startTime = Date.now()
     
-    // ✅ Debug: แสดง call stack
-    console.log(`🔍 [DEBUG] cleanupIdleSandboxes called from: ${new Error().stack?.split('\n').slice(1, 3).join(' | ')}`)
-    
     // ✅ ตรวจสอบ cooldown period
     const timeSinceLastCleanup = startTime - this.lastIdleCleanupTime
     if (timeSinceLastCleanup < this.IDLE_CLEANUP_COOLDOWN) {
-      console.log(`⏭️ [IDLE CLEANUP] Skipping - too soon (${Math.round(timeSinceLastCleanup / 1000)}s ago, need ${Math.round(this.IDLE_CLEANUP_COOLDOWN / 1000)}s)`)
+      // ลบ log ออกเพื่อลด log spam
       return
     }
     
@@ -158,20 +155,18 @@ class DaytonaCleanupService {
     try {
       const sandboxes = await daytona.list()
       daytonaSandboxCount = sandboxes.length
-      console.log(`📊 [IDLE CLEANUP] Found ${daytonaSandboxCount} sandboxes on Daytona`)
     } catch (error) {
       console.error('❌ [IDLE CLEANUP] Failed to list sandboxes from Daytona:', error)
       return
     }
     
-    // ✅ ถ้าไม่มี sandbox บน Daytona ให้ skip ทันที
+    // ✅ ถ้าไม่มี sandbox บน Daytona ให้ skip ทันที (ไม่ต้อง log)
     if (daytonaSandboxCount === 0) {
-      console.log('⏭️ [IDLE CLEANUP] No sandboxes on Daytona, skipping cleanup')
       return
     }
     
-    // ✅ เริ่ม cleanup เฉพาะเมื่อมี sandbox
-    console.log(`🧹 [IDLE CLEANUP] Starting idle sandboxes cleanup at ${new Date().toISOString()}`)
+    // ✅ เริ่ม cleanup เฉพาะเมื่อมี sandbox (log เฉพาะเมื่อมีงานจริงๆ)
+    console.log(`🧹 [IDLE CLEANUP] Starting cleanup - found ${daytonaSandboxCount} sandboxes`)
     
     // ✅ อัปเดตเวลาล่าสุด
     this.lastIdleCleanupTime = startTime
@@ -182,12 +177,6 @@ class DaytonaCleanupService {
     const idleTimeout = 10 * 60 * 1000 // 10 นาที
     let cleanedCount = 0
     let errorCount = 0
-
-    // ✅ แสดงข้อมูลใน state ทั้งหมด
-    const statesInfo = Array.from(sandboxStates.entries()).map(([id, state]) => 
-      `${id}:${state.status}:${state.lastHeartbeatAt ? Math.round((now - state.lastHeartbeatAt) / 60000) + 'm' : 'none'}`
-    ).join(', ')
-    console.log(`📊 [IDLE CLEANUP] States: ${statesInfo || 'none'} (total: ${sandboxStates.size})`)
 
     for (const [sandboxId, state] of sandboxStates.entries()) {
       if (state.status === 'running' && state.lastHeartbeatAt) {
@@ -237,7 +226,11 @@ class DaytonaCleanupService {
     }
 
     const duration = Date.now() - startTime
-    console.log(`✅ [IDLE CLEANUP] Completed: cleaned ${cleanedCount} idle sandboxes (${errorCount} errors) in ${duration}ms`)
+    
+    // ✅ Log เฉพาะเมื่อมีการทำงานจริงๆ
+    if (cleanedCount > 0 || errorCount > 0) {
+      console.log(`✅ [IDLE CLEANUP] Completed: cleaned ${cleanedCount} idle sandboxes (${errorCount} errors) in ${duration}ms`)
+    }
     
     // ✅ ทำความสะอาด memory หลังจาก idle cleanup
     await this.cleanupMemoryStates()
@@ -464,10 +457,8 @@ async function updateSandboxStatus(
   }
   sandboxStates.set(sandboxId, next)
   
-  // เพิ่ม console log สำหรับ heartbeat
-  if (status === 'running') {
-    console.log(`💓 [HEARTBEAT] Sandbox ${sandboxId} - Status: ${status}, Last Heartbeat: ${new Date(now).toISOString()}`)
-  } else {
+  // ✅ Log เฉพาะการเปลี่ยนสถานะที่สำคัญ (ไม่ log heartbeat ที่เป็น running)
+  if (status !== 'running' || !current || current.status !== status) {
     console.log(`📊 [STATUS] Sandbox ${sandboxId} - Status: ${status}, Timestamp: ${new Date(now).toISOString()}`)
   }
   
@@ -877,7 +868,7 @@ export async function GET(req: NextRequest) {
     const sandboxId = searchParams.get('sandboxId')
     if (!sandboxId) return NextResponse.json({ error: 'Missing sandboxId' }, { status: 400 })
 
-    console.log(`💓 [HEARTBEAT] Checking status for sandbox: ${sandboxId}`)
+    // ✅ ลบ heartbeat log เพื่อลด log spam (heartbeat ส่งมาทุก 2 นาที)
 
     const state = sandboxStates.get(sandboxId)
     if (state) {

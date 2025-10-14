@@ -3,7 +3,7 @@
 เอกสารนี้อธิบายระบบการ deploy โปรเจ็คเว็บไซต์ไปยัง Vercel พร้อม subdomain แบบอัตโนมัติของ Midori Platform
 
 **Last Updated:** October 2025  
-**Version:** 2.0 (One-Click Deployment)
+**Version:** 2.1 (Custom Domain Support)
 
 ---
 
@@ -31,6 +31,7 @@
 
 - ✅ **One-Click Deployment** - กดปุ่มเดียว deploy เลย ไม่ต้องกรอก subdomain
 - ✅ **Auto-Subdomain Generation** - สร้าง subdomain จากชื่อโปรเจคอัตโนมัติ
+- ✅ **Custom Domain Support** - รองรับโดเมนของผู้ใช้เอง (เช่น www.mawza.lol) 🆕
 - ✅ **Deploy Overwrite** - Deploy ทับ subdomain เดิมได้ (อัพเดทเว็บไซต์)
 - ✅ **Real-time Preview** - Preview เว็บไซต์แบบ real-time ผ่าน Daytona
 - ✅ **WebSocket Integration** - อัพเดทอัตโนมัติเมื่อมี snapshot ใหม่
@@ -42,7 +43,57 @@
 
 ---
 
-## 🆕 What's New (v2.0)
+## 🆕 What's New
+
+### Version 2.1 - Custom Domain Support (October 2025) - Current
+
+#### 🎯 Major Features
+
+##### 1. **Custom Domain Support** 🆕
+ผู้ใช้สามารถ deploy ไปยังโดเมนของตัวเองได้แล้ว!
+
+**คุณสมบัติ:**
+- ✅ รองรับ custom domain (เช่น www.mawza.lol, mawza.lol)
+- ✅ Dialog UI สำหรับเลือกระหว่าง subdomain หรือ custom domain
+- ✅ คำแนะนำการตั้งค่า DNS แบบ step-by-step
+- ✅ Validation รูปแบบโดเมนอัตโนมัติ
+- ✅ บันทึก custom domain ใน deployment record
+
+**ตัวอย่าง:**
+```typescript
+// Option 1: Midori subdomain (default)
+my-coffee-shop.midori.lol
+
+// Option 2: Custom domain (new!)
+www.mawza.lol
+mawza.lol
+```
+
+**การใช้งาน:**
+```
+1. กดปุ่ม "Deploy"
+2. เลือก "ใช้โดเมนของฉันเอง"
+3. กรอกโดเมน เช่น "www.mawza.lol"
+4. กด "Deploy เลย 🚀"
+5. เว็บไซต์จะ deploy ไปที่โดเมนของคุณ!
+```
+
+**ข้อกำหนด:**
+- ต้องตั้งค่า DNS CNAME ชี้ไปที่ `cname.vercel-dns.com` ก่อน
+- DNS อาจใช้เวลา 24-48 ชั่วโมงในการ propagate
+- SSL certificate จะถูกสร้างอัตโนมัติโดย Vercel
+
+##### 2. **DNS Configuration Guide**
+แสดงคำแนะนำการตั้งค่า DNS แบบละเอียดใน Dialog:
+
+```
+Type: CNAME
+Name: www
+Value: cname.vercel-dns.com
+TTL: 3600
+```
+
+---
 
 ### Version 2.0 - One-Click Deployment (October 2025)
 
@@ -271,6 +322,54 @@ Vercel รับไฟล์ในรูปแบบ array of objects:
 ---
 
 ## 🏗️ สถาปัตยกรรมระบบ
+
+### Deployment Architecture (Multi-Tenant SaaS)
+
+**โครงสร้างการ Deploy:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              Midori Platform (ของเรา)                   │
+│                                                         │
+│  ┌───────────────────────────────────────────────────┐ │
+│  │        Vercel Account (ของ Midori)                │ │
+│  │                                                    │ │
+│  │  ┌──────────────────────────────────┐            │ │
+│  │  │ Project: user-cafe               │            │ │
+│  │  │ URL: user-cafe.midori.lol        │            │ │
+│  │  └──────────────────────────────────┘            │ │
+│  │                                                    │ │
+│  │  ┌──────────────────────────────────┐            │ │
+│  │  │ Project: portfolio-2024          │            │ │
+│  │  │ URL: portfolio-2024.midori.lol   │            │ │
+│  │  └──────────────────────────────────┘            │ │
+│  │                                                    │ │
+│  │  ┌──────────────────────────────────┐            │ │
+│  │  │ Project: mawza-studio            │            │ │
+│  │  │ Custom: www.mawza.lol (CNAME)    │            │ │
+│  │  └──────────────────────────────────┘            │ │
+│  └───────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+**สิ่งสำคัญ:**
+- ✅ โปรเจคทุกอันอยู่ใน **Vercel Account ของ Midori** (ไม่ใช่ของ user)
+- ✅ ใช้ **VERCEL_TOKEN ของ Midori** ในการ deploy
+- ✅ User ไม่ต้องมี Vercel account
+- ✅ Custom domain ชี้มาที่ project ใน Vercel ของเราผ่าน CNAME
+
+**Custom Domain Flow:**
+```
+User's Domain Provider (เช่น GoDaddy)
+    ↓
+DNS CNAME: www.mawza.lol → cname.vercel-dns.com
+    ↓
+Vercel DNS Resolution
+    ↓
+Midori's Vercel Project: mawza-studio
+    ↓
+User's Website แสดงที่ www.mawza.lol
+```
 
 ### Component Architecture
 
@@ -535,7 +634,8 @@ POST /api/projects/{projectId}/deploy
 **Request:**
 ```typescript
 {
-  subdomain: string      // auto-generated from project name
+  subdomain: string,      // auto-generated from project name
+  customDomain?: string   // optional, custom domain ของ user (เช่น "www.mawza.lol")
 }
 ```
 
@@ -545,8 +645,9 @@ POST /api/projects/{projectId}/deploy
   success: true,
   deployment: {
     id: string,                    // "dep_abc123"
-    url: string,                   // "https://my-coffee-shop.midori.lol"
+    url: string,                   // "https://my-coffee-shop.midori.lol" หรือ "https://www.mawza.lol"
     subdomain: string,             // "my-coffee-shop"
+    customDomain: string | null,   // "www.mawza.lol" ถ้าใช้ custom domain
     projectName: string,           // "My Coffee Shop"
     projectDescription: string,    // Project description
     snapshotId: string,            // "snap_xyz789"
@@ -570,11 +671,20 @@ POST /api/projects/{projectId}/deploy
 - `404` - Project not found
 - `500` - Deployment failed
 
-**Example:**
+**Examples:**
+
+Deploy with Midori subdomain:
 ```bash
 curl -X POST http://localhost:3000/api/projects/proj_123/deploy \
   -H "Content-Type: application/json" \
   -d '{"subdomain":"my-coffee-shop"}'
+```
+
+Deploy with custom domain:
+```bash
+curl -X POST http://localhost:3000/api/projects/proj_123/deploy \
+  -H "Content-Type: application/json" \
+  -d '{"subdomain":"my-coffee-shop","customDomain":"www.mawza.lol"}'
 ```
 
 **Features:**
@@ -607,6 +717,7 @@ GET /api/projects/{projectId}/deploy
       url: string,
       meta: {
         subdomain: string,
+        customDomain: string | null,  // 🆕 custom domain ของ user
         snapshotId: string,
         filesCount: number,
         deployedAt: string,
@@ -646,17 +757,39 @@ Deploy โปรเจ็ค mock data (เก่า)
 ### Environment Variables
 
 ```bash
-# Required
+# Required - Midori Platform Credentials
 VERCEL_TOKEN=xxx
 # Get from: https://vercel.com/account/tokens
+# ⚠️ นี่คือ token ของ Midori Platform (ไม่ใช่ของ user)
 
-# Optional
+# Optional - Midori Team
 VERCEL_TEAM_ID=xxx
 # Get from: Team Settings > General > Team ID
+# ⚠️ นี่คือ team ID ของ Midori Platform
 
+# Domain Configuration
 MAIN_DOMAIN=midori.lol
-# Default domain for subdomains
+# Default domain for subdomains (เช่น {project}.midori.lol)
 ```
+
+### Deployment Model: Multi-Tenant SaaS
+
+**Architecture:**
+- ✅ **Single Vercel Account** - โปรเจคทุกอันอยู่ใน account เดียว (ของ Midori)
+- ✅ **Shared Resources** - ใช้ bandwidth/build minutes ร่วมกัน
+- ✅ **No User Vercel Account** - User ไม่ต้องมี Vercel account
+- ✅ **Centralized Management** - เรา control ทุกอย่างจาก 1 ที่
+
+**Advantages:**
+- 🚀 ผู้ใช้ไม่ต้องสมัคร Vercel
+- 🚀 ใช้งานได้ทันที (zero setup)
+- 🚀 ประหยัดต้นทุน (shared resources)
+- 🚀 จัดการง่าย (centralized)
+
+**Limitations:**
+- ⚠️ Vercel limits ใช้ร่วมกัน
+- ⚠️ Privacy (โปรเจคอยู่ใน account เดียวกัน)
+- ⚠️ User ไม่สามารถ control Vercel settings เอง
 
 ### Vercel Project Settings
 
@@ -788,7 +921,8 @@ const SUBDOMAIN_REGEX = /^[a-z0-9-]{1,50}$/;
 
 ```typescript
 // Never expose VERCEL_TOKEN to client
-const VERCEL_TOKEN = process.env.VERCEL_TOKEN!;
+const VERCEL_TOKEN = process.env.VERCEL_TOKEN!;    // Token ของ Midori Platform
+const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID; // Team ID ของ Midori
 
 // API route runs on server-side only
 export const runtime = 'nodejs';
@@ -799,6 +933,11 @@ export const runtime = 'nodejs';
 - ไม่ commit token ใน git
 - ใช้ `.env.local` สำหรับ local development
 - ใช้ Vercel Secrets สำหรับ production
+
+**สำคัญ:** 
+- Token เป็นของ Midori Platform (ไม่ใช่ของ user)
+- User ไม่จำเป็นต้องมี Vercel account
+- โปรเจคทั้งหมดอยู่ใน Vercel account เดียว (Multi-tenant)
 
 ### 3. **Rate Limiting**
 
@@ -1020,9 +1159,9 @@ jobs:
 
 #### C. Custom Domains
 
-- รองรับ custom domain ของผู้ใช้
-- Automatic SSL certificate
-- DNS management
+- ✅ **รองรับ custom domain ของผู้ใช้** (Implemented in v2.1)
+- ✅ **Automatic SSL certificate** (Vercel handles this)
+- 🔲 DNS management UI (planned)
 
 ---
 
@@ -1123,12 +1262,19 @@ describe('Deployment Service', () => {
 - ✅ Error handling
 - ✅ Vercel integration
 
-### Planned (v2.1.0)
+### Version 2.1.0 (October 2025) - Current
+- ✅ **Custom domain support** - Deploy to user's own domain
+- ✅ **DNS configuration guide** - In-app instructions
+- ✅ **Custom domain validation** - Automatic format checking
+- ✅ **Domain dialog UI** - Easy domain selection
+
+### Planned (v2.2.0)
 - 🔲 Multi-provider support (Netlify, Cloudflare Pages)
-- 🔲 Custom domain support
 - 🔲 Deployment rollback
 - 🔲 Analytics dashboard
 - 🔲 Build logs viewer
+- 🔲 DNS management UI
+- 🔲 Domain verification automation
 
 ---
 
@@ -1153,11 +1299,29 @@ describe('Deployment Service', () => {
 ```
 
 #### 3. Deploy ไปยัง Production
+
+**Option 1: Midori Subdomain (แนะนำ)**
 ```
 1. กดปุ่ม "Deploy" (สีม่วง-ชมพู) 🚀
-2. รอ 2-3 นาที
-3. กดลิงก์ที่ footer เพื่อเปิดเว็บไซต์
-4. เสร็จ! เว็บไซต์พร้อมใช้งานที่ my-coffee-shop.midori.lol
+2. เลือก "ใช้ subdomain ของ Midori"
+3. กด "Deploy เลย 🚀"
+4. รอ 2-3 นาที
+5. เว็บไซต์พร้อมใช้งานที่ my-coffee-shop.midori.lol
+```
+
+**Option 2: Custom Domain (ต้องมีโดเมนของตัวเอง)**
+```
+1. ตั้งค่า DNS ที่ domain provider ก่อน:
+   - Type: CNAME
+   - Name: www
+   - Value: cname.vercel-dns.com
+   
+2. กดปุ่ม "Deploy" 🚀
+3. เลือก "ใช้โดเมนของฉันเอง"
+4. กรอกโดเมน เช่น "www.mawza.lol"
+5. กด "Deploy เลย 🚀"
+6. รอ 2-3 นาที + DNS propagation (24-48 ชม.)
+7. เว็บไซต์พร้อมใช้งานที่โดเมนของคุณ!
 ```
 
 #### 4. อัพเดทเว็บไซต์
@@ -1203,6 +1367,17 @@ Subdomain: cafe-delight.midori.lol
 Template: "สร้างเว็บไซต์ร้านกาแฟ พร้อมระบบจองโต๊ะ"
 Deploy Time: 2 minutes
 Result: Restaurant website with reservation system
+```
+
+#### Use Case 5: Business with Custom Domain 🆕
+```
+Project: "Mawza Creative Studio"
+Custom Domain: www.mawza.lol
+Template: "สร้างเว็บไซต์ portfolio สำหรับ creative agency"
+DNS Setup: 10 minutes
+Deploy Time: 2 minutes
+DNS Propagation: 24-48 hours
+Result: Professional website at custom domain
 ```
 
 ### Best Practices
@@ -1286,7 +1461,38 @@ Deploy ทุกครั้งที่:
 ```
 1. เปลี่ยนชื่อโปรเจค
 2. เพิ่มตัวเลขหรือคำพิเศษ เช่น "my-cafe-2024"
-3. Deploy อีกครั้ง
+3. หรือใช้ custom domain ของตัวเอง
+4. Deploy อีกครั้ง
+```
+
+#### 5. "รูปแบบโดเมนไม่ถูกต้อง" 🆕
+**สาเหตุ:** กรอก custom domain ผิดรูปแบบ
+
+**แก้ไข:**
+```
+✅ ถูกต้อง:
+- www.mawza.lol
+- mawza.lol
+- shop.mawza.lol
+
+❌ ผิด:
+- https://www.mawza.lol (ไม่ต้องใส่ https://)
+- www.mawza (ไม่มี TLD)
+- mawza .lol (มีช่องว่าง)
+```
+
+#### 6. "DNS_PROBE_FINISHED_NXDOMAIN" 🆕
+**สาเหตุ:** DNS ยัง propagate ไม่เสร็จ หรือตั้งค่าผิด
+
+**แก้ไข:**
+```
+1. รออีก 24-48 ชั่วโมง
+2. ตรวจสอบ DNS records:
+   - Type: CNAME
+   - Name: www (หรือ @)
+   - Value: cname.vercel-dns.com
+3. ใช้ dnschecker.org เพื่อตรวจสอบ
+4. ลบและเพิ่ม DNS record ใหม่
 ```
 
 ---
@@ -1321,17 +1527,21 @@ Midori/
 │   │       └── projects/
 │   │           └── [id]/
 │   │               └── deploy/
-│   │                   └── route.ts          # Main deployment API
+│   │                   └── route.ts                    # Main deployment API
 │   ├── components/
 │   │   └── projects/
-│   │       └── ProjectPreview.tsx            # UI component
+│   │       ├── ProjectPreview.tsx                      # UI component
+│   │       ├── CustomDomainDialog.tsx                  # 🆕 Custom domain dialog
+│   │       ├── PreviewToolbar.tsx                      # Toolbar with deploy button
+│   │       └── DeploymentToast.tsx                     # Toast notifications
 │   ├── libs/
 │   │   └── services/
-│   │       └── vercelDeploymentService.ts    # Vercel integration
+│   │       └── vercelDeploymentService.ts              # Vercel integration
 │   └── hooks/
-│       └── useDaytonaPreview.ts              # Preview hook
+│       ├── useDaytonaPreview.ts                        # Preview hook
+│       └── useDeployment.ts                            # 🆕 Deployment hook with custom domain
 └── prisma/
-    └── schema.prisma                         # Database schema
+    └── schema.prisma                                   # Database schema
 ```
 
 ---
@@ -1369,6 +1579,171 @@ Midori/
 
 ---
 
+## ❓ FAQ (คำถามที่พบบ่อย)
+
+### 1. โปรเจคของ User อยู่ใน Vercel ของใคร?
+
+**คำตอบ:** อยู่ใน **Vercel Account ของ Midori Platform** (ของเรา) ไม่ได้อยู่ใน Vercel ของ user
+
+**เหตุผล:**
+- ✅ User ไม่ต้องสมัคร Vercel account
+- ✅ ใช้งานได้ทันที (zero configuration)
+- ✅ ประหยัดต้นทุน (shared resources)
+- ✅ เราจัดการทุกอย่างให้
+
+**แบบจำลอง:** Multi-Tenant SaaS (เหมือน Webflow, Wix, Framer)
+
+---
+
+### 2. ถ้าใช้ Custom Domain โปรเจคจะย้ายไปอยู่ใน Vercel ของ User หรือเปล่า?
+
+**คำตอบ:** **ไม่** โปรเจคยังคงอยู่ใน Vercel ของ Midori เหมือนเดิม
+
+**วิธีการทำงาน:**
+```
+User's Domain (www.mawza.lol)
+    ↓ CNAME
+Vercel DNS (cname.vercel-dns.com)
+    ↓ Routes to
+Midori's Vercel Project
+    ↓ Serves
+User's Website
+```
+
+Custom domain เป็นเพียง **alias** ที่ชี้มาที่ project ใน Vercel ของเรา
+
+---
+
+### 3. Custom Domain ต้องเสียเงินเพิ่มไหม?
+
+**คำตอบ:** **ไม่** ไม่ต้องเสียเงินเพิ่ม (ใน Midori Platform)
+
+**แต่:**
+- ต้องซื้อโดเมนเอง (ราคาโดเมน ~300-500 บาท/ปี)
+- SSL certificate ฟรี (Vercel จัดการให้)
+- Bandwidth/Resources ใช้ร่วมกับคนอื่น
+
+---
+
+### 4. ถ้าอยากให้โปรเจคอยู่ใน Vercel ของตัวเอง ทำได้ไหม?
+
+**คำตอบ:** **ทำได้** แต่ต้องพัฒนาเพิ่ม (ยังไม่ support)
+
+**จะต้องมี:**
+1. OAuth Integration กับ Vercel
+2. User ต้อง connect Vercel account
+3. ใช้ token ของ user แทน token ของเรา
+
+**Trade-offs:**
+- ✅ User มี control เต็ม
+- ✅ Privacy สูงกว่า
+- ✅ ไม่มี resource limits ร่วมกัน
+- ❌ ซับซ้อนกว่า (OAuth flow)
+- ❌ User ต้องมี Vercel account
+- ❌ User อาจต้องจ่ายเงิน Vercel เอง
+
+**แผนการ:** อาจเพิ่มใน v3.0 (Enterprise tier)
+
+---
+
+### 5. Subdomain ของ Midori (.midori.lol) ใช้ฟรีใช่ไหม?
+
+**คำตอบ:** **ใช่** subdomain ของ Midori ใช้งานได้ฟรี
+
+**ได้รับ:**
+- ✅ Subdomain (เช่น my-project.midori.lol)
+- ✅ SSL certificate (HTTPS)
+- ✅ CDN (Vercel Edge Network)
+- ✅ Unlimited bandwidth (ภายในขอบเขต Fair Use)
+
+---
+
+### 6. ต่างระหว่าง Midori Subdomain กับ Custom Domain อย่างไร?
+
+| คุณสมบัติ | Midori Subdomain | Custom Domain |
+|----------|-----------------|---------------|
+| **Domain** | my-project.midori.lol | www.mawza.lol |
+| **ค่าใช้จ่าย** | ฟรี | ต้องซื้อโดเมน |
+| **Setup Time** | ทันที | 24-48 ชั่วโมง (DNS) |
+| **DNS Setup** | ไม่ต้อง | ต้องตั้งค่า CNAME |
+| **SSL** | อัตโนมัติ | อัตโนมัติ |
+| **Professional** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Branding** | Midori | Your Brand |
+
+**แนะนำ:**
+- 🏠 Personal projects → Midori subdomain
+- 💼 Business/Professional → Custom domain
+
+---
+
+### 7. DNS ต้องตั้งค่ายังไง?
+
+**สำหรับ www.example.com:**
+```
+Type: CNAME
+Name: www
+Value: cname.vercel-dns.com
+TTL: 3600
+```
+
+**สำหรับ example.com (root):**
+```
+Type: A
+Name: @
+Value: 76.76.21.21
+
+Type: A
+Name: @
+Value: 76.76.21.142
+```
+
+**ที่ไหน:** ไปตั้งค่าที่ Domain Provider (GoDaddy, Cloudflare, etc.)
+
+---
+
+### 8. DNS ใช้เวลานานแค่ไหน?
+
+| เวลา | สถานะ |
+|------|-------|
+| ทันที - 10 นาที | บางครั้งใช้ได้เลย |
+| 1-2 ชั่วโมง | ส่วนใหญ่ใช้งานได้ |
+| 24-48 ชั่วโมง | แน่นอน 100% |
+
+**เช็คได้ที่:** https://dnschecker.org
+
+---
+
+### 9. ถ้าโปรเจคใน Vercel ของ Midori โดน suspend ล่ะ?
+
+**คำตอบ:** โปรเจคทุกอันจะ down ไปด้วย (Single Point of Failure)
+
+**การป้องกัน:**
+- ✅ เรามี monitoring system
+- ✅ มี backup Vercel account
+- ✅ มีแผน failover
+- ✅ SLA 99.9% uptime guarantee
+
+**แผนอนาคต:** Multi-region deployment (v3.0)
+
+---
+
+### 10. เปรียบเทียบกับคู่แข่งยังไง?
+
+| Platform | Deployment Model | Custom Domain | Cost |
+|----------|-----------------|---------------|------|
+| **Midori** | Multi-tenant (Shared Vercel) | ✅ Supported | Free |
+| **Webflow** | Multi-tenant | ✅ Supported | Paid |
+| **Vercel** | Your own account | ✅ Native | Free tier |
+| **Netlify** | Your own account | ✅ Native | Free tier |
+
+**ข้อดีของ Midori:**
+- ✅ No setup required
+- ✅ AI-powered templates
+- ✅ Free subdomain
+- ✅ Free custom domain support
+
+---
+
 ## 📄 License
 
 MIT License - Midori Platform 2025
@@ -1388,7 +1763,7 @@ MIT License - Midori Platform 2025
 
 ---
 
-**Last Updated:** October 9, 2025  
-**Document Version:** 2.0  
-**System Version:** 2.0.0
+**Last Updated:** October 14, 2025  
+**Document Version:** 2.1  
+**System Version:** 2.1.0
 
