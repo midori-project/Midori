@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { BusinessCategoryManifest } from '@/midori/agents/frontend-v2/template-system/business-categories';
 import { BlockVariant } from '@/midori/agents/frontend-v2/template-system/shared-blocks/index';
+import { EnhancedTemplateRenderer } from './TemplateRenderer';
 
 interface VariantPreviewProps {
   category: BusinessCategoryManifest;
@@ -93,8 +94,8 @@ export function VariantPreview({ category, variant, mode }: VariantPreviewProps)
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[600px] flex flex-col">
-      <div className="px-6 py-4 border-b border-gray-200">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[700px] flex flex-col">
+      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
@@ -129,91 +130,12 @@ export function VariantPreview({ category, variant, mode }: VariantPreviewProps)
             </div>
           </div>
         ) : (
-          <div className="p-6">
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              {/* Mock Preview Container */}
-              <div className="relative">
-                {/* Simulate the rendered component */}
-                <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-8 min-h-[400px] flex items-center justify-center">
-                  <div className="text-center space-y-4">
-                    <div className="text-6xl mb-4">
-                      {variant.id === 'hero-stats' && '📊'}
-                      {variant.id === 'hero-split' && '📱'}
-                      {variant.id === 'hero-fullscreen' && '🖥️'}
-                      {variant.id === 'hero-minimal' && '⚪'}
-                      {variant.id === 'hero-cards' && '🃏'}
-                    </div>
-                    
-                    <h1 className="text-3xl font-bold text-gray-900">
-                      {mockData.heading}
-                    </h1>
-                    
-                    <p className="text-gray-600 max-w-md">
-                      {mockData.subheading}
-                    </p>
-                    
-                    <div className="flex space-x-4 justify-center">
-                      <button className="px-6 py-2 bg-blue-600 text-white rounded-lg">
-                        {mockData.ctaLabel}
-                      </button>
-                      <button className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg">
-                        {mockData.secondaryCta}
-                      </button>
-                    </div>
-                    
-                    {/* Stats for hero-stats variant */}
-                    {variant.id === 'hero-stats' && (
-                      <div className="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{mockData.stat1}</div>
-                          <div className="text-sm text-gray-600">{mockData.stat1Label}</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{mockData.stat2}</div>
-                          <div className="text-sm text-gray-600">{mockData.stat2Label}</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{mockData.stat3}</div>
-                          <div className="text-sm text-gray-600">{mockData.stat3Label}</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Preview Info Overlay */}
-                <div className="absolute top-4 right-4 bg-black/80 text-white px-3 py-2 rounded-lg text-xs">
-                  <div className="flex items-center space-x-2">
-                    <span>🎨 {category.globalSettings.tone}</span>
-                    <span>•</span>
-                    <span>🎭 {variant.id}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Template Info */}
-            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-1">Category Settings</h4>
-                <p className="text-blue-700">
-                  Tone: {category.globalSettings.tone}
-                </p>
-                <p className="text-blue-700">
-                  Colors: {category.globalSettings.palette.primary} + {category.globalSettings.palette.secondary || 'none'}
-                </p>
-              </div>
-              
-              <div className="bg-green-50 p-3 rounded-lg">
-                <h4 className="font-medium text-green-900 mb-1">Variant Info</h4>
-                <p className="text-green-700">
-                  Type: {variant.name}
-                </p>
-                <p className="text-green-700">
-                  Overrides: {Object.keys(variant.overrides || {}).length}
-                </p>
-              </div>
-            </div>
+          <div className="h-full">
+            {/* Real Template Preview */}
+            <EnhancedTemplateRenderer 
+              category={category}
+              variant={variant}
+            />
           </div>
         )}
       </div>
