@@ -2,111 +2,22 @@ import { BlockVariant } from "../index";
 
 export const aboutVariants: BlockVariant[] = [
   {
-    id: "about-split",
-    name: "About with Image Split",
-    description: "About section with split layout - image on one side, content on the other",
+    id: "about-basic",
+    name: "Basic About",
+    description: "Simple about section with features and stats",
     template: `export default function About() {
   return (
-    <section className="py-20 bg-white">
+    <section className="py-16 bg-{primary}-50">
       <div className="max-w-screen-2xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Image Side */}
-          <div className="relative">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-              <img 
-                src="{aboutImage}" 
-                alt="{aboutImageAlt}"
-                className="w-full h-[600px] object-cover"
-              />
-            </div>
-            {/* Decorative Elements */}
-            <div className="absolute -z-10 -top-8 -left-8 w-64 h-64 bg-{primary}-300 rounded-full blur-3xl opacity-30"></div>
-            <div className="absolute -z-10 -bottom-8 -right-8 w-64 h-64 bg-{secondary}-300 rounded-full blur-3xl opacity-30"></div>
-          </div>
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-{primary}-900 mb-6">{title}</h2>
+          <p className="text-lg text-{primary}-700 mb-8 leading-relaxed">{description}</p>
           
-          {/* Content Side */}
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-4xl lg:text-5xl font-bold text-{primary}-900 mb-6">
-                {title}
-              </h2>
-              <p className="text-xl text-{primary}-700 leading-relaxed">
-                {description}
-              </p>
-            </div>
-            
-            {/* Features */}
-            <div className="space-y-6">
-              {features}
-            </div>
-            
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-6 pt-8 border-t border-{primary}-200">
-              {stats}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}`,
-    overrides: {
-      aboutImage: {
-        type: "string",
-        required: true,
-        description: "About section image URL from Unsplash"
-      },
-      aboutImageAlt: {
-        type: "string",
-        required: true,
-        maxLength: 100,
-        description: "About image alt text for accessibility"
-      }
-    }
-  },
-  {
-    id: "about-team",
-    name: "About with Team",
-    description: "About section with team members showcase - builds trust",
-    template: `export default function About() {
-  return (
-    <section className="py-20 bg-gradient-to-br from-{primary}-50 via-white to-{secondary}-50">
-      <div className="max-w-screen-2xl mx-auto px-4">
-        {/* About Content */}
-        <div className="max-w-4xl mx-auto text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-{primary}-900 mb-6">
-            {title}
-          </h2>
-          <p className="text-xl text-{primary}-700 leading-relaxed mb-12">
-            {description}
-          </p>
-          
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
             {features}
           </div>
-        </div>
-        
-        {/* Team Section */}
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-{primary}-900 mb-3">
-              {teamTitle}
-            </h3>
-            <p className="text-lg text-{primary}-600">
-              {teamSubtitle}
-            </p>
-          </div>
           
-          {/* Team Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {teamMembers}
-          </div>
-        </div>
-        
-        {/* Stats */}
-        <div className="max-w-5xl mx-auto mt-20">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 bg-white rounded-3xl shadow-lg p-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
             {stats}
           </div>
         </div>
@@ -483,4 +394,3 @@ return (
     }
   }
 ];
-
