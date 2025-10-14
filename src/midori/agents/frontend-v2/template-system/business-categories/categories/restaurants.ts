@@ -224,15 +224,44 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'about-basic',
+        variantId: 'about-team-showcase',
         required: false,
         customizations: {
           title: 'เกี่ยวกับเรา',
-          description: 'ร้านอาหารสไตล์โมเดิร์นที่นำเสนออาหารคุณภาพในบรรยากาศร่วมสมัย',
+          description: 'ร้านอาหารสไตล์โมเดิร์นที่นำเสนออาหารคุณภาพในบรรยากาศร่วมสมัย พร้อมทีมงานมืออาชีพที่พร้อมมอบประสบการณ์การรับประทานอาหารที่ดีที่สุดให้กับคุณ',
           features: [
             { title: 'อาหารสดใหม่', description: 'คัดสรรวัตถุดิบคุณภาพ' },
             { title: 'บรรยากาศทันสมัย', description: 'การตกแต่งโมเดิร์น' },
             { title: 'บริการมืออาชีพ', description: 'ทีมงานที่พร้อมบริการ' }
           ],
+          teamMembers: [
+            {
+              name: 'เชฟอนุชา วงศ์สกุล',
+              role: 'หัวหน้าเชฟ',
+              image: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=400',
+              description: 'ประสบการณ์กว่า 15 ปี'
+            },
+            {
+              name: 'สมชาย ใจดี',
+              role: 'ผู้จัดการร้าน',
+              image: 'https://images.unsplash.com/photo-1583394293214-28ded15ee548?w=400',
+              description: 'เชี่ยวชาญด้านการบริการ'
+            },
+            {
+              name: 'นภัสสร สุขสันต์',
+              role: 'Sous Chef',
+              image: 'https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=400',
+              description: 'ผู้เชี่ยวชาญอาหารไทยร่วมสมัย'
+            },
+            {
+              name: 'ธนากร ชำนาญการ',
+              role: 'หัวหน้าบาร์',
+              image: 'https://images.unsplash.com/photo-1574701148212-8518049c7b2c?w=400',
+              description: 'มิกซ์เครื่องดื่มสุดพิเศษ'
+            }
+          ],
+          missionTitle: 'พันธกิจของเรา',
+          missionStatement: 'มุ่งมั่นนำเสนออาหารคุณภาพระดับพรีเมียม ด้วยวัตถุดิบสดใหม่และการบริการที่เป็นเลิศ เพื่อสร้างประสบการณ์การรับประทานอาหารที่น่าประทับใจให้กับลูกค้าทุกท่าน',
           stats: [
             { number: '10+', label: 'ปีประสบการณ์' },
             { number: '500+', label: 'ลูกค้าพึงพอใจ' },
