@@ -20,7 +20,7 @@ export async function deployStaticSite(subdomain: string, files: FileItem[]) {
       files,
       projectSettings: {
         framework: 'vite',
-        buildCommand: 'npm run build',
+        buildCommand: 'npm install && npm run build',
         outputDirectory: 'dist',
         installCommand: 'npm install',
       },
@@ -73,7 +73,26 @@ export async function deployStaticSite(subdomain: string, files: FileItem[]) {
       break;
     }
     if (state === 'ERROR') {
-      throw new Error('Deployment failed');
+      console.error(`❌ Deployment failed with state: ${state}`);
+      console.error(`📊 Deployment data:`, r.data);
+      
+      const errorCode = r.data.errorCode;
+      const errorMessage = r.data.errorMessage;
+      const errorStep = r.data.errorStep;
+      
+      let detailedError = `Deployment failed. State: ${state}`;
+      if (errorCode) detailedError += `, Error Code: ${errorCode}`;
+      if (errorMessage) detailedError += `, Message: ${errorMessage}`;
+      if (errorStep) detailedError += `, Step: ${errorStep}`;
+      
+      console.error(`🔍 Build Error Details:`, {
+        errorCode,
+        errorMessage,
+        errorStep,
+        inspectorUrl: r.data.inspectorUrl
+      });
+      
+      throw new Error(detailedError);
     }
 
     await new Promise((res) => setTimeout(res, 5000));

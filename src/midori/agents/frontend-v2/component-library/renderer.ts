@@ -488,10 +488,10 @@ export class ComponentRenderer {
       
       let imports = "";
       // React 17+ ไม่จำเป็นต้อง import React สำหรับ JSX
-      // แต่ยังคงใส่เพื่อความชัดเจน
-      if (!hasReactImport) {
-        imports = `import React from 'react';\n\n`;
-      }
+      // ไม่ต้อง import React เพื่อหลีกเลี่ยง unused import error
+      // if (!hasReactImport) {
+      //   imports = `import React from 'react';\n\n`;
+      // }
       
       let interfaceDef = "";
       if (!hasInterface) {
@@ -821,7 +821,7 @@ export class ComponentRenderer {
       footerBasic: aiGeneratedData?.["footer-basic"],
     });
 
-    return `import React, { ReactNode } from 'react';
+    return `import { ReactNode } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
@@ -875,6 +875,21 @@ const Layout = ({ children }: LayoutProps) => {
           aiGeneratedData?.components?.contact?.props?.email ||
           aiGeneratedData?.["contact-basic"]?.email ||
           "hello@business.com"
+        }"
+        contactTitle="${
+          aiGeneratedData?.components?.footer?.props?.contactTitle ||
+          aiGeneratedData?.["footer-basic"]?.contactTitle ||
+          "Contact Us"
+        }"
+        phoneLabel="${
+          aiGeneratedData?.components?.footer?.props?.phoneLabel ||
+          aiGeneratedData?.["footer-basic"]?.phoneLabel ||
+          "Tel:"
+        }"
+        emailLabel="${
+          aiGeneratedData?.components?.footer?.props?.emailLabel ||
+          aiGeneratedData?.["footer-basic"]?.emailLabel ||
+          "Email:"
         }"
       />
     </div>
@@ -1201,8 +1216,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<Root />);`;
     // Generate imports for selected components
     const componentImports = this.generateComponentImports(selection);
 
-    return `import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+    return `import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Menu from './components/Menu';
@@ -1285,35 +1299,33 @@ body {
   }
 
   private generateMenuComponent(aiGeneratedData?: Record<string, any>): string {
-    return `import React from 'react';
-
-export default function Menu() {
+    return `export default function Menu() {
   const menuItems = ${JSON.stringify(
     aiGeneratedData?.components?.menu?.props?.menuItems ||
       aiGeneratedData?.["menu-basic"]?.menuItems || [
         {
-          id: 1,
+          id: "1",
           name: "Main Course",
           description: "Delicious main dishes",
-          price: "15.99",
+          price: 15.99,
           category: "Main Course",
           image: "https://via.placeholder.com/400x300?text=Main+Course",
           imageAlt: "Main Course",
         },
         {
-          id: 2,
+          id: "2",
           name: "Beverages",
           description: "Refreshing drinks",
-          price: "5.99",
+          price: 5.99,
           category: "Beverage",
           image: "https://via.placeholder.com/400x300?text=Beverages",
           imageAlt: "Beverages",
         },
         {
-          id: 3,
+          id: "3",
           name: "Desserts",
           description: "Sweet treats",
-          price: "8.99",
+          price: 8.99,
           category: "Dessert",
           image: "https://via.placeholder.com/400x300?text=Desserts",
           imageAlt: "Desserts",
@@ -1351,7 +1363,7 @@ export default function Menu() {
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xl font-bold text-gray-900">{item.name}</h3>
                   <span className="text-primary-600 font-semibold">
-                    {'฿' + (typeof item.price === 'number' ? item.price.toFixed(0) : Number(item.price ?? 0).toFixed(0))}
+                    ฿{item.price.toFixed(2)}
                   </span>
             </div>
                 <p className="text-gray-600 mb-3">{item.description}</p>
@@ -1377,9 +1389,7 @@ export default function Menu() {
       contactBasic: aiGeneratedData?.["contact-basic"],
     });
 
-    return `import React from 'react';
-
-const Home: React.FC = () => {
+    return `const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -1527,25 +1537,42 @@ const Home: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-2xl font-semibold mb-4">Visit Us</h3>
+              <h3 className="text-2xl font-semibold mb-4">${
+                aiGeneratedData?.components?.contact?.props?.contactInfoTitle ||
+                aiGeneratedData?.["contact-basic"]?.contactInfoTitle ||
+                "Visit Us"
+              }</h3>
               <p className="text-gray-600 mb-4">${
-                aiGeneratedData?.components?.contact?.props?.address ||
+                (aiGeneratedData?.components?.contact?.props?.addressLabel ||
+                aiGeneratedData?.["contact-basic"]?.addressLabel ||
+                "Address") + ": " + 
+                (aiGeneratedData?.components?.contact?.props?.address ||
                 aiGeneratedData?.["contact-basic"]?.address ||
-                "Your Address"
+                "Your Address")
               }</p>
-              <p className="text-gray-600 mb-4">Phone: ${
-                aiGeneratedData?.components?.contact?.props?.phone ||
+              <p className="text-gray-600 mb-4">${
+                (aiGeneratedData?.components?.contact?.props?.phoneLabel ||
+                aiGeneratedData?.["contact-basic"]?.phoneLabel ||
+                "Phone") + ": " +
+                (aiGeneratedData?.components?.contact?.props?.phone ||
                 aiGeneratedData?.["contact-basic"]?.phone ||
-                "Your Phone"
+                "Your Phone")
               }</p>
-              <p className="text-gray-600">Email: ${
-                aiGeneratedData?.components?.contact?.props?.email ||
+              <p className="text-gray-600">${
+                (aiGeneratedData?.components?.contact?.props?.emailLabel ||
+                aiGeneratedData?.["contact-basic"]?.emailLabel ||
+                "Email") + ": " +
+                (aiGeneratedData?.components?.contact?.props?.email ||
                 aiGeneratedData?.["contact-basic"]?.email ||
-                "your@email.com"
+                "your@email.com")
               }</p>
             </div>
             <div>
-              <h3 className="text-2xl font-semibold mb-4">Hours</h3>
+              <h3 className="text-2xl font-semibold mb-4">${
+                aiGeneratedData?.components?.contact?.props?.hoursLabel ||
+                aiGeneratedData?.["contact-basic"]?.hoursLabel ||
+                "Hours"
+              }</h3>
               <p className="text-gray-600 mb-2">${
                 aiGeneratedData?.components?.contact?.props?.businessHours ||
                 aiGeneratedData?.["contact-basic"]?.businessHours ||
@@ -1630,6 +1657,7 @@ export default Home;`;
   title?: string;
   subtitle?: string;
   menuItems?: Array<{
+    id: string;
     name: string;
     description: string;
     price: number;

@@ -5,6 +5,7 @@
 
 import { initializeComponentLibrary, getComponentSelector, ComponentRegistryManager } from '../component-library';
 import { ComponentRenderer } from '../component-library/renderer';
+import { LLMEnhancedSelector } from '../component-library/llm-selector';
 import { persistFrontendV2Result } from '../services/persistence-service';
 import { ThemePackGenerator } from '../theme-pack';
 import { BlueprintSelector } from '../blueprint';
@@ -19,6 +20,7 @@ export class ComponentAdapter {
   private aiService: AIService;
   private projectGenerator: ProjectStructureGenerator;
   private componentRenderer: ComponentRenderer;
+  private llmSelector: LLMEnhancedSelector;
   private initialized: boolean = false;
   private categoryCache: Map<string, string> = new Map(); // Cache for category detection
 
@@ -26,6 +28,7 @@ export class ComponentAdapter {
     this.aiService = new AIService();
     this.projectGenerator = new ProjectStructureGenerator();
     this.componentRenderer = ComponentRenderer.getInstance();
+    this.llmSelector = new LLMEnhancedSelector();
   }
 
   /**
@@ -68,12 +71,12 @@ export class ComponentAdapter {
       const selectionContext = await this.createSelectionContext(task);
       console.log('🎯 Selection Context:', selectionContext);
 
-      // 5. Select Components
-      console.log('🤖 Selecting components...');
-      const selector = getComponentSelector();
-      const componentSelection = await selector.selectComponents(selectionContext);
+      // 5. Select Components with LLM Enhancement
+      console.log('🤖 Selecting components with LLM-enhanced selector...');
+      const componentSelection = await this.llmSelector.selectComponentsWithLLM(selectionContext);
       console.log('✅ Components selected:', componentSelection.selectedComponents.length);
       console.log('📊 Selection Score:', (componentSelection.totalScore * 100).toFixed(1) + '%');
+      console.log('🧠 LLM Enhanced:', componentSelection.reasoning.llmEnhanced ? 'Yes' : 'Fallback to traditional');
 
       // 6. Generate AI Content for components
       console.log('🤖 Generating AI content for components...');

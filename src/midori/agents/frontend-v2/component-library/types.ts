@@ -161,6 +161,7 @@ export interface SelectionReasoning {
   keyFactors: string[];
   tradeoffs?: string[];
   recommendations?: string[];
+  llmEnhanced?: boolean;
 }
 
 // ============================

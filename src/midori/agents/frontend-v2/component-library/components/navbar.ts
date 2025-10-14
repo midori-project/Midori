@@ -64,7 +64,7 @@ export const NAVBAR_COMPONENTS: ComponentDefinition[] = [
             <span className="ml-2 text-xl font-bold text-gray-800">{brandName}</span>
           </div>
           <div className="hidden md:flex space-x-8">
-            {menuItems?.map((item, index) => (
+            {menuItems?.map((item: any, index: number) => (
               <a key={index} href={item.link} className="text-gray-700 hover:text-primary-600 px-3 py-2">
                 {item.label}
               </a>
@@ -150,7 +150,7 @@ export const NAVBAR_COMPONENTS: ComponentDefinition[] = [
         <div className="flex justify-between items-center h-14">
           <span className="text-lg font-semibold text-gray-900">{brandName}</span>
           <div className="flex space-x-6">
-            {menuItems?.map((item, index) => (
+            {menuItems?.map((item: any, index: number) => (
               <a key={index} href={item.link} className="text-gray-600 hover:text-gray-900 text-sm">
                 {item.label}
               </a>

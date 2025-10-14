@@ -77,7 +77,7 @@ export const ABOUT_COMPONENTS: ComponentDefinition[] = [
             <p className="text-gray-700 leading-relaxed mb-6">{description}</p>
             {features && (
               <div className="grid grid-cols-2 gap-4">
-                {features.map((feature, idx) => (
+                {features.map((feature: any, idx: number) => (
                   <div key={idx} className="flex items-start">
                     <span className="text-primary-500 mr-2">✓</span>
                     <div>
@@ -124,7 +124,7 @@ export const ABOUT_COMPONENTS: ComponentDefinition[] = [
           <p className="text-gray-700 text-lg leading-relaxed mb-8">{description}</p>
           {features && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {features.map((feature, idx) => (
+              {features.map((feature: any, idx: number) => (
                 <div key={idx} className="bg-white rounded-lg p-6 shadow-sm">
                   <h3 className="text-gray-900 font-semibold mb-2">{feature.title}</h3>
                   <p className="text-gray-600">{feature.description}</p>
@@ -172,7 +172,7 @@ export const ABOUT_COMPONENTS: ComponentDefinition[] = [
         </div>
         {features && (
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-            {features.map((feature, idx) => (
+            {features.map((feature: any, idx: number) => (
               <div key={idx} className="flex items-start p-6 bg-gray-50 rounded-lg">
                 <div className="flex-shrink-0 w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold mr-4">
                   {idx + 1}

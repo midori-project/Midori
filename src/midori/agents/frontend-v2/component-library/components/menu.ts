@@ -51,13 +51,13 @@ export const MENU_COMPONENTS: ComponentDefinition[] = [
           <h2 className="text-4xl font-bold text-gray-900 mb-4">{title}</h2>
           {subtitle && <p className="text-lg text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
         </div>
-        {categories?.map((category, catIdx) => (
+        {categories?.map((category: any, catIdx: number) => (
           <div key={catIdx} className="mb-12">
             <h3 className="text-2xl font-bold text-gray-900 mb-6 border-b-2 border-primary-500 pb-2">
               {category.name}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {category.items?.map((item, itemIdx) => (
+              {category.items?.map((item: any, itemIdx: number) => (
                 <div key={itemIdx} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
                   {item.image && (
                     <img src={item.image} alt={item.imageAlt || item.name} className="w-full h-48 object-cover" />
@@ -65,7 +65,7 @@ export const MENU_COMPONENTS: ComponentDefinition[] = [
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="text-lg font-semibold text-gray-900">{item.name}</h4>
-                      <span className="text-lg font-bold text-primary-600">฿{item.price}</span>
+                      <span className="text-lg font-bold text-primary-600">฿{item.price.toFixed(2)}</span>
                     </div>
                     {item.description && (
                       <p className="text-gray-600 text-sm">{item.description}</p>
@@ -105,13 +105,13 @@ export const MENU_COMPONENTS: ComponentDefinition[] = [
           <h2 className="text-4xl font-bold text-gray-900 mb-4">{title}</h2>
           {subtitle && <p className="text-lg text-gray-600">{subtitle}</p>}
         </div>
-        {categories?.map((category, catIdx) => (
+        {categories?.map((category: any, catIdx: number) => (
           <div key={catIdx} className="mb-10">
             <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
               {category.name}
             </h3>
             <div className="space-y-4">
-              {category.items?.map((item, itemIdx) => (
+              {category.items?.map((item: any, itemIdx: number) => (
                 <div key={itemIdx} className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -120,7 +120,7 @@ export const MENU_COMPONENTS: ComponentDefinition[] = [
                         <p className="text-gray-600 text-sm">{item.description}</p>
                       )}
                     </div>
-                    <span className="text-xl font-bold text-primary-600 ml-4">฿{item.price}</span>
+                    <span className="text-xl font-bold text-primary-600 ml-4">฿{item.price.toFixed(2)}</span>
                   </div>
                 </div>
               ))}
@@ -154,13 +154,13 @@ export const MENU_COMPONENTS: ComponentDefinition[] = [
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">{title}</h2>
         {subtitle && <p className="text-gray-600 text-center mb-10">{subtitle}</p>}
-        {categories?.map((category, catIdx) => (
+        {categories?.map((category: any, catIdx: number) => (
           <div key={catIdx} className="mb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-300 pb-2">
               {category.name}
             </h3>
             <div className="space-y-3">
-              {category.items?.map((item, itemIdx) => (
+              {category.items?.map((item: any, itemIdx: number) => (
                 <div key={itemIdx} className="flex justify-between">
                   <div>
                     <span className="font-semibold text-gray-900">{item.name}</span>
@@ -168,7 +168,7 @@ export const MENU_COMPONENTS: ComponentDefinition[] = [
                       <p className="text-gray-600 text-sm">{item.description}</p>
                     )}
                   </div>
-                  <span className="font-semibold text-gray-900">฿{item.price}</span>
+                  <span className="font-semibold text-gray-900">฿{item.price.toFixed(2)}</span>
                 </div>
               ))}
             </div>

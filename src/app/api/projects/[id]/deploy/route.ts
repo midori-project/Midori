@@ -12,9 +12,14 @@ export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  let subdomain: string = '';
+  let projectId: string = '';
+  
   try {
     const { id } = await context.params;
-    const { subdomain } = await req.json();
+    projectId = id;
+    const body = await req.json();
+    subdomain = body.subdomain;
 
     // ✅ Validate subdomain format
     if (!subdomain || !/^[a-z0-9-]{1,50}$/.test(subdomain)) {
@@ -165,17 +170,13 @@ export async function POST(
     
     // บันทึก deployment ที่ล้มเหลว
     try {
-      const { id } = await context.params;
-      const body = await req.json();
-      const { subdomain } = body;
-      
       await (prisma as any).deployment.create({
         data: {
-          projectId: id,
+          projectId: projectId || 'unknown',
           provider: 'vercel',
           state: 'failed',
           meta: {
-            subdomain,
+            subdomain: subdomain || 'unknown',
             error: error.message,
             failedAt: new Date().toISOString(),
           },

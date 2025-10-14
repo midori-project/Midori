@@ -125,11 +125,11 @@ export const FOOTER_COMPONENTS: ComponentDefinition[] = [
             <h3 className="text-2xl font-bold mb-4">{brandName}</h3>
             <p className="text-gray-400 text-sm">{description}</p>
           </div>
-          {linkGroups && linkGroups.map((group, idx) => (
+          {linkGroups && linkGroups.map((group: any, idx: number) => (
             <div key={idx}>
               <h4 className="text-lg font-semibold mb-4">{group.title}</h4>
               <ul className="space-y-2">
-                {group.links.map((link, linkIdx) => (
+                {group.links.map((link: any, linkIdx: number) => (
                   <li key={linkIdx}>
                     <a href={link.url} className="text-gray-400 hover:text-white text-sm">
                       {link.label}
@@ -150,7 +150,7 @@ export const FOOTER_COMPONENTS: ComponentDefinition[] = [
           <p className="text-gray-400 text-sm">{copyright || \`© \${new Date().getFullYear()} \${brandName}. All rights reserved.\`}</p>
           {socialLinks && (
             <div className="flex space-x-4">
-              {socialLinks.map((social, idx) => (
+              {socialLinks.map((social: any, idx: number) => (
                 <a key={idx} href={social.url} className="text-gray-400 hover:text-white">
                   {social.icon || social.name}
                 </a>
@@ -234,7 +234,7 @@ export const FOOTER_COMPONENTS: ComponentDefinition[] = [
           {description && <p className="text-gray-600 mb-6 max-w-2xl mx-auto">{description}</p>}
           {socialLinks && (
             <div className="flex justify-center space-x-6 mb-6">
-              {socialLinks.map((social, idx) => (
+              {socialLinks.map((social: any, idx: number) => (
                 <a key={idx} href={social.url} className="text-gray-600 hover:text-gray-900">
                   {social.icon || social.name}
                 </a>
