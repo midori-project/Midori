@@ -1,413 +1,293 @@
-# 🎨 Layout Tester - Quick Start Guide
+# 🎨 Layout Tester Guide
 
-## 🚀 เริ่มต้นใช้งาน
+## ภาพรวม
 
-### ขั้นตอนที่ 1: เปิด Development Server
+Layout Tester เป็นเครื่องมือสำหรับทดสอบการทำงานของ **Variant System** ใน Midori AI Platform ที่ช่วยให้คุณสามารถ:
 
-```bash
-npm run dev
-```
+- 🏢 เลือก Business Categories ต่างๆ (Restaurant, E-commerce, Portfolio, etc.)
+- 🎭 ทดสอบ Hero Variants ต่างๆ (hero-stats, hero-split, hero-fullscreen, etc.)
+- 🖥️ ดู Live Preview และ Code Preview แบบ Real-time
+- 🔄 เปรียบเทียบการทำงานของ Variant System
 
-### ขั้นตอนที่ 2: เข้าสู่หน้า Layout Tester
+---
 
-เปิด browser และไปที่:
+## 🚀 การเข้าถึง
+
+### URL
 ```
 http://localhost:3000/layout-tester
 ```
 
+### Navigation
+- ไปที่หน้า Landing Page
+- คลิก "Layout Tester" ในเมนู หรือ
+- ไปที่ `/layout-tester` โดยตรง
+
 ---
 
-## 🎯 วิธีใช้งาน
+## 🎯 ฟีเจอร์หลัก
 
-### 1️⃣ เลือก Layout
+### 1️⃣ Business Category Selector
+**ตำแหน่ง**: ด้านซ้ายบน
 
-คลิกที่ layout card ที่ต้องการทดสอบ:
+**การทำงาน**:
+- แสดง Business Categories ทั้งหมดที่มีในระบบ
+- แต่ละ Category มี:
+  - 🏷️ **ID**: `restaurant-luxury`, `ecommerce`, `portfolio`
+  - 🎨 **Tone**: `luxury`, `modern`, `warm`, `minimal`
+  - 🎨 **Colors**: Primary + Secondary colors
+  - 📦 **Blocks**: จำนวน blocks ที่ใช้
+  - 🎭 **Hero Variant**: variant ที่เลือกใช้
 
-- 🔷 **Modern** - Layout แบบแบ่งครึ่งจอ (ทันสมัย)
-- 💎 **Luxury** - Layout เต็มจอแบบหรูหรา
-- ⬜ **Minimal** - Layout เรียบง่ายสะอาดตา
-- 🍕 **Casual** - Layout พร้อม feature cards
-- 🍽️ **Standard** - Layout มาตรฐาน
-
-Layout ที่เลือกจะมี **check mark (✓)** และ **border สีน้ำเงิน**
-
-### 2️⃣ เพิ่ม Keywords (Optional)
-
-ใส่ keywords เพิ่มเติมในช่อง input:
+**ตัวอย่าง Categories**:
 ```
-vegan, organic, cozy
-```
-
-**Note:** Keywords หลักจะถูกเพิ่มอัตโนมัติตาม layout ที่เลือก
-
-### 3️⃣ สร้างเว็บไซต์
-
-คลิกปุ่ม **"🚀 สร้างเว็บไซต์เลย"**
-
-ระบบจะ:
-- แสดงสถานะ "กำลังสร้างเว็บไซต์..."
-- เรียก Frontend-V2 Agent API
-- Generate website ตาม layout ที่เลือก
-
-### 4️⃣ ดูผลลัพธ์
-
-หลังจาก generation เสร็จ คุณจะเห็น:
-
-#### สถิติหลัก (4 boxes)
-- 📄 **จำนวนไฟล์** - ไฟล์ที่ถูกสร้าง
-- 💾 **ขนาดรวม** - ขนาดของโปรเจคทั้งหมด
-- 🧩 **Blocks** - จำนวน blocks ที่ใช้
-- 🤖 **AI Content** - สถานะการสร้าง AI content
-
-#### รายละเอียด
-- Business Category ที่ถูกใช้
-- Template ที่ถูกใช้
-- รายชื่อ Blocks ทั้งหมด
-
-#### รายการไฟล์
-- ชื่อไฟล์พร้อม path
-- ขนาดของแต่ละไฟล์
-- แสดงสูงสุด 15 ไฟล์
-
-### 5️⃣ Daytona Preview (Auto-Created!) 👀
-
-**ระบบจะสร้าง Preview อัตโนมัติทันที** หลังจาก generate สำเร็จ:
-
-#### ขั้นตอนที่เกิดขึ้นอัตโนมัติ:
-
-1. **⏳ กำลังสร้าง Preview...**
-   - สถานะ: 🟡 Creating
-   - แสดง loading spinner
-   - ใช้เวลา 30-60 วินาที
-
-2. **🟢 Preview พร้อมใช้งาน**
-   - สถานะ: 🟢 Running
-   - แสดง Sandbox ID
-   - แสดง Preview URL พร้อมปุ่ม
-
-3. **🌐 เปิด Preview**
-   - คลิกปุ่ม "🌐 เปิด Preview ในแท็บใหม่"
-   - เว็บไซต์จะเปิดในแท็บใหม่
-   - สามารถทดสอบได้เลย!
-
-#### Preview Actions:
-
-**ปุ่มที่มี:**
-- 🚀 **สร้าง Daytona Preview** - ปรากฏถ้ายัง ไม่ได้สร้าง preview (ถ้า auto-start ล้มเหลว)
-- 🌐 **เปิด Preview ในแท็บใหม่** - เปิดเว็บไซต์ที่สร้างแล้ว
-- 🛑 **Stop** - หยุด sandbox (ประหยัด resource)
-- 🔄 **ลองใหม่อีกครั้ง** - ถ้าเกิด error
-
-#### ข้อมูล Preview:
-
-```
-สถานะ: 🟢 พร้อมใช้งาน
-Sandbox ID: sandbox-abc123
-Preview URL: https://sandbox-abc123.daytona.app
+🍽️ Restaurant (warm) - Orange + Red
+🏢 Restaurant Modern (modern) - Blue + Indigo  
+💎 Restaurant Luxury (luxury) - Gray + Amber
+⚪ Restaurant Minimal (minimal) - Gray + Stone
+😊 Restaurant Casual (friendly) - Orange + Yellow
+🛒 E-commerce (professional) - Blue + Purple
 ```
 
----
+### 2️⃣ Hero Variant Selector
+**ตำแหน่ง**: ด้านซ้ายล่าง
 
-## 🎨 Layout Variants รายละเอียด
+**การทำงาน**:
+- แสดง Hero Variants ทั้งหมด
+- แต่ละ Variant มี:
+  - 🎨 **Icon**: แสดงประเภทของ variant
+  - 📝 **Description**: อธิบายการใช้งาน
+  - ⚙️ **Overrides**: จำนวน customizations
 
-### 🔷 Modern (restaurant-modern)
-**Variant:** `hero-split`
-
-**จุดเด่น:**
-- Layout แบบแบ่งครึ่งจอ (50/50)
-- เนื้อหาด้านซ้าย รูปภาพด้านขวา
-- มี decorative gradient blobs
-- สี: Blue & Indigo
-
-**เหมาะกับ:**
-- ร้านกาแฟสมัยใหม่
-- Fusion Restaurant
-- Cafe ร่วมสมัย
-
-**Keywords:** modern, contemporary, trendy, fusion
-
----
-
-### 💎 Luxury (restaurant-luxury)
-**Variant:** `hero-fullscreen`
-
-**จุดเด่น:**
-- Layout เต็มจอ (fullscreen)
-- Overlay สีเข้มพร้อม gradient
-- มี scroll indicator
-- Dramatic และสง่างาม
-- สี: Gray & Amber (ทอง)
-
-**เหมาะกับ:**
-- Fine Dining
-- ร้านอาหารระดับ Michelin
-- Premium Restaurant
-
-**Keywords:** luxury, fine dining, premium, elegant
-
----
-
-### ⬜ Minimal (restaurant-minimal)
-**Variant:** `hero-minimal`
-
-**จุดเด่น:**
-- Layout เรียบง่าย สะอาดตา
-- เน้น typography และเนื้อหา
-- รูปภาพอยู่ด้านล่าง
-- White space เยอะ
-- สี: Gray & Stone (นู้ด)
-
-**เหมาะกับ:**
-- ร้านอาหารญี่ปุ่น
-- Simple Cafe
-- ร้านที่เน้นความเรียบง่าย
-
-**Keywords:** minimal, simple, clean, japanese
-
----
-
-### 🍕 Casual (restaurant-casual)
-**Variant:** `hero-cards`
-
-**จุดเด่น:**
-- Layout พร้อม 3 feature cards
-- อบอุ่น เป็นกันเอง
-- เน้นการแสดง features
-- สี: Orange & Yellow (อบอุ่น)
-
-**เหมาะกับ:**
-- ร้านอาหารครอบครัว
-- Street Food
-- Casual Dining
-
-**Keywords:** casual, friendly, family, cozy
-
----
-
-### 🍽️ Standard (restaurant)
-**Variant:** `hero-stats`
-
-**จุดเด่น:**
-- Layout มาตรฐาน
-- มีส่วนแสดงสถิติ (statistics)
-- Gradient background
-- สี: Orange & Red
-
-**เหมาะกับ:**
-- ร้านอาหารทั่วไป
-- ธุรกิจที่ต้องการแสดงสถิติ
-
-**Keywords:** restaurant, food, thai
-
----
-
-## 📊 การตีความผลลัพธ์
-
-### ✅ Generation สำเร็จ
-
-คุณจะเห็น:
-- ✅ หัวข้อสีเขียว "สร้างเว็บไซต์สำเร็จ!"
-- เวลาที่ใช้ (วินาที)
-- สถิติทั้ง 4 boxes
-- รายการไฟล์ที่สร้าง
-
-**การตรวจสอบ:**
-- ✓ จำนวนไฟล์ควรมากกว่า 10 ไฟล์
-- ✓ ขนาดรวมควรอยู่ที่ 100-200KB
-- ✓ Blocks ควรมี 6-8 blocks
-- ✓ AI Content ควรเป็น ✓ (Yes)
-
-### ❌ Generation ล้มเหลว
-
-คุณจะเห็น:
-- ❌ หัวข้อสีแดง "การสร้างล้มเหลว"
-- ข้อความ error
-- รายละเอียด error (ถ้ามี)
-
-**วิธีแก้:**
-1. ตรวจสอบ OpenAI API key (`.env`)
-2. ตรวจสอบ network connection
-3. ลองอีกครั้ง
-4. ดู console logs (`F12`)
-
----
-
-## 🔧 Troubleshooting
-
-### ปัญหา: หน้า Layout Tester ไม่โหลด
-
-**วิธีแก้:**
-```bash
-# ตรวจสอบว่า dev server กำลังรัน
-npm run dev
-
-# Clear cache
-rm -rf .next
-npm run dev
+**ตัวอย่าง Variants**:
+```
+📊 hero-stats - Statistics-focused layout
+📱 hero-split - Modern split-screen design  
+🖥️ hero-fullscreen - Dramatic full-screen hero
+⚪ hero-minimal - Clean, minimal design
+🃏 hero-cards - Feature cards layout
 ```
 
-### ปัญหา: API ไม่ตอบกลับ
+### 3️⃣ Preview Panel
+**ตำแหน่ง**: ด้านขวา
 
-**วิธีแก้:**
-1. ตรวจสอบ console logs
-2. ตรวจสอบ `.env` file:
-```env
-OPENAI_API_KEY=sk-...
-```
-3. Restart dev server
-
-### ปัญหา: Generation ช้าเกินไป
-
-**สาเหตุ:**
-- AI generation ใช้เวลา 5-15 วินาที
-- Network latency
-- OpenAI API rate limit
-
-**วิธีแก้:**
-- รอให้ generation เสร็จ
-- ลดจำนวน keywords
-- ตรวจสอบ internet connection
-
-### ปัญหา: ไฟล์ไม่ครบ
-
-**วิธีแก้:**
-1. ตรวจสอบ business category
-2. ตรวจสอบ template configuration
-3. ดู validation errors
+**โหมดการแสดงผล**:
+- 🖥️ **Live Preview**: แสดงผลลัพธ์แบบ Mock UI
+- 💻 **Code Preview**: แสดง Template Code
 
 ---
 
-## 💡 Tips & Best Practices
+## 🎮 วิธีการใช้งาน
 
-### 1. การเลือก Layout
+### ขั้นตอนที่ 1: เลือก Business Category
+1. ดูรายการ Business Categories ด้านซ้าย
+2. คลิกที่ Category ที่ต้องการทดสอบ
+3. ระบบจะ Auto-select Hero Variant ที่เหมาะสม
 
-✅ **ควรทำ:**
-- เลือก layout ตามลักษณะของธุรกิจ
-- ทดสอบหลาย layouts เพื่อเปรียบเทียบ
-- ใช้ keywords ที่ชัดเจน
+**ตัวอย่าง**:
+- เลือก `Restaurant Luxury` → Auto-select `hero-fullscreen`
+- เลือก `Restaurant Modern` → Auto-select `hero-split`
+- เลือก `E-commerce` → Auto-select `hero-stats`
 
-❌ **ไม่ควรทำ:**
-- ใช้ keywords ทั่วไปเกินไป
-- เพิ่ม keywords มากเกินไป (> 10)
-- Generate ซ้ำๆ เร็วเกินไป
+### ขั้นตอนที่ 2: เลือก Hero Variant
+1. ดูรายการ Hero Variants ด้านซ้ายล่าง
+2. คลิกที่ Variant ที่ต้องการทดสอบ
+3. ระบบจะอัปเดต Preview ทันที
 
-### 2. การใช้ Keywords
-
-**Good Examples:**
-```
-vegan, organic, healthy, plant-based
-modern, minimalist, scandinavian
-luxury, premium, fine-dining, michelin
-```
-
-**Bad Examples:**
-```
-good, nice, best, top
-restaurant, food, eat
-ร้านอาหาร, อาหาร
-```
-
-### 3. การตรวจสอบผลลัพธ์
-
-**ควรตรวจสอบ:**
-- ✓ Component files (Hero, Navbar, Footer, etc.)
-- ✓ Configuration files (package.json, tsconfig.json)
-- ✓ Style files (CSS/Tailwind)
-- ✓ Project structure files
+### ขั้นตอนที่ 3: ดูผลลัพธ์
+1. **Live Preview**: ดู Mock UI ที่แสดงผลลัพธ์
+2. **Code Preview**: ดู Template Code ที่ถูกสร้างขึ้น
 
 ---
 
-## 📸 Screenshot Guide
+## 🔍 การอ่านผลลัพธ์
 
-### หน้าหลัก
-- แสดง 5 layout cards
-- แต่ละ card มี icon, ชื่อ, รายละเอียด
-- Gradient header ตาม theme ของแต่ละ layout
+### Live Preview
+```
+🎨 Category Settings:
+- Tone: luxury
+- Colors: gray + amber
 
-### เลือก Layout
-- Card ที่เลือกจะมี border สีน้ำเงิน
-- มี check mark (✓) ที่มุมขวาบน
-- แสดงส่วน "สร้างเว็บไซต์" ด้านล่าง
-
-### กำลัง Generate
-- ปุ่มแสดง loading spinner
-- ข้อความ "กำลังสร้างเว็บไซต์..."
-- ปุ่ม disabled (ไม่สามารถกดซ้ำ)
-
-### แสดงผลลัพธ์
-- Success: สีเขียว พร้อมสถิติ
-- Failed: สีแดง พร้อม error message
-
----
-
-## 🎯 ตัวอย่างการใช้งาน
-
-### Use Case 1: ทดสอบ Modern Layout
-1. คลิก 🔷 Modern card
-2. เพิ่ม keywords: `fusion, contemporary`
-3. คลิก "สร้างเว็บไซต์เลย"
-4. รอ 5-10 วินาที
-5. ดูผลลัพธ์
-
-**คาดหวัง:**
-- 15-20 ไฟล์
-- Hero component ใช้ hero-split variant
-- สีน้ำเงิน (Blue/Indigo)
-
-### Use Case 2: เปรียบเทียบ Luxury vs Minimal
-1. ทดสอบ 💎 Luxury ก่อน
-2. บันทึกผลลัพธ์
-3. ทดสอบ ⬜ Minimal
-4. เปรียบเทียบ:
-   - จำนวนไฟล์
-   - ขนาด
-   - Layout style
-   - สีที่ใช้
-
----
-
-## 🔐 Security Notes
-
-**สำหรับ Development:**
-- ✓ ใช้ได้เลย
-- ✓ ไม่ต้อง authentication
-
-**สำหรับ Production:**
-- ❌ ต้องเพิ่ม authentication
-- ❌ ต้องมี rate limiting
-- ❌ ต้อง validate input
-
----
-
-## 🆘 ขอความช่วยเหลือ
-
-### Log Files
-```bash
-# ดู dev server logs
-npm run dev
-
-# ดู API logs
-Check terminal output
+🎭 Variant Info:  
+- Type: Hero Fullscreen
+- Overrides: 0
 ```
 
-### Console Logs
-```javascript
-// เปิด browser console (F12)
-// ดู errors และ warnings
-```
+### Code Preview
+```jsx
+import { Link } from "react-router-dom";
 
-### Debug Mode
-```javascript
-// เพิ่มใน browser console
-localStorage.setItem('debug', 'true');
+export default function Hero() {
+  return (
+    <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img src="{heroImage}" alt="{heroImageAlt}" />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-gray-900/60"></div>
+      </div>
+      
+      {/* Content */}
+      <div className="relative z-10 text-center text-white">
+        <h1 className="text-6xl lg:text-8xl font-black mb-8">
+          {heading}
+        </h1>
+        <p className="text-2xl lg:text-3xl mb-12">
+          {subheading}
+        </p>
+      </div>
+    </section>
+  );
+}
 ```
 
 ---
 
-**Happy Testing! 🚀**
+## 🎨 Business Categories ที่รองรับ
 
-ถ้ามีปัญหาหรือคำถาม กรุณาดูที่:
-- README.md ของ Frontend-V2 Agent
-- Demo scripts ใน `demo/` folder
-- API documentation
+### Restaurant Categories
+| Category | Tone | Colors | Hero Variant | ใช้สำหรับ |
+|----------|------|--------|--------------|-----------|
+| `restaurant` | warm | orange + red | hero-stats | ร้านอาหารทั่วไป |
+| `restaurant-modern` | modern | blue + indigo | hero-split | ร้านอาหารโมเดิร์น |
+| `restaurant-luxury` | luxury | gray + amber | hero-fullscreen | ร้านอาหารหรูหรา |
+| `restaurant-minimal` | minimal | gray + stone | hero-minimal | ร้านอาหารมินิมอล |
+| `restaurant-casual` | friendly | orange + yellow | hero-cards | ร้านอาหารสบายๆ |
 
+### E-commerce Categories
+| Category | Tone | Colors | Hero Variant | ใช้สำหรับ |
+|----------|------|--------|--------------|-----------|
+| `ecommerce` | professional | blue + purple | hero-stats | ร้านค้าออนไลน์ |
+
+### Portfolio Categories
+| Category | Tone | Colors | Hero Variant | ใช้สำหรับ |
+|----------|------|--------|--------------|-----------|
+| `portfolio` | professional | blue + indigo | hero-minimal | Portfolio ส่วนตัว |
+
+### Healthcare Categories
+| Category | Tone | Colors | Hero Variant | ใช้สำหรับ |
+|----------|------|--------|--------------|-----------|
+| `healthcare` | professional | green + blue | hero-stats | โรงพยาบาล/คลินิก |
+
+---
+
+## 🎭 Hero Variants ที่รองรับ
+
+### Variant Types
+| Variant | Icon | Description | เหมาะสำหรับ |
+|---------|------|-------------|-------------|
+| `hero-stats` | 📊 | Statistics-focused layout | ร้านอาหาร, E-commerce, Healthcare |
+| `hero-split` | 📱 | Modern split-screen design | ร้านอาหารโมเดิร์น, Portfolio |
+| `hero-fullscreen` | 🖥️ | Dramatic full-screen hero | ร้านอาหารหรูหรา, Luxury brands |
+| `hero-minimal` | ⚪ | Clean, minimal design | ร้านอาหารมินิมอล, Portfolio |
+| `hero-cards` | 🃏 | Feature cards layout | ร้านอาหารสบายๆ, Service businesses |
+
+---
+
+## 🔧 Technical Details
+
+### Data Flow
+```
+User Selection
+    ↓
+Business Category Selected
+    ↓
+Auto-select Hero Variant (if exists)
+    ↓
+Update Preview Panel
+    ↓
+Render Template with Mock Data
+    ↓
+Display Live/Code Preview
+```
+
+### Mock Data
+```typescript
+const mockData = {
+  badge: 'Sample Badge',
+  heading: 'Sample Heading', 
+  subheading: 'This is a sample subheading...',
+  ctaLabel: 'Get Started',
+  secondaryCta: 'Learn More',
+  heroImage: 'https://images.unsplash.com/...',
+  stat1: '100+',
+  stat1Label: 'Happy Customers',
+  // ... more mock data
+};
+```
+
+### Color System
+```typescript
+// Primary colors from category
+primary: 'gray' | 'blue' | 'orange' | 'green'
+secondary: 'amber' | 'indigo' | 'red' | 'stone'
+
+// Applied in templates
+className="bg-{primary}-600 text-{primary}-100"
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### ปัญหาที่พบบ่อย
+
+#### 1. Preview ไม่แสดงผล
+**สาเหตุ**: Template processing error
+**แก้ไข**: 
+- รีเฟรชหน้า
+- ตรวจสอบ Console logs
+- ลองเปลี่ยน Category หรือ Variant
+
+#### 2. Colors ไม่ถูกต้อง
+**สาเหตุ**: Tailwind CSS classes ไม่ถูก generate
+**แก้ไข**:
+- ตรวจสอบ `globalSettings.palette`
+- ใช้สีที่ Tailwind รองรับ
+
+#### 3. Variant ไม่เปลี่ยน
+**สาเหตุ**: Auto-selection logic error
+**แก้ไข**:
+- เลือก Category ใหม่
+- เลือก Variant ด้วยตนเอง
+
+---
+
+## 🚀 การพัฒนาต่อ
+
+### Features ที่สามารถเพิ่มได้
+1. **Real Template Rendering**: แทนที่ Mock UI ด้วยการ render จริง
+2. **Custom Mock Data**: ให้ user ป้อนข้อมูลทดสอบเอง
+3. **Export Functionality**: Export template code
+4. **Comparison Mode**: เปรียบเทียบ 2 variants พร้อมกัน
+5. **Performance Metrics**: แสดงขนาดไฟล์, loading time
+
+### Code Structure
+```
+src/
+├── app/layout-tester/
+│   └── page.tsx                 # Main page
+├── components/layout-tester/
+│   ├── BusinessCategorySelector.tsx
+│   ├── VariantSelector.tsx  
+│   ├── VariantPreview.tsx
+│   └── index.ts
+└── midori/agents/frontend-v2/
+    └── template-system/
+        ├── business-categories/
+        └── shared-blocks/
+            └── variants/
+```
+
+---
+
+## 📞 Support
+
+หากมีปัญหาหรือข้อสงสัย:
+1. ตรวจสอบ Console logs
+2. ดู Network tab สำหรับ API calls
+3. ตรวจสอบ Component props
+4. ดู Documentation ใน `/docs`
+
+---
+
+**Happy Testing! 🎨✨**

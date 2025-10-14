@@ -1,12 +1,12 @@
 import { BusinessCategoryManifest } from "../index";
 
-// Portfolio Business Category
+// Portfolio Business Categories
 export const portfolioCategories: BusinessCategoryManifest[] = [
   {
     id: 'portfolio',
     name: 'Portfolio',
-    description: 'Personal portfolio and creative showcase websites',
-    keywords: ['portfolio', 'creative', 'designer', 'developer', 'artist', 'work', 'projects'],
+    description: 'Personal and professional portfolio websites',
+    keywords: ['portfolio', 'personal', 'professional', 'cv', 'resume', 'work', 'projects', 'portfolio', 'ผลงาน', 'ประวัติ', 'งาน', 'โปรเจกต์'],
     blocks: [
       {
         blockId: 'navbar-basic',
@@ -14,39 +14,39 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
         customizations: {
           menuItems: [
             { label: 'หน้าแรก', href: '/' },
-            { label: 'ผลงาน', href: '/portfolio' },
             { label: 'เกี่ยวกับ', href: '/about' },
+            { label: 'ผลงาน', href: '/portfolio' },
             { label: 'ติดต่อ', href: '/contact' }
           ]
         }
       },
       {
         blockId: 'hero-basic',
+        variantId: 'hero-minimal',
         required: true,
         customizations: {
           badge: 'Portfolio',
-          heading: 'Creative Professional',
-          subheading: 'แสดงผลงานและความสามารถในการสร้างสรรค์สิ่งใหม่ๆ',
+          heading: 'สวัสดี ฉันคือ [ชื่อ]',
+          subheading: 'นักพัฒนาเว็บไซต์ที่มีประสบการณ์ในการสร้างเว็บไซต์ที่สวยงามและใช้งานง่าย',
           ctaLabel: 'ดูผลงาน',
-          secondaryCta: 'ติดต่อ'
+          secondaryCta: 'ติดต่อฉัน'
         }
       },
       {
         blockId: 'about-basic',
-        required: false,
+        required: true,
         customizations: {
           title: 'เกี่ยวกับฉัน',
-          description: 'ฉันเป็นนักออกแบบและนักพัฒนาที่มีความหลงใหลในการสร้างสรรค์สิ่งใหม่ๆ',
+          description: 'ฉันเป็นนักพัฒนาเว็บไซต์ที่มีประสบการณ์ในการสร้างเว็บไซต์ที่สวยงามและใช้งานง่าย',
           features: [
-            { title: 'ออกแบบ', description: 'UI/UX Design' },
-            { title: 'พัฒนา', description: 'Web Development' },
-            { title: 'สร้างสรรค์', description: 'Creative Solutions' }
+            { title: 'Frontend Development', description: 'React, Vue, Angular' },
+            { title: 'Backend Development', description: 'Node.js, Python, PHP' },
+            { title: 'UI/UX Design', description: 'Figma, Adobe XD' }
           ],
           stats: [
-            { number: '50+', label: 'โปรเจค' },
+            { number: '50+', label: 'โปรเจกต์' },
             { number: '3+', label: 'ปีประสบการณ์' },
-            { number: '100%', label: 'ความพึงพอใจ' },
-            { number: '24/7', label: 'พร้อมทำงาน' }
+            { number: '100%', label: 'ความพึงพอใจ' }
           ]
         }
       },
@@ -56,16 +56,15 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
         customizations: {
           title: 'ผลงานของฉัน',
           menuItems: [
-            { name: 'Web Design', price: '15,000', description: 'ออกแบบเว็บไซต์สวยงาม' },
-            { name: 'Mobile App', price: '25,000', description: 'พัฒนาแอปมือถือ' },
-            { name: 'Logo Design', price: '5,000', description: 'ออกแบบโลโก้' },
-            { name: 'Branding', price: '20,000', description: 'สร้างแบรนด์ครบวงจร' }
+            { name: 'E-commerce Website', price: 'Completed', description: 'เว็บไซต์ขายของออนไลน์' },
+            { name: 'Restaurant Website', price: 'Completed', description: 'เว็บไซต์ร้านอาหาร' },
+            { name: 'Portfolio Website', price: 'Completed', description: 'เว็บไซต์แสดงผลงาน' }
           ]
         }
       },
       {
         blockId: 'contact-basic',
-        required: false,
+        required: true,
         customizations: {
           title: 'ติดต่อฉัน',
           subtitle: 'พร้อมรับงานใหม่',
@@ -79,17 +78,17 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
         blockId: 'footer-basic',
         required: true,
         customizations: {
-          companyName: 'Creative Portfolio',
-          description: 'นักออกแบบและนักพัฒนาที่มีความหลงใหลในการสร้างสรรค์',
+          companyName: 'Portfolio',
+          description: 'นักพัฒนาเว็บไซต์ที่มีประสบการณ์',
           socialLinks: [
             { name: 'GitHub', url: 'https://github.com', icon: '💻' },
             { name: 'LinkedIn', url: 'https://linkedin.com', icon: '💼' },
-            { name: 'Dribbble', url: 'https://dribbble.com', icon: '🎨' }
+            { name: 'Email', url: 'mailto:hello@portfolio.com', icon: '📧' }
           ],
           quickLinks: [
             { label: 'หน้าแรก', href: '/' },
-            { label: 'ผลงาน', href: '/portfolio' },
             { label: 'เกี่ยวกับ', href: '/about' },
+            { label: 'ผลงาน', href: '/portfolio' },
             { label: 'ติดต่อ', href: '/contact' }
           ],
           address: 'กรุงเทพฯ, ประเทศไทย',
@@ -105,48 +104,47 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
     ],
     globalSettings: {
       palette: {
-        primary: 'purple',
-        secondary: 'pink',
-        bgTone: '100'
+        primary: 'blue',
+        secondary: 'indigo',
+        bgTone: '50'
       },
       tokens: {
-        radius: '10px',
-        spacing: '1.25rem'
+        radius: '8px',
+        spacing: '1rem'
       },
-      tone: 'creative',
-      reasoning: 'Purple and pink convey creativity and innovation'
+      tone: 'professional',
+      reasoning: 'Blue conveys trust and professionalism, perfect for portfolios'
     },
     overrides: {
       'hero-basic': {
         placeholders: {
-          badge: { 
-            required: true, 
-            maxLength: 40, 
-            description: 'Portfolio badge text' 
+          badge: {
+            required: true,
+            maxLength: 40,
+            description: 'Portfolio badge text'
           },
-          heading: { 
-            required: true, 
-            maxLength: 80, 
-            description: 'Professional title or name' 
+          heading: {
+            required: true,
+            maxLength: 80,
+            description: 'Portfolio main heading'
           },
-          subheading: { 
-            required: true, 
-            maxLength: 160, 
-            description: 'Professional description or tagline' 
+          subheading: {
+            required: true,
+            maxLength: 160,
+            description: 'Portfolio description'
           },
-          ctaLabel: { 
-            required: true, 
-            maxLength: 24, 
-            description: 'Primary CTA (e.g., "ดูผลงาน", "Portfolio")' 
+          ctaLabel: {
+            required: true,
+            maxLength: 24,
+            description: 'Primary CTA (e.g., "ดูผลงาน", "ติดต่อ")'
           },
-          secondaryCta: { 
-            required: true, 
-            maxLength: 24, 
-            description: 'Secondary CTA (e.g., "ติดต่อ", "Contact")' 
+          secondaryCta: {
+            required: true,
+            maxLength: 24,
+            description: 'Secondary CTA (e.g., "ติดต่อ", "ดาวน์โหลด CV")'
           }
         }
       }
     }
   }
 ];
-
