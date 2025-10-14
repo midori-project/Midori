@@ -9,9 +9,10 @@ interface VariantPreviewProps {
   category: BusinessCategoryManifest;
   variant: BlockVariant;
   mode: 'code' | 'live';
+  customMockData?: Record<string, any>;
 }
 
-export function VariantPreview({ category, variant, mode }: VariantPreviewProps) {
+export function VariantPreview({ category, variant, mode, customMockData }: VariantPreviewProps) {
   const [renderedTemplate, setRenderedTemplate] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -135,6 +136,7 @@ export function VariantPreview({ category, variant, mode }: VariantPreviewProps)
             <EnhancedTemplateRenderer 
               category={category}
               variant={variant}
+              customMockData={customMockData}
             />
           </div>
         )}
