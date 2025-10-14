@@ -103,23 +103,8 @@ export class CategoryService {
       for (const keyword of keywords) {
         const keywordLower = keyword.toLowerCase().trim();
         
-        // ✨ PRIORITY 1: Style/Theme keywords get HIGHEST score (10 points)
-        const styleKeywords: Record<string, string[]> = {
-          'modern': ['modern', 'โมเดิร์น', 'ทันสมัย', 'สมัยใหม่'],
-          'luxury': ['luxury', 'หรูหรา', 'พรีเมียม', 'ไฟน์ไดนิ่ง', 'premium', 'fine dining'],
-          'minimal': ['minimal', 'มินิมอล', 'เรียบง่าย', 'สะอาดตา', 'minimalist', 'simple', 'clean'],
-          'casual': ['casual', 'สบายๆ', 'แคชชวล', 'เป็นกันเอง', 'friendly', 'cozy']
-        };
-        
-        for (const [style, variants] of Object.entries(styleKeywords)) {
-          if (variants.some(v => keywordLower.includes(v) || v.includes(keywordLower))) {
-            // Check if category ID contains this style
-            if (category.id.includes(style)) {
-              score += 10; // ✨ Highest priority for style match
-              console.log(`  ✨ Style match: "${keywordLower}" → ${category.id} (+10)`);
-            }
-          }
-        }
+        // Style keywords are now handled by variant pools, not category selection
+        // Removed style matching to prevent incorrect category selection
         
         // Exact match gets high score (but lower than style match)
         if (category.keywords.some(catKeyword => 
@@ -153,6 +138,14 @@ export class CategoryService {
         if (bookKeywords.some(book => keywordLower.includes(book))) {
           if (category.id === 'ecommerce') {
             score += 4; // Higher score for book-related ecommerce
+          }
+        }
+        
+        // Special handling for portfolio-related keywords
+        const portfolioKeywords = ['portfolio', 'creative', 'designer', 'developer', 'artist', 'showcase', 'personal', 'professional', 'freelancer'];
+        if (portfolioKeywords.some(portfolio => keywordLower.includes(portfolio))) {
+          if (category.id === 'portfolio') {
+            score += 4; // Higher score for portfolio-related keywords
           }
         }
       }

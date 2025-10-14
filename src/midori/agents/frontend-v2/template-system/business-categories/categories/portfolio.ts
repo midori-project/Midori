@@ -6,7 +6,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
     id: 'portfolio',
     name: 'Portfolio',
     description: 'Personal portfolio and creative showcase websites',
-    keywords: ['portfolio', 'creative', 'designer', 'developer', 'artist', 'work', 'projects'],
+    keywords: ['portfolio', 'creative', 'designer', 'developer', 'work', 'projects', 'website', 'personal', 'showcase', 'freelancer', 'creative work', 'design portfolio', 'developer portfolio', 'artist portfolio'],
     blocks: [
       {
         blockId: 'navbar-basic',
@@ -14,8 +14,8 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
         customizations: {
           menuItems: [
             { label: 'หน้าแรก', href: '/' },
-            { label: 'ผลงาน', href: '/portfolio' },
-            { label: 'เกี่ยวกับ', href: '/about' },
+            { label: 'เมนู', href: '/menu' },
+            { label: 'เกี่ยวกับเรา', href: '/about' },
             { label: 'ติดต่อ', href: '/contact' }
           ]
         }
@@ -144,6 +144,44 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
             maxLength: 24, 
             description: 'Secondary CTA (e.g., "ติดต่อ", "Contact")' 
           }
+        }
+      }
+    },
+    variantPools: {
+      'hero-basic': {
+        allowedVariants: ['hero-minimal', 'hero-split', 'hero-fullscreen'],
+        defaultVariant: 'hero-minimal',
+        randomSelection: false,
+        constraints: {
+          businessType: ['portfolio', 'creative', 'designer', 'developer', 'artist'],
+          tone: ['creative', 'modern', 'minimal', 'professional']
+        }
+      },
+      'about-basic': {
+        allowedVariants: ['about-split', 'about-minimal', 'about-team'],
+        defaultVariant: 'about-split',
+        randomSelection: false,
+        constraints: {
+          businessType: ['portfolio', 'creative'],
+          tone: ['creative', 'personal', 'professional']
+        }
+      },
+      'footer-basic': {
+        allowedVariants: ['footer-minimal', 'footer-centered'],
+        defaultVariant: 'footer-minimal',
+        randomSelection: false,
+        constraints: {
+          businessType: ['portfolio', 'creative'],
+          tone: ['minimal', 'clean', 'professional']
+        }
+      },
+      'menu-basic': {
+        allowedVariants: ['menu-list', 'menu-masonry'],
+        defaultVariant: 'menu-masonry',
+        randomSelection: false,
+        constraints: {
+          businessType: ['portfolio', 'creative'],
+          tone: ['creative', 'organized', 'showcase']
         }
       }
     }

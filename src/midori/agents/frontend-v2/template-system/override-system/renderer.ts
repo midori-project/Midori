@@ -380,7 +380,8 @@ export class TemplateRenderer {
   }
 
   /**
-   * Generate navbar menu links (using React Router Link)
+   * Generate navbar menu links (using React Router Link) - Simplified version
+   * Now relies on business category data instead of hard-coded logic
    */
   private generateNavbarMenuItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
     const items = userData['Navbar']?.menuItems
@@ -391,48 +392,10 @@ export class TemplateRenderer {
       return '';
     }
 
-    // Define valid routes base on default pages
-    const validBaseRoutes = new Set<string>(['/', '/menu', '/about', '/contact']);
-
-    // Extend valid routes using common category routes (best-effort; safe whitelist)
-    const category = (userData?.businessCategory || userData?.category || '').toLowerCase();
-    const categoryRoutes: Record<string, string[]> = {
-      restaurant: ['/reservation', '/chef-profile', '/dish-gallery'],
-      ecommerce: ['/products', '/categories', '/cart', '/checkout'],
-      portfolio: ['/portfolio', '/projects'],
-      healthcare: ['/services', '/doctors', '/appointment'],
-      pharmacy: ['/products', '/services', '/about', '/contact']
-    };
-    for (const r of (categoryRoutes[category] || [])) validBaseRoutes.add(r);
-
     const primary = colorMap['primary'] || 'blue';
-    const lang = this.getLanguage(userData);
-    const filtered = items.filter((item: any) => {
-      const href = typeof item?.href === 'string' ? item.href : '';
-      return validBaseRoutes.has(href);
-    });
 
-    // Ensure core routes are present (append if missing)
-    const i18n = this.getI18n(lang);
-    const coreRouteLabels: Record<string, string> = {
-      '/': i18n.home,
-      '/menu': i18n.menu,
-      '/about': i18n.about,
-      '/contact': i18n.contact
-    };
-    const coreRoutes = new Set<string>(['/', '/about', '/contact']);
-    if (category === 'restaurant') coreRoutes.add('/menu');
-
-    const existingHrefs = new Set<string>(filtered.map((i: any) => i?.href).filter(Boolean));
-    for (const route of coreRoutes) {
-      if (validBaseRoutes.has(route) && !existingHrefs.has(route)) {
-        filtered.push({ label: coreRouteLabels[route] || route, href: route });
-      }
-    }
-
-    if (filtered.length === 0) return '';
-
-    return filtered.map((item: any) =>
+    // Simply use the menu items from business category - no filtering or hard-coded logic
+    return items.map((item: any) =>
       `<li><Link to="${this.escapeHtml(item.href)}" className="text-${primary}-700 hover:text-${primary}-900">${this.escapeHtml(item.label || 'Menu')}</Link></li>`
     ).join('\n                ');
   }

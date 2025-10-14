@@ -149,7 +149,7 @@ export class ProjectStructureGenerator {
       '{address}': this.getAddress(componentResult),
       '{phone}': this.getPhone(componentResult),
       '{appRoutes}': this.generateAppRoutes(componentResult),
-      '{routeElements}': this.generateRouteElements(componentResult)
+      // Removed routeElements - now using fixed routes in App.tsx template
     };
 
     for (const [placeholder, value] of Object.entries(placeholders)) {
@@ -416,37 +416,7 @@ import About from './pages/About';`
     return routeImports[businessCategory] || '';
   }
 
-  /**
-   * Generate route elements (dynamic based on category)
-   */
-  private generateRouteElements(componentResult: ComponentResultV2): string {
-    const businessCategory = componentResult.result.businessCategory;
-    
-    const routeElements: Record<string, string> = {
-      'restaurant': `<Route path="/menu" element={<Menu />} />
-          <Route path="/reservation" element={<Reservation availableSlots={['12:00 PM', '1:00 PM', '2:00 PM', '6:00 PM', '7:00 PM', '8:00 PM']} />} />
-          <Route path="/chef-profile" element={<ChefProfile name="Chef Maria" photo="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1200" biography="A passionate chef with 15 years of experience" specialties={['Italian Cuisine', 'Mediterranean']} philosophy="Fresh ingredients make the best dishes" awards={['Best Chef 2023']} signatureDishes={['Pasta Carbonara', 'Tiramisu']} />} />
-          <Route path="/dish-gallery" element={<DishGallery />} />`,
-      'ecommerce': `<Route path="/products" element={<Products />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />`,
-      'portfolio': `<Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/projects" element={<Projects />} />`,
-      'healthcare': `<Route path="/services" element={<Services />} />
-          <Route path="/doctors" element={<Doctors />} />
-          <Route path="/appointment" element={<Appointment />} />
-          <Route path="/contact" element={<Contact />} />`,
-      'pharmacy': `<Route path="/products" element={<Products />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/about" element={<About />} />`
-    };
-    
-    return routeElements[businessCategory] || '';
-  }
+  // Removed generateRouteElements - now using fixed routes in App.tsx template
 
   /**
    * Map file type
@@ -530,7 +500,7 @@ import About from './pages/About';`
         '{address}': this.getAddress(componentResult),
         '{phone}': this.getPhone(componentResult),
         '{appRoutes}': this.generateAppRoutes(componentResult),
-        '{routeElements}': this.generateRouteElements(componentResult)
+        // Removed routeElements - now using fixed routes in App.tsx template
       };
 
       for (const [placeholder, value] of Object.entries(placeholders)) {

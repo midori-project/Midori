@@ -172,111 +172,131 @@ export class AIService {
   }
 
   /**
-   * Build search query for hero image with randomization
+   * Build focused search query for hero image: business type + style + color
    */
   private buildHeroSearchQuery(
     businessCategory: string,
     keywords: string[]
   ): string {
-    const businessKeywords: Record<string, string[]> = {
-      restaurant: [
-        "restaurant",
-        "food",
-        "dining",
-        "kitchen",
-        "chef",
-        "cuisine",
-        "thai restaurant",
-        "asian food",
-        "street food",
-        "fine dining",
-        "restaurant interior",
-        "dining room",
-        "food service",
-        "culinary",
-        "restaurant kitchen",
-        "food preparation",
-        "restaurant staff",
-      ],
-      ecommerce: [
-        "shopping",
-        "store",
-        "retail",
-        "products",
-        "marketplace",
-        "commerce",
-        "online shopping",
-        "ecommerce",
-        "shopping mall",
-        "retail store",
-        "product display",
-        "shopping cart",
-        "storefront",
-        "retail space",
-      ],
-      healthcare: [
-        "health",
-        "medical",
-        "hospital",
-        "wellness",
-        "care",
-        "medicine",
-        "healthcare",
-        "medical center",
-        "clinic",
-        "hospital interior",
-        "medical equipment",
-        "healthcare professional",
-        "patient care",
-      ],
-      pharmacy: [
-        "pharmacy",
-        "medicine",
-        "health",
-        "medical",
-        "drugs",
-        "wellness",
-        "pharmaceutical",
-        "drugstore",
-        "pharmacy interior",
-        "medication",
-        "healthcare products",
-        "medical supplies",
-      ],
-      portfolio: [
-        "design",
-        "creative",
-        "art",
-        "professional",
-        "work",
-        "studio",
-        "creative workspace",
-        "design studio",
-        "art studio",
-        "office",
-        "professional work",
-        "creative environment",
-        "workspace",
-      ],
+    // Extract business type from category (e.g., "restaurant-minimal" -> "restaurant")
+    const businessType = businessCategory.split('-')[0];
+    
+    // Extract style from category (e.g., "restaurant-minimal" -> "minimal")
+    const styleFromCategory = businessCategory.split('-').slice(1).join(' ');
+    
+    // Extract style and color from keywords
+    const styleKeywords = this.extractStyleKeywords(keywords);
+    const colorKeywords = this.extractColorKeywords(keywords);
+    
+    // Build focused search query: business type + style + color
+    const searchTerms: string[] = [];
+    
+    // 1. Business type (essential)
+    searchTerms.push(businessType);
+    
+    // 2. Style (from category or keywords)
+    if (styleFromCategory) {
+      searchTerms.push(styleFromCategory);
+    }
+    if (styleKeywords.length > 0) {
+      searchTerms.push(...styleKeywords);
+    }
+    
+    // 3. Color (if specified)
+    if (colorKeywords.length > 0) {
+      searchTerms.push(...colorKeywords);
+    }
+    
+    // 4. Add "design" for better image results
+    searchTerms.push("design");
+    
+    // Remove duplicates and join
+    const uniqueTerms = [...new Set(searchTerms)];
+    return uniqueTerms.join(" ");
+  }
+
+  /**
+   * Extract style keywords from user input
+   */
+  private extractStyleKeywords(keywords: string[]): string[] {
+    const styleMap: Record<string, string> = {
+      'มินิมอล': 'minimalist',
+      'minimal': 'minimalist',
+      'minimalist': 'minimalist',
+      'เรียบง่าย': 'minimalist',
+      'สะอาดตา': 'minimalist',
+      'โมเดิร์น': 'modern',
+      'modern': 'modern',
+      'ทันสมัย': 'modern',
+      'สมัยใหม่': 'modern',
+      'หรูหรา': 'luxury',
+      'luxury': 'luxury',
+      'พรีเมียม': 'luxury',
+      'ไฟน์ไดนิ่ง': 'luxury',
+      'premium': 'luxury',
+      'สบายๆ': 'casual',
+      'casual': 'casual',
+      'แคชชวล': 'casual',
+      'เป็นกันเอง': 'casual',
+      'friendly': 'casual',
+      'cozy': 'casual'
     };
+    
+    const styles: string[] = [];
+    for (const keyword of keywords) {
+      const lowerKeyword = keyword.toLowerCase();
+      for (const [thai, english] of Object.entries(styleMap)) {
+        if (lowerKeyword.includes(thai) || lowerKeyword.includes(english)) {
+          styles.push(english);
+        }
+      }
+    }
+    
+    return [...new Set(styles)];
+  }
 
-    const categoryKeywords = businessKeywords[businessCategory] || [
-      "business",
-      "professional",
-    ];
-
-    // Randomize keywords for variety
-    const shuffledCategoryKeywords = this.shuffleArray([...categoryKeywords]);
-    const shuffledUserKeywords = this.shuffleArray([...keywords]);
-
-    // Combine and randomize all keywords
-    const allKeywords = [...shuffledCategoryKeywords, ...shuffledUserKeywords];
-    const shuffledAllKeywords = this.shuffleArray(allKeywords);
-
-    // Use more keywords for better variety (5-7 keywords)
-    return shuffledAllKeywords
-      .slice(0, Math.min(7, shuffledAllKeywords.length))
-      .join(" ");
+  /**
+   * Extract color keywords from user input
+   */
+  private extractColorKeywords(keywords: string[]): string[] {
+    const colorMap: Record<string, string> = {
+      'เหลือง': 'yellow',
+      'yellow': 'yellow',
+      'เหลืองอ่อน': 'yellow',
+      'ฟ้า': 'blue',
+      'blue': 'blue',
+      'น้ำเงิน': 'blue',
+      'เขียว': 'green',
+      'green': 'green',
+      'เขียวอ่อน': 'green',
+      'ม่วง': 'purple',
+      'purple': 'purple',
+      'ม่วงอ่อน': 'purple',
+      'ชมพู': 'pink',
+      'pink': 'pink',
+      'โรส': 'pink',
+      'ส้ม': 'orange',
+      'orange': 'orange',
+      'ส้มอ่อน': 'orange',
+      'แดง': 'red',
+      'red': 'red',
+      'แดงเข้ม': 'red',
+      'คราม': 'indigo',
+      'indigo': 'indigo',
+      'ครามอ่อน': 'indigo'
+    };
+    
+    const colors: string[] = [];
+    for (const keyword of keywords) {
+      const lowerKeyword = keyword.toLowerCase();
+      for (const [thai, english] of Object.entries(colorMap)) {
+        if (lowerKeyword.includes(thai) || lowerKeyword.includes(english)) {
+          colors.push(english);
+        }
+      }
+    }
+    
+    return [...new Set(colors)];
   }
 
   /**

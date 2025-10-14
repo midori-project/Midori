@@ -6,7 +6,7 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
     id: 'ecommerce',
     name: 'E-commerce',
     description: 'Online store and e-commerce websites',
-    keywords: ['shop', 'store', 'buy', 'sell', 'ecommerce', 'shopping', 'products', 'ขายหนังสือ', 'หนังสือ', 'ร้านหนังสือ', 'bookstore', 'ร้านค้า', 'ขายสินค้า', 'ออนไลน์', 'ช้อปปิ้ง', 'สินค้า', 'ร้านขายของ'],
+    keywords: ['shop', 'store', 'buy', 'sell', 'ecommerce', 'shopping', 'products', 'ขายหนังสือ', 'หนังสือ', 'ร้านหนังสือ', 'bookstore', 'ร้านค้า', 'ขายสินค้า', 'ออนไลน์', 'ช้อปปิ้ง', 'สินค้า', 'ร้านขายของ', 'flower', 'flowers', 'ดอกไม้', 'ร้านดอกไม้', 'flower shop', 'florist'],
     blocks: [
       {
         blockId: 'navbar-basic',
@@ -14,8 +14,7 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
         customizations: {
           menuItems: [
             { label: 'หน้าแรก', href: '/' },
-            { label: 'สินค้า', href: '/products' },
-            { label: 'หมวดหมู่', href: '/categories' },
+            { label: 'เมนู', href: '/menu' },
             { label: 'เกี่ยวกับเรา', href: '/about' },
             { label: 'ติดต่อ', href: '/contact' }
           ]
@@ -152,6 +151,44 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
             maxLength: 24, 
             description: 'Secondary CTA (e.g., "ดูสินค้า", "ค้นหา")' 
           }
+        }
+      }
+    },
+    variantPools: {
+      'hero-basic': {
+        allowedVariants: ['hero-stats', 'hero-split', 'hero-cards'],
+        defaultVariant: 'hero-stats',
+        randomSelection: false,
+        constraints: {
+          businessType: ['ecommerce', 'retail', 'online-store'],
+          tone: ['professional', 'trustworthy', 'modern']
+        }
+      },
+      'about-basic': {
+        allowedVariants: ['about-split', 'about-minimal', 'about-timeline'],
+        defaultVariant: 'about-split',
+        randomSelection: false,
+        constraints: {
+          businessType: ['ecommerce', 'retail'],
+          tone: ['professional', 'trustworthy']
+        }
+      },
+      'footer-basic': {
+        allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
+        defaultVariant: 'footer-mega',
+        randomSelection: false,
+        constraints: {
+          businessType: ['ecommerce', 'retail'],
+          tone: ['professional', 'comprehensive']
+        }
+      },
+      'menu-basic': {
+        allowedVariants: ['menu-list', 'menu-masonry', 'menu-carousel'],
+        defaultVariant: 'menu-masonry',
+        randomSelection: false,
+        constraints: {
+          businessType: ['ecommerce', 'retail'],
+          tone: ['professional', 'organized']
         }
       }
     }

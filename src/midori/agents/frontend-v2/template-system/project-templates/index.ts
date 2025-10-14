@@ -256,7 +256,6 @@ const App: React.FC = () => {
           <Route path="/menu" element={<Menu />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
-          {routeElements}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

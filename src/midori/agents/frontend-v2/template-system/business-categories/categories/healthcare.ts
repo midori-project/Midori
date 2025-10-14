@@ -14,9 +14,8 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
         customizations: {
           menuItems: [
             { label: 'หน้าแรก', href: '/' },
-            { label: 'บริการ', href: '/services' },
-            { label: 'แพทย์', href: '/doctors' },
-            { label: 'นัดหมาย', href: '/appointment' },
+            { label: 'เมนู', href: '/menu' },
+            { label: 'เกี่ยวกับเรา', href: '/about' },
             { label: 'ติดต่อ', href: '/contact' }
           ]
         }
@@ -154,6 +153,44 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
           }
         }
       }
+    },
+    variantPools: {
+      'hero-basic': {
+        allowedVariants: ['hero-stats', 'hero-split'],
+        defaultVariant: 'hero-stats',
+        randomSelection: false,
+        constraints: {
+          businessType: ['healthcare', 'medical', 'clinic', 'hospital'],
+          tone: ['professional', 'trustworthy', 'reliable', 'medical']
+        }
+      },
+      'about-basic': {
+        allowedVariants: ['about-split', 'about-minimal'],
+        defaultVariant: 'about-split',
+        randomSelection: false,
+        constraints: {
+          businessType: ['healthcare', 'medical'],
+          tone: ['professional', 'trustworthy', 'medical']
+        }
+      },
+      'footer-basic': {
+        allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
+        defaultVariant: 'footer-mega',
+        randomSelection: false,
+        constraints: {
+          businessType: ['healthcare', 'medical'],
+          tone: ['professional', 'comprehensive', 'trustworthy']
+        }
+      },
+      'menu-basic': {
+        allowedVariants: ['menu-list', 'menu-masonry'],
+        defaultVariant: 'menu-list',
+        randomSelection: false,
+        constraints: {
+          businessType: ['healthcare', 'medical'],
+          tone: ['professional', 'organized', 'clear']
+        }
+      }
     }
   },
   {
@@ -168,8 +205,8 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
         customizations: {
           menuItems: [
             { label: 'หน้าแรก', href: '/' },
-            { label: 'สินค้า', href: '/products' },
-            { label: 'บริการ', href: '/services' },
+            { label: 'เมนู', href: '/menu' },
+            { label: 'เกี่ยวกับเรา', href: '/about' },
             { label: 'ติดต่อ', href: '/contact' }
           ]
         }
@@ -328,6 +365,44 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
             maxLength: 24, 
             description: 'Secondary CTA (e.g., "ติดต่อเรา", "ข้อมูล")' 
           }
+        }
+      }
+    },
+    variantPools: {
+      'hero-basic': {
+        allowedVariants: ['hero-stats', 'hero-split', 'hero-cards'],
+        defaultVariant: 'hero-stats',
+        randomSelection: false,
+        constraints: {
+          businessType: ['pharmacy', 'drugstore', 'medical-supply'],
+          tone: ['professional', 'trustworthy', 'reliable', 'medical']
+        }
+      },
+      'about-basic': {
+        allowedVariants: ['about-split', 'about-minimal'],
+        defaultVariant: 'about-split',
+        randomSelection: false,
+        constraints: {
+          businessType: ['pharmacy', 'drugstore'],
+          tone: ['professional', 'trustworthy', 'medical']
+        }
+      },
+      'footer-basic': {
+        allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
+        defaultVariant: 'footer-mega',
+        randomSelection: false,
+        constraints: {
+          businessType: ['pharmacy', 'drugstore'],
+          tone: ['professional', 'comprehensive', 'trustworthy']
+        }
+      },
+      'menu-basic': {
+        allowedVariants: ['menu-list', 'menu-masonry'],
+        defaultVariant: 'menu-list',
+        randomSelection: false,
+        constraints: {
+          businessType: ['pharmacy', 'drugstore'],
+          tone: ['professional', 'organized', 'clear']
         }
       }
     }
