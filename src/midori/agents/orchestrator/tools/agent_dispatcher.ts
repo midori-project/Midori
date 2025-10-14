@@ -42,11 +42,6 @@ class RealAgentClient {
 
   async dispatchTask(task: Task): Promise<DispatchResult> {
     console.log(`📤 Dispatching task ${task.taskId} to ${this.agentName} agent`);
-    console.log(`📤 Task payload:`, {
-      hasProjectContext: !!task.payload?.projectContext,
-      projectId: task.payload?.projectContext?.projectId,
-      projectType: task.payload?.projectContext?.projectType
-    });
     
     try {
       const dispatchId = `${this.agentName}-${task.taskId}-${Date.now()}`;
@@ -54,20 +49,9 @@ class RealAgentClient {
       
       // Call real agent based on agent name
       if (this.agentName === 'frontend') {
-        console.log('🎨 Calling Frontend Agent...');
-        
         // Transform task to frontend format if needed
         const frontendTask = await this.transformToFrontendTask(task);
-        console.log('🎨 Transformed frontend task:', {
-          taskId: frontendTask.taskId,
-          taskType: frontendTask.taskType,
-          hasProjectContext: !!frontendTask.projectContext,
-          projectId: frontendTask.projectContext?.projectId,
-          projectType: frontendTask.projectContext?.projectType
-        });
         result = await frontendAgent(frontendTask);
-        
-        console.log(`✅ Frontend Agent completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
         
       } else if (this.agentName === 'backend') {
         console.log('⚙️ Calling Backend Agent...');
@@ -76,16 +60,12 @@ class RealAgentClient {
         const backendTask = this.transformToBackendTask(task);
         result = await this.callBackendAgent(backendTask);
         
-        console.log(`✅ Backend Agent completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
-        
       } else if (this.agentName === 'devops') {
         console.log('🚀 Calling DevOps Agent...');
         
         // Transform task to devops format if needed
         const devopsTask = this.transformToDevOpsTask(task);
         result = await this.callDevOpsAgent(devopsTask);
-        
-        console.log(`✅ DevOps Agent completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
         
       } else {
         throw new Error(`Unknown agent: ${this.agentName}`);
@@ -130,7 +110,6 @@ class RealAgentClient {
     const keywords = this.extractKeywords(task.payload?.userInput || '');
     
     // Let Frontend-V2 handle style detection internally
-    console.log('🎨 Letting Frontend-V2 handle style detection internally');
     
     return {
       taskId: task.taskId,
@@ -295,7 +274,7 @@ class RealAgentClient {
       .split(/\s+/)
       .filter(word => word.length > 2)
       .filter(word => !['สร้าง', 'ทำ', 'ต้องการ', 'อยาก', 'ให้', 'เป็น', 'แบบ', 'สี', 'สไตล์'].includes(word))
-      .slice(0, 5); // Limit to 5 keywords
+      .slice(0, 100); // Limit to 5 keywords
     
     return keywords.length > 0 ? keywords : ['website'];
   }

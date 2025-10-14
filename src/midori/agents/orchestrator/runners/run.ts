@@ -169,11 +169,8 @@ type OrchestratorResult = z.infer<typeof OrchestratorResultSchema>;
  * 1. Validate and parse incoming command
  */
 function validateCommand(rawCommand: unknown): Command {
-  console.log('⚡ Validating command...');
-  
   try {
     const result = CommandSchema.parse(rawCommand);
-    console.log(`✅ Command validated: ${result.commandType}`);
     return result;
   } catch (error) {
     console.error('❌ Command validation failed:', error);
@@ -192,8 +189,6 @@ function classifyCommand(command: Command): {
   requiredAgents: TaskType[];
   estimatedDuration: number;
 } {
-  console.log(`🔍 Classifying command: ${command.commandType}`);
-  
   // Template-First commands are generally simple
   if (command.commandType === CommandType.SELECT_TEMPLATE || 
       command.commandType === CommandType.CUSTOMIZE_TEMPLATE) {
@@ -264,8 +259,6 @@ function classifyCommand(command: Command): {
  * 3. Break down command into executable tasks
  */
 function breakdownCommand(command: Command): Task[] {
-  console.log(`⚙️ Breaking down command: ${command.commandType}`);
-  
   const taskId = crypto.randomUUID();
   const baseTask = {
     taskId,

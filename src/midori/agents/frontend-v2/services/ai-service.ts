@@ -529,7 +529,7 @@ Translate now:`;
       const finishReason = response.choices[0]?.finish_reason;
       
       console.log("🤖 AI Response content:", content);
-      console.log("🤖 AI Response choices:", response.choices);
+      // console.log("🤖 AI Response choices:", response.choices); // muted noisy log
       console.log("🤖 Finish reason:", finishReason);
       console.log("🤖 Usage:", response.usage);
       

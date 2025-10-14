@@ -10,10 +10,10 @@ export const runtime = 'nodejs';
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { subdomain, customDomain } = await req.json();
 
     // ✅ Validate subdomain format
@@ -183,7 +183,8 @@ export async function POST(
     
     // บันทึก deployment ที่ล้มเหลว
     try {
-      const { id } = params;
+      const resolvedParams = await params;
+      const { id } = resolvedParams;
       const body = await req.json();
       const { subdomain, customDomain } = body;
       
@@ -220,10 +221,10 @@ export async function POST(
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const deployments = await (prisma as any).deployment.findMany({
       where: { projectId: id },

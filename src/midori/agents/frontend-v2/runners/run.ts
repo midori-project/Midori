@@ -11,29 +11,18 @@ import { FrontendTaskV2, ComponentResultV2 } from '../schemas/types';
  */
 export async function runFrontendAgentV2(task: FrontendTaskV2): Promise<ComponentResultV2> {
   console.log('🚀 Starting Frontend-V2 Agent...');
-  console.log('📋 Task Details:', {
-    taskId: task.taskId,
-    taskType: task.taskType,
-    businessCategory: task.businessCategory,
-    keywords: task.keywords
-  });
-
+  
   try {
     // 1. Validate Task
     validateTask(task);
 
     // 2. Initialize Template Adapter
     const adapter = new TemplateAdapter();
-    console.log('✅ Template Adapter initialized');
 
-    // 3. Log Template System Stats
-    const stats = adapter.getTemplateSystemStats();
-    console.log('📊 Template System Stats:', stats);
-
-    // 4. Generate Frontend
+    // 3. Generate Frontend
     const result = await adapter.generateFrontend(task);
 
-    // 5. Log Results
+    // 4. Log Results
     console.log('📈 Generation Results:', {
       success: result.success,
       filesGenerated: result.files.length,
@@ -96,8 +85,6 @@ function validateTask(task: FrontendTaskV2): void {
   if (!validTaskTypes.includes(task.taskType)) {
     throw new Error(`Invalid task type: ${task.taskType}. Valid types: ${validTaskTypes.join(', ')}`);
   }
-
-  console.log('✅ Task validation passed');
 }
 
 /**

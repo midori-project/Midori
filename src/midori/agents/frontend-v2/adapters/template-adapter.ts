@@ -36,7 +36,7 @@ export class TemplateAdapter {
    */
   private async convertToTemplateRequest(task: FrontendTaskV2) {
     // 1. ตรวจสอบ business category
-    let businessCategoryId = task.businessCategory;
+    let businessCategoryId: string = task.businessCategory || '';
     
     // ถ้าไม่ระบุ business category ให้ใช้ category service
     if (!businessCategoryId) {
@@ -283,26 +283,16 @@ export class TemplateAdapter {
 
     try {
       console.log('🚀 Starting frontend generation with Template System...');
-      console.log('📋 Task:', {
-        taskId: task.taskId,
-        taskType: task.taskType,
-        businessCategory: task.businessCategory,
-        keywords: task.keywords
-      });
 
       // 1. แปลง task เป็น template request
       const templateRequest = await this.convertToTemplateRequest(task);
-      console.log('🔄 Converted to template request:', templateRequest);
+      console.log('🔄 Converted to template request:', {
+        businessCategoryId: templateRequest.businessCategoryId,
+        manifestBlocks: templateRequest.concreteManifest.blocks.length
+      });
 
     // 2. สร้าง AI Prompt และ Generate User Data
     console.log('🤖 Generating AI content...');
-    
-    // Debug: แสดง variants ที่ใช้
-    const heroBlock = templateRequest.concreteManifest.blocks.find(b => b.id === 'hero-basic');
-    if (heroBlock) {
-      console.log(`🎨 Hero variant: ${heroBlock.metadata?.variantId || 'default'}`);
-      console.log(`📋 Hero placeholders:`, Object.keys(heroBlock.placeholders));
-    }
     
     const aiPromptConfig = this.overrideSystem.createAIPromptConfig(
       templateRequest.businessCategoryId,
@@ -313,29 +303,40 @@ export class TemplateAdapter {
     const aiGeneratedData = await this.generateUserDataFromAI(aiPromptConfig);
     console.log('✅ AI content generated:', Object.keys(aiGeneratedData));
 
-    // 3. ใช้ Template System สร้างเว็บไซต์
-    console.log('🔄 Calling generateWebsite with:', {
-      businessCategoryId: templateRequest.businessCategoryId,
-      userDataKeys: Object.keys(aiGeneratedData),
-      validationEnabled: templateRequest.validationEnabled
-    });
+    // If user specified a brand name in keywords (e.g., "ชื่อ แมวแมว"), enforce it
+    const extractedBrand = this.extractBrandFromKeywords(templateRequest.userData.keywords);
+    if (extractedBrand) {
+      aiGeneratedData["navbar-basic"] = aiGeneratedData["navbar-basic"] || {};
+      aiGeneratedData["navbar-basic"].brand = extractedBrand;
+      aiGeneratedData["navbar-basic"].brandFirstChar = this.safeFirstChar(extractedBrand);
+    }
+
+    // 3. ✅ ใช้ renderTemplates แทน generateWebsite (ไม่ resolve manifest ซ้ำ)
+    console.log('🔄 Rendering templates with AI data...');
     
-    const templateResult = await this.overrideSystem.generateWebsite(
-      templateRequest.businessCategoryId,
+    const rendererResult = await this.overrideSystem.renderTemplates(
+      templateRequest.concreteManifest, // ✅ ใช้ manifest ที่ resolve แล้วจาก convertToTemplateRequest
       aiGeneratedData,
-      [], // customOverrides - ใช้ empty array สำหรับตอนนี้
       templateRequest.validationEnabled
     );
 
-    // Add AI-generated data to template result
-    (templateResult as any).aiGeneratedData = aiGeneratedData;
+    console.log('✅ Template rendering completed:', {
+      filesGenerated: Object.keys(rendererResult.files).length,
+      processingTime: rendererResult.processingTime
+    });
 
-      console.log('✅ Template generation completed:', {
-        filesGenerated: Object.keys(templateResult.files).length,
-        processingTime: templateResult.processingTime
-      });
+    // รวม result จาก renderer กับ manifest ที่มีอยู่แล้ว
+    const templateResult = {
+      files: rendererResult.files,
+      concreteManifest: templateRequest.concreteManifest,
+      appliedOverrides: rendererResult.appliedOverrides,
+      processingTime: rendererResult.processingTime,
+      validationResults: rendererResult.validationResults,
+      businessCategory: templateRequest.businessCategoryId,
+      aiGeneratedData: aiGeneratedData
+    };
 
-      // 3. แปลงผลลัพธ์เป็น component result
+      // 4. แปลงผลลัพธ์เป็น component result
       const result = this.convertToComponentResult(templateResult, task, startTime);
 
       // 4. เพิ่ม preview ถ้าต้องการ
@@ -355,13 +356,10 @@ export class TemplateAdapter {
             projectId: task.metadata.projectId,
             userId: (task as any).metadata?.userId,
           });
-          console.log('💾 Persisted frontend-v2 result to database');
         } catch (err) {
           console.warn('⚠️ Failed to persist frontend-v2 result:', err);
         }
       }
-
-      console.log('🎉 Frontend generation completed successfully!');
       return result;
 
     } catch (error) {
@@ -492,5 +490,30 @@ export class TemplateAdapter {
       availableBlocks: this.sharedBlocks.map(b => b.id),
       availableCategories: this.businessCategories.map(c => c.id)
     };
+  }
+
+  /**
+   * Extract brand name from keywords using simple pattern: ['ชื่อ', '<brand>']
+   */
+  private extractBrandFromKeywords(keywords: string[] = []): string | null {
+    if (!Array.isArray(keywords) || keywords.length === 0) return null;
+    for (let i = 0; i < keywords.length; i++) {
+      const token = (keywords[i] || '').trim().toLowerCase();
+      if (token === 'ชื่อ' || token === 'name') {
+        const candidate = (keywords[i + 1] || '').trim();
+        if (candidate) return candidate;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Compute first char for brandFirstChar safely
+   */
+  private safeFirstChar(text: string): string {
+    const t = (text || '').trim();
+    if (t.length === 0) return '';
+    const ch: string = t.charAt(0);
+    return /[a-zA-Z]/.test(ch) ? ch.toUpperCase() : ch;
   }
 }
