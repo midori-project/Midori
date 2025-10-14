@@ -2,12 +2,12 @@ import { BlockVariant } from "../index";
 
 export const aboutVariants: BlockVariant[] = [
   {
-    id: "about-split",
-    name: "About with Image Split",
-    description: "About section with split layout - image on one side, content on the other",
+    id: "about-basic",
+    name: "Basic About",
+    description: "Simple about section with features and stats",
     template: `export default function About() {
   return (
-    <section className="py-20 bg-white">
+    <section className="py-16 bg-{primary}-50">
       <div className="max-w-screen-2xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Image Side */}
@@ -89,28 +89,8 @@ export const aboutVariants: BlockVariant[] = [
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {features}
           </div>
-        </div>
-        
-        {/* Team Section */}
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-{primary}-900 mb-3">
-              {teamTitle}
-            </h3>
-            <p className="text-lg text-{primary}-600">
-              {teamSubtitle}
-            </p>
-          </div>
           
-          {/* Team Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {teamMembers}
-          </div>
-        </div>
-        
-        {/* Stats */}
-        <div className="max-w-5xl mx-auto mt-20">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 bg-white rounded-3xl shadow-lg p-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
             {stats}
           </div>
         </div>
@@ -495,4 +475,3 @@ return (
     }
   }
 ];
-

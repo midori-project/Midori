@@ -1015,6 +1015,7 @@ enum ProjectType {
   personal
   healthcare
   hotel
+  unknown
 }
 
 enum ProjectStatus {
