@@ -5,11 +5,13 @@ import { useDaytonaPreview } from '@/hooks/useDaytonaPreview';
 import { useProjectData } from '@/hooks/useProjectData';
 import { useDeployment } from '@/hooks/useDeployment';
 import { useProjectWebSocket } from '@/hooks/useProjectWebSocket';
+import { useVisualEdit } from '@/hooks/useVisualEdit';
 import { PreviewToolbar } from './PreviewToolbar';
 import { PreviewContent } from './PreviewContent';
 import { PreviewFooter } from './PreviewFooter';
 import { DeploymentToast } from './DeploymentToast';
 import { CustomDomainDialog } from './CustomDomainDialog';
+import { VisualEditPanel } from './VisualEditPanel';
 
 /**
  * ProjectPreview Component
@@ -92,6 +94,27 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   } = useDaytonaPreview({ 
     projectId: projectId,
     files: projectFiles,
+  });
+
+  // 🎨 Visual Edit Mode
+  const {
+    editMode,
+    selectedElement,
+    isSaving,
+    toggleEditMode,
+    saveEdit,
+    cancelEdit
+  } = useVisualEdit({ 
+    projectId,
+    sandboxId, // 🔑 ส่ง sandboxId เพื่อใช้ partial update API
+    onSaveSuccess: () => {
+      console.log('✅ Visual edit saved successfully');
+      // Optionally refetch data or show success message
+    },
+    onSaveError: (error) => {
+      console.error('❌ Visual edit save error:', error);
+      // Optionally show error toast
+    }
   });
 
   // ==================== Memoized Values ====================
@@ -177,6 +200,8 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
         isDeploying={isDeploying}
         isCodeEditorVisible={isCodeEditorVisible}
         generateSubdomain={generateSubdomain}
+        editMode={editMode}
+        onToggleEditMode={toggleEditMode}
       />
 
       {/* Content */}
@@ -218,6 +243,14 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
         projectName={projectName || projectId}
         generateSubdomain={generateSubdomain}
         isDeploying={isDeploying}
+      />
+
+      {/* 🎨 Visual Edit Panel */}
+      <VisualEditPanel
+        selectedElement={selectedElement}
+        isSaving={isSaving}
+        onSave={saveEdit}
+        onCancel={cancelEdit}
       />
     </div>
   );

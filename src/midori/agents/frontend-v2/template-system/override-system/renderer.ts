@@ -121,7 +121,7 @@ export class TemplateRenderer {
     // 🎯 OPTIMIZATION 1: Build all replacements first, then apply in batch
     const replacements: Record<string, string> = {};
 
-    // Step 1: Collect all placeholder values
+    // Step 1: Collect all placeholder values (🎨 WITH data attributes for visual editing!)
     for (const [placeholder, config] of Object.entries(block.placeholders)) {
       // Skip special placeholders that are handled by applySpecialPlaceholders
       if (['menuItems', 'features', 'stats', 'socialLinks', 'quickLinks'].includes(placeholder)) {
@@ -131,11 +131,36 @@ export class TemplateRenderer {
       const value = this.getUserDataValue(placeholder, userData, config, block.id);
       
       if (value !== undefined) {
-        replacements[placeholder] = this.escapeHtml(String(value));
+        // 🎨 VISUAL EDIT: Wrap with data attributes ONLY for text content
+        // Attribute values (src, href) should NOT be wrapped
+        if (this.isAttributeValue(placeholder)) {
+          // For attribute values, just escape HTML (data attrs will be on element itself in template)
+          replacements[placeholder] = this.escapeHtml(String(value));
+        } else {
+          // For text content, wrap with span
+          const wrappedValue = this.wrapWithDataAttributes(
+            block.id,
+            placeholder,
+            String(value),
+            this.inferFieldType(placeholder)
+          );
+          replacements[placeholder] = wrappedValue;
+        }
         appliedOverrides.push(`placeholder-${placeholder}`);
       } else if (config.required) {
         const fallbackValue = this.getFallbackValue(placeholder, config);
-        replacements[placeholder] = this.escapeHtml(String(fallbackValue));
+        // 🎨 VISUAL EDIT: Same logic for fallback values
+        if (this.isAttributeValue(placeholder)) {
+          replacements[placeholder] = this.escapeHtml(String(fallbackValue));
+        } else {
+          const wrappedValue = this.wrapWithDataAttributes(
+            block.id,
+            placeholder,
+            String(fallbackValue),
+            this.inferFieldType(placeholder)
+          );
+          replacements[placeholder] = wrappedValue;
+        }
         appliedOverrides.push(`fallback-${placeholder}`);
       }
     }
@@ -272,6 +297,7 @@ export class TemplateRenderer {
   /**
    * Generate features HTML
    * 🚀 OPTIMIZATION 3: Pre-resolved colors
+   * 🎨 VISUAL EDIT: Added data attributes for click-to-edit
    */
   private generateFeatures(userData: Record<string, any>, colorMap: Record<string, string>): string {
     const features = userData['About-basic']?.features 
@@ -283,13 +309,33 @@ export class TemplateRenderer {
     }
 
     const primary = colorMap['primary'] || 'blue';
-    return features.map((feature: any) => 
-      `<div className="text-center">
+    return features.map((feature: any, index: number) => 
+      `<div className="text-center"
+        data-editable="true"
+        data-block-id="about-basic"
+        data-field="features"
+        data-item-index="${index}"
+        data-type="feature"
+      >
         <div className="w-16 h-16 bg-${primary}-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-${primary}-600 text-2xl">✨</span>
         </div>
-        <h3 className="text-xl font-semibold text-${primary}-900 mb-2">${this.escapeHtml(feature.title || 'Feature')}</h3>
-        <p className="text-${primary}-700">${this.escapeHtml(feature.description || 'Description')}</p>
+        <h3 className="text-xl font-semibold text-${primary}-900 mb-2"
+          data-editable="true"
+          data-block-id="about-basic"
+          data-field="features[${index}].title"
+          data-type="heading"
+        >
+          ${this.escapeHtml(feature.title || 'Feature')}
+        </h3>
+        <p className="text-${primary}-700"
+          data-editable="true"
+          data-block-id="about-basic"
+          data-field="features[${index}].description"
+          data-type="text"
+        >
+          ${this.escapeHtml(feature.description || 'Description')}
+        </p>
       </div>`
     ).join('\n            ');
   }
@@ -297,6 +343,7 @@ export class TemplateRenderer {
   /**
    * Generate stats HTML
    * 🚀 OPTIMIZATION 3: Pre-resolved colors
+   * 🎨 VISUAL EDIT: Added data attributes for click-to-edit
    */
   private generateStats(userData: Record<string, any>, colorMap: Record<string, string>): string {
     const stats = userData['About-basic']?.stats 
@@ -308,10 +355,30 @@ export class TemplateRenderer {
     }
 
     const primary = colorMap['primary'] || 'blue';
-    return stats.map((stat: any) => 
-      `<div className="text-center">
-        <div className="text-3xl font-bold text-${primary}-600 mb-2">${this.escapeHtml(stat.number || '0')}</div>
-        <div className="text-${primary}-700">${this.escapeHtml(stat.label || 'Label')}</div>
+    return stats.map((stat: any, index: number) => 
+      `<div className="text-center"
+        data-editable="true"
+        data-block-id="about-basic"
+        data-field="stats"
+        data-item-index="${index}"
+        data-type="stat"
+      >
+        <div className="text-3xl font-bold text-${primary}-600 mb-2"
+          data-editable="true"
+          data-block-id="about-basic"
+          data-field="stats[${index}].number"
+          data-type="text"
+        >
+          ${this.escapeHtml(stat.number || '0')}
+        </div>
+        <div className="text-${primary}-700"
+          data-editable="true"
+          data-block-id="about-basic"
+          data-field="stats[${index}].label"
+          data-type="text"
+        >
+          ${this.escapeHtml(stat.label || 'Label')}
+        </div>
       </div>`
     ).join('\n            ');
   }
@@ -319,6 +386,7 @@ export class TemplateRenderer {
   /**
    * Generate menu items HTML with images
    * 🚀 OPTIMIZATION 3: Pre-resolved colors + Images
+   * 🎨 VISUAL EDIT: Added data attributes for click-to-edit
    */
   private generateMenuItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
     const menuItems = userData['Menu-basic']?.menuItems 
@@ -331,8 +399,14 @@ export class TemplateRenderer {
 
     const primary = colorMap['primary'] || 'blue';
     const lang = this.getLanguage(userData);
-    return menuItems.map((item: any) => 
-      `<div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-${primary}-100">
+    return menuItems.map((item: any, index: number) => 
+      `<div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-${primary}-100"
+        data-editable="true"
+        data-block-id="menu-basic"
+        data-field="menuItems"
+        data-item-index="${index}"
+        data-type="menu-item"
+      >
         {/* Image Section */}
         <div className="relative h-48 overflow-hidden">
           <img 
@@ -340,10 +414,19 @@ export class TemplateRenderer {
             alt="${this.escapeHtml(item.imageAlt || item.name || 'Food item')}"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"
+            data-editable="true"
+            data-block-id="menu-basic"
+            data-field="menuItems[${index}].image"
+            data-type="image"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="absolute top-4 right-4">
-            <span className="px-3 py-1 bg-${primary}-500 text-white text-xs font-semibold rounded-full">
+            <span className="px-3 py-1 bg-${primary}-500 text-white text-xs font-semibold rounded-full"
+              data-editable="true"
+              data-block-id="menu-basic"
+              data-field="menuItems[${index}].category"
+              data-type="text"
+            >
               ${this.escapeHtml(item.category || 'food')}
             </span>
           </div>
@@ -352,7 +435,12 @@ export class TemplateRenderer {
         {/* Content Section */}
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-${primary}-900 group-hover:text-${primary}-700 transition-colors">
+            <h3 className="text-xl font-bold text-${primary}-900 group-hover:text-${primary}-700 transition-colors"
+              data-editable="true"
+              data-block-id="menu-basic"
+              data-field="menuItems[${index}].name"
+              data-type="heading"
+            >
               ${this.escapeHtml(item.name || 'Item')}
             </h3>
             <div className="w-12 h-12 bg-${primary}-100 rounded-full flex items-center justify-center group-hover:bg-${primary}-200 transition-colors">
@@ -360,12 +448,22 @@ export class TemplateRenderer {
             </div>
           </div>
           
-          <p className="text-gray-600 mb-6 leading-relaxed">
+          <p className="text-gray-600 mb-6 leading-relaxed"
+            data-editable="true"
+            data-block-id="menu-basic"
+            data-field="menuItems[${index}].description"
+            data-type="text"
+          >
             ${this.escapeHtml(item.description || 'Description')}
           </p>
           
           <div className="flex items-center justify-between">
-            <div className="text-3xl font-bold text-${primary}-600 group-hover:text-${primary}-700 transition-colors">
+            <div className="text-3xl font-bold text-${primary}-600 group-hover:text-${primary}-700 transition-colors"
+              data-editable="true"
+              data-block-id="menu-basic"
+              data-field="menuItems[${index}].price"
+              data-type="text"
+            >
               ${this.formatPrice(item.price, lang)}
             </div>
             <button className="px-4 py-2 bg-${primary}-500 text-white rounded-full hover:bg-${primary}-600 font-semibold text-sm group-hover:scale-105 transform transition-all duration-300">
@@ -418,6 +516,7 @@ export class TemplateRenderer {
   /**
    * Generate social links HTML
    * 🚀 OPTIMIZATION 3: Pre-resolved colors
+   * 🎨 VISUAL EDIT: Added data attributes for click-to-edit
    */
   private generateSocialLinks(userData: Record<string, any>, colorMap: Record<string, string>): string {
     const socialLinks = userData.Footer?.socialLinks 
@@ -429,8 +528,14 @@ export class TemplateRenderer {
     }
 
     const primary = colorMap['primary'] || 'blue';
-    return socialLinks.map((link: any) => 
-      `<a href="${this.escapeHtml(link.url || '#')}" className="text-${primary}-300 hover:text-white transition-colors">
+    return socialLinks.map((link: any, index: number) => 
+      `<a href="${this.escapeHtml(link.url || '#')}" 
+         className="text-${primary}-300 hover:text-white transition-colors"
+         data-editable="true"
+         data-block-id="footer-basic"
+         data-field="socialLinks[${index}].url"
+         data-type="link"
+      >
         <span className="sr-only">${this.escapeHtml(link.name || 'Social')}</span>
         <span className="text-2xl">${this.escapeHtml(link.icon || '🔗')}</span>
       </a>`
@@ -440,6 +545,7 @@ export class TemplateRenderer {
   /**
    * Generate quick links HTML (using React Router Link)
    * 🚀 OPTIMIZATION 3: Pre-resolved colors
+   * 🎨 VISUAL EDIT: Added data attributes for click-to-edit
    */
   private generateQuickLinks(userData: Record<string, any>, colorMap: Record<string, string>): string {
     let quickLinks = userData.Footer?.quickLinks 
@@ -459,8 +565,18 @@ export class TemplateRenderer {
     }
 
     const primary = colorMap['primary'] || 'blue';
-    return quickLinks.map((link: any) => 
-      `<li><Link to="${this.escapeHtml(link.href || '#')}" className="text-${primary}-300 hover:text-white transition-colors">${this.escapeHtml(link.label || 'Link')}</Link></li>`
+    return quickLinks.map((link: any, index: number) => 
+      `<li>
+        <Link to="${this.escapeHtml(link.href || '#')}" 
+              className="text-${primary}-300 hover:text-white transition-colors"
+              data-editable="true"
+              data-block-id="footer-basic"
+              data-field="quickLinks[${index}].label"
+              data-type="text"
+        >
+          ${this.escapeHtml(link.label || 'Link')}
+        </Link>
+      </li>`
     ).join('\n              ');
   }
 
@@ -761,6 +877,61 @@ export class TemplateRenderer {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  /**
+   * 🎨 VISUAL EDIT: Wrap placeholder value with data attributes for visual editing
+   * NOTE: ใช้ได้เฉพาะ TEXT CONTENT เท่านั้น ไม่ใช่ attribute values (src, href, etc.)
+   */
+  private wrapWithDataAttributes(
+    blockId: string,
+    field: string,
+    value: string,
+    type: 'text' | 'heading' | 'subheading' | 'button' | 'badge'
+  ): string {
+    const tag = 'span'; // ใช้ span เพราะไม่รบกวน semantic HTML
+    
+    return `<${tag} 
+      data-editable="true" 
+      data-block-id="${blockId}" 
+      data-field="${field}"
+      data-type="${type}"
+      class="midori-editable"
+    >${this.escapeHtml(value)}</${tag}>`;
+  }
+
+  /**
+   * 🎨 VISUAL EDIT: Infer field type from placeholder name
+   */
+  private inferFieldType(field: string): 'text' | 'heading' | 'subheading' | 'button' | 'badge' {
+    if (field === 'heading') return 'heading';
+    if (field === 'subheading') return 'subheading';
+    if (field === 'badge') return 'badge';
+    if (field.includes('cta') || field.includes('Cta') || field.includes('Button')) return 'button';
+    return 'text';
+  }
+
+  /**
+   * 🎨 VISUAL EDIT: ตรวจสอบว่า placeholder นี้เป็น attribute value หรือไม่
+   * Attribute values (src, href, alt) ไม่สามารถ wrap ด้วย span ได้
+   */
+  private isAttributeValue(field: string): boolean {
+    // Check if field ends with Image, ImageAlt, Url, or is a known attribute field
+    if (field.endsWith('Image') || 
+        field.endsWith('ImageAlt') || 
+        field.endsWith('Url') ||
+        field.endsWith('Alt')) {
+      return true;
+    }
+    
+    // Check specific attribute fields
+    const attributeFields = [
+      'src', 'href', 'url', 'alt',
+      'image', 'icon', 'logo',
+      'video', 'audio'
+    ];
+    
+    return attributeFields.includes(field.toLowerCase());
   }
 
   /**
