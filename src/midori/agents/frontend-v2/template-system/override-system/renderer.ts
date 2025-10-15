@@ -508,14 +508,28 @@ export class TemplateRenderer {
    * Currency/price formatter by language
    */
   private formatPrice(price: any, lang: 'th' | 'en'): string {
-    const n = Number(price ?? 0);
-    if (Number.isFinite(n)) {
-      if (lang === 'en') {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(n);
+    const raw = price ?? 0;
+    let n = Number(raw);
+
+    // Normalize common AI outputs like "$12", "1,200", "120 บาท"
+    if (!Number.isFinite(n)) {
+      const text = String(raw);
+      const match = text.match(/[\d,.]+/);
+      if (match) {
+        const normalized = match[0].replace(/,/g, '');
+        const parsed = Number(normalized);
+        if (Number.isFinite(parsed)) {
+          n = parsed;
+        }
       }
-      return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(n);
     }
-    return lang === 'en' ? '0 THB' : '0 บาท';
+
+    if (!Number.isFinite(n)) n = 0;
+
+    if (lang === 'en') {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n);
+    }
+    return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(n);
   }
 
   /**

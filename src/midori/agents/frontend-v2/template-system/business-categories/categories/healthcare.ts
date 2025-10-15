@@ -14,7 +14,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
         customizations: {
           menuItems: [
             { label: 'หน้าแรก', href: '/' },
-            { label: 'เมนู', href: '/menu' },
+            { label: 'สินค้า', href: '/menu' },
             { label: 'เกี่ยวกับเรา', href: '/about' },
             { label: 'ติดต่อ', href: '/contact' }
           ]
@@ -40,6 +40,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'about-basic',
+        variantId: 'about-split',
         required: false,
         customizations: {
           title: 'เกี่ยวกับคลินิกของเรา',
@@ -59,6 +60,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'menu-basic',
+        variantId: 'menu-list',
         required: true,
         customizations: {
           title: 'บริการของเรา',
@@ -84,6 +86,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'footer-basic',
+        variantId: 'footer-centered',
         required: true,
         customizations: {
           companyName: 'คลินิกสุขภาพดี',
@@ -193,7 +196,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       }
     }
   },
-  {
+/*   {
     id: 'pharmacy',
     name: 'Pharmacy',
     description: 'Pharmacy and drugstore websites',
@@ -406,6 +409,6 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
         }
       }
     }
-  }
+  } */
 ];
 

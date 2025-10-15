@@ -156,10 +156,29 @@ export class ManifestResolver {
       throw new Error(`Shared block '${blockUsage.blockId}' not found`);
     }
 
-    // 2. Determine which variant to use
-    // Priority: customOverride.variantId > blockUsage.variantId > default (no variant)
+    // 2. Determine which variant to use using variantPools
+    // Priority: customOverride.variantId > variantPools selection > blockUsage.variantId > default (no variant)
     const customOverride = customOverrides.find(o => o.blockId === blockUsage.blockId);
-    const variantId = customOverride?.variantId || blockUsage.variantId;
+    let variantId = customOverride?.variantId;
+    
+    // If no custom override, use variantPools to select variant
+    if (!variantId && businessCategory.variantPools?.[blockUsage.blockId]) {
+      const pool = businessCategory.variantPools[blockUsage.blockId];
+      
+      // Try style-based selection first
+      if (pool.randomSelection) {
+        variantId = this.getRandomVariantFromPool(businessCategory.id, blockUsage.blockId);
+      } else {
+        variantId = pool.defaultVariant;
+      }
+      
+      console.log(`🎯 Selected variant '${variantId}' from variantPools for block '${blockUsage.blockId}'`);
+    }
+    
+    // Fallback to blockUsage.variantId if variantPools didn't provide one
+    if (!variantId) {
+      variantId = blockUsage.variantId;
+    }
     
     let finalTemplate = sharedBlock.template;
     let finalPlaceholders = { ...sharedBlock.placeholders };
@@ -351,5 +370,26 @@ export class ManifestResolver {
       duration: 0,
       steps: []
     };
+  }
+
+  /**
+   * Get random variant from pool
+   */
+  private getRandomVariantFromPool(categoryId: string, blockId: string): string | undefined {
+    const category = this.businessCategories.get(categoryId);
+    if (!category?.variantPools?.[blockId]) {
+      return undefined;
+    }
+
+    const pool = category.variantPools[blockId];
+    const allowedVariants = pool.allowedVariants;
+    
+    if (allowedVariants.length === 0) {
+      return pool.defaultVariant;
+    }
+
+    // Random selection from allowed variants
+    const randomIndex = Math.floor(Math.random() * allowedVariants.length);
+    return allowedVariants[randomIndex];
   }
 }

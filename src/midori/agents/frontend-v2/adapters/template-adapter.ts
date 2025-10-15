@@ -82,30 +82,36 @@ export class TemplateAdapter {
     const keywords = aiPromptConfig.keywords;
     const concreteManifest = aiPromptConfig.concreteManifest;
     
-    // Detect language from user input/keywords (fallback to user setting, then Thai)
-    const preferredLanguage = aiPromptConfig?.userData?.aiSettings?.language as string | undefined;
-    const detectedLanguage = this.detectLanguage(
-      keywords,
-      (aiPromptConfig?.userData?.userInput as string) || keywords?.join(' ') || '',
-      preferredLanguage
-    );
+    // Detect language from user input/keywords (prioritize input detection over user settings)
+    const userInput = (aiPromptConfig?.userData?.userInput as string) || keywords?.join(' ') || '';
+    const detectedLanguage = this.detectLanguage(keywords, userInput);
     
-    // Use OverrideSystem's AI prompt generation instead of AIService
-    const aiPrompt = this.overrideSystem.createAIPrompt(
-      businessCategory.id,
+    // Always prioritize detected language over user preferences
+    const finalLanguage = detectedLanguage || 'en';
+    
+    // Get system prompt from Template System (with language support)
+    const { OverrideSystemWithTemplates } = require("../template-system/prompt-templates/override-integration");
+    const templateSystem = new OverrideSystemWithTemplates(true);
+    const templateResult = templateSystem.createOptimizedAIPrompt({
+      businessCategory,
       concreteManifest,
       keywords,
-      undefined
-    );
+      customInstructions: undefined,
+      language: finalLanguage
+    });
     
-    // Generate content using AI service with the new prompt
+    // Use the user prompt from Template System (with language support)
+    const aiPrompt = templateResult.userPrompt;
+    
+    // Generate content using AI service with both prompts
     const request: AIGenerationRequest = {
       businessCategory: businessCategory.id,
       keywords,
-      language: detectedLanguage,
+      language: finalLanguage,
       model: 'gpt-5-nano',
       temperature: 1,
-      customPrompt: aiPrompt // Pass the custom prompt
+      customPrompt: aiPrompt, // User prompt from Template System
+      customSystemPrompt: templateResult.systemPrompt // System prompt from Template System
     };
     
     const result = await this.aiService.generateContent(request);
@@ -117,7 +123,7 @@ export class TemplateAdapter {
       status: this.aiService.getStatus()
     });
     
-    return result;
+    return { aiGeneratedData: result, detectedLanguage: finalLanguage };
   }
 
   /**
@@ -309,7 +315,7 @@ export class TemplateAdapter {
       templateRequest.userData.keywords
     );
     
-    const aiGeneratedData = await this.generateUserDataFromAI(aiPromptConfig);
+    const { aiGeneratedData, detectedLanguage } = await this.generateUserDataFromAI(aiPromptConfig);
     console.log('✅ AI content generated:', Object.keys(aiGeneratedData));
 
     // If user specified a brand name in keywords (e.g., "ชื่อ แมวแมว"), enforce it
@@ -322,6 +328,16 @@ export class TemplateAdapter {
 
     // 3. ✅ ใช้ renderTemplates แทน generateWebsite (ไม่ resolve manifest ซ้ำ)
     console.log('🔄 Rendering templates with AI data...');
+    // Ensure renderer gets the intended language (avoid heuristic fallback)
+    try {
+      // Use the detected language from AI generation
+      const lang = detectedLanguage || 'en';
+      aiGeneratedData.global = aiGeneratedData.global || {};
+      aiGeneratedData.global.language = lang;
+      aiGeneratedData.aiSettings = { ...(aiGeneratedData.aiSettings || {}), language: lang };
+    } catch {
+      // no-op
+    }
     
     const rendererResult = await this.overrideSystem.renderTemplates(
       templateRequest.concreteManifest, // ✅ ใช้ manifest ที่ resolve แล้วจาก convertToTemplateRequest
@@ -465,10 +481,7 @@ export class TemplateAdapter {
    * - If user explicitly sets language (en/th), use it
    * - Else detect by characters: any Thai range => 'th', otherwise 'en'
    */
-  private detectLanguage(keywords: string[] = [], userInput: string = '', preferred?: string): 'th' | 'en' {
-    const normalizedPref = (preferred || '').toLowerCase();
-    if (normalizedPref === 'th' || normalizedPref === 'en') return normalizedPref as 'th' | 'en';
-
+  private detectLanguage(keywords: string[] = [], userInput: string = ''): 'th' | 'en' {
     const text = `${userInput} ${keywords.join(' ')}`.trim();
     // Thai unicode range: \u0E00-\u0E7F
     const hasThai = /[\u0E00-\u0E7F]/.test(text);

@@ -564,7 +564,11 @@ export class OrchestratorAI {
     // Website creation patterns - now use template selection
     if (lowerInput.includes('สร้างเว็บไซต์') || 
         lowerInput.includes('สร้างร้าน') ||
+        lowerInput.includes('ร้าน อาหาร') ||        // ✅ เพิ่ม pattern นี้
+        lowerInput.includes('ร้านอาหาร') ||         // ✅ เพิ่ม pattern นี้
         lowerInput.includes('สร้างเว็บ') ||
+        lowerInput.includes('เว็บขาย') ||
+        lowerInput.includes('เว็บไซต์ขาย') ||
         lowerInput.includes('create website') ||
         lowerInput.includes('build website')) {
       return {
@@ -871,6 +875,8 @@ export class OrchestratorAI {
     else if (analysis.taskType?.includes('Website creation') || 
         message.content.includes('สร้างเว็บไซต์') || 
         message.content.includes('สร้างร้าน') ||
+        message.content.includes('ร้าน อาหาร') ||        // ✅ เพิ่ม pattern นี้
+        message.content.includes('ร้านอาหาร') ||         // ✅ เพิ่ม pattern นี้
         message.content.includes('สร้างเว็บ') ||
         message.content.includes('เว็บขาย') ||
         message.content.includes('เว็บไซต์ขาย') ||

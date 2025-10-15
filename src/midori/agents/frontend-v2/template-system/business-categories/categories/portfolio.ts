@@ -6,7 +6,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
     id: 'portfolio',
     name: 'Portfolio',
     description: 'Personal portfolio and creative showcase websites',
-    keywords: ['portfolio', 'creative', 'designer', 'developer', 'work', 'projects', 'website', 'personal', 'showcase', 'freelancer', 'creative work', 'design portfolio', 'developer portfolio', 'artist portfolio'],
+    keywords: ['portfolio', 'creative', 'designer', 'developer', 'work', 'projects', 'personal', 'showcase', 'freelancer', 'creative work', 'design portfolio', 'developer portfolio', 'artist portfolio'],
     blocks: [
       {
         blockId: 'navbar-basic',
@@ -22,6 +22,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'hero-basic',
+        variantId: 'hero-split',
         required: true,
         customizations: {
           badge: 'Portfolio',
@@ -33,6 +34,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'about-basic',
+        variantId: 'about-minimal',
         required: false,
         customizations: {
           title: 'เกี่ยวกับฉัน',
@@ -52,6 +54,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'menu-basic',
+        variantId: 'menu-carousel',
         required: true,
         customizations: {
           title: 'ผลงานของฉัน',
@@ -77,6 +80,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'footer-basic',
+        variantId: 'footer-minimal',
         required: true,
         customizations: {
           companyName: 'Creative Portfolio',

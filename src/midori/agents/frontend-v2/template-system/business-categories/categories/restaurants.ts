@@ -6,7 +6,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
     id: 'restaurant',
     name: 'Restaurant',
     description: 'Restaurant and food service websites with flexible styling',
-    keywords: ['restaurant', 'food', 'dining', 'cafe', 'bistro', 'menu', 'reservation', 'ร้านอาหาร', 'อาหาร', 'หมูย่าง', 'หมูกรอบ', 'ขายอาหาร', 'ร้านขายอาหาร', 'ภัตตาคาร', 'คาเฟ่', 'ร้านกาแฟ'],
+    keywords: ['restaurant', 'restuarant', 'food', 'dining', 'cafe', 'bistro', 'menu', 'reservation', 'ร้านอาหาร', 'อาหาร', 'หมูย่าง', 'หมูกรอบ', 'ขายอาหาร', 'ร้านขายอาหาร', 'ภัตตาคาร', 'คาเฟ่', 'ร้านกาแฟ'],
     blocks: [
       {
         blockId: 'navbar-basic',

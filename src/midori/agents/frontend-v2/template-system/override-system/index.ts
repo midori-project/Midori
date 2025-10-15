@@ -255,7 +255,7 @@ export class OverrideSystem {
   }
 
   /**
-   * สร้าง AI Prompt โดยตรง
+   * สร้าง AI Prompt โดยตรง (ใช้ Template System)
    */
   createAIPrompt(
     businessCategoryId: string,
@@ -263,6 +263,10 @@ export class OverrideSystem {
     keywords: string[],
     customInstructions?: string
   ): string {
+    // ใช้ Template System แทน prompt เดิม
+    const { OverrideSystemWithTemplates } = require("../prompt-templates/override-integration");
+    const templateSystem = new OverrideSystemWithTemplates(true);
+    
     const config = this.createAIPromptConfig(
       businessCategoryId,
       concreteManifest,
@@ -270,7 +274,12 @@ export class OverrideSystem {
       customInstructions
     );
     
-    return createAIPrompt(config);
+    const result = templateSystem.createOptimizedAIPrompt(config);
+    
+    // Log performance metrics
+    console.log(`🎯 Template System: ${result.metadata.templateUsed} (${result.metadata.promptLength} chars, ${result.metadata.generationTime}ms)`);
+    
+    return result.userPrompt;
   }
 
   /**
@@ -794,11 +803,12 @@ function generateExamples(groupName: string, placeholders: string[]): string {
 function getBlockDataKey(blockId: string): string {
   const keyMap: Record<string, string> = {
     "hero-basic": "Hero",
-    "navbar-basic": "Navbar",
+    "navbar-basic": "Navbar", 
     "theme-basic": "Theme",
     "footer-basic": "Footer",
-    "about-basic": "About-basic",
-    "contact-basic": "Contact-basic",
+    "about-basic": "About",
+    "contact-basic": "Contact",
+    "menu-basic": "Menu"
   };
 
   return keyMap[blockId] || blockId.charAt(0).toUpperCase() + blockId.slice(1);

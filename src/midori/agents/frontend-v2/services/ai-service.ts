@@ -17,6 +17,7 @@ export interface AIGenerationRequest {
   model?: string;
   temperature?: number;
   customPrompt?: string; // Add support for custom prompt
+  customSystemPrompt?: string; // Add support for custom system prompt
 }
 
 export interface AIGenerationResponse {
@@ -538,7 +539,7 @@ Translate now:`;
         messages: [
           {
             role: "system",
-            content: this.getSystemPrompt(),
+            content: request.customSystemPrompt || this.getSystemPrompt(),
           },
           {
             role: "user",

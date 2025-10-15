@@ -22,7 +22,6 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'hero-basic',
-        variantId: 'hero-stats',
         required: true,
         customizations: {
           badge: 'ร้านค้าออนไลน์',
