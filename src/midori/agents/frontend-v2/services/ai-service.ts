@@ -16,6 +16,7 @@ export interface AIGenerationRequest {
   language: string;
   model?: string;
   temperature?: number;
+  customPrompt?: string; // Add support for custom prompt
 }
 
 export interface AIGenerationResponse {
@@ -192,7 +193,9 @@ export class AIService {
     const searchTerms: string[] = [];
     
     // 1. Business type (essential)
-    searchTerms.push(businessType);
+    if (businessType) {
+      searchTerms.push(businessType);
+    }
     
     // 2. Style (from category or keywords)
     if (styleFromCategory) {
@@ -524,7 +527,8 @@ Translate now:`;
     try {
       console.log("🤖 Generating content with AI...");
       
-      const prompt = this.createPrompt(request);
+      // Use custom prompt if provided, otherwise use default prompt
+      const prompt = request.customPrompt || this.createPrompt(request);
       
       const model = request.model || "gpt-5-nano";
       const isGpt5 = model.includes("gpt-5");
@@ -812,12 +816,53 @@ IMPORTANT:
       
       const parsed = JSON.parse(cleanContent);
       
-      // Validate required fields
-      if (!parsed.global || !parsed["hero-basic"]) {
-        throw new Error("Invalid response structure");
+      // Debug logging
+      console.log("🔍 Parsed AI response keys:", Object.keys(parsed));
+      console.log("🔍 Global section:", parsed.global);
+      
+      // Validate required fields - be more flexible with block names
+      if (!parsed.global) {
+        throw new Error("Invalid response structure: missing global section");
       }
       
-      return parsed as AIGenerationResponse;
+      // Check if we have at least one block (hero, navbar, about, etc.)
+      // Support both PascalCase and kebab-case
+      const hasAnyBlock = Object.keys(parsed).some(key => {
+        const lowerKey = key.toLowerCase();
+        return lowerKey.includes('hero') || lowerKey.includes('navbar') || lowerKey.includes('about') || 
+               lowerKey.includes('menu') || lowerKey.includes('contact') || lowerKey.includes('footer') ||
+               lowerKey.includes('theme');
+      });
+      
+      if (!hasAnyBlock) {
+        throw new Error("Invalid response structure: no content blocks found");
+      }
+      
+      // Normalize block names from PascalCase to kebab-case
+      const normalizedResponse = { ...parsed };
+      const blockMappings = {
+        'Navbar': 'navbar-basic',
+        'Hero': 'hero-basic', 
+        'About': 'about-basic',        // ✅ เพิ่ม mapping สำหรับ 'About'
+        'About-basic': 'about-basic',
+        'Menu': 'menu-basic',          // ✅ เพิ่ม mapping สำหรับ 'Menu'
+        'Menu-basic': 'menu-basic',
+        'Contact': 'contact-basic',    // ✅ เพิ่ม mapping สำหรับ 'Contact'
+        'Contact-basic': 'contact-basic',
+        'Footer': 'footer-basic',
+        'Theme': 'theme-basic'         // ✅ เพิ่ม mapping สำหรับ 'Theme'
+      };
+      
+      for (const [pascalCase, kebabCase] of Object.entries(blockMappings)) {
+        if (normalizedResponse[pascalCase]) {
+          normalizedResponse[kebabCase] = normalizedResponse[pascalCase];
+          delete normalizedResponse[pascalCase];
+        }
+      }
+      
+      console.log("🔄 Normalized response keys:", Object.keys(normalizedResponse));
+      
+      return normalizedResponse as AIGenerationResponse;
     } catch (error) {
       console.error("❌ Failed to parse AI response:", error);
       console.log("🔄 Using mock data instead");

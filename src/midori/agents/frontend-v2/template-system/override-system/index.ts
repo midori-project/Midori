@@ -255,6 +255,25 @@ export class OverrideSystem {
   }
 
   /**
+   * สร้าง AI Prompt โดยตรง
+   */
+  createAIPrompt(
+    businessCategoryId: string,
+    concreteManifest: ConcreteManifest,
+    keywords: string[],
+    customInstructions?: string
+  ): string {
+    const config = this.createAIPromptConfig(
+      businessCategoryId,
+      concreteManifest,
+      keywords,
+      customInstructions
+    );
+    
+    return createAIPrompt(config);
+  }
+
+  /**
    * Validate User Data
    */
   validateUserData(
@@ -329,17 +348,36 @@ export function createAIPrompt(config: AIPromptConfig): string {
   const colorKeywords = extractColorKeywords(keywords);
   console.log("Keywords:", keywords);
   console.log("Extracted colors:", colorKeywords);
-  const colorHint =
-    colorKeywords.length > 0
-      ? `\n\n🎨 COLOR OVERRIDE: User specifically requested ${colorKeywords.join(
-          ", "
-        )} colors. 
+  
+  // Check if user specified colors or if context requires fallback
+  const shouldUseAIFallback = shouldUseAIColorFallback(keywords, businessCategory);
+  
+  const colorHint = colorKeywords.length > 0
+    ? `\n\n🎨 COLOR OVERRIDE: User specifically requested ${colorKeywords.join(", ")} colors. 
   - IGNORE business category base colors completely
   - Use ONLY these user-specified colors: ${colorKeywords.join(", ")}
   - Primary color: ${colorKeywords[0]}
   - Secondary color: ${colorKeywords[1] || colorKeywords[0]}
   - This overrides any default colors for the business category`
-      : "";
+    : shouldUseAIFallback
+    ? `\n\n🎨 AI FALLBACK: Context requires different colors than default.
+  - Business category default: ${businessCategory.globalSettings.palette.primary} + ${businessCategory.globalSettings.palette.secondary}
+  - Context analysis suggests different colors would be more appropriate
+  - Generate colors that better match the specific context and keywords`
+    : `\n\n🎨 DEFAULT COLORS: Use business category default colors.
+  - Primary: ${businessCategory.globalSettings.palette.primary}
+  - Secondary: ${businessCategory.globalSettings.palette.secondary}
+  - bgTone: ${businessCategory.globalSettings.palette.bgTone}
+  - DO NOT change these colors unless user specifically requests different colors`;
+
+  // Debug logging
+  console.log("🎨 Color selection debug:", {
+    colorKeywords,
+    shouldUseAIFallback,
+    businessCategory: businessCategory.id,
+    defaultPrimary: businessCategory.globalSettings.palette.primary,
+    defaultSecondary: businessCategory.globalSettings.palette.secondary
+  });
 
   let prompt = `You are a website content generator. Based on the keywords and business category, generate appropriate content.
 
@@ -354,9 +392,9 @@ Generate content that matches the schema exactly. Return JSON with the following
 {
   "global": {
     "palette": {
-      "primary": "choose appropriate color based on keywords and business type",
-      "secondary": "choose complementary color based on keywords and business type", 
-      "bgTone": "choose appropriate background tone number (50, 100, 200, 300, 400, 500, 600, 700, 800, 900)"
+      "primary": "${colorKeywords.length > 0 ? colorKeywords[0] : (shouldUseAIFallback ? 'choose appropriate color based on context' : businessCategory.globalSettings.palette.primary)}",
+      "secondary": "${colorKeywords.length > 0 ? (colorKeywords[1] || colorKeywords[0]) : (shouldUseAIFallback ? 'choose complementary color based on context' : businessCategory.globalSettings.palette.secondary)}", 
+      "bgTone": "${colorKeywords.length > 0 ? 'choose appropriate background tone' : (shouldUseAIFallback ? 'choose appropriate background tone' : businessCategory.globalSettings.palette.bgTone)}"
     },
     "tokens": {
       "radius": "${businessCategory.globalSettings.tokens.radius}",
@@ -476,21 +514,18 @@ Color Guidelines:
   * แดง, แดงเข้ม = red
   * เหลือง, เหลืองอ่อน = yellow
   * คราม, ครามอ่อน = indigo
-- CRITICAL: User-specified colors in keywords ALWAYS override business category base colors
-- If keywords contain color names (Thai or English), use ONLY those colors
-- If no color specified in keywords, then choose colors that match the business type:
-  * Food/Restaurant: orange, red, yellow (warm colors)
-  * Technology/Tech: blue, purple, indigo (cool colors)
-  * Health/Medical: green, blue (trustworthy colors)
-  * Luxury/Premium: purple, indigo, gold (sophisticated colors)
-  * Nature/Eco: green, blue (natural colors)
-  * Fashion/Beauty: pink, purple, red (vibrant colors)
-  * Finance/Business: blue, indigo (professional colors)
+- CRITICAL: Use business category default colors unless user specifies different colors or context requires fallback
+- If user specifies colors in keywords (Thai or English), use ONLY those colors
+- If context requires different colors (health, luxury, modern, etc.), generate appropriate colors
+- If no special requirements, use business category default colors:
+  * Restaurant: ${businessCategory.globalSettings.palette.primary} + ${businessCategory.globalSettings.palette.secondary}
+  * E-commerce: blue + purple (professional, trustworthy)
+  * Healthcare: green + blue (clean, trustworthy)
+  * Portfolio: purple + indigo (creative, professional)
 - CRITICAL: You MUST use ONLY English color names (blue, green, purple, pink, orange, red, yellow, indigo) in your response
 - DO NOT use Thai color names (ฟ้า, ส้ม, เขียว, etc.) in the JSON response
 - Primary color should be the main brand color
 - Secondary color should complement the primary color
-- NEVER use business category base colors if user specifies different colors in keywords
 - bgTone should provide good contrast (lighter for dark text, darker for light text)`;
 
   if (customInstructions) {
@@ -592,6 +627,46 @@ function extractColorKeywords(keywords: string[]): string[] {
   }
 
   return [...new Set(foundColors)]; // Remove duplicates
+}
+
+/**
+ * Check if AI color fallback should be used based on context
+ */
+function shouldUseAIColorFallback(keywords: string[], businessCategory: any): boolean {
+  const contextKeywords = [
+    // Health/Wellness context
+    'สุขภาพ', 'มังสวิรัติ', 'ออร์แกนิก', 'ธรรมชาติ', 'wellness', 'health', 'organic', 'natural',
+    
+    // Luxury/Premium context
+    'ลักซ์ชัวรี่', 'หรูหรา', 'พรีเมียม', 'หรู', 'luxury', 'premium', 'sophisticated', 'elegant',
+    
+    // Modern/Tech context
+    'โมเดิร์น', 'ทันสมัย', 'เทคโนโลยี', 'ดิจิทัล', 'modern', 'tech', 'digital', 'contemporary',
+    
+    // Minimal context
+    'มินิมอล', 'เรียบง่าย', 'สะอาด', 'minimal', 'clean', 'simple', 'minimalist',
+    
+    // Nature/Eco context
+    'ธรรมชาติ', 'สิ่งแวดล้อม', 'อีโค', 'nature', 'eco', 'environmental', 'green'
+  ];
+
+  // Check if any context keywords are present
+  const hasContextKeywords = keywords.some(keyword => 
+    contextKeywords.some(context => 
+      keyword.toLowerCase().includes(context.toLowerCase())
+    )
+  );
+
+  // Check for specific business type mismatches
+  const businessType = businessCategory.id;
+  const hasTypeMismatch = (
+    (businessType === 'restaurant' && keywords.some(k => k.includes('สุขภาพ'))) ||
+    (businessType === 'restaurant' && keywords.some(k => k.includes('ลักซ์ชัวรี่'))) ||
+    (businessType === 'ecommerce' && keywords.some(k => k.includes('สุขภาพ'))) ||
+    (businessType === 'healthcare' && keywords.some(k => k.includes('ลักซ์ชัวรี่')))
+  );
+
+  return hasContextKeywords || hasTypeMismatch;
 }
 
 /**

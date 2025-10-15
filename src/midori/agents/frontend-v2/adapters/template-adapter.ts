@@ -75,11 +75,12 @@ export class TemplateAdapter {
   }
 
   /**
-   * Generate User Data from AI
+   * Generate User Data from AI using OverrideSystem
    */
   private async generateUserDataFromAI(aiPromptConfig: any): Promise<any> {
-    const businessCategory = aiPromptConfig.businessCategory.id;
+    const businessCategory = aiPromptConfig.businessCategory;
     const keywords = aiPromptConfig.keywords;
+    const concreteManifest = aiPromptConfig.concreteManifest;
     
     // Detect language from user input/keywords (fallback to user setting, then Thai)
     const preferredLanguage = aiPromptConfig?.userData?.aiSettings?.language as string | undefined;
@@ -89,20 +90,28 @@ export class TemplateAdapter {
       preferredLanguage
     );
     
-    // Create AI generation request
+    // Use OverrideSystem's AI prompt generation instead of AIService
+    const aiPrompt = this.overrideSystem.createAIPrompt(
+      businessCategory.id,
+      concreteManifest,
+      keywords,
+      undefined
+    );
+    
+    // Generate content using AI service with the new prompt
     const request: AIGenerationRequest = {
-      businessCategory,
+      businessCategory: businessCategory.id,
       keywords,
       language: detectedLanguage,
       model: 'gpt-5-nano',
-      temperature: 1
+      temperature: 1,
+      customPrompt: aiPrompt // Pass the custom prompt
     };
     
-    // Generate content using AI service
     const result = await this.aiService.generateContent(request);
     
-    console.log('✅ AI content generated:', {
-      businessCategory,
+    console.log('✅ AI content generated with OverrideSystem prompt:', {
+      businessCategory: businessCategory.id,
       keywords,
       aiAvailable: this.aiService.isAvailable(),
       status: this.aiService.getStatus()
