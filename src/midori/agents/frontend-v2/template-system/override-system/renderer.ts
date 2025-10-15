@@ -131,13 +131,17 @@ export class TemplateRenderer {
       const value = this.getUserDataValue(placeholder, userData, config, block.id);
       
       if (value !== undefined) {
-        // 🎨 VISUAL EDIT: Wrap with data attributes ONLY for text content
-        // Attribute values (src, href) should NOT be wrapped
+        // 🎨 VISUAL EDIT: Check if template already has data-editable attributes
+        const hasDataAttributes = template.includes(`data-field="${placeholder}"`);
+        
         if (this.isAttributeValue(placeholder)) {
           // For attribute values, just escape HTML (data attrs will be on element itself in template)
           replacements[placeholder] = this.escapeHtml(String(value));
+        } else if (hasDataAttributes) {
+          // ✨ Template already has data attributes - don't wrap!
+          replacements[placeholder] = this.escapeHtml(String(value));
         } else {
-          // For text content, wrap with span
+          // For text content without pre-existing data attrs, wrap with span
           const wrappedValue = this.wrapWithDataAttributes(
             block.id,
             placeholder,
@@ -149,8 +153,12 @@ export class TemplateRenderer {
         appliedOverrides.push(`placeholder-${placeholder}`);
       } else if (config.required) {
         const fallbackValue = this.getFallbackValue(placeholder, config);
-        // 🎨 VISUAL EDIT: Same logic for fallback values
+        const hasDataAttributes = template.includes(`data-field="${placeholder}"`);
+        
         if (this.isAttributeValue(placeholder)) {
+          replacements[placeholder] = this.escapeHtml(String(fallbackValue));
+        } else if (hasDataAttributes) {
+          // ✨ Template already has data attributes - don't wrap!
           replacements[placeholder] = this.escapeHtml(String(fallbackValue));
         } else {
           const wrappedValue = this.wrapWithDataAttributes(

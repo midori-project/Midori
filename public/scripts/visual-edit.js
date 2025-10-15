@@ -147,18 +147,32 @@
       pointer-events: auto !important;
     }
     
+    /* 🎨 Hover effect - ปกติ (text, buttons) - ไม่ปรับ z-index */
     .midori-edit-mode [data-editable]:hover {
       outline: 2px dashed #3b82f6 !important;
       outline-offset: 2px;
-      background: rgba(59, 130, 246, 0.05) !important;
-      z-index: 9999 !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
     }
     
+    /* 🖼️ Hover effect - สำหรับ background images */
+    .midori-edit-mode [data-type="image"]:hover {
+      outline: 3px dashed #f59e0b !important;
+      outline-offset: 4px;
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2) !important;
+    }
+    
+    /* Selected state - ปกติ */
     [data-editable].midori-selected {
-      outline: 2px solid #3b82f6 !important;
+      outline: 3px solid #3b82f6 !important;
       outline-offset: 2px;
-      background: rgba(59, 130, 246, 0.1) !important;
-      z-index: 10000 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+    }
+    
+    /* 🖼️ Selected - สำหรับ background images */
+    [data-type="image"].midori-selected {
+      outline: 3px solid #f59e0b !important;
+      outline-offset: 4px;
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.3) !important;
     }
     
     /* Tooltip showing field name */
@@ -195,25 +209,26 @@
       pointer-events: none !important;
     }
     
-    /* Special styling for different types */
+    /* 🎨 Special styling - Heading */
     .midori-edit-mode [data-type="heading"]:hover {
       outline-color: #10b981 !important;
-      background: rgba(16, 185, 129, 0.05) !important;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) !important;
     }
     
     .midori-edit-mode [data-type="heading"].midori-selected {
       outline-color: #10b981 !important;
-      background: rgba(16, 185, 129, 0.1) !important;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
     }
     
-    .midori-edit-mode [data-type="image"]:hover {
-      outline-color: #f59e0b !important;
-      background: rgba(245, 158, 11, 0.05) !important;
+    /* 🔘 Special styling - Button */
+    .midori-edit-mode [data-type="button"]:hover {
+      outline-color: #8b5cf6 !important;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1) !important;
     }
     
-    .midori-edit-mode [data-type="image"].midori-selected {
-      outline-color: #f59e0b !important;
-      background: rgba(245, 158, 11, 0.1) !important;
+    .midori-edit-mode [data-type="button"].midori-selected {
+      outline-color: #8b5cf6 !important;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2) !important;
     }
   `;
   document.head.appendChild(style);

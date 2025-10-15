@@ -219,14 +219,16 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
           .midori-edit-mode * { pointer-events: none !important; }
           .midori-edit-mode [data-editable] { pointer-events: auto !important; transition: all 0.2s ease; cursor: pointer !important; position: relative; }
           .midori-edit-mode [data-editable] * { pointer-events: auto !important; }
-          .midori-edit-mode [data-editable]:hover { outline: 2px dashed #3b82f6 !important; outline-offset: 2px; background: rgba(59, 130, 246, 0.05) !important; z-index: 9999 !important; }
-          [data-editable].midori-selected { outline: 2px solid #3b82f6 !important; outline-offset: 2px; background: rgba(59, 130, 246, 0.1) !important; z-index: 10000 !important; }
+          .midori-edit-mode [data-editable]:hover { outline: 2px dashed #3b82f6 !important; outline-offset: 2px; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important; }
+          .midori-edit-mode [data-type="image"]:hover { outline: 3px dashed #f59e0b !important; outline-offset: 4px; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2) !important; }
+          [data-editable].midori-selected { outline: 3px solid #3b82f6 !important; outline-offset: 2px; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important; }
+          [data-type="image"].midori-selected { outline: 3px solid #f59e0b !important; outline-offset: 4px; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.3) !important; }
           .midori-edit-mode [data-editable]:hover::after { content: attr(data-field); position: absolute; top: -28px; left: 0; background: #3b82f6; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; font-family: -apple-system, sans-serif; white-space: nowrap; z-index: 10001; pointer-events: none !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
           .midori-edit-mode [data-editable]:hover::before { content: ''; position: absolute; top: -8px; left: 10px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #3b82f6; z-index: 10001; pointer-events: none !important; }
-          .midori-edit-mode [data-type="heading"]:hover { outline-color: #10b981 !important; background: rgba(16, 185, 129, 0.05) !important; }
-          .midori-edit-mode [data-type="heading"].midori-selected { outline-color: #10b981 !important; background: rgba(16, 185, 129, 0.1) !important; }
-          .midori-edit-mode [data-type="image"]:hover { outline-color: #f59e0b !important; background: rgba(245, 158, 11, 0.05) !important; }
-          .midori-edit-mode [data-type="image"].midori-selected { outline-color: #f59e0b !important; background: rgba(245, 158, 11, 0.1) !important; }
+          .midori-edit-mode [data-type="heading"]:hover { outline-color: #10b981 !important; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) !important; }
+          .midori-edit-mode [data-type="heading"].midori-selected { outline-color: #10b981 !important; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important; }
+          .midori-edit-mode [data-type="button"]:hover { outline-color: #8b5cf6 !important; box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1) !important; }
+          .midori-edit-mode [data-type="button"].midori-selected { outline-color: #8b5cf6 !important; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2) !important; }
         \`;
         document.head.appendChild(style);
 

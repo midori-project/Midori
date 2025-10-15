@@ -75,7 +75,13 @@ export default function Hero(){
           
           {/* Main Heading */}
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight drop-shadow-2xl">
-            <span className="bg-gradient-to-r from-white to-{primary}-100 bg-clip-text text-transparent">
+            <span 
+              className="relative z-10 bg-gradient-to-r from-white to-{primary}-100 bg-clip-text text-transparent"
+              data-editable="true"
+              data-block-id="hero-basic"
+              data-field="heading"
+              data-type="heading"
+            >
               {heading}
             </span>
           </h1>
