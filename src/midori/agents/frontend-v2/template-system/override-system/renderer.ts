@@ -875,11 +875,22 @@ export class TemplateRenderer {
     }
   }
 
-  /**
-   * Escape HTML characters
-   */
-  private escapeHtml(text: string): string {
-    return text
+  private escapeHtml(text: any): string {
+    // 🔧 แก้ไข: รองรับค่าที่ไม่ใช่ string
+    if (text === null || text === undefined) {
+      return '';
+    }
+    
+    // ถ้าเป็น object หรือ array ให้แปลงเป็น JSON string
+    if (typeof text === 'object') {
+      console.warn(`⚠️ escapeHtml received object/array, converting to JSON:`, text);
+      text = JSON.stringify(text);
+    }
+    
+    // แปลงเป็น string
+    const str = String(text);
+    
+    return str
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
