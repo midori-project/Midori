@@ -63,7 +63,7 @@ export class TemplateAdapter {
     };
 
     // 4. Resolve concrete manifest
-    const resolverResult = await this.overrideSystem.resolveManifest(businessCategoryId, []);
+    const resolverResult = await this.overrideSystem.resolveManifest(businessCategoryId, [], task.keywords);
 
     return {
       businessCategoryId,

@@ -48,7 +48,8 @@ export class ManifestResolver {
    */
   resolveManifest(
     businessCategoryId: string,
-    customOverrides: OverrideConfig[] = []
+    customOverrides: OverrideConfig[] = [],
+    keywords: string[] = []
   ): ResolverResult {
     const startTime = Date.now();
     this.processingStats.startTime = startTime;
@@ -60,7 +61,8 @@ export class ManifestResolver {
       // Step 2: Process Blocks
       const concreteBlocks = this.processBlocks(
         businessCategory, 
-        customOverrides
+        customOverrides,
+        keywords
       );
       
       // Step 3: Create Concrete Manifest
@@ -116,7 +118,8 @@ export class ManifestResolver {
    */
   private processBlocks(
     businessCategory: BusinessCategoryManifest,
-    customOverrides: OverrideConfig[]
+    customOverrides: OverrideConfig[],
+    keywords: string[] = []
   ): ConcreteBlock[] {
     const stepStart = Date.now();
     const concreteBlocks: ConcreteBlock[] = [];
@@ -126,7 +129,8 @@ export class ManifestResolver {
         const concreteBlock = this.processBlock(
           blockUsage,
           businessCategory,
-          customOverrides
+          customOverrides,
+          keywords
         );
         concreteBlocks.push(concreteBlock);
       } catch (error) {
@@ -146,7 +150,8 @@ export class ManifestResolver {
   private processBlock(
     blockUsage: BlockUsage,
     businessCategory: BusinessCategoryManifest,
-    customOverrides: OverrideConfig[]
+    customOverrides: OverrideConfig[],
+    keywords: string[] = []
   ): ConcreteBlock {
     const stepStart = Date.now();
     
@@ -165,14 +170,30 @@ export class ManifestResolver {
     if (!variantId && businessCategory.variantPools?.[blockUsage.blockId]) {
       const pool = businessCategory.variantPools[blockUsage.blockId];
       
-      // Try style-based selection first
-      if (pool.randomSelection) {
-        variantId = this.getRandomVariantFromPool(businessCategory.id, blockUsage.blockId);
-      } else {
-        variantId = pool.defaultVariant;
+      // Try style-based selection first (if keywords provided)
+      if (keywords.length > 0) {
+        const { getStyleBasedVariant } = require('../business-categories');
+        const styleBasedVariant = getStyleBasedVariant(
+          businessCategory.id, 
+          blockUsage.blockId, 
+          keywords
+        );
+        
+        if (styleBasedVariant && pool.allowedVariants.includes(styleBasedVariant)) {
+          variantId = styleBasedVariant;
+          console.log(`🎨 Selected style-based variant '${variantId}' for block '${blockUsage.blockId}' (keywords: ${keywords.join(', ')})`);
+        }
       }
       
-      console.log(`🎯 Selected variant '${variantId}' from variantPools for block '${blockUsage.blockId}'`);
+      // Fallback to random or default if no style-based selection
+      if (!variantId) {
+        if (pool.randomSelection) {
+          variantId = this.getRandomVariantFromPool(businessCategory.id, blockUsage.blockId);
+        } else {
+          variantId = pool.defaultVariant;
+        }
+        console.log(`🎯 Selected variant '${variantId}' from variantPools for block '${blockUsage.blockId}'`);
+      }
     }
     
     // Fallback to blockUsage.variantId if variantPools didn't provide one

@@ -108,7 +108,8 @@ export class OverrideSystem {
    */
   async resolveManifest(
     businessCategoryId: string,
-    customOverrides: OverrideConfig[] = []
+    customOverrides: OverrideConfig[] = [],
+    keywords: string[] = []
   ): Promise<ResolverResult> {
     try {
       this.logger.logResolverStep("Starting manifest resolution", {
@@ -118,7 +119,8 @@ export class OverrideSystem {
 
       const result = this.resolver.resolveManifest(
         businessCategoryId,
-        customOverrides
+        customOverrides,
+        keywords
       );
 
       this.logger.logConcreteManifestCreation(result.concreteManifest);
@@ -192,7 +194,8 @@ export class OverrideSystem {
       // Step 1: Resolve Manifest
       const resolverResult = await this.resolveManifest(
         businessCategoryId,
-        customOverrides
+        customOverrides,
+        userData.keywords || []
       );
 
       // Step 2: Render Templates
