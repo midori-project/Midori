@@ -260,6 +260,19 @@ export class UnsplashService {
    */
   private getFallbackImages(query: string): UnsplashImage[] {
     const fallbackImages: Record<string, UnsplashImage[]> = {
+      restaurant: [
+        {
+          id: 'fallback-restaurant-1',
+          urls: {
+            small: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop&crop=center',
+            regular: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop&crop=center',
+            full: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&h=1080&fit=crop&crop=center'
+          },
+          alt_description: 'Restaurant interior with elegant dining setup',
+          description: 'Beautiful restaurant ambiance',
+          user: { name: 'Unsplash', username: 'unsplash' }
+        }
+      ],
       food: [
         {
           id: 'fallback-food-1',
@@ -303,17 +316,33 @@ export class UnsplashService {
 
     // Find appropriate fallback based on query
     const queryLower = query.toLowerCase();
+    
+    // Restaurant/cafe/dining related
+    if (queryLower.includes('restaurant') || queryLower.includes('cafe') || 
+        queryLower.includes('dining') || queryLower.includes('luxury') ||
+        queryLower.includes('cat') || queryLower.includes('bistro')) {
+      console.log(`📸 Using restaurant fallback for query: ${query}`);
+      return fallbackImages.restaurant || fallbackImages.food || [];
+    }
+    
+    // Food related
     if (queryLower.includes('food') || queryLower.includes('rice') || queryLower.includes('noodle')) {
       return fallbackImages.food || [];
     }
+    
+    // Product related
     if (queryLower.includes('book') || queryLower.includes('product') || queryLower.includes('toy')) {
       return fallbackImages.product || [];
     }
+    
+    // Medical related
     if (queryLower.includes('medicine') || queryLower.includes('health') || queryLower.includes('medical')) {
       return fallbackImages.medicine || [];
     }
 
-    return fallbackImages.food || []; // Default fallback
+    // Default fallback to restaurant for business-like queries
+    console.log(`📸 Using default restaurant fallback for query: ${query}`);
+    return fallbackImages.restaurant || fallbackImages.food || [];
   }
 
   /**

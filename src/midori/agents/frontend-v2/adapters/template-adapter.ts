@@ -313,9 +313,11 @@ export class TemplateAdapter {
     // 2. สร้าง AI Prompt และ Generate User Data
     // 🎨 Check if we already have AI data from visual edit
     let aiGeneratedData;
+    let detectedLanguage;
     if ((task.metadata as any)?.aiGeneratedData) {
       console.log('🎨 Using existing AI data from visual edit');
       aiGeneratedData = (task.metadata as any).aiGeneratedData;
+      detectedLanguage = task.aiSettings?.language || 'en';
     } else {
       console.log('🤖 Generating new AI content...');
       
@@ -325,7 +327,10 @@ export class TemplateAdapter {
         templateRequest.userData.keywords
       );
       
-      aiGeneratedData = await this.generateUserDataFromAI(aiPromptConfig);
+      // 🔧 แก้ไข: ดึง aiGeneratedData และ detectedLanguage ออกมาจาก result
+      const result = await this.generateUserDataFromAI(aiPromptConfig);
+      aiGeneratedData = result.aiGeneratedData;  // ← ดึงเฉพาะข้อมูลจริง
+      detectedLanguage = result.detectedLanguage;  // ← เก็บ language ไว้ใช้
       console.log('✅ AI content generated:', Object.keys(aiGeneratedData));
     }
 
@@ -341,8 +346,8 @@ export class TemplateAdapter {
     console.log('🔄 Rendering templates with AI data...');
     // Ensure renderer gets the intended language (avoid heuristic fallback)
     try {
-      // Use the detected language from AI generation
-      const lang = detectedLanguage || 'en';
+      // Use the detected language from AI generation or from task settings
+      const lang = detectedLanguage || task.aiSettings?.language || 'en';
       aiGeneratedData.global = aiGeneratedData.global || {};
       aiGeneratedData.global.language = lang;
       aiGeneratedData.aiSettings = { ...(aiGeneratedData.aiSettings || {}), language: lang };
