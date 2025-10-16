@@ -126,10 +126,14 @@ export function PreviewContent({
                       src={previewUrl}
                       className="w-full h-full border-0"
                       title="Project Preview"
+                      data-preview="true"
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                       referrerPolicy="no-referrer"
                       allow="clipboard-read; clipboard-write"
-                      onLoad={() => console.log('✅ Preview loaded:', previewUrl)}
+                      onLoad={() => {
+                        console.log('✅ Preview loaded:', previewUrl);
+                        console.log('🎨 Visual edit script is embedded in generated HTML');
+                      }}
                       onError={() => console.error('❌ Preview failed to load:', previewUrl)}
                     />
                   </div>

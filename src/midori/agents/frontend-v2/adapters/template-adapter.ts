@@ -52,6 +52,10 @@ export class TemplateAdapter {
 
     // 2. สร้าง custom overrides จาก customizations
     const customOverrides = this.createCustomOverrides(task.customizations);
+    
+    // 🎨 2.1 รวม customOverrides จาก visual edit (ถ้ามี)
+    const visualEditOverrides = (task.metadata as any)?.visualEditOverrides || [];
+    const allOverrides = [...customOverrides, ...visualEditOverrides];
 
     // 3. สร้าง user data สำหรับ AI
     const userData = {
@@ -307,16 +311,28 @@ export class TemplateAdapter {
       });
 
     // 2. สร้าง AI Prompt และ Generate User Data
-    console.log('🤖 Generating AI content...');
-    
-    const aiPromptConfig = this.overrideSystem.createAIPromptConfig(
-      templateRequest.businessCategoryId,
-      templateRequest.concreteManifest,
-      templateRequest.userData.keywords
-    );
-    
-    const { aiGeneratedData, detectedLanguage } = await this.generateUserDataFromAI(aiPromptConfig);
-    console.log('✅ AI content generated:', Object.keys(aiGeneratedData));
+    // 🎨 Check if we already have AI data from visual edit
+    let aiGeneratedData;
+    let detectedLanguage;
+    if ((task.metadata as any)?.aiGeneratedData) {
+      console.log('🎨 Using existing AI data from visual edit');
+      aiGeneratedData = (task.metadata as any).aiGeneratedData;
+      detectedLanguage = task.aiSettings?.language || 'en';
+    } else {
+      console.log('🤖 Generating new AI content...');
+      
+      const aiPromptConfig = this.overrideSystem.createAIPromptConfig(
+        templateRequest.businessCategoryId,
+        templateRequest.concreteManifest,
+        templateRequest.userData.keywords
+      );
+      
+      // 🔧 แก้ไข: ดึง aiGeneratedData และ detectedLanguage ออกมาจาก result
+      const result = await this.generateUserDataFromAI(aiPromptConfig);
+      aiGeneratedData = result.aiGeneratedData;  // ← ดึงเฉพาะข้อมูลจริง
+      detectedLanguage = result.detectedLanguage;  // ← เก็บ language ไว้ใช้
+      console.log('✅ AI content generated:', Object.keys(aiGeneratedData));
+    }
 
     // If user specified a brand name in keywords (e.g., "ชื่อ แมวแมว"), enforce it
     const extractedBrand = this.extractBrandFromKeywords(templateRequest.userData.keywords);
@@ -330,8 +346,8 @@ export class TemplateAdapter {
     console.log('🔄 Rendering templates with AI data...');
     // Ensure renderer gets the intended language (avoid heuristic fallback)
     try {
-      // Use the detected language from AI generation
-      const lang = detectedLanguage || 'en';
+      // Use the detected language from AI generation or from task settings
+      const lang = detectedLanguage || task.aiSettings?.language || 'en';
       aiGeneratedData.global = aiGeneratedData.global || {};
       aiGeneratedData.global.language = lang;
       aiGeneratedData.aiSettings = { ...(aiGeneratedData.aiSettings || {}), language: lang };

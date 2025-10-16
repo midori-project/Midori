@@ -17,6 +17,10 @@ export const aboutVariants: BlockVariant[] = [
                 src="{aboutImage}" 
                 alt="{aboutImageAlt}"
                 className="w-full h-[600px] object-cover"
+                data-editable="true"
+                data-block-id="about-basic"
+                data-field="aboutImage"
+                data-type="image"
               />
             </div>
             {/* Decorative Elements */}
@@ -295,6 +299,10 @@ return (
               alt="{heroImageAlt}"
               className="w-full h-full object-cover"
               loading="eager"
+              data-editable="true"
+              data-block-id="about-basic"
+              data-field="heroImage"
+              data-type="image"
             />
           </div>
           
@@ -452,6 +460,10 @@ return (
               alt="{heroImageAlt}"
               className="w-full h-full object-cover"
               loading="eager"
+              data-editable="true"
+              data-block-id="about-basic"
+              data-field="heroImage"
+              data-type="image"
             />
           </div>
         </div>

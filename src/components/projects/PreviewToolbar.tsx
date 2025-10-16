@@ -33,6 +33,8 @@ interface PreviewToolbarProps {
   isDeploying: boolean;
   isCodeEditorVisible: boolean;
   generateSubdomain: (name: string) => string;
+  editMode?: boolean;
+  onToggleEditMode?: () => void;
 }
 
 /**
@@ -59,6 +61,8 @@ export function PreviewToolbar({
   isDeploying,
   isCodeEditorVisible,
   generateSubdomain,
+  editMode,
+  onToggleEditMode
 }: PreviewToolbarProps) {
   return (
     <div className="bg-white border-b border-gray-200 p-4">
@@ -158,6 +162,21 @@ export function PreviewToolbar({
           >
             <span>{isCodeEditorVisible ? '👁️ Hide Editor' : '👁️ Show Editor'}</span>
           </button>
+
+          {/* 🎨 Visual Edit Mode Toggle */}
+          {onToggleEditMode && (
+            <button
+              onClick={onToggleEditMode}
+              className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center space-x-1 font-semibold ${
+                editMode 
+                  ? 'bg-blue-500 text-white shadow-lg ring-2 ring-blue-300' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              title={`${editMode ? 'Exit' : 'Enter'} Visual Edit Mode (Alt + E)`}
+            >
+              <span>{editMode ? '✏️ Edit Mode' : '👁️ Preview'}</span>
+            </button>
+          )}
 
           {/* Deploy Button */}
           <button

@@ -583,6 +583,13 @@ Translate now:`;
         request.businessCategory
       );
 
+      // 🔍 Debug: ตรวจสอบ structure ของ aiResponse
+      console.log("🔍 aiResponse blocks:", Object.keys(aiResponse));
+      console.log("🔍 hero-basic exists?", !!aiResponse["hero-basic"]);
+      if (aiResponse["hero-basic"]) {
+        console.log("🔍 hero-basic content:", JSON.stringify(aiResponse["hero-basic"]).substring(0, 200));
+      }
+
       // Enhance hero section with dynamic image
       if (aiResponse["hero-basic"]) {
         console.log("🖼️ Enhancing hero section with dynamic image...");
@@ -595,7 +602,9 @@ Translate now:`;
           heroImage: heroImageData.heroImage,
           heroImageAlt: heroImageData.heroImageAlt,
         };
-        console.log("✅ Hero section enhanced with dynamic image");
+        console.log("✅ Hero section enhanced with dynamic image:", heroImageData.heroImage.substring(0, 80));
+      } else {
+        console.warn("⚠️ hero-basic not found in aiResponse, cannot enhance with Unsplash image");
       }
 
       // Enhance menu items with dynamic images

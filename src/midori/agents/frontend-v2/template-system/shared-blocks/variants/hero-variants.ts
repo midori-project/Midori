@@ -17,6 +17,10 @@ export default function Hero(){
             alt="{heroImageAlt}"
             className="w-full h-full object-cover"
             loading="eager"
+            data-editable="true"
+            data-block-id="hero-basic"
+            data-field="heroImage"
+            data-type="image"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-{primary}-900/80 via-{primary}-800/70 to-{primary}-700/80"></div>
         </div>
@@ -33,7 +37,13 @@ export default function Hero(){
           
           {/* Main Heading */}
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight drop-shadow-2xl">
-            <span className="bg-gradient-to-r from-white to-{primary}-100 bg-clip-text text-transparent">
+            <span 
+              className="relative z-10 bg-gradient-to-r from-white to-{primary}-100 bg-clip-text text-transparent"
+              data-editable="true"
+              data-block-id="hero-basic"
+              data-field="heading"
+              data-type="heading"
+            >
               {heading}
             </span>
           </h1>
@@ -137,6 +147,10 @@ export default function Hero() {
                 alt="{heroImageAlt}"
                 className="w-full h-full object-cover"
                 loading="eager"
+                data-editable="true"
+                data-block-id="hero-basic"
+                data-field="heroImage"
+                data-type="image"
               />
             </div>
             
@@ -167,6 +181,10 @@ export default function Hero() {
           alt="{heroImageAlt}"
           className="w-full h-full object-cover"
           loading="eager"
+          data-editable="true"
+          data-block-id="hero-basic"
+          data-field="heroImage"
+          data-type="image"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-{primary}-900/60"></div>
       </div>
@@ -180,11 +198,19 @@ export default function Hero() {
           <span className="text-sm font-medium tracking-wider uppercase">{badge}</span>
         </div>
         
-        <h1 className="text-6xl lg:text-8xl font-black mb-8 drop-shadow-2xl leading-tight">
-          <span className="bg-gradient-to-r from-white via-white to-{primary}-200 bg-clip-text text-transparent">
-            {heading}
-          </span>
-        </h1>
+      
+          <h1 className="text-6xl lg:text-8xl font-black mb-8 drop-shadow-2xl leading-tight">
+            <span 
+              className="relative z-10 bg-gradient-to-r from-white via-white to-{primary}-200 bg-clip-text text-transparent"
+              data-editable="true"
+              data-block-id="hero-basic"
+              data-field="heading"
+              data-type="heading"
+            >
+              {heading}
+            </span>
+          </h1>
+       
         
         <p className="text-2xl lg:text-3xl mb-12 drop-shadow-lg text-white/95 leading-relaxed max-w-3xl mx-auto">
           {subheading}
@@ -261,6 +287,10 @@ export default function Hero() {
             alt="{heroImageAlt}"
             className="w-full h-auto"
             loading="eager"
+            data-editable="true"
+            data-block-id="hero-basic"
+            data-field="heroImage"
+            data-type="image"
           />
         </div>
       </div>
