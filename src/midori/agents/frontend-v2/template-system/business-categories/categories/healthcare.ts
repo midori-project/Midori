@@ -159,7 +159,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
     },
     variantPools: {
       'hero-basic': {
-        allowedVariants: ['hero-stats', 'hero-split'],
+        allowedVariants: ['hero-stats', 'hero-split', 'hero-cards', 'hero-minimal', 'hero-fullscreen'],
         defaultVariant: 'hero-stats',
         randomSelection: false,
         constraints: {

@@ -155,7 +155,7 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
     },
     variantPools: {
       'hero-basic': {
-        allowedVariants: ['hero-stats', 'hero-split', 'hero-cards'],
+        allowedVariants: ['hero-stats', 'hero-split', 'hero-cards', 'hero-minimal', 'hero-fullscreen'],
         defaultVariant: 'hero-stats',
         randomSelection: false,
         constraints: {
