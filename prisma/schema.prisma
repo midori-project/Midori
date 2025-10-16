@@ -493,6 +493,7 @@ model ProjectContext {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
   preview             Json?
+  // ✅ Add Frontend-V2 support
   frontendV2Data      Json?
   project             Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -1015,7 +1016,6 @@ enum ProjectType {
   personal
   healthcare
   hotel
-  unknown
 }
 
 enum ProjectStatus {
