@@ -43,5 +43,9 @@ next-env.d.ts
 # copilot
 .github/copilot-instructions.md
 
+# project analysis reference
+project-analysis-reference.md
+error-analysis-detail.md
+fix-checklist.md
 
 /src/generated/prisma
