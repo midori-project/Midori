@@ -1,8 +1,6 @@
 // src/libs/services/projectLikeService.ts
 // Business service for project like operations
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../prisma/prisma';
 
 export interface ProjectLikeResult {
   success: boolean;
@@ -109,8 +107,6 @@ export async function toggleProjectLike(
       likeCount: 0,
       error: 'เกิดข้อผิดพลาดในการจัดการการไลค์',
     };
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -154,8 +150,6 @@ export async function getProjectLikeStatus(
       isLiked: false,
       likeCount: 0,
     };
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -207,8 +201,6 @@ export async function getUserLikedProjects(userId: string) {
   } catch (error) {
     console.error('Error fetching user liked projects:', error);
     return [];
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -241,7 +233,5 @@ export async function syncProjectLikeCounts() {
     console.log('Project like counts synced successfully');
   } catch (error) {
     console.error('Error syncing project like counts:', error);
-  } finally {
-    await prisma.$disconnect();
   }
 }

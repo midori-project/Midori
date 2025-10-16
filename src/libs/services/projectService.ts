@@ -1,8 +1,6 @@
 // src/libs/services/projectService.ts
 // Business service for project-related operations
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../prisma/prisma';
 
 export interface ProjectWithPreview {
   id: string;
