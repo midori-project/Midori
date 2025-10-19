@@ -286,6 +286,37 @@ function replaceField(
     })
   }
   
+  // Strategy 1.5: ค้นหา generic tags (h1, h2, h3, p, div, etc.) with data-field
+  if (!replaced) {
+    console.log('🎯 [REPLACE] Trying generic tag replacement...')
+    
+    // Pattern: <anyTag data-field="fieldName">content</anyTag>
+    const genericTagPattern = new RegExp(
+      `<([a-zA-Z][a-zA-Z0-9]*)[^>]*data-field="${escapeRegex(field)}"[^>]*>([\\s\\S]*?)</\\1>`,
+      'gims'
+    )
+    
+    const genericMatch = content.match(genericTagPattern)
+    
+    if (genericMatch) {
+      console.log('🎯 [REPLACE] Found generic tag, replacing content...')
+      
+      newContent = content.replace(genericTagPattern, (fullMatch, tagName) => {
+        // เก็บ attributes เดิมไว้ แทนที่แค่ content
+        const openTagEnd = fullMatch.indexOf('>')
+        const closeTagStart = fullMatch.lastIndexOf('</')
+        
+        if (openTagEnd >= 0 && closeTagStart > openTagEnd) {
+          const openTag = fullMatch.substring(0, openTagEnd + 1)
+          replaced = true
+          return `${openTag}${escapeHtml(newValue)}</${tagName}>`
+        }
+        
+        return fullMatch
+      })
+    }
+  }
+  
   // Strategy 2: ถ้าเป็น image field, ค้นหา attribute ใน <img> tag
   if (!replaced && (field.includes('Image') || field.includes('image') || type === 'image')) {
     console.log('🖼️ [REPLACE] Trying image attribute replacement...')
