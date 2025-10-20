@@ -174,6 +174,69 @@ export class AIService {
   }
 
   /**
+   * Get about section image
+   */
+  async getAboutImage(
+    businessCategory: string,
+    keywords: string[]
+  ): Promise<{ aboutImage: string; aboutImageAlt: string }> {
+    try {
+      // Create search query based on business category and keywords
+      const englishKeywords = await Promise.all(
+        (keywords || []).map((k) => this.translateToEnglishIfThai(k))
+      );
+      const searchQuery = this.buildAboutSearchQuery(
+        businessCategory,
+        englishKeywords
+      );
+
+      const unsplashImage = await this.unsplashService.searchImages(
+        searchQuery,
+        {
+          perPage: 5,
+          orientation: "landscape",
+          orderBy: "relevant",
+        }
+      );
+
+      if (unsplashImage.length > 0) {
+        // Randomly select an image for variety
+        const randomIndex = Math.floor(Math.random() * unsplashImage.length);
+        const selectedImage = unsplashImage[randomIndex];
+
+        if (selectedImage) {
+          const imageUrl = this.unsplashService.generateImageUrl(
+            selectedImage,
+            {
+              width: 600,
+              height: 400,
+              quality: 85,
+            }
+          );
+
+          return {
+            aboutImage: imageUrl,
+            aboutImageAlt:
+              selectedImage.alt_description || `${businessCategory} about image`,
+          };
+        }
+      }
+
+      // Fallback
+      return {
+        aboutImage: "https://via.placeholder.com/600x400?text=About+Image",
+        aboutImageAlt: `${businessCategory} about image`,
+      };
+    } catch (error) {
+      console.error("❌ Error getting about image:", error);
+      return {
+        aboutImage: "https://via.placeholder.com/600x400?text=About+Image",
+        aboutImageAlt: `${businessCategory} about image`,
+      };
+    }
+  }
+
+  /**
    * Build focused search query for hero image: business type + style + color
    */
   private buildHeroSearchQuery(
@@ -213,6 +276,52 @@ export class AIService {
     
     // 4. Add "design" for better image results
     searchTerms.push("design");
+    
+    // Remove duplicates and join
+    const uniqueTerms = [...new Set(searchTerms)];
+    return uniqueTerms.join(" ");
+  }
+
+  /**
+   * Build focused search query for about image: business type + interior + style
+   */
+  private buildAboutSearchQuery(
+    businessCategory: string,
+    keywords: string[]
+  ): string {
+    // Extract business type from category (e.g., "restaurant-minimal" -> "restaurant")
+    const businessType = businessCategory.split('-')[0];
+    
+    // Extract style from category (e.g., "restaurant-minimal" -> "minimal")
+    const styleFromCategory = businessCategory.split('-').slice(1).join(' ');
+    
+    // Extract style and color from keywords
+    const styleKeywords = this.extractStyleKeywords(keywords);
+    const colorKeywords = this.extractColorKeywords(keywords);
+    
+    // Build focused search query: business type + interior + style
+    const searchTerms: string[] = [];
+    
+    // 1. Business type (essential)
+    if (businessType) {
+      searchTerms.push(businessType);
+    }
+    
+    // 2. Interior context
+    searchTerms.push('interior');
+    
+    // 3. Style (from category or keywords)
+    if (styleFromCategory) {
+      searchTerms.push(styleFromCategory);
+    }
+    if (styleKeywords.length > 0) {
+      searchTerms.push(...styleKeywords);
+    }
+    
+    // 4. Color (from keywords)
+    if (colorKeywords.length > 0) {
+      searchTerms.push(...colorKeywords);
+    }
     
     // Remove duplicates and join
     const uniqueTerms = [...new Set(searchTerms)];
@@ -633,6 +742,21 @@ Translate now:`;
 
         aiResponse["menu-basic"].menuItems = enhancedMenuItems;
         console.log("✅ Menu items enhanced with dynamic images");
+      }
+
+      // Enhance about section with dynamic image (for about-split variant)
+      if (aiResponse["about-basic"]) {
+        console.log("🖼️ Enhancing about section with dynamic image...");
+        const aboutImageData = await this.getAboutImage(
+          request.businessCategory,
+          request.keywords
+        );
+        aiResponse["about-basic"] = {
+          ...aiResponse["about-basic"],
+          aboutImage: aboutImageData.aboutImage,
+          aboutImageAlt: aboutImageData.aboutImageAlt,
+        };
+        console.log("✅ About section enhanced with dynamic image:", aboutImageData.aboutImage.substring(0, 80));
       }
 
       return aiResponse;

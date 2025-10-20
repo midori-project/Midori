@@ -13,6 +13,7 @@ import {
   FileMapping
 } from './types';
 import { SchemaValidator } from './validation';
+// Removed UnsplashService import - now handled in ai-service.ts
 
 export class TemplateRenderer {
   private validator: SchemaValidator;
@@ -68,11 +69,10 @@ export class TemplateRenderer {
           files[fileName] = renderedTemplate;
           appliedOverrides.push(...block.appliedOverrides);
         } catch (error) {
-          throw new TemplateRenderError(
-            `Failed to render block '${block.id}': ${error instanceof Error ? error.message : String(error)}`,
-            block.id,
-            block.template
-          );
+          console.error(`❌ Failed to render block '${block.id}':`, error);
+          // Continue with other blocks instead of throwing
+          const fileName = this.getFileNameForBlock(block.id);
+          files[fileName] = `// Error rendering block '${block.id}': ${error instanceof Error ? error.message : String(error)}`;
         }
       }
 
@@ -101,11 +101,31 @@ export class TemplateRenderer {
       this.processingStats.endTime = Date.now();
       this.processingStats.duration = this.processingStats.endTime - this.processingStats.startTime;
       
-      throw new TemplateRenderError(
-        `Failed to render templates: ${error instanceof Error ? error.message : String(error)}`,
-        'unknown',
-        ''
-      );
+      console.error('❌ Template rendering error:', error);
+      
+      // Return empty result instead of throwing to prevent crashes
+      return {
+        files: {},
+        appliedOverrides: [],
+        processingTime: this.processingStats.duration,
+        validationResults: {
+          isValid: false,
+          errors: [{
+            field: 'renderer',
+            message: `Rendering failed: ${error instanceof Error ? error.message : String(error)}`,
+            code: 'RENDER_ERROR',
+            severity: 'error'
+          }],
+          warnings: [],
+          summary: {
+            totalFields: 0,
+            validFields: 0,
+            errorFields: 1,
+            warningFields: 0,
+            successRate: 0
+          }
+        }
+      };
     }
   }
 
@@ -1136,6 +1156,7 @@ export class TemplateRenderer {
       'badge', 'heading', 'subheading', 
       'ctaLabel', 'secondaryCta',
       'heroImage', 'heroImageAlt',
+      // aboutImage, aboutImageAlt ต้องเป็น variant-specific เพื่อให้ใช้ dynamic generation
       'brand', 'brandFirstChar', 'ctaButton', 'menuItems',
       'title', 'description', 'features', 'stats',
       'address', 'phone', 'email', 'businessHours',
@@ -1156,10 +1177,15 @@ export class TemplateRenderer {
     return variantSpecific;
   }
 
+  // Removed dynamic image generation methods - now handled in ai-service.ts
+
   /**
    * Generate fallback values สำหรับ placeholders ที่หายไป
    */
-  private generateFallbackValues(placeholders: string[], blockId: string): Record<string, any> {
+  private generateFallbackValues(
+    placeholders: string[], 
+    blockId: string
+  ): Record<string, any> {
     const fallbacks: Record<string, any> = {};
     
     // Fallback map สำหรับ placeholder patterns ต่างๆ
@@ -1192,7 +1218,47 @@ export class TemplateRenderer {
       // Team members
       'teamMembers': [
         { name: 'John Doe', role: 'Chef', image: 'https://via.placeholder.com/400x400', bio: 'Expert chef' }
-      ]
+      ],
+      
+      // About variants (handled by dynamic generation above)
+      // 'aboutImage', 'aboutImageAlt', 'heroImage', 'heroImageAlt' are handled dynamically
+      
+      // Team variants
+      'teamTitle': 'Our Team',
+      'teamSubtitle': 'Meet our professional team members',
+      
+      // Timeline variants
+      'timelineItems': [
+        { year: '2020', title: 'Company Founded', description: 'Started our journey' },
+        { year: '2021', title: 'First Milestone', description: 'Reached 100 customers' },
+        { year: '2022', title: 'Expansion', description: 'Opened new locations' },
+        { year: '2023', title: 'Award Winner', description: 'Best service award' }
+      ],
+      
+      // Mission variants
+      'missionTitle': 'Our Mission',
+      'missionStatement': 'We are committed to delivering excellence in everything we do',
+      
+      // Story variants
+      'storyItems': [
+        { year: '2020', title: 'The Beginning', description: 'Our story started here' },
+        { year: '2021', title: 'Growth', description: 'We expanded our services' },
+        { year: '2022', title: 'Innovation', description: 'New technologies introduced' },
+        { year: '2023', title: 'Future', description: 'Looking ahead to tomorrow' }
+      ],
+      
+      // Values variants
+      'values': [
+        { title: 'Quality', description: 'We maintain the highest standards' },
+        { title: 'Integrity', description: 'Honest and transparent in all dealings' },
+        { title: 'Innovation', description: 'Always looking for better solutions' },
+        { title: 'Service', description: 'Customer satisfaction is our priority' }
+      ],
+      
+      // CTA variants
+      'ctaLabel': 'Learn More',
+      'secondaryCta': 'Contact Us',
+      'badge': 'About Us'
     };
     
     for (const placeholder of placeholders) {
@@ -1240,6 +1306,7 @@ export class TemplateRenderer {
       'badge', 'heading', 'subheading', 
       'ctaLabel', 'secondaryCta',
       'heroImage', 'heroImageAlt',
+      // aboutImage, aboutImageAlt ต้องเป็น variant-specific เพื่อให้ใช้ dynamic generation
       'brand', 'brandFirstChar', 'ctaButton', 'menuItems',
       'title', 'description', 'features', 'stats',
       'address', 'phone', 'email', 'businessHours',

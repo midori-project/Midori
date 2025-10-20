@@ -10,7 +10,7 @@ Rules:
 - Use the specified language for all text content (Thai or English)
 - Focus on products, shopping, and retail-related content
 - Use appropriate product categories: product, book, stationery, toy, clothing, electronics
-- Generate 4-6 product items with realistic product names in the specified language
+- Generate 6 product items with realistic product names in the specified language
 - Use placeholder images: https://via.placeholder.com/400x300?text=Product+Name
 - All fields are REQUIRED - provide actual content, not placeholders
 
@@ -19,11 +19,11 @@ Color Rules:
 - bgTone: ONLY use 50, 100, 200, 300, 400, 500, 600, 700, 800, 900
 - DO NOT use teal, cyan, or any other colors not listed above`,
 
-  generateUserPrompt: (keywords: string[], colorHint: string, language?: string) => {
+  generateVariantAwarePrompt: (keywords: string[], colorHint: string, concreteManifest?: any, variantInfo?: any, language?: string): string => {
     const detectedLanguage = language || 'en';
     const isEnglish = detectedLanguage === 'en';
     
-    return `E-commerce Keywords: ${keywords.join(", ")}
+    let prompt: string = `E-commerce Keywords: ${keywords.join(", ")}
 ${colorHint}
 
 Language: ${detectedLanguage}
@@ -31,6 +31,10 @@ Language: ${detectedLanguage}
 ${isEnglish ? 
   'Generate e-commerce website JSON in ENGLISH with this structure:' : 
   'Generate e-commerce website JSON in THAI with this structure:'}
+
+IMPORTANT: ${isEnglish ? 
+  'All text content must be in ENGLISH only.' : 
+  'All text content must be in THAI only. Use Thai language for all text fields including brand names, headings, descriptions, and product names.'}
 {
   "global": {
     "palette": {
@@ -44,116 +48,116 @@ ${isEnglish ?
     }
   },
   "Navbar": {
-    "brand": "[Store Name]",
+    "brand": "${isEnglish ? '[Store Name]' : '[ชื่อร้าน]'}",
     "brandFirstChar": "[First Letter]",
-    "ctaButton": "[Shop Button]",
+    "ctaButton": "${isEnglish ? '[Shop Button]' : '[ปุ่มซื้อ]'}",
     "menuItems": [
-      { "label": "[Home]", "href": "/" },
-      { "label": "[Products]", "href": "/menu" },
-      { "label": "[About]", "href": "/about" },
-      { "label": "[Contact]", "href": "/contact" }
+      { "label": "${isEnglish ? '[Home]' : '[หน้าแรก]'}", "href": "/" },
+      { "label": "${isEnglish ? '[Products]' : '[สินค้า]'}", "href": "/menu" },
+      { "label": "${isEnglish ? '[About]' : '[เกี่ยวกับ]'}", "href": "/about" },
+      { "label": "${isEnglish ? '[Contact]' : '[ติดต่อ]'}", "href": "/contact" }
     ]
   },
   "Hero": {
-    "badge": "[Store Badge]",
-    "heading": "[Main Heading]",
-    "subheading": "[Subheading Description]",
-    "ctaLabel": "[Primary CTA]",
-    "secondaryCta": "[Secondary CTA]",
+    "badge": "${isEnglish ? '[Store Badge]' : '[ป้ายร้าน]'}",
+    "heading": "${isEnglish ? '[Main Heading]' : '[หัวข้อหลัก]'}",
+    "subheading": "${isEnglish ? '[Subheading Description]' : '[คำอธิบายย่อย]'}",
+    "ctaLabel": "${isEnglish ? '[Primary CTA]' : '[ปุ่มหลัก]'}",
+    "secondaryCta": "${isEnglish ? '[Secondary CTA]' : '[ปุ่มรอง]'}",
     "heroImage": "https://via.placeholder.com/1920x1080?text=Hero+Image",
-    "heroImageAlt": "[Hero Image Description]",
+    "heroImageAlt": "${isEnglish ? '[Hero Image Description]' : '[คำอธิบายรูปหลัก]'}",
     "stat1": "[Stat Number 1]",
-    "stat1Label": "[Stat Label 1]",
+    "stat1Label": "${isEnglish ? '[Stat Label 1]' : '[ป้ายสถิติ 1]'}",
     "stat2": "[Stat Number 2]",
-    "stat2Label": "[Stat Label 2]",
+    "stat2Label": "${isEnglish ? '[Stat Label 2]' : '[ป้ายสถิติ 2]'}",
     "stat3": "[Stat Number 3]",
-    "stat3Label": "[Stat Label 3]"
+    "stat3Label": "${isEnglish ? '[Stat Label 3]' : '[ป้ายสถิติ 3]'}"
   },
   "About": {
-    "title": "[About Title]",
-    "description": "[About Description]",
+    "title": "${isEnglish ? '[About Title]' : '[หัวข้อเกี่ยวกับ]'}",
+    "description": "${isEnglish ? '[About Description]' : '[คำอธิบายเกี่ยวกับ]'}",
     "features": [
-      { "title": "[Feature 1 Title]", "description": "[Feature 1 Description]" },
-      { "title": "[Feature 2 Title]", "description": "[Feature 2 Description]" },
-      { "title": "[Feature 3 Title]", "description": "[Feature 3 Description]" }
+      { "title": "${isEnglish ? '[Feature 1 Title]' : '[คุณสมบัติ 1]'}", "description": "${isEnglish ? '[Feature 1 Description]' : '[คำอธิบายคุณสมบัติ 1]'}" },
+      { "title": "${isEnglish ? '[Feature 2 Title]' : '[คุณสมบัติ 2]'}", "description": "${isEnglish ? '[Feature 2 Description]' : '[คำอธิบายคุณสมบัติ 2]'}" },
+      { "title": "${isEnglish ? '[Feature 3 Title]' : '[คุณสมบัติ 3]'}", "description": "${isEnglish ? '[Feature 3 Description]' : '[คำอธิบายคุณสมบัติ 3]'}" }
     ],
     "stats": [
-      { "number": "[Stat 1 Number]", "label": "[Stat 1 Label]" },
-      { "number": "[Stat 2 Number]", "label": "[Stat 2 Label]" },
-      { "number": "[Stat 3 Number]", "label": "[Stat 3 Label]" },
-      { "number": "[Stat 4 Number]", "label": "[Stat 4 Label]" }
+      { "number": "[Stat 1 Number]", "label": "${isEnglish ? '[Stat 1 Label]' : '[ป้ายสถิติ 1]'}" },
+      { "number": "[Stat 2 Number]", "label": "${isEnglish ? '[Stat 2 Label]' : '[ป้ายสถิติ 2]'}" },
+      { "number": "[Stat 3 Number]", "label": "${isEnglish ? '[Stat 3 Label]' : '[ป้ายสถิติ 3]'}" },
+      { "number": "[Stat 4 Number]", "label": "${isEnglish ? '[Stat 4 Label]' : '[ป้ายสถิติ 4]'}" }
     ],
-    "aboutImage": "https://via.placeholder.com/400x300?text=About+Image",
-    "aboutImageAlt": "[About Image Description]"
+    "aboutImage": "[Store interior image URL - will be generated dynamically]",
+    "aboutImageAlt": "${isEnglish ? '[About Image Description]' : '[คำอธิบายรูปเกี่ยวกับ]'}"
   },
   "Menu": {
-    "title": "[Products Title]",
+    "title": "${isEnglish ? '[Products Title]' : '[หัวข้อสินค้า]'}",
     "menuItems": [
       {
-        "name": "[Product 1 Name]",
+        "name": "${isEnglish ? '[Product 1 Name]' : '[ชื่อสินค้า 1]'}",
         "price": "[Price 1]",
-        "description": "[Product 1 Description]",
+        "description": "${isEnglish ? '[Product 1 Description]' : '[คำอธิบายสินค้า 1]'}",
         "image": "https://via.placeholder.com/400x300?text=Product+Name",
-        "imageAlt": "[Product 1 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Product 1 Image Alt]' : '[คำอธิบายรูปสินค้า 1]'}",
         "category": "product"
       },
       {
-        "name": "[Product 2 Name]",
+        "name": "${isEnglish ? '[Product 2 Name]' : '[ชื่อสินค้า 2]'}",
         "price": "[Price 2]",
-        "description": "[Product 2 Description]",
+        "description": "${isEnglish ? '[Product 2 Description]' : '[คำอธิบายสินค้า 2]'}",
         "image": "https://via.placeholder.com/400x300?text=Product+Name",
-        "imageAlt": "[Product 2 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Product 2 Image Alt]' : '[คำอธิบายรูปสินค้า 2]'}",
         "category": "book"
       },
       {
-        "name": "[Product 3 Name]",
+        "name": "${isEnglish ? '[Product 3 Name]' : '[ชื่อสินค้า 3]'}",
         "price": "[Price 3]",
-        "description": "[Product 3 Description]",
+        "description": "${isEnglish ? '[Product 3 Description]' : '[คำอธิบายสินค้า 3]'}",
         "image": "https://via.placeholder.com/400x300?text=Product+Name",
-        "imageAlt": "[Product 3 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Product 3 Image Alt]' : '[คำอธิบายรูปสินค้า 3]'}",
         "category": "stationery"
       },
       {
-        "name": "[Product 4 Name]",
+        "name": "${isEnglish ? '[Product 4 Name]' : '[ชื่อสินค้า 4]'}",
         "price": "[Price 4]",
-        "description": "[Product 4 Description]",
+        "description": "${isEnglish ? '[Product 4 Description]' : '[คำอธิบายสินค้า 4]'}",
         "image": "https://via.placeholder.com/400x300?text=Product+Name",
-        "imageAlt": "[Product 4 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Product 4 Image Alt]' : '[คำอธิบายรูปสินค้า 4]'}",
         "category": "toy"
       },
       {
-        "name": "[Product 5 Name]",
+        "name": "${isEnglish ? '[Product 5 Name]' : '[ชื่อสินค้า 5]'}",
         "price": "[Price 5]",
-        "description": "[Product 5 Description]",
+        "description": "${isEnglish ? '[Product 5 Description]' : '[คำอธิบายสินค้า 5]'}",
         "image": "https://via.placeholder.com/400x300?text=Product+Name",
-        "imageAlt": "[Product 5 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Product 5 Image Alt]' : '[คำอธิบายรูปสินค้า 5]'}",
         "category": "clothing"
       }
     ]
   },
   "Contact": {
-    "title": "[Contact Title]",
-    "subtitle": "[Contact Subtitle]",
-    "address": "[Store Address]",
+    "title": "${isEnglish ? '[Contact Title]' : '[หัวข้อติดต่อ]'}",
+    "subtitle": "${isEnglish ? '[Contact Subtitle]' : '[คำอธิบายติดต่อ]'}",
+    "address": "${isEnglish ? '[Store Address]' : '[ที่อยู่ร้าน]'}",
     "phone": "[Phone Number]",
     "email": "[Email Address]",
-    "businessHours": "[Business Hours]"
+    "businessHours": "${isEnglish ? '[Business Hours]' : '[เวลาทำการ]'}"
   },
   "Footer": {
-    "companyName": "[Store Name]",
-    "description": "[Store Description]",
+    "companyName": "${isEnglish ? '[Store Name]' : '[ชื่อร้าน]'}",
+    "description": "${isEnglish ? '[Store Description]' : '[คำอธิบายร้าน]'}",
     "socialLinks": [
       { "name": "Facebook", "url": "https://facebook.com", "icon": "📘" },
       { "name": "Instagram", "url": "https://instagram.com", "icon": "📷" },
       { "name": "Line", "url": "https://line.me", "icon": "💬" }
     ],
     "quickLinks": [
-      { "label": "[Home]", "href": "/" },
-      { "label": "[Products]", "href": "/products" },
-      { "label": "[About]", "href": "/about" },
-      { "label": "[Contact]", "href": "/contact" }
+      { "label": "${isEnglish ? '[Home]' : '[หน้าแรก]'}", "href": "/" },
+      { "label": "${isEnglish ? '[Products]' : '[สินค้า]'}", "href": "/products" },
+      { "label": "${isEnglish ? '[About]' : '[เกี่ยวกับ]'}", "href": "/about" },
+      { "label": "${isEnglish ? '[Contact]' : '[ติดต่อ]'}", "href": "/contact" }
     ],
-    "address": "[Store Address]",
+    "address": "${isEnglish ? '[Store Address]' : '[ที่อยู่ร้าน]'}",
     "phone": "[Phone Number]",
     "email": "[Email Address]"
   },
@@ -162,12 +166,72 @@ ${isEnglish ?
     "spacing": "1rem"
   }
 }`;
+
+    // Add variant-specific instructions if needed
+    if (variantInfo?.variantsUsed) {
+      prompt += `\n\n🎯 VARIANT-SPECIFIC INSTRUCTIONS:`;
+      
+      for (const [blockId, variantId] of Object.entries(variantInfo.variantsUsed)) {
+        const variantFields = variantInfo.variantSpecificFields?.[blockId] || [];
+        
+        if (variantFields.length > 0) {
+          prompt += `\n\n⚠️ IMPORTANT: Block '${blockId}' uses variant '${variantId}' which REQUIRES these additional fields:`;
+          
+          if (variantId === 'hero-stats' && blockId === 'hero-basic') {
+            prompt += `\n- stat1: "[Stat Number 1]" (number with + sign)
+- stat1Label: "${isEnglish ? '[Stat Label 1]' : '[ป้ายสถิติ 1]'}" (label text)
+- stat2: "[Stat Number 2]" (number with + sign)  
+- stat2Label: "${isEnglish ? '[Stat Label 2]' : '[ป้ายสถิติ 2]'}" (label text)
+- stat3: "[Stat Number 3]" (number with + sign)
+- stat3Label: "${isEnglish ? '[Stat Label 3]' : '[ป้ายสถิติ 3]'}" (label text)`;
+          } else if (variantId === 'hero-split' && blockId === 'hero-basic') {
+            prompt += `\n- heroImage: "https://via.placeholder.com/1920x1080?text=Store+Interior" (landscape image)
+- heroImageAlt: "${isEnglish ? '[Hero Image Description]' : '[คำอธิบายรูปหลัก]'}" (image description)
+- ctaLabel: "${isEnglish ? '[Primary CTA]' : '[ปุ่มหลัก]'}" (primary CTA)
+- secondaryCta: "${isEnglish ? '[Secondary CTA]' : '[ปุ่มรอง]'}" (secondary CTA)`;
+          } else if (variantId === 'about-split' && blockId === 'about-basic') {
+            prompt += `\n- aboutImage: "[Store interior image URL - will be generated dynamically]" (store interior image)
+- aboutImageAlt: "${isEnglish ? '[About Image Description]' : '[คำอธิบายรูปเกี่ยวกับ]'}" (image description)`;
+          } else if (variantId === 'about-team' && blockId === 'about-basic') {
+            prompt += `\n- teamTitle: "${isEnglish ? '[Team Section Title]' : '[หัวข้อทีม]'}" (team section heading)
+- teamSubtitle: "${isEnglish ? '[Team Section Subtitle]' : '[คำอธิบายทีม]'}" (team section description)
+- teamMembers: [array of 3-4 team member objects with name, role, image, bio]`;
+          } else if (variantId === 'about-timeline' && blockId === 'about-basic') {
+            prompt += `\n- timelineItems: [array of 4-5 timeline objects with year, title, description]`;
+          } else if (variantId === 'about-team-showcase' && blockId === 'about-basic') {
+            prompt += `\n- teamMembers: [array of 3-4 team member objects with name, role, image, bio]
+- missionTitle: "${isEnglish ? '[Mission Title]' : '[หัวข้อพันธกิจ]'}" (mission section heading)
+- missionStatement: "${isEnglish ? '[Mission Statement]' : '[คำแถลงพันธกิจ]'}" (mission description)`;
+          } else if (variantId === 'about-story' && blockId === 'about-basic') {
+            prompt += `\n- storyItems: [array of 4-5 story objects with year, title, description]
+- ctaLabel: "${isEnglish ? '[Call to Action Label]' : '[ปุ่มเรียกใช้]'}" (button text)`;
+          } else if (variantId === 'about-values' && blockId === 'about-basic') {
+            prompt += `\n- values: [array of 3-4 value objects with title, description]
+- heroImage: "https://via.placeholder.com/600x400?text=Company+Values" (values section image)
+- heroImageAlt: "${isEnglish ? '[Values Image Description]' : '[คำอธิบายรูปค่านิยม]'}" (image description)`;
+          } else if (variantId === 'about-hero' && blockId === 'about-basic') {
+            prompt += `\n- badge: "${isEnglish ? '[About Badge]' : '[ป้ายเกี่ยวกับ]'}" (badge text)
+- ctaLabel: "${isEnglish ? '[Primary CTA]' : '[ปุ่มหลัก]'}" (primary button text)
+- secondaryCta: "${isEnglish ? '[Secondary CTA]' : '[ปุ่มรอง]'}" (secondary button text)
+- heroImage: "https://via.placeholder.com/600x400?text=About+Hero" (hero image)
+- heroImageAlt: "${isEnglish ? '[About Hero Image Description]' : '[คำอธิบายรูปเกี่ยวกับ]'}" (image description)`;
+          }
+        }
+      }
+    }
+    
+    // Add final language enforcement
+    if (!isEnglish) {
+      prompt += `\n\n🇹🇭 CRITICAL: All text content MUST be in THAI language only. Do not use any English text in brand names, headings, descriptions, or any other text fields.`;
+    }
+    
+    return prompt;
   },
 
   getOptimizedPrompt: (keywords: string[], colorHint: string, concreteManifest?: any, variantInfo?: any, language?: string) => {
     return {
       systemPrompt: ecommercePromptTemplate.systemPrompt,
-      userPrompt: ecommercePromptTemplate.generateUserPrompt(keywords, colorHint, language)
+      userPrompt: ecommercePromptTemplate.generateVariantAwarePrompt(keywords, colorHint, concreteManifest, variantInfo, language)
     };
   }
 };
