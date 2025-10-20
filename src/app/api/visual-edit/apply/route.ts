@@ -84,6 +84,8 @@ export async function POST(req: NextRequest) {
     
     // 🔑 Step 2: หาและแทนที่ field
     console.log('🔍 [VISUAL-EDIT] Searching for field to replace...')
+    console.log('📄 [VISUAL-EDIT] Content preview (first 500 chars):', currentContent.substring(0, 500))
+    console.log('🔍 [VISUAL-EDIT] Looking for field:', field, 'in content...')
     const { newContent, replaced } = replaceField(currentContent, blockId, field, value, type || 'text')
     
     if (!replaced) {
@@ -323,24 +325,44 @@ function replaceField(
     
     // ถ้าเป็น alt attribute
     if (field.toLowerCase().includes('alt')) {
-      const altPattern = new RegExp(
+      // Pattern 1: data-field comes before alt
+      const altPattern1 = new RegExp(
         `(data-field="${escapeRegex(field)}"[^>]*alt=")([^"]*)(")`,'gi'
       )
-      if (content.match(altPattern)) {
-        newContent = content.replace(altPattern, `$1${escapeHtml(newValue)}$3`)
+      // Pattern 2: alt comes before data-field (template format)
+      const altPattern2 = new RegExp(
+        `(alt=")([^"]*)("[^>]*data-field="${escapeRegex(field)}")`,'gi'
+      )
+      
+      if (content.match(altPattern1)) {
+        newContent = content.replace(altPattern1, `$1${escapeHtml(newValue)}$3`)
         replaced = true
-        console.log('✅ [REPLACE] Replaced alt attribute')
+        console.log('✅ [REPLACE] Replaced alt attribute (pattern 1)')
+      } else if (content.match(altPattern2)) {
+        newContent = content.replace(altPattern2, `$1${escapeHtml(newValue)}$3`)
+        replaced = true
+        console.log('✅ [REPLACE] Replaced alt attribute (pattern 2)')
       }
     } 
     // ถ้าเป็น src attribute
     else {
-      const srcPattern = new RegExp(
+      // Pattern 1: data-field comes before src
+      const srcPattern1 = new RegExp(
         `(data-field="${escapeRegex(field)}"[^>]*src=")([^"]*)(")`,'gi'
       )
-      if (content.match(srcPattern)) {
-        newContent = content.replace(srcPattern, `$1${newValue}$3`)
+      // Pattern 2: src comes before data-field (template format)
+      const srcPattern2 = new RegExp(
+        `(src=")([^"]*)("[^>]*data-field="${escapeRegex(field)}")`,'gi'
+      )
+      
+      if (content.match(srcPattern1)) {
+        newContent = content.replace(srcPattern1, `$1${newValue}$3`)
         replaced = true
-        console.log('✅ [REPLACE] Replaced src attribute')
+        console.log('✅ [REPLACE] Replaced src attribute (pattern 1)')
+      } else if (content.match(srcPattern2)) {
+        newContent = content.replace(srcPattern2, `$1${newValue}$3`)
+        replaced = true
+        console.log('✅ [REPLACE] Replaced src attribute (pattern 2)')
       }
     }
   }
@@ -357,6 +379,41 @@ function replaceField(
     }
   }
   
+  // Strategy 4: ค้นหา template format src="{field}" with data-field
+  if (!replaced && (field.includes('Image') || field.includes('image') || type === 'image')) {
+    console.log('🎯 [REPLACE] Trying template format replacement...')
+    
+    // Pattern for template format: src="{heroImage}" ... data-field="heroImage"
+    // รองรับ attributes ระหว่าง src และ data-field
+    const templatePattern = new RegExp(
+      `(src=")\\{${escapeRegex(field)}\\}("[\\s\\S]*?data-field="${escapeRegex(field)}")`,
+      'gims'
+    )
+    
+    if (content.match(templatePattern)) {
+      newContent = content.replace(templatePattern, `$1${newValue}$2`)
+      replaced = true
+      console.log('✅ [REPLACE] Replaced template format')
+    }
+  }
+  
+  // Strategy 5: ค้นหา template format src="{field}" แบบง่าย (ไม่มี data-field)
+  if (!replaced && (field.includes('Image') || field.includes('image') || type === 'image')) {
+    console.log('🎯 [REPLACE] Trying simple template format replacement...')
+    
+    // Pattern for simple template format: src="{heroImage}"
+    const simpleTemplatePattern = new RegExp(
+      `(src=")\\{${escapeRegex(field)}\\}(")`,
+      'gims'
+    )
+    
+    if (content.match(simpleTemplatePattern)) {
+      newContent = content.replace(simpleTemplatePattern, `$1${newValue}$2`)
+      replaced = true
+      console.log('✅ [REPLACE] Replaced simple template format')
+    }
+  }
+  
   return { newContent, replaced }
 }
 
@@ -364,7 +421,7 @@ function replaceField(
  * แปลง blockId เป็น component path
  */
 function getComponentPath(blockId: string): string {
-  // Direct mapping
+  // Direct mapping to template system files
   const componentMap: Record<string, string> = {
     'hero': 'src/components/Hero.tsx',
     'hero-basic': 'src/components/Hero.tsx',

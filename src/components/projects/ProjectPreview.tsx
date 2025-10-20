@@ -248,6 +248,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
       {/* 🎨 Visual Edit Panel */}
       <VisualEditPanel
         selectedElement={selectedElement}
+        projectId={projectId}
         isSaving={isSaving}
         onSave={saveEdit}
         onCancel={cancelEdit}
