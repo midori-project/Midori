@@ -42,7 +42,7 @@ Rules:
 - Use Thai language for all text content
 - Focus on products, shopping, and retail-related content
 - Use appropriate product categories: product, book, stationery, toy, clothing, electronics
-- Generate 4-6 product items with realistic product names
+- Generate 6 product items with realistic product names
 - Use placeholder images: https://via.placeholder.com/400x300?text=Product+Name
 - All fields are REQUIRED - provide actual content, not placeholders`
 };

@@ -31,6 +31,10 @@ Language: ${detectedLanguage}
 ${isEnglish ? 
   'Generate restaurant website JSON in ENGLISH with this structure:' : 
   'Generate restaurant website JSON in THAI with this structure:'}
+
+IMPORTANT: ${isEnglish ? 
+  'All text content must be in ENGLISH only.' : 
+  'All text content must be in THAI only. Use Thai language for all text fields including restaurant names, menu items, descriptions, and all other text content.'}
 {
   "global": {
     "palette": {
@@ -44,81 +48,81 @@ ${isEnglish ?
     }
   },
   "Navbar": {
-    "brand": "[Restaurant Name]",
+    "brand": "${isEnglish ? '[Restaurant Name]' : '[ชื่อร้านอาหาร]'}",
     "brandFirstChar": "[First Letter]",
-    "ctaButton": "[Reservation Button]",
+    "ctaButton": "${isEnglish ? '[Reservation Button]' : '[ปุ่มจองโต๊ะ]'}",
     "menuItems": [
-      { "label": "[Home]", "href": "/" },
-      { "label": "[Menu]", "href": "/menu" },
-      { "label": "[About]", "href": "/about" },
-      { "label": "[Contact]", "href": "/contact" }
+      { "label": "${isEnglish ? '[Home]' : '[หน้าแรก]'}", "href": "/" },
+      { "label": "${isEnglish ? '[Menu]' : '[เมนู]'}", "href": "/menu" },
+      { "label": "${isEnglish ? '[About]' : '[เกี่ยวกับ]'}", "href": "/about" },
+      { "label": "${isEnglish ? '[Contact]' : '[ติดต่อ]'}", "href": "/contact" }
     ]
   },
   "Hero": {
-    "badge": "[Restaurant Badge]",
-    "heading": "[Main Heading]",
-    "subheading": "[Subheading Description]",
-    "ctaLabel": "[Primary CTA]",
-    "secondaryCta": "[Secondary CTA]",
+    "badge": "${isEnglish ? '[Restaurant Badge]' : '[ป้ายร้านอาหาร]'}",
+    "heading": "${isEnglish ? '[Main Heading]' : '[หัวข้อหลัก]'}",
+    "subheading": "${isEnglish ? '[Subheading Description]' : '[คำอธิบายย่อย]'}",
+    "ctaLabel": "${isEnglish ? '[Primary CTA]' : '[ปุ่มหลัก]'}",
+    "secondaryCta": "${isEnglish ? '[Secondary CTA]' : '[ปุ่มรอง]'}",
     "heroImage": "https://via.placeholder.com/1920x1080?text=Hero+Image",
-    "heroImageAlt": "[Hero Image Description]",
+    "heroImageAlt": "${isEnglish ? '[Hero Image Description]' : '[คำอธิบายรูปหลัก]'}",
     "stat1": "[Stat Number 1]",
-    "stat1Label": "[Stat Label 1]",
+    "stat1Label": "${isEnglish ? '[Stat Label 1]' : '[ป้ายสถิติ 1]'}",
     "stat2": "[Stat Number 2]",
-    "stat2Label": "[Stat Label 2]",
+    "stat2Label": "${isEnglish ? '[Stat Label 2]' : '[ป้ายสถิติ 2]'}",
     "stat3": "[Stat Number 3]",
-    "stat3Label": "[Stat Label 3]"
+    "stat3Label": "${isEnglish ? '[Stat Label 3]' : '[ป้ายสถิติ 3]'}"
   },
   "About": {
-    "title": "[About Title]",
-    "description": "[About Description]",
+    "title": "${isEnglish ? '[About Title]' : '[หัวข้อเกี่ยวกับ]'}",
+    "description": "${isEnglish ? '[About Description]' : '[คำอธิบายเกี่ยวกับ]'}",
     "features": [
-      { "title": "[Feature 1 Title]", "description": "[Feature 1 Description]" },
-      { "title": "[Feature 2 Title]", "description": "[Feature 2 Description]" },
-      { "title": "[Feature 3 Title]", "description": "[Feature 3 Description]" }
+      { "title": "${isEnglish ? '[Feature 1 Title]' : '[คุณสมบัติ 1]'}", "description": "${isEnglish ? '[Feature 1 Description]' : '[คำอธิบายคุณสมบัติ 1]'}" },
+      { "title": "${isEnglish ? '[Feature 2 Title]' : '[คุณสมบัติ 2]'}", "description": "${isEnglish ? '[Feature 2 Description]' : '[คำอธิบายคุณสมบัติ 2]'}" },
+      { "title": "${isEnglish ? '[Feature 3 Title]' : '[คุณสมบัติ 3]'}", "description": "${isEnglish ? '[Feature 3 Description]' : '[คำอธิบายคุณสมบัติ 3]'}" }
     ],
     "stats": [
-      { "number": "[Stat 1 Number]", "label": "[Stat 1 Label]" },
-      { "number": "[Stat 2 Number]", "label": "[Stat 2 Label]" },
-      { "number": "[Stat 3 Number]", "label": "[Stat 3 Label]" },
-      { "number": "[Stat 4 Number]", "label": "[Stat 4 Label]" }
+      { "number": "[Stat 1 Number]", "label": "${isEnglish ? '[Stat 1 Label]' : '[ป้ายสถิติ 1]'}" },
+      { "number": "[Stat 2 Number]", "label": "${isEnglish ? '[Stat 2 Label]' : '[ป้ายสถิติ 2]'}" },
+      { "number": "[Stat 3 Number]", "label": "${isEnglish ? '[Stat 3 Label]' : '[ป้ายสถิติ 3]'}" },
+      { "number": "[Stat 4 Number]", "label": "${isEnglish ? '[Stat 4 Label]' : '[ป้ายสถิติ 4]'}" }
     ],
-    "aboutImage": "https://via.placeholder.com/400x300?text=About+Image",
-    "aboutImageAlt": "[About Image Description]"
+    "aboutImage": "[Restaurant interior image URL - will be generated dynamically]",
+    "aboutImageAlt": "${isEnglish ? '[About Image Description]' : '[คำอธิบายรูปเกี่ยวกับ]'}"
   },
   "Menu": {
-    "title": "[Menu Title]",
+    "title": "${isEnglish ? '[Menu Title]' : '[หัวข้อเมนู]'}",
     "menuItems": [
       {
-        "name": "[Dish 1 Name]",
+        "name": "${isEnglish ? '[Dish 1 Name]' : '[ชื่ออาหาร 1]'}",
         "price": "[Price 1]",
-        "description": "[Dish 1 Description]",
+        "description": "${isEnglish ? '[Dish 1 Description]' : '[คำอธิบายอาหาร 1]'}",
         "image": "https://via.placeholder.com/400x300?text=Dish+Name",
-        "imageAlt": "[Dish 1 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Dish 1 Image Alt]' : '[คำอธิบายรูปอาหาร 1]'}",
         "category": "rice"
       },
       {
-        "name": "[Dish 2 Name]",
+        "name": "${isEnglish ? '[Dish 2 Name]' : '[ชื่ออาหาร 2]'}",
         "price": "[Price 2]",
-        "description": "[Dish 2 Description]",
+        "description": "${isEnglish ? '[Dish 2 Description]' : '[คำอธิบายอาหาร 2]'}",
         "image": "https://via.placeholder.com/400x300?text=Dish+Name",
-        "imageAlt": "[Dish 2 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Dish 2 Image Alt]' : '[คำอธิบายรูปอาหาร 2]'}",
         "category": "noodles"
       },
       {
-        "name": "[Dish 3 Name]",
+        "name": "${isEnglish ? '[Dish 3 Name]' : '[ชื่ออาหาร 3]'}",
         "price": "[Price 3]",
-        "description": "[Dish 3 Description]",
+        "description": "${isEnglish ? '[Dish 3 Description]' : '[คำอธิบายอาหาร 3]'}",
         "image": "https://via.placeholder.com/400x300?text=Dish+Name",
-        "imageAlt": "[Dish 3 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Dish 3 Image Alt]' : '[คำอธิบายรูปอาหาร 3]'}",
         "category": "soup"
       },
       {
-        "name": "[Dish 4 Name]",
+        "name": "${isEnglish ? '[Dish 4 Name]' : '[ชื่ออาหาร 4]'}",
         "price": "[Price 4]",
-        "description": "[Dish 4 Description]",
+        "description": "${isEnglish ? '[Dish 4 Description]' : '[คำอธิบายอาหาร 4]'}",
         "image": "https://via.placeholder.com/400x300?text=Dish+Name",
-        "imageAlt": "[Dish 4 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Dish 4 Image Alt]' : '[คำอธิบายรูปอาหาร 4]'}",
         "category": "curry"
       }
     ]
@@ -180,9 +184,40 @@ ${isEnglish ?
           } else if (variantId === 'about-features' && blockId === 'about-basic') {
             prompt += `\n- features: [array of 3-4 feature objects with title and description]
 - stats: [array of 3-4 stat objects with number and label]`;
+          } else if (variantId === 'about-split' && blockId === 'about-basic') {
+            prompt += `\n- aboutImage: "[Restaurant interior image URL - will be generated dynamically]" (restaurant interior image)
+- aboutImageAlt: "[About Image Description]" (image description)`;
+          } else if (variantId === 'about-team' && blockId === 'about-basic') {
+            prompt += `\n- teamTitle: "[Team Section Title]" (team section heading)
+- teamSubtitle: "[Team Section Subtitle]" (team section description)
+- teamMembers: [array of 3-4 team member objects with name, role, image, bio]`;
+          } else if (variantId === 'about-timeline' && blockId === 'about-basic') {
+            prompt += `\n- timelineItems: [array of 4-5 timeline objects with year, title, description]`;
+          } else if (variantId === 'about-team-showcase' && blockId === 'about-basic') {
+            prompt += `\n- teamMembers: [array of 3-4 team member objects with name, role, image, bio]
+- missionTitle: "[Mission Title]" (mission section heading)
+- missionStatement: "[Mission Statement]" (mission description)`;
+          } else if (variantId === 'about-story' && blockId === 'about-basic') {
+            prompt += `\n- storyItems: [array of 4-5 story objects with year, title, description]
+- ctaLabel: "[Call to Action Label]" (button text)`;
+          } else if (variantId === 'about-values' && blockId === 'about-basic') {
+            prompt += `\n- values: [array of 3-4 value objects with title, description]
+- heroImage: "https://via.placeholder.com/600x400?text=Company+Values" (values section image)
+- heroImageAlt: "[Values Image Description]" (image description)`;
+          } else if (variantId === 'about-hero' && blockId === 'about-basic') {
+            prompt += `\n- badge: "[About Badge]" (badge text)
+- ctaLabel: "[Primary CTA]" (primary button text)
+- secondaryCta: "[Secondary CTA]" (secondary button text)
+- heroImage: "https://via.placeholder.com/600x400?text=About+Hero" (hero image)
+- heroImageAlt: "[About Hero Image Description]" (image description)`;
           }
         }
       }
+    }
+    
+    // Add final language enforcement
+    if (!isEnglish) {
+      prompt += `\n\n🇹🇭 CRITICAL: All text content MUST be in THAI language only. Do not use any English text in restaurant names, menu items, descriptions, or any other text fields.`;
     }
     
     return prompt;

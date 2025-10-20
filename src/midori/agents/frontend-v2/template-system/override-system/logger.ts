@@ -124,7 +124,12 @@ export class OverrideLogger {
   /**
    * Log Generated Files
    */
-  logGeneratedFiles(files: Record<string, string>): void {
+  logGeneratedFiles(files: Record<string, string> | undefined | null): void {
+    if (!files) {
+      this.log('warn', 'renderer', '[Generated Files]', 'No files generated or files parameter is null/undefined');
+      return;
+    }
+    
     const fileInfo = Object.entries(files).map(([name, content]) => ({
       name,
       size: content.length,

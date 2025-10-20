@@ -19,11 +19,11 @@ Color Rules:
 - bgTone: ONLY use 50, 100, 200, 300, 400, 500, 600, 700, 800, 900
 - DO NOT use teal, cyan, or any other colors not listed above`,
 
-  generateUserPrompt: (keywords: string[], colorHint: string, language?: string) => {
+  generateVariantAwarePrompt: (keywords: string[], colorHint: string, concreteManifest?: any, variantInfo?: any, language?: string): string => {
     const detectedLanguage = language || 'en';
     const isEnglish = detectedLanguage === 'en';
     
-    return `Portfolio Keywords: ${keywords.join(", ")}
+    let prompt: string = `Portfolio Keywords: ${keywords.join(", ")}
 ${colorHint}
 
 Language: ${detectedLanguage}
@@ -31,6 +31,10 @@ Language: ${detectedLanguage}
 ${isEnglish ? 
   'Generate portfolio website JSON in ENGLISH with this structure:' : 
   'Generate portfolio website JSON in THAI with this structure:'}
+
+IMPORTANT: ${isEnglish ? 
+  'All text content must be in ENGLISH only.' : 
+  'All text content must be in THAI only. Use Thai language for all text fields including company names, project titles, descriptions, and all other text content.'}
 {
   "global": {
     "palette": {
@@ -44,89 +48,89 @@ ${isEnglish ?
     }
   },
   "Navbar": {
-    "brand": "[Company Name]",
+    "brand": "${isEnglish ? '[Company Name]' : '[ชื่อบริษัท]'}",
     "brandFirstChar": "[First Letter]",
-    "ctaButton": "[Contact Button Text]",
+    "ctaButton": "${isEnglish ? '[Contact Button Text]' : '[ปุ่มติดต่อ]'}",
     "menuItems": [
-      { "label": "[Home]", "href": "/" },
-      { "label": "[Portfolio]", "href": "/menu" },
-      { "label": "[About]", "href": "/about" },
-      { "label": "[Contact]", "href": "/contact" }
+      { "label": "${isEnglish ? '[Home]' : '[หน้าแรก]'}", "href": "/" },
+      { "label": "${isEnglish ? '[Portfolio]' : '[ผลงาน]'}", "href": "/menu" },
+      { "label": "${isEnglish ? '[About]' : '[เกี่ยวกับ]'}", "href": "/about" },
+      { "label": "${isEnglish ? '[Contact]' : '[ติดต่อ]'}", "href": "/contact" }
     ]
   },
   "Hero": {
-    "badge": "[Badge Text]",
-    "heading": "[Main Heading]",
-    "subheading": "[Subheading Description]",
-    "ctaLabel": "[Primary CTA]",
-    "secondaryCta": "[Secondary CTA]",
+    "badge": "${isEnglish ? '[Badge Text]' : '[ป้ายข้อความ]'}",
+    "heading": "${isEnglish ? '[Main Heading]' : '[หัวข้อหลัก]'}",
+    "subheading": "${isEnglish ? '[Subheading Description]' : '[คำอธิบายย่อย]'}",
+    "ctaLabel": "${isEnglish ? '[Primary CTA]' : '[ปุ่มหลัก]'}",
+    "secondaryCta": "${isEnglish ? '[Secondary CTA]' : '[ปุ่มรอง]'}",
     "heroImage": "https://via.placeholder.com/1920x1080?text=Hero+Image",
-    "heroImageAlt": "[Hero Image Description]",
+    "heroImageAlt": "${isEnglish ? '[Hero Image Description]' : '[คำอธิบายรูปหลัก]'}",
     "stat1": "[Stat Number 1]",
-    "stat1Label": "[Stat Label 1]",
+    "stat1Label": "${isEnglish ? '[Stat Label 1]' : '[ป้ายสถิติ 1]'}",
     "stat2": "[Stat Number 2]",
-    "stat2Label": "[Stat Label 2]",
+    "stat2Label": "${isEnglish ? '[Stat Label 2]' : '[ป้ายสถิติ 2]'}",
     "stat3": "[Stat Number 3]",
-    "stat3Label": "[Stat Label 3]"
+    "stat3Label": "${isEnglish ? '[Stat Label 3]' : '[ป้ายสถิติ 3]'}"
   },
   "About": {
-    "title": "[About Title]",
-    "description": "[About Description]",
+    "title": "${isEnglish ? '[About Title]' : '[หัวข้อเกี่ยวกับ]'}",
+    "description": "${isEnglish ? '[About Description]' : '[คำอธิบายเกี่ยวกับ]'}",
     "features": [
-      { "title": "[Feature 1 Title]", "description": "[Feature 1 Description]" },
-      { "title": "[Feature 2 Title]", "description": "[Feature 2 Description]" },
-      { "title": "[Feature 3 Title]", "description": "[Feature 3 Description]" }
+      { "title": "${isEnglish ? '[Feature 1 Title]' : '[คุณสมบัติ 1]'}", "description": "${isEnglish ? '[Feature 1 Description]' : '[คำอธิบายคุณสมบัติ 1]'}" },
+      { "title": "${isEnglish ? '[Feature 2 Title]' : '[คุณสมบัติ 2]'}", "description": "${isEnglish ? '[Feature 2 Description]' : '[คำอธิบายคุณสมบัติ 2]'}" },
+      { "title": "${isEnglish ? '[Feature 3 Title]' : '[คุณสมบัติ 3]'}", "description": "${isEnglish ? '[Feature 3 Description]' : '[คำอธิบายคุณสมบัติ 3]'}" }
     ],
     "stats": [
-      { "number": "[Stat 1 Number]", "label": "[Stat 1 Label]" },
-      { "number": "[Stat 2 Number]", "label": "[Stat 2 Label]" },
-      { "number": "[Stat 3 Number]", "label": "[Stat 3 Label]" },
-      { "number": "[Stat 4 Number]", "label": "[Stat 4 Label]" }
+      { "number": "[Stat 1 Number]", "label": "${isEnglish ? '[Stat 1 Label]' : '[ป้ายสถิติ 1]'}" },
+      { "number": "[Stat 2 Number]", "label": "${isEnglish ? '[Stat 2 Label]' : '[ป้ายสถิติ 2]'}" },
+      { "number": "[Stat 3 Number]", "label": "${isEnglish ? '[Stat 3 Label]' : '[ป้ายสถิติ 3]'}" },
+      { "number": "[Stat 4 Number]", "label": "${isEnglish ? '[Stat 4 Label]' : '[ป้ายสถิติ 4]'}" }
     ],
-    "aboutImage": "https://via.placeholder.com/400x300?text=About+Image",
-    "aboutImageAlt": "[About Image Description]"
+    "aboutImage": "[Creative workspace image URL - will be generated dynamically]",
+    "aboutImageAlt": "${isEnglish ? '[About Image Description]' : '[คำอธิบายรูปเกี่ยวกับ]'}"
   },
   "Menu": {
-    "title": "[Portfolio Title]",
+    "title": "${isEnglish ? '[Portfolio Title]' : '[หัวข้อผลงาน]'}",
     "menuItems": [
       {
-        "name": "[Project 1 Name]",
+        "name": "${isEnglish ? '[Project 1 Name]' : '[ชื่อโปรเจกต์ 1]'}",
         "price": "[Price 1]",
-        "description": "[Project 1 Description]",
+        "description": "${isEnglish ? '[Project 1 Description]' : '[คำอธิบายโปรเจกต์ 1]'}",
         "image": "https://via.placeholder.com/400x300?text=Work+Name",
-        "imageAlt": "[Project 1 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Project 1 Image Alt]' : '[คำอธิบายรูปโปรเจกต์ 1]'}",
         "category": "design"
       },
       {
-        "name": "[Project 2 Name]",
+        "name": "${isEnglish ? '[Project 2 Name]' : '[ชื่อโปรเจกต์ 2]'}",
         "price": "[Price 2]",
-        "description": "[Project 2 Description]",
+        "description": "${isEnglish ? '[Project 2 Description]' : '[คำอธิบายโปรเจกต์ 2]'}",
         "image": "https://via.placeholder.com/400x300?text=Work+Name",
-        "imageAlt": "[Project 2 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Project 2 Image Alt]' : '[คำอธิบายรูปโปรเจกต์ 2]'}",
         "category": "development"
       },
       {
-        "name": "[Project 3 Name]",
+        "name": "${isEnglish ? '[Project 3 Name]' : '[ชื่อโปรเจกต์ 3]'}",
         "price": "[Price 3]",
-        "description": "[Project 3 Description]",
+        "description": "${isEnglish ? '[Project 3 Description]' : '[คำอธิบายโปรเจกต์ 3]'}",
         "image": "https://via.placeholder.com/400x300?text=Work+Name",
-        "imageAlt": "[Project 3 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Project 3 Image Alt]' : '[คำอธิบายรูปโปรเจกต์ 3]'}",
         "category": "creative"
       },
       {
-        "name": "[Project 4 Name]",
+        "name": "${isEnglish ? '[Project 4 Name]' : '[ชื่อโปรเจกต์ 4]'}",
         "price": "[Price 4]",
-        "description": "[Project 4 Description]",
+        "description": "${isEnglish ? '[Project 4 Description]' : '[คำอธิบายโปรเจกต์ 4]'}",
         "image": "https://via.placeholder.com/400x300?text=Work+Name",
-        "imageAlt": "[Project 4 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Project 4 Image Alt]' : '[คำอธิบายรูปโปรเจกต์ 4]'}",
         "category": "art"
       },
       {
-        "name": "[Project 5 Name]",
+        "name": "${isEnglish ? '[Project 5 Name]' : '[ชื่อโปรเจกต์ 5]'}",
         "price": "[Price 5]",
-        "description": "[Project 5 Description]",
+        "description": "${isEnglish ? '[Project 5 Description]' : '[คำอธิบายโปรเจกต์ 5]'}",
         "image": "https://via.placeholder.com/400x300?text=Work+Name",
-        "imageAlt": "[Project 5 Image Alt]",
+        "imageAlt": "${isEnglish ? '[Project 5 Image Alt]' : '[คำอธิบายรูปโปรเจกต์ 5]'}",
         "category": "professional"
       }
     ]
@@ -162,12 +166,72 @@ ${isEnglish ?
     "spacing": "1rem"
   }
 }`;
+
+    // Add variant-specific instructions if needed
+    if (variantInfo?.variantsUsed) {
+      prompt += `\n\n🎯 VARIANT-SPECIFIC INSTRUCTIONS:`;
+      
+      for (const [blockId, variantId] of Object.entries(variantInfo.variantsUsed)) {
+        const variantFields = variantInfo.variantSpecificFields?.[blockId] || [];
+        
+        if (variantFields.length > 0) {
+          prompt += `\n\n⚠️ IMPORTANT: Block '${blockId}' uses variant '${variantId}' which REQUIRES these additional fields:`;
+          
+          if (variantId === 'hero-stats' && blockId === 'hero-basic') {
+            prompt += `\n- stat1: "[Stat Number 1]" (number with + sign)
+- stat1Label: "[Stat Label 1]" (label text)
+- stat2: "[Stat Number 2]" (number with + sign)  
+- stat2Label: "[Stat Label 2]" (label text)
+- stat3: "[Stat Number 3]" (number with + sign)
+- stat3Label: "[Stat Label 3]" (label text)`;
+          } else if (variantId === 'hero-split' && blockId === 'hero-basic') {
+            prompt += `\n- heroImage: "https://via.placeholder.com/1920x1080?text=Creative+Work" (landscape image)
+- heroImageAlt: "[Hero Image Description]" (image description)
+- ctaLabel: "[Primary CTA]" (primary CTA)
+- secondaryCta: "[Secondary CTA]" (secondary CTA)`;
+          } else if (variantId === 'about-split' && blockId === 'about-basic') {
+            prompt += `\n- aboutImage: "[Creative workspace image URL - will be generated dynamically]" (creative workspace image)
+- aboutImageAlt: "[About Image Description]" (image description)`;
+          } else if (variantId === 'about-team' && blockId === 'about-basic') {
+            prompt += `\n- teamTitle: "[Team Section Title]" (team section heading)
+- teamSubtitle: "[Team Section Subtitle]" (team section description)
+- teamMembers: [array of 3-4 team member objects with name, role, image, bio]`;
+          } else if (variantId === 'about-timeline' && blockId === 'about-basic') {
+            prompt += `\n- timelineItems: [array of 4-5 timeline objects with year, title, description]`;
+          } else if (variantId === 'about-team-showcase' && blockId === 'about-basic') {
+            prompt += `\n- teamMembers: [array of 3-4 team member objects with name, role, image, bio]
+- missionTitle: "[Mission Title]" (mission section heading)
+- missionStatement: "[Mission Statement]" (mission description)`;
+          } else if (variantId === 'about-story' && blockId === 'about-basic') {
+            prompt += `\n- storyItems: [array of 4-5 story objects with year, title, description]
+- ctaLabel: "[Call to Action Label]" (button text)`;
+          } else if (variantId === 'about-values' && blockId === 'about-basic') {
+            prompt += `\n- values: [array of 3-4 value objects with title, description]
+- heroImage: "https://via.placeholder.com/600x400?text=Company+Values" (values section image)
+- heroImageAlt: "[Values Image Description]" (image description)`;
+          } else if (variantId === 'about-hero' && blockId === 'about-basic') {
+            prompt += `\n- badge: "[About Badge]" (badge text)
+- ctaLabel: "[Primary CTA]" (primary button text)
+- secondaryCta: "[Secondary CTA]" (secondary button text)
+- heroImage: "https://via.placeholder.com/600x400?text=About+Hero" (hero image)
+- heroImageAlt: "[About Hero Image Description]" (image description)`;
+          }
+        }
+      }
+    }
+    
+    // Add final language enforcement
+    if (!isEnglish) {
+      prompt += `\n\n🇹🇭 CRITICAL: All text content MUST be in THAI language only. Do not use any English text in company names, project titles, descriptions, or any other text fields.`;
+    }
+    
+    return prompt;
   },
 
   getOptimizedPrompt: (keywords: string[], colorHint: string, concreteManifest?: any, variantInfo?: any, language?: string) => {
     return {
       systemPrompt: portfolioPromptTemplate.systemPrompt,
-      userPrompt: portfolioPromptTemplate.generateUserPrompt(keywords, colorHint, language)
+      userPrompt: portfolioPromptTemplate.generateVariantAwarePrompt(keywords, colorHint, concreteManifest, variantInfo, language)
     };
   }
 };

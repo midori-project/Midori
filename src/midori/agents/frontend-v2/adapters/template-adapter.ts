@@ -362,13 +362,13 @@ export class TemplateAdapter {
     );
 
     console.log('✅ Template rendering completed:', {
-      filesGenerated: Object.keys(rendererResult.files).length,
+      filesGenerated: rendererResult.files ? Object.keys(rendererResult.files).length : 0,
       processingTime: rendererResult.processingTime
     });
 
     // รวม result จาก renderer กับ manifest ที่มีอยู่แล้ว
     const templateResult = {
-      files: rendererResult.files,
+      files: rendererResult.files || {},
       concreteManifest: templateRequest.concreteManifest,
       appliedOverrides: rendererResult.appliedOverrides,
       processingTime: rendererResult.processingTime,
