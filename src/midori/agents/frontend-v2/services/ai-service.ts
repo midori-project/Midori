@@ -6,6 +6,7 @@
 import { config } from "dotenv";
 import OpenAI from "openai";
 import { UnsplashService, UnsplashImage } from "./unsplash-service";
+import { BatchUnsplashService } from "./batch-unsplash-service";
 
 // Load .env from root
 config({ path: "../../../../.env" });
@@ -39,6 +40,7 @@ export class AIService {
   private openai: OpenAI | null = null;
   private isInitialized = false;
   private unsplashService: UnsplashService;
+  private batchUnsplashService: BatchUnsplashService;
   private lastTeamSearchQuery: string | null = null;
   // Simple in-memory cache for translated keywords
   private translationCache: Map<string, string> = new Map();
@@ -46,6 +48,7 @@ export class AIService {
   constructor() {
     this.initialize();
     this.unsplashService = new UnsplashService();
+    this.batchUnsplashService = new BatchUnsplashService();
   }
 
   private initialize() {
@@ -108,6 +111,59 @@ export class AIService {
         image: "https://via.placeholder.com/400x300?text=Image+Not+Available",
         imageAlt: itemName,
       };
+    }
+  }
+
+  /**
+   * Phase 2: Batch processing for menu items
+   * Process multiple menu items in batches for better performance
+   */
+  async getImagesForMenuItemsBatch(
+    menuItems: Array<{
+      name: string;
+      category: string;
+      businessCategory: string;
+    }>
+  ): Promise<Array<{ image: string; imageAlt: string; success: boolean; error?: string }>> {
+    try {
+      console.log(`🚀 Batch processing ${menuItems.length} menu items...`);
+      
+      // Translate all item names to English first
+      const translatedItems = await Promise.all(
+        menuItems.map(async (item) => ({
+          ...item,
+          name: await this.translateToEnglishIfThai(item.name, {
+            category: item.category,
+            businessCategory: item.businessCategory,
+          })
+        }))
+      );
+
+      // Process in batches
+      const batchResults = await this.batchUnsplashService.getImagesForMenuItems(translatedItems);
+      
+      console.log(`✅ Batch processing completed: ${batchResults.filter(r => r.success).length}/${batchResults.length} successful`);
+      return batchResults;
+    } catch (error) {
+      console.error("❌ Error in batch processing menu items:", error);
+      // Fallback to individual processing
+      console.log("🔄 Falling back to individual processing...");
+      const fallbackResults = await Promise.all(
+        menuItems.map(async (item) => {
+          try {
+            const result = await this.getImageForMenuItem(item.name, item.category, item.businessCategory);
+            return { ...result, success: true };
+          } catch (err) {
+            return {
+              image: "https://via.placeholder.com/400x300?text=Image+Not+Available",
+              imageAlt: item.name,
+              success: false,
+              error: err instanceof Error ? err.message : 'Unknown error'
+            };
+          }
+        })
+      );
+      return fallbackResults;
     }
   }
 
@@ -788,50 +844,74 @@ Translate now:`;
         console.log("⚠️ No team members found in AI response");
       }
 
-      // Enhance hero section with dynamic image
+      // Phase 3: Multi-section batch processing for better performance
+      console.log("🚀 Processing all sections with batch approach...");
+      
+      // Prepare batch requests for all sections
+      const batchRequests: any = {};
+      
+      // Hero section
       if (aiResponse["hero-basic"]) {
-        console.log("🖼️ Enhancing hero section with dynamic image...");
-        const heroImageData = await this.getHeroImage(
-          request.businessCategory,
-          request.keywords
-        );
-        aiResponse["hero-basic"] = {
-          ...aiResponse["hero-basic"],
-          heroImage: heroImageData.heroImage,
-          heroImageAlt: heroImageData.heroImageAlt,
+        batchRequests.hero = {
+          businessCategory: request.businessCategory,
+          keywords: request.keywords
         };
-        console.log("✅ Hero section enhanced with dynamic image:", heroImageData.heroImage.substring(0, 80));
-      } else {
-        console.warn("⚠️ hero-basic not found in aiResponse, cannot enhance with Unsplash image");
+      }
+      
+      // About section
+      if (aiResponse["about-basic"]) {
+        batchRequests.about = {
+          businessCategory: request.businessCategory,
+          keywords: request.keywords
+        };
+      }
+      
+      // Menu items
+      if (aiResponse["menu-basic"]?.menuItems) {
+        batchRequests.menuItems = aiResponse["menu-basic"].menuItems.map((item: any) => ({
+          name: item.name,
+          category: this.generateCategory(item.name, request.businessCategory),
+          businessCategory: request.businessCategory
+        }));
       }
 
-      // Enhance menu items with dynamic images
-      if (aiResponse["menu-basic"]?.menuItems) {
-        console.log("🖼️ Enhancing menu items with dynamic images...");
-        const enhancedMenuItems = await Promise.all(
-          aiResponse["menu-basic"].menuItems.map(async (item: any) => {
-            const category = this.generateCategory(
-              item.name,
-              request.businessCategory
-            );
-            const imageData = await this.getImageForMenuItem(
-              item.name,
-              category,
-              request.businessCategory
-            );
-
-            return {
-              ...item,
-              image: imageData.image,
-              imageAlt: imageData.imageAlt,
-              category: category,
-            };
-          })
-        );
-
+      // Process all sections in one batch
+      const batchResults = await this.batchUnsplashService.getImagesForSections(batchRequests);
+      
+      // Apply results to respective sections
+      if (batchResults.hero && aiResponse["hero-basic"]) {
+        aiResponse["hero-basic"] = {
+          ...aiResponse["hero-basic"],
+          heroImage: batchResults.hero.heroImage,
+          heroImageAlt: batchResults.hero.heroImageAlt,
+        };
+        console.log("✅ Hero section enhanced with dynamic image:", batchResults.hero.heroImage.substring(0, 80));
+      }
+      
+      if (batchResults.about && aiResponse["about-basic"]) {
+        aiResponse["about-basic"] = {
+          ...aiResponse["about-basic"],
+          aboutImage: batchResults.about.aboutImage,
+          aboutImageAlt: batchResults.about.aboutImageAlt,
+        };
+        console.log("✅ About section enhanced with dynamic image:", batchResults.about.aboutImage.substring(0, 80));
+      }
+      
+      if (batchResults.menuItems && aiResponse["menu-basic"]?.menuItems) {
+        const enhancedMenuItems = aiResponse["menu-basic"].menuItems.map((item: any, index: number) => {
+          const batchResult = batchResults.menuItems?.[index];
+          return {
+            ...item,
+            image: batchResult?.image || "https://via.placeholder.com/400x300?text=Image+Not+Available",
+            imageAlt: batchResult?.imageAlt || item.name,
+            category: batchRequests.menuItems[index]?.category || "food",
+          };
+        });
         aiResponse["menu-basic"].menuItems = enhancedMenuItems;
         console.log("✅ Menu items enhanced with dynamic images");
       }
+      
+      console.log("✅ All sections enhanced with batch processing");
 
       // Enhance team members with dynamic images (for about-team variants)
       if (aiResponse["about-basic"]?.teamMembers) {
