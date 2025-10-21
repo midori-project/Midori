@@ -157,13 +157,13 @@ export const aboutVariants: BlockVariant[] = [
         </div>
         
         {/* Timeline */}
-        <div className="max-w-5xl mx-auto mb-20">
+        <div className="max-w-6xl mx-auto mb-20">
           <div className="relative">
             {/* Timeline Line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-{primary}-400 via-{primary}-500 to-{primary}-600 hidden lg:block"></div>
+            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-[2px] bg-gradient-to-b from-{primary}-400 via-{primary}-500 to-{primary}-600 hidden lg:block"></div>
             
-            {/* Timeline Items */}
-            <div className="space-y-12">
+            {/* Timeline Items - Alternating Layout */}
+            <div className="space-y-16">
               {timelineItems}
             </div>
           </div>
@@ -392,26 +392,37 @@ return (
   },
   {
     id: "about-story",
-    name: "About Story Timeline",
-    description: "About section with company story timeline",
+    name: "About Personal Journey",
+    description: "About section with personal story and journey - creative storytelling approach",
     template: `export default function About() {
 return (
-  <section className="py-20 bg-gradient-to-br from-gray-50 to-{primary}-50">
+  <section className="py-20 bg-gradient-to-br from-{primary}-50 via-white to-{secondary}-50">
     <div className="max-w-screen-2xl mx-auto px-4">
-      <div className="text-center mb-16">
+      <div className="text-center mb-20">
         <h2 className="text-4xl md:text-5xl font-bold text-{primary}-900 mb-6">{title}</h2>
         <p className="text-xl text-{primary}-700 mb-8 max-w-3xl mx-auto leading-relaxed">{description}</p>
       </div>
       
-      <div className="relative">
-        <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-{primary}-200 rounded-full"></div>
-        
-        <div className="space-y-12">
+      {/* Story Journey - Vertical Cards */}
+      <div className="max-w-4xl mx-auto mb-20">
+        <div className="space-y-8">
           {storyItems}
         </div>
       </div>
       
-      <div className="mt-20 text-center">
+      {/* Values Section */}
+      <div className="max-w-6xl mx-auto mb-16">
+        <div className="text-center mb-12">
+          <h3 className="text-3xl font-bold text-{primary}-900 mb-4">Our Values</h3>
+          <p className="text-lg text-{primary}-600">What drives us every day</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {values}
+        </div>
+      </div>
+      
+      {/* Call to Action */}
+      <div className="text-center">
         <div className="inline-flex items-center px-8 py-4 bg-{primary}-600 text-white font-bold text-lg rounded-xl hover:bg-{primary}-700 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
           {ctaLabel}
           <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -426,7 +437,13 @@ return (
     overrides: {
       storyItems: { 
         type: "array", 
-        required: true 
+        required: true,
+        description: "Array of personal journey story objects"
+      },
+      values: {
+        type: "array",
+        required: true,
+        description: "Array of company values objects"
       },
       ctaLabel: { 
         type: "string", 
@@ -495,4 +512,5 @@ return (
     }
   }
 ];
+
 

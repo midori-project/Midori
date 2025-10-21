@@ -164,7 +164,7 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
         }
       },
       'about-basic': {
-        allowedVariants: ['about-split', 'about-minimal', 'about-timeline'],
+        allowedVariants: ['about-split', 'about-minimal', 'about-timeline', 'about-story', 'about-values'],
         defaultVariant: 'about-team',
         randomSelection: false,
         constraints: {
