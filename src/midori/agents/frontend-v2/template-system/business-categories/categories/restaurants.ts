@@ -183,7 +183,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       'about-basic': {
         allowedVariants: ['about-split', 'about-timeline', 'about-minimal', 'about-team'],
-        defaultVariant: 'about-split',
+        defaultVariant: 'about-hero',
         randomSelection: false, // 🎲 Random selection for variety
         constraints: {
           businessType: ['restaurant', 'food-service'],

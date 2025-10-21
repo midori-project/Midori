@@ -1491,7 +1491,7 @@ export class TemplateRenderer {
     const basePlaceholders = [
       'badge', 'heading', 'subheading', 
       'ctaLabel', 'secondaryCta',
-      'heroImage', 'heroImageAlt',
+      // heroImage, heroImageAlt ต้องเป็น variant-specific เพื่อให้ใช้ dynamic generation
       // aboutImage, aboutImageAlt ต้องเป็น variant-specific เพื่อให้ใช้ dynamic generation
       'brand', 'brandFirstChar', 'ctaButton', 'menuItems',
       'title', 'description', 'features', 'stats',
