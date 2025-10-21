@@ -20,7 +20,7 @@ Color Rules:
 - DO NOT use teal, cyan, or any other colors not listed above`,
 
   generateVariantAwarePrompt: (keywords: string[], colorHint: string, concreteManifest?: any, variantInfo?: any, language?: string): string => {
-    const detectedLanguage = language || 'en';
+    const detectedLanguage = language || 'th';
     const isEnglish = detectedLanguage === 'en';
     
     let prompt: string = `Portfolio Keywords: ${keywords.join(", ")}
@@ -88,7 +88,27 @@ IMPORTANT: ${isEnglish ?
       { "number": "[Stat 4 Number]", "label": "${isEnglish ? '[Stat 4 Label]' : '[ป้ายสถิติ 4]'}" }
     ],
     "aboutImage": "[Creative workspace image URL - will be generated dynamically]",
-    "aboutImageAlt": "${isEnglish ? '[About Image Description]' : '[คำอธิบายรูปเกี่ยวกับ]'}"
+    "aboutImageAlt": "${isEnglish ? '[About Image Description]' : '[คำอธิบายรูปเกี่ยวกับ]'}",
+    "teamMembers": [
+      {
+        "name": "${isEnglish ? '[Team Member 1 Name]' : '[ชื่อสมาชิกทีม 1]'}",
+        "role": "${isEnglish ? '[Team Member 1 Role]' : '[ตำแหน่งสมาชิกทีม 1]'}",
+        "image": "https://via.placeholder.com/400x400?text=Team+Member",
+        "bio": "${isEnglish ? '[Team Member 1 Bio]' : '[ประวัติสมาชิกทีม 1]'}"
+      },
+      {
+        "name": "${isEnglish ? '[Team Member 2 Name]' : '[ชื่อสมาชิกทีม 2]'}",
+        "role": "${isEnglish ? '[Team Member 2 Role]' : '[ตำแหน่งสมาชิกทีม 2]'}",
+        "image": "https://via.placeholder.com/400x400?text=Team+Member",
+        "bio": "${isEnglish ? '[Team Member 2 Bio]' : '[ประวัติสมาชิกทีม 2]'}"
+      },
+      {
+        "name": "${isEnglish ? '[Team Member 3 Name]' : '[ชื่อสมาชิกทีม 3]'}",
+        "role": "${isEnglish ? '[Team Member 3 Role]' : '[ตำแหน่งสมาชิกทีม 3]'}",
+        "image": "https://via.placeholder.com/400x400?text=Team+Member",
+        "bio": "${isEnglish ? '[Team Member 3 Bio]' : '[ประวัติสมาชิกทีม 3]'}"
+      }
+    ]
   },
   "Menu": {
     "title": "${isEnglish ? '[Portfolio Title]' : '[หัวข้อผลงาน]'}",
