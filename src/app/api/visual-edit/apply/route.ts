@@ -351,6 +351,59 @@ function replaceField(
     }
   }
   
+  // 🎯 FIX: Strategy 0.5 - ถ้าเป็น icon ให้ทำ icon replacement ก่อนเลย
+  if (type === 'icon' || field.includes('icon') || field.includes('Icon')) {
+    console.log('🎨 [REPLACE] Icon field detected - trying icon replacement first...')
+    
+    // Pattern 1: icon ใน span tag
+    const iconSpanPattern = new RegExp(
+      `<span[^>]*data-field="${escapeRegex(field)}"[^>]*>([\\s\\S]*?)</span>`,
+      'gims'
+    )
+    
+    if (content.match(iconSpanPattern)) {
+      newContent = content.replace(iconSpanPattern, (fullMatch) => {
+        const openTagEnd = fullMatch.indexOf('>')
+        if (openTagEnd >= 0) {
+          const openTag = fullMatch.substring(0, openTagEnd + 1)
+          replaced = true
+          // ไม่ escape HTML สำหรับ icon เพราะอาจเป็น emoji
+          return `${openTag}${newValue}</span>`
+        }
+        return fullMatch
+      })
+      console.log('✅ [REPLACE] Replaced icon in span tag')
+    }
+    
+    // Pattern 2: icon ใน generic tag
+    if (!replaced) {
+      const iconTagPattern = new RegExp(
+        `<([a-zA-Z][a-zA-Z0-9]*)[^>]*data-field="${escapeRegex(field)}"[^>]*>([\\s\\S]*?)</\\1>`,
+        'gims'
+      )
+      
+      if (content.match(iconTagPattern)) {
+        newContent = content.replace(iconTagPattern, (fullMatch, tagName) => {
+          const openTagEnd = fullMatch.indexOf('>')
+          if (openTagEnd >= 0) {
+            const openTag = fullMatch.substring(0, openTagEnd + 1)
+            replaced = true
+            // ไม่ escape HTML สำหรับ icon เพราะอาจเป็น emoji
+            return `${openTag}${newValue}</${tagName}>`
+          }
+          return fullMatch
+        })
+        console.log('✅ [REPLACE] Replaced icon in generic tag')
+      }
+    }
+    
+    // Return ทันทีถ้าแทนที่สำเร็จ
+    if (replaced) {
+      console.log('🎉 [REPLACE] Icon replacement successful, skipping text strategies')
+      return { newContent, replaced };
+    }
+  }
+  
   // Strategy 1: ค้นหา wrapped span (multiline) - สำหรับ text content เท่านั้น
   // <span data-editable="true" data-block-id="..." data-field="..." data-type="...">OLD VALUE</span>
   const wrappedPattern = new RegExp(
@@ -502,51 +555,6 @@ function replaceField(
       newContent = content.replace(simpleTemplatePattern, `$1${newValue}$2`)
       replaced = true
       console.log('✅ [REPLACE] Replaced simple template format')
-    }
-  }
-  
-  // Strategy 6: ค้นหา icon field (emoji/symbol) ใน span หรือ element
-  if (!replaced && (field.includes('icon') || field.includes('Icon') || type === 'icon')) {
-    console.log('🎨 [REPLACE] Trying icon field replacement...')
-    
-    // Pattern 1: icon ใน span tag
-    const iconSpanPattern = new RegExp(
-      `<span[^>]*data-field="${escapeRegex(field)}"[^>]*>([\\s\\S]*?)</span>`,
-      'gims'
-    )
-    
-    if (content.match(iconSpanPattern)) {
-      newContent = content.replace(iconSpanPattern, (fullMatch) => {
-        const openTagEnd = fullMatch.indexOf('>')
-        if (openTagEnd >= 0) {
-          const openTag = fullMatch.substring(0, openTagEnd + 1)
-          replaced = true
-          return `${openTag}${escapeHtml(newValue)}</span>`
-        }
-        return fullMatch
-      })
-      console.log('✅ [REPLACE] Replaced icon in span tag')
-    }
-    
-    // Pattern 2: icon ใน generic tag
-    if (!replaced) {
-      const iconTagPattern = new RegExp(
-        `<([a-zA-Z][a-zA-Z0-9]*)[^>]*data-field="${escapeRegex(field)}"[^>]*>([\\s\\S]*?)</\\1>`,
-        'gims'
-      )
-      
-      if (content.match(iconTagPattern)) {
-        newContent = content.replace(iconTagPattern, (fullMatch, tagName) => {
-          const openTagEnd = fullMatch.indexOf('>')
-          if (openTagEnd >= 0) {
-            const openTag = fullMatch.substring(0, openTagEnd + 1)
-            replaced = true
-            return `${openTag}${escapeHtml(newValue)}</${tagName}>`
-          }
-          return fullMatch
-        })
-        console.log('✅ [REPLACE] Replaced icon in generic tag')
-      }
     }
   }
   
