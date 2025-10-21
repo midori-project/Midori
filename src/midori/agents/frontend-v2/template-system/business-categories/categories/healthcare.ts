@@ -168,7 +168,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
         }
       },
       'about-basic': {
-        allowedVariants: ['about-split', 'about-minimal'],
+        allowedVariants: ['about-split', 'about-minimal', 'about-timeline', 'about-story', 'about-values'],
         defaultVariant: 'about-split',
         randomSelection: false,
         constraints: {

@@ -31,13 +31,13 @@ export function generateCompatiblePrompt(
       return restaurantPromptTemplate.getOptimizedPrompt(keywords, colorHint, concreteManifest, variantInfo, language);
     
     case 'ecommerce':
-      return ecommercePromptTemplate.getOptimizedPrompt(keywords, colorHint);
+      return ecommercePromptTemplate.getOptimizedPrompt(keywords, colorHint, concreteManifest, variantInfo, language);
     
     case 'healthcare':
-      return healthcarePromptTemplate.getOptimizedPrompt(keywords, colorHint);
+      return healthcarePromptTemplate.getOptimizedPrompt(keywords, colorHint, concreteManifest, variantInfo, language);
     
     case 'portfolio':
-      return portfolioPromptTemplate.getOptimizedPrompt(keywords, colorHint);
+      return portfolioPromptTemplate.getOptimizedPrompt(keywords, colorHint, concreteManifest, variantInfo, language);
     
     default:
       // Fallback to restaurant template

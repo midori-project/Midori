@@ -672,23 +672,24 @@ export class TemplateRenderer {
    * Generate timeline items HTML
    */
   private generateTimelineItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
-    const timelineItems = userData['About-basic']?.timelineItems 
-      || userData['about-basic']?.timelineItems 
+    const timelineItems = userData['about-basic']?.timelineItems 
+      || userData['About-basic']?.timelineItems 
       || [];
 
     if (!Array.isArray(timelineItems) || timelineItems.length === 0) {
+      console.log("⚠️ No timeline items found, using fallback");
       return '<div className="text-center text-gray-500">No timeline items available</div>';
     }
 
     const primary = colorMap['primary'] || 'blue';
     return timelineItems.map((item: any, index: number) => {
       const isEven = index % 2 === 0;
-      const leftClasses = isEven ? 'lg:text-right lg:pr-8' : 'lg:text-left lg:pl-8';
-      const rightClasses = isEven ? 'lg:text-left lg:pl-8' : 'lg:text-right lg:pr-8';
       
-      return `<div className="relative flex items-center">
-        <div className="flex-1 lg:flex-none lg:w-1/2">
-          <div className="${leftClasses}">
+      return `<div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+        {/* ฝั่งซ้าย */}
+        <div className="w-full lg:w-1/2 flex ${isEven ? 'justify-end lg:pr-8' : 'justify-start lg:pl-8'}">
+          <div className="${isEven ? 'text-right' : 'text-left'}">
+            ${isEven ? `
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-${primary}-100 text-${primary}-700 text-sm font-semibold mb-4">
               ${this.escapeHtml(item.year || '2024')}
             </div>
@@ -698,17 +699,29 @@ export class TemplateRenderer {
             <p className="text-${primary}-700 leading-relaxed">
               ${this.escapeHtml(item.description || 'Timeline event description')}
             </p>
+            ` : ''}
           </div>
         </div>
         
         {/* Timeline Dot */}
-        <div className="hidden lg:flex items-center justify-center w-8 h-8 bg-${primary}-500 rounded-full border-4 border-white shadow-lg z-10">
+        <div className="flex items-center justify-center w-8 h-8 bg-${primary}-500 rounded-full border-4 border-white shadow-lg z-10 mx-auto lg:mx-0 my-4 lg:my-0">
           <div className="w-3 h-3 bg-white rounded-full"></div>
         </div>
         
-        <div className="flex-1 lg:flex-none lg:w-1/2">
-          <div className="${rightClasses}">
-            {/* Empty space for alternating layout */}
+        {/* ฝั่งขวา */}
+        <div className="w-full lg:w-1/2 flex ${isEven ? 'justify-end lg:pl-8' : 'justify-start lg:pr-8'}">
+          <div className="${isEven ? 'text-left' : 'text-right'}">
+            ${!isEven ? `
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-${primary}-100 text-${primary}-700 text-sm font-semibold mb-4">
+              ${this.escapeHtml(item.year || '2024')}
+            </div>
+            <h3 className="text-xl font-bold text-${primary}-900 mb-2">
+              ${this.escapeHtml(item.title || 'Timeline Event')}
+            </h3>
+            <p className="text-${primary}-700 leading-relaxed">
+              ${this.escapeHtml(item.description || 'Timeline event description')}
+            </p>
+            ` : ''}
           </div>
         </div>
       </div>`;
@@ -716,11 +729,11 @@ export class TemplateRenderer {
   }
 
   /**
-   * Generate story items HTML
+   * Generate story items HTML - Vertical Cards Layout
    */
   private generateStoryItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
-    const storyItems = userData['About-basic']?.storyItems 
-      || userData['about-basic']?.storyItems 
+    const storyItems = userData['about-basic']?.storyItems 
+      || userData['About-basic']?.storyItems
       || [];
 
     if (!Array.isArray(storyItems) || storyItems.length === 0) {
@@ -729,17 +742,20 @@ export class TemplateRenderer {
 
     const primary = colorMap['primary'] || 'blue';
     return storyItems.map((item: any, index: number) => {
-      const isEven = index % 2 === 0;
-      const leftClasses = isEven ? 'lg:text-right lg:pr-8' : 'lg:text-left lg:pl-8';
-      const rightClasses = isEven ? 'lg:text-left lg:pl-8' : 'lg:text-right lg:pr-8';
-      
-      return `<div className="relative flex items-center">
-        <div className="flex-1 lg:flex-none lg:w-1/2">
-          <div className="${leftClasses}">
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-${primary}-100 text-${primary}-700 text-sm font-semibold mb-4">
-              ${this.escapeHtml(item.year || '2024')}
+      return `<div className="bg-white rounded-2xl shadow-lg p-8 border border-${primary}-100 hover:shadow-xl transition-shadow">
+        <div className="flex items-start space-x-4">
+          <div className="flex-shrink-0">
+            <div className="w-12 h-12 bg-${primary}-100 rounded-full flex items-center justify-center">
+              <span className="text-${primary}-600 font-bold text-lg">${index + 1}</span>
             </div>
-            <h3 className="text-xl font-bold text-${primary}-900 mb-2">
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center space-x-2 mb-2">
+              <span className="text-sm font-medium text-${primary}-600 bg-${primary}-50 px-3 py-1 rounded-full">
+                ${this.escapeHtml(item.year || '2024')}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-${primary}-900 mb-3">
               ${this.escapeHtml(item.title || 'Story Event')}
             </h3>
             <p className="text-${primary}-700 leading-relaxed">
@@ -747,27 +763,16 @@ export class TemplateRenderer {
             </p>
           </div>
         </div>
-        
-        {/* Story Dot */}
-        <div className="hidden lg:flex items-center justify-center w-8 h-8 bg-${primary}-500 rounded-full border-4 border-white shadow-lg z-10">
-          <div className="w-3 h-3 bg-white rounded-full"></div>
-        </div>
-        
-        <div className="flex-1 lg:flex-none lg:w-1/2">
-          <div className="${rightClasses}">
-            {/* Empty space for alternating layout */}
-          </div>
-        </div>
       </div>`;
-    }).join('\n              ');
+    }).join('\n            ');
   }
 
   /**
    * Generate values HTML
    */
   private generateValues(userData: Record<string, any>, colorMap: Record<string, string>): string {
-    const values = userData['About-basic']?.values 
-      || userData['about-basic']?.values 
+    const values = userData['about-basic']?.values 
+      || userData['About-basic']?.values
       || [];
 
     if (!Array.isArray(values) || values.length === 0) {
@@ -1001,8 +1006,8 @@ export class TemplateRenderer {
         keys: ['Navbar', 'navbar-basic']
       },
       'about-basic': {
-        placeholders: ['title', 'description', 'features', 'stats'],
-        keys: ['About-basic', 'about-basic']
+        placeholders: ['title', 'description', 'features', 'stats', 'badge', 'ctaLabel', 'secondaryCta', 'heroImage', 'heroImageAlt', 'aboutImage', 'aboutImageAlt', 'teamTitle', 'teamSubtitle', 'teamMembers', 'timelineItems', 'storyItems', 'values', 'missionTitle', 'missionStatement'],
+        keys: ['About-basic', 'about-basic', 'About']
       },
       'contact-basic': {
         placeholders: ['title', 'subtitle', 'address', 'phone', 'email', 'businessHours'],
