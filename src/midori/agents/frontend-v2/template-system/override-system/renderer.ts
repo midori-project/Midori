@@ -640,28 +640,28 @@ export class TemplateRenderer {
 
     if (!Array.isArray(teamMembers) || teamMembers.length === 0) {
       console.log("⚠️ No team members found, using fallback");
-      return '<div class="text-center text-gray-500">No team members available</div>';
+      return '<div className="text-center text-gray-500">No team members available</div>';
     }
 
     const primary = colorMap['primary'] || 'blue';
     return teamMembers.map((member: any, index: number) => 
-      `<div class="text-center group">
-        <div class="relative mb-4">
-          <div class="w-32 h-32 mx-auto rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
+      `<div className="text-center group">
+        <div className="relative mb-4">
+          <div className="w-32 h-32 mx-auto rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
             <img 
               src="${this.escapeHtml(member.image || 'https://via.placeholder.com/128x128?text=Team+Member')}" 
               alt="${this.escapeHtml(member.name || 'Team Member')}"
-              class="w-full h-full object-cover"
+              className="w-full h-full object-cover"
             />
           </div>
         </div>
-        <h4 class="text-lg font-bold text-${primary}-900 mb-1">
+        <h4 className="text-lg font-bold text-${primary}-900 mb-1">
           ${this.escapeHtml(member.name || 'Team Member')}
         </h4>
-        <p class="text-sm text-${primary}-600 mb-2">
+        <p className="text-sm text-${primary}-600 mb-2">
           ${this.escapeHtml(member.role || 'Role')}
         </p>
-        <p class="text-xs text-${primary}-500 leading-relaxed">
+        <p className="text-xs text-${primary}-500 leading-relaxed">
           ${this.escapeHtml(member.bio || 'Team member description')}
         </p>
       </div>`
@@ -677,38 +677,42 @@ export class TemplateRenderer {
       || [];
 
     if (!Array.isArray(timelineItems) || timelineItems.length === 0) {
-      return '<div class="text-center text-gray-500">No timeline items available</div>';
+      return '<div className="text-center text-gray-500">No timeline items available</div>';
     }
 
     const primary = colorMap['primary'] || 'blue';
-    return timelineItems.map((item: any, index: number) => 
-      `<div class="relative flex items-center">
-        <div class="flex-1 lg:flex-none lg:w-1/2">
-          <div class="${index % 2 === 0 ? 'lg:text-right lg:pr-8' : 'lg:text-left lg:pl-8'}">
-            <div class="inline-flex items-center px-4 py-2 rounded-full bg-${primary}-100 text-${primary}-700 text-sm font-semibold mb-4">
+    return timelineItems.map((item: any, index: number) => {
+      const isEven = index % 2 === 0;
+      const leftClasses = isEven ? 'lg:text-right lg:pr-8' : 'lg:text-left lg:pl-8';
+      const rightClasses = isEven ? 'lg:text-left lg:pl-8' : 'lg:text-right lg:pr-8';
+      
+      return `<div className="relative flex items-center">
+        <div className="flex-1 lg:flex-none lg:w-1/2">
+          <div className="${leftClasses}">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-${primary}-100 text-${primary}-700 text-sm font-semibold mb-4">
               ${this.escapeHtml(item.year || '2024')}
             </div>
-            <h3 class="text-xl font-bold text-${primary}-900 mb-2">
+            <h3 className="text-xl font-bold text-${primary}-900 mb-2">
               ${this.escapeHtml(item.title || 'Timeline Event')}
             </h3>
-            <p class="text-${primary}-700 leading-relaxed">
+            <p className="text-${primary}-700 leading-relaxed">
               ${this.escapeHtml(item.description || 'Timeline event description')}
             </p>
           </div>
         </div>
         
-        <!-- Timeline Dot -->
-        <div class="hidden lg:flex items-center justify-center w-8 h-8 bg-${primary}-500 rounded-full border-4 border-white shadow-lg z-10">
-          <div class="w-3 h-3 bg-white rounded-full"></div>
+        {/* Timeline Dot */}
+        <div className="hidden lg:flex items-center justify-center w-8 h-8 bg-${primary}-500 rounded-full border-4 border-white shadow-lg z-10">
+          <div className="w-3 h-3 bg-white rounded-full"></div>
         </div>
         
-        <div class="flex-1 lg:flex-none lg:w-1/2">
-          <div class="${index % 2 === 0 ? 'lg:text-left lg:pl-8' : 'lg:text-right lg:pr-8'}">
-            <!-- Empty space for alternating layout -->
+        <div className="flex-1 lg:flex-none lg:w-1/2">
+          <div className="${rightClasses}">
+            {/* Empty space for alternating layout */}
           </div>
         </div>
-      </div>`
-    ).join('\n              ');
+      </div>`;
+    }).join('\n              ');
   }
 
   /**
@@ -720,38 +724,42 @@ export class TemplateRenderer {
       || [];
 
     if (!Array.isArray(storyItems) || storyItems.length === 0) {
-      return '<div class="text-center text-gray-500">No story items available</div>';
+      return '<div className="text-center text-gray-500">No story items available</div>';
     }
 
     const primary = colorMap['primary'] || 'blue';
-    return storyItems.map((item: any, index: number) => 
-      `<div class="relative flex items-center">
-        <div class="flex-1 lg:flex-none lg:w-1/2">
-          <div class="${index % 2 === 0 ? 'lg:text-right lg:pr-8' : 'lg:text-left lg:pl-8'}">
-            <div class="inline-flex items-center px-4 py-2 rounded-full bg-${primary}-100 text-${primary}-700 text-sm font-semibold mb-4">
+    return storyItems.map((item: any, index: number) => {
+      const isEven = index % 2 === 0;
+      const leftClasses = isEven ? 'lg:text-right lg:pr-8' : 'lg:text-left lg:pl-8';
+      const rightClasses = isEven ? 'lg:text-left lg:pl-8' : 'lg:text-right lg:pr-8';
+      
+      return `<div className="relative flex items-center">
+        <div className="flex-1 lg:flex-none lg:w-1/2">
+          <div className="${leftClasses}">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-${primary}-100 text-${primary}-700 text-sm font-semibold mb-4">
               ${this.escapeHtml(item.year || '2024')}
             </div>
-            <h3 class="text-xl font-bold text-${primary}-900 mb-2">
+            <h3 className="text-xl font-bold text-${primary}-900 mb-2">
               ${this.escapeHtml(item.title || 'Story Event')}
             </h3>
-            <p class="text-${primary}-700 leading-relaxed">
+            <p className="text-${primary}-700 leading-relaxed">
               ${this.escapeHtml(item.description || 'Story event description')}
             </p>
           </div>
         </div>
         
-        <!-- Story Dot -->
-        <div class="hidden lg:flex items-center justify-center w-8 h-8 bg-${primary}-500 rounded-full border-4 border-white shadow-lg z-10">
-          <div class="w-3 h-3 bg-white rounded-full"></div>
+        {/* Story Dot */}
+        <div className="hidden lg:flex items-center justify-center w-8 h-8 bg-${primary}-500 rounded-full border-4 border-white shadow-lg z-10">
+          <div className="w-3 h-3 bg-white rounded-full"></div>
         </div>
         
-        <div class="flex-1 lg:flex-none lg:w-1/2">
-          <div class="${index % 2 === 0 ? 'lg:text-left lg:pl-8' : 'lg:text-right lg:pr-8'}">
-            <!-- Empty space for alternating layout -->
+        <div className="flex-1 lg:flex-none lg:w-1/2">
+          <div className="${rightClasses}">
+            {/* Empty space for alternating layout */}
           </div>
         </div>
-      </div>`
-    ).join('\n              ');
+      </div>`;
+    }).join('\n              ');
   }
 
   /**
@@ -763,22 +771,22 @@ export class TemplateRenderer {
       || [];
 
     if (!Array.isArray(values) || values.length === 0) {
-      return '<div class="text-center text-gray-500">No values available</div>';
+      return '<div className="text-center text-gray-500">No values available</div>';
     }
 
     const primary = colorMap['primary'] || 'blue';
     return values.map((value: any, index: number) => 
-      `<div class="flex items-start space-x-4 p-4 rounded-lg bg-${primary}-50 hover:bg-${primary}-100 transition-colors">
-        <div class="flex-shrink-0 w-8 h-8 bg-${primary}-500 rounded-full flex items-center justify-center">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      `<div className="flex items-start space-x-4 p-4 rounded-lg bg-${primary}-50 hover:bg-${primary}-100 transition-colors">
+        <div className="flex-shrink-0 w-8 h-8 bg-${primary}-500 rounded-full flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
         <div>
-          <h4 class="text-lg font-semibold text-${primary}-900 mb-1">
+          <h4 className="text-lg font-semibold text-${primary}-900 mb-1">
             ${this.escapeHtml(value.title || 'Value Title')}
           </h4>
-          <p class="text-${primary}-700 text-sm leading-relaxed">
+          <p className="text-${primary}-700 text-sm leading-relaxed">
             ${this.escapeHtml(value.description || 'Value description')}
           </p>
         </div>
