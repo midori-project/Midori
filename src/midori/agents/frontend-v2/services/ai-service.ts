@@ -39,6 +39,7 @@ export class AIService {
   private openai: OpenAI | null = null;
   private isInitialized = false;
   private unsplashService: UnsplashService;
+  private lastTeamSearchQuery: string | null = null;
   // Simple in-memory cache for translated keywords
   private translationCache: Map<string, string> = new Map();
 
@@ -234,6 +235,96 @@ export class AIService {
         aboutImageAlt: `${businessCategory} about image`,
       };
     }
+  }
+
+  /**
+   * Get team member image from Unsplash
+   */
+  async getTeamMemberImage(
+    memberName: string,
+    memberRole: string,
+    businessCategory: string
+  ): Promise<{ image: string; imageAlt: string }> {
+    try {
+      // Create search query for team member
+      const searchQuery = this.buildTeamMemberSearchQuery(
+        memberName,
+        memberRole,
+        businessCategory
+      );
+
+      // Only log once per unique search query
+      if (!this.lastTeamSearchQuery || this.lastTeamSearchQuery !== searchQuery) {
+        console.log(`🔍 Searching for team member image: ${searchQuery}`);
+        this.lastTeamSearchQuery = searchQuery;
+      }
+
+      const unsplashImage = await this.unsplashService.searchImages(
+        searchQuery,
+        { perPage: 1 }
+      );
+
+      if (unsplashImage.length > 0) {
+        const selectedImage = unsplashImage[0];
+
+        if (selectedImage) {
+          const imageUrl = this.unsplashService.generateImageUrl(
+            selectedImage,
+            {
+              width: 400,
+              height: 400,
+              quality: 85,
+            }
+          );
+
+          return {
+            image: imageUrl,
+            imageAlt: selectedImage.alt_description || `${memberName} - ${memberRole}`,
+          };
+        }
+      }
+
+      // Fallback
+      console.log(`⚠️ Using fallback image for: ${memberName} - ${memberRole}`);
+      return {
+        image: "https://via.placeholder.com/400x400?text=Team+Member",
+        imageAlt: `${memberName} - ${memberRole}`,
+      };
+    } catch (error) {
+      console.error("❌ Error getting team member image:", error);
+      return {
+        image: "https://via.placeholder.com/400x400?text=Team+Member",
+        imageAlt: `${memberName} - ${memberRole}`,
+      };
+    }
+  }
+
+  /**
+   * Build search query for team member image
+   */
+  private buildTeamMemberSearchQuery(
+    memberName: string,
+    memberRole: string,
+    businessCategory: string
+  ): string {
+    // Map business categories to relevant team member search terms
+    const categoryMap: Record<string, string[]> = {
+      restaurant: ["chef", "cook", "kitchen staff", "restaurant team"],
+      ecommerce: ["business professional", "team member", "office worker"],
+      healthcare: ["doctor", "nurse", "medical professional", "healthcare team"],
+      portfolio: ["designer", "developer", "creative professional"],
+    };
+
+    const categoryTerms = categoryMap[businessCategory] || ["professional", "team member"];
+    
+    // Use role if it's descriptive, otherwise use category terms
+    const roleTerms = memberRole.toLowerCase().includes("chef") || 
+                     memberRole.toLowerCase().includes("doctor") || 
+                     memberRole.toLowerCase().includes("manager") 
+                     ? [memberRole.toLowerCase()] 
+                     : categoryTerms;
+
+    return `${roleTerms.join(" ")} ${businessCategory} professional portrait`;
   }
 
   /**
@@ -692,11 +783,9 @@ Translate now:`;
         request.businessCategory
       );
 
-      // 🔍 Debug: ตรวจสอบ structure ของ aiResponse
-      console.log("🔍 aiResponse blocks:", Object.keys(aiResponse));
-      console.log("🔍 hero-basic exists?", !!aiResponse["hero-basic"]);
-      if (aiResponse["hero-basic"]) {
-        console.log("🔍 hero-basic content:", JSON.stringify(aiResponse["hero-basic"]).substring(0, 200));
+      // Debug: Only log if no team members found
+      if (aiResponse["about-basic"]?.teamMembers?.length === 0) {
+        console.log("⚠️ No team members found in AI response");
       }
 
       // Enhance hero section with dynamic image
@@ -742,6 +831,29 @@ Translate now:`;
 
         aiResponse["menu-basic"].menuItems = enhancedMenuItems;
         console.log("✅ Menu items enhanced with dynamic images");
+      }
+
+      // Enhance team members with dynamic images (for about-team variants)
+      if (aiResponse["about-basic"]?.teamMembers) {
+        console.log("🖼️ Enhancing team members with dynamic images...");
+        const enhancedTeamMembers = await Promise.all(
+          aiResponse["about-basic"].teamMembers.map(async (member: any) => {
+            const imageData = await this.getTeamMemberImage(
+              member.name || "Team Member",
+              member.role || "Role",
+              request.businessCategory
+            );
+
+            return {
+              ...member,
+              image: imageData.image,
+              imageAlt: imageData.imageAlt,
+            };
+          })
+        );
+
+        aiResponse["about-basic"].teamMembers = enhancedTeamMembers;
+        console.log("✅ Team members enhanced with dynamic images");
       }
 
       // Enhance about section with dynamic image (for about-split variant)
@@ -950,10 +1062,6 @@ IMPORTANT:
       
       const parsed = JSON.parse(cleanContent);
       
-      // Debug logging
-      console.log("🔍 Parsed AI response keys:", Object.keys(parsed));
-      console.log("🔍 Global section:", parsed.global);
-      
       // Validate required fields - be more flexible with block names
       if (!parsed.global) {
         throw new Error("Invalid response structure: missing global section");
@@ -994,7 +1102,7 @@ IMPORTANT:
         }
       }
       
-      console.log("🔄 Normalized response keys:", Object.keys(normalizedResponse));
+      // console.log("🔄 Normalized response keys:", Object.keys(normalizedResponse));
       
       return normalizedResponse as AIGenerationResponse;
     } catch (error) {
@@ -1055,6 +1163,27 @@ IMPORTANT:
       mockData["menu-basic"].menuItems = enhancedMenuItems;
     }
 
+    // Enhance team members with dynamic images
+    if (mockData["about-basic"]?.teamMembers) {
+      const enhancedTeamMembers = await Promise.all(
+        mockData["about-basic"].teamMembers.map(async (member: any) => {
+          const imageData = await this.getTeamMemberImage(
+            member.name || "Team Member",
+            member.role || "Role",
+            request.businessCategory
+          );
+
+          return {
+            ...member,
+            image: imageData.image,
+            imageAlt: imageData.imageAlt,
+          };
+        })
+      );
+
+      mockData["about-basic"].teamMembers = enhancedTeamMembers;
+    }
+
     return mockData;
   }
 
@@ -1091,6 +1220,14 @@ IMPORTANT:
           description: "ร้านอาหารไทยแท้",
           features: [{ title: "สดใหม่", description: "ทุกวัน" }],
           stats: [{ number: "10+", label: "ปี" }],
+          teamMembers: [
+            {
+              name: "John Doe",
+              role: "Chef",
+              image: "https://via.placeholder.com/400x400?text=Team+Member",
+              bio: "Expert chef"
+            }
+          ],
         },
         "contact-basic": {
           title: "ติดต่อเรา",
@@ -1155,6 +1292,14 @@ IMPORTANT:
         description: "Default Description",
         features: [],
         stats: [],
+        teamMembers: [
+          {
+            name: "John Doe",
+            role: "Chef",
+            image: "https://via.placeholder.com/400x400?text=Team+Member",
+            bio: "Expert chef"
+          }
+        ],
       },
       "contact-basic": {
         title: "Default Contact",

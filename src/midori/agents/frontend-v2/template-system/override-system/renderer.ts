@@ -313,6 +313,23 @@ export class TemplateRenderer {
       specialReplacements['quickLinks'] = this.generateQuickLinks(userData, colorMap);
     }
 
+    // Array fields for about variants
+    if (template.includes('{teamMembers}')) {
+      specialReplacements['teamMembers'] = this.generateTeamMembers(userData, colorMap);
+    }
+
+    if (template.includes('{timelineItems}')) {
+      specialReplacements['timelineItems'] = this.generateTimelineItems(userData, colorMap);
+    }
+
+    if (template.includes('{storyItems}')) {
+      specialReplacements['storyItems'] = this.generateStoryItems(userData, colorMap);
+    }
+
+    if (template.includes('{values}')) {
+      specialReplacements['values'] = this.generateValues(userData, colorMap);
+    }
+
     // Batch replace all special placeholders
     for (const [key, value] of Object.entries(specialReplacements)) {
       result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
@@ -606,6 +623,167 @@ export class TemplateRenderer {
         </Link>
       </li>`
     ).join('\n              ');
+  }
+
+  /**
+   * Generate team members HTML
+   */
+  private generateTeamMembers(userData: Record<string, any>, colorMap: Record<string, string>): string {
+    const teamMembers = userData['about-basic']?.teamMembers 
+      || userData['About-basic']?.teamMembers 
+      || [];
+
+    // Debug: Only log if no team members found
+    if (teamMembers.length === 0) {
+      console.log("⚠️ No team members found in generateTeamMembers");
+    }
+
+    if (!Array.isArray(teamMembers) || teamMembers.length === 0) {
+      console.log("⚠️ No team members found, using fallback");
+      return '<div class="text-center text-gray-500">No team members available</div>';
+    }
+
+    const primary = colorMap['primary'] || 'blue';
+    return teamMembers.map((member: any, index: number) => 
+      `<div class="text-center group">
+        <div class="relative mb-4">
+          <div class="w-32 h-32 mx-auto rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
+            <img 
+              src="${this.escapeHtml(member.image || 'https://via.placeholder.com/128x128?text=Team+Member')}" 
+              alt="${this.escapeHtml(member.name || 'Team Member')}"
+              class="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+        <h4 class="text-lg font-bold text-${primary}-900 mb-1">
+          ${this.escapeHtml(member.name || 'Team Member')}
+        </h4>
+        <p class="text-sm text-${primary}-600 mb-2">
+          ${this.escapeHtml(member.role || 'Role')}
+        </p>
+        <p class="text-xs text-${primary}-500 leading-relaxed">
+          ${this.escapeHtml(member.bio || 'Team member description')}
+        </p>
+      </div>`
+    ).join('\n            ');
+  }
+
+  /**
+   * Generate timeline items HTML
+   */
+  private generateTimelineItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
+    const timelineItems = userData['About-basic']?.timelineItems 
+      || userData['about-basic']?.timelineItems 
+      || [];
+
+    if (!Array.isArray(timelineItems) || timelineItems.length === 0) {
+      return '<div class="text-center text-gray-500">No timeline items available</div>';
+    }
+
+    const primary = colorMap['primary'] || 'blue';
+    return timelineItems.map((item: any, index: number) => 
+      `<div class="relative flex items-center">
+        <div class="flex-1 lg:flex-none lg:w-1/2">
+          <div class="${index % 2 === 0 ? 'lg:text-right lg:pr-8' : 'lg:text-left lg:pl-8'}">
+            <div class="inline-flex items-center px-4 py-2 rounded-full bg-${primary}-100 text-${primary}-700 text-sm font-semibold mb-4">
+              ${this.escapeHtml(item.year || '2024')}
+            </div>
+            <h3 class="text-xl font-bold text-${primary}-900 mb-2">
+              ${this.escapeHtml(item.title || 'Timeline Event')}
+            </h3>
+            <p class="text-${primary}-700 leading-relaxed">
+              ${this.escapeHtml(item.description || 'Timeline event description')}
+            </p>
+          </div>
+        </div>
+        
+        <!-- Timeline Dot -->
+        <div class="hidden lg:flex items-center justify-center w-8 h-8 bg-${primary}-500 rounded-full border-4 border-white shadow-lg z-10">
+          <div class="w-3 h-3 bg-white rounded-full"></div>
+        </div>
+        
+        <div class="flex-1 lg:flex-none lg:w-1/2">
+          <div class="${index % 2 === 0 ? 'lg:text-left lg:pl-8' : 'lg:text-right lg:pr-8'}">
+            <!-- Empty space for alternating layout -->
+          </div>
+        </div>
+      </div>`
+    ).join('\n              ');
+  }
+
+  /**
+   * Generate story items HTML
+   */
+  private generateStoryItems(userData: Record<string, any>, colorMap: Record<string, string>): string {
+    const storyItems = userData['About-basic']?.storyItems 
+      || userData['about-basic']?.storyItems 
+      || [];
+
+    if (!Array.isArray(storyItems) || storyItems.length === 0) {
+      return '<div class="text-center text-gray-500">No story items available</div>';
+    }
+
+    const primary = colorMap['primary'] || 'blue';
+    return storyItems.map((item: any, index: number) => 
+      `<div class="relative flex items-center">
+        <div class="flex-1 lg:flex-none lg:w-1/2">
+          <div class="${index % 2 === 0 ? 'lg:text-right lg:pr-8' : 'lg:text-left lg:pl-8'}">
+            <div class="inline-flex items-center px-4 py-2 rounded-full bg-${primary}-100 text-${primary}-700 text-sm font-semibold mb-4">
+              ${this.escapeHtml(item.year || '2024')}
+            </div>
+            <h3 class="text-xl font-bold text-${primary}-900 mb-2">
+              ${this.escapeHtml(item.title || 'Story Event')}
+            </h3>
+            <p class="text-${primary}-700 leading-relaxed">
+              ${this.escapeHtml(item.description || 'Story event description')}
+            </p>
+          </div>
+        </div>
+        
+        <!-- Story Dot -->
+        <div class="hidden lg:flex items-center justify-center w-8 h-8 bg-${primary}-500 rounded-full border-4 border-white shadow-lg z-10">
+          <div class="w-3 h-3 bg-white rounded-full"></div>
+        </div>
+        
+        <div class="flex-1 lg:flex-none lg:w-1/2">
+          <div class="${index % 2 === 0 ? 'lg:text-left lg:pl-8' : 'lg:text-right lg:pr-8'}">
+            <!-- Empty space for alternating layout -->
+          </div>
+        </div>
+      </div>`
+    ).join('\n              ');
+  }
+
+  /**
+   * Generate values HTML
+   */
+  private generateValues(userData: Record<string, any>, colorMap: Record<string, string>): string {
+    const values = userData['About-basic']?.values 
+      || userData['about-basic']?.values 
+      || [];
+
+    if (!Array.isArray(values) || values.length === 0) {
+      return '<div class="text-center text-gray-500">No values available</div>';
+    }
+
+    const primary = colorMap['primary'] || 'blue';
+    return values.map((value: any, index: number) => 
+      `<div class="flex items-start space-x-4 p-4 rounded-lg bg-${primary}-50 hover:bg-${primary}-100 transition-colors">
+        <div class="flex-shrink-0 w-8 h-8 bg-${primary}-500 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold text-${primary}-900 mb-1">
+            ${this.escapeHtml(value.title || 'Value Title')}
+          </h4>
+          <p class="text-${primary}-700 text-sm leading-relaxed">
+            ${this.escapeHtml(value.description || 'Value description')}
+          </p>
+        </div>
+      </div>`
+    ).join('\n            ');
   }
 
   /**
