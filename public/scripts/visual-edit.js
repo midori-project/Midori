@@ -69,7 +69,20 @@
     e.stopPropagation();
     e.stopImmediatePropagation(); // 🔑 หยุด event ทั้งหมด
 
-    const editable = e.target.closest('[data-editable]');
+    // 🔑 ตรวจสอบว่า target เองมี data-editable หรือไม่ก่อน
+    let editable = e.target;
+    if (!editable.hasAttribute('data-editable')) {
+      editable = e.target.closest('[data-editable]');
+    }
+    
+    // 🔑 ถ้า editable เป็น menu-item ให้หา child ที่เป็น image แทน
+    if (editable && editable.dataset.type === 'menu-item') {
+      const imageChild = e.target.closest('[data-type="image"]');
+      if (imageChild) {
+        editable = imageChild;
+      }
+    }
+    
     if (!editable) {
       console.log('⚠️ Clicked outside editable area');
       return;
@@ -159,7 +172,15 @@
       outline: 3px dashed #f59e0b !important;
       outline-offset: 4px;
       box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2) !important;
+      position: relative !important;
+      z-index: 9999 !important;
     }
+
+    /* 🔑 ให้ image elements อยู่บนสุดเสมอ */
+  .midori-edit-mode [data-type="image"] {
+  z-index: 9999 !important;
+  position: relative !important;
+}
     
     /* Selected state - ปกติ */
     [data-editable].midori-selected {
@@ -170,9 +191,11 @@
     
     /* 🖼️ Selected - สำหรับ background images */
     [data-type="image"].midori-selected {
-      outline: 3px solid #f59e0b !important;
+      outline: 3px solid #3b82f6 !important;
       outline-offset: 4px;
       box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.3) !important;
+      position: relative !important;
+      z-index: 9999 !important;
     }
     
     /* Tooltip showing field name */

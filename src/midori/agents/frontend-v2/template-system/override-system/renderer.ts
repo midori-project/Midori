@@ -464,9 +464,9 @@ export class TemplateRenderer {
             data-field="menuItems[${index}].image"
             data-type="image"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="absolute top-4 right-4">
-            <span className="px-3 py-1 bg-${primary}-500 text-white text-xs font-semibold rounded-full"
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+          <div className="absolute top-4 right-4 pointer-events-none">
+            <span className="px-3 py-1 bg-${primary}-500 text-white text-xs font-semibold rounded-full pointer-events-auto"
               data-editable="true"
               data-block-id="menu-basic"
               data-field="menuItems[${index}].category"
