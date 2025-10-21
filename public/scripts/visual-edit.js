@@ -243,6 +243,17 @@
       box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
     }
     
+    /* 🎨 Special styling - Icon */
+    .midori-edit-mode [data-type="icon"]:hover {
+      outline-color: #f59e0b !important;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1) !important;
+    }
+    
+    .midori-edit-mode [data-type="icon"].midori-selected {
+      outline-color: #f59e0b !important;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+    }
+    
     /* 🔘 Special styling - Button */
     .midori-edit-mode [data-type="button"]:hover {
       outline-color: #8b5cf6 !important;

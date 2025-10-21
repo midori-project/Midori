@@ -229,7 +229,10 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
           .midori-edit-mode [data-type="heading"].midori-selected { outline-color: #10b981 !important; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important; }
           .midori-edit-mode [data-type="button"]:hover { outline-color: #8b5cf6 !important; box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1) !important; }
           .midori-edit-mode [data-type="button"].midori-selected { outline-color: #8b5cf6 !important; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2) !important; }
-          .midori-edit-mode [data-type="image"] {z-index: 9999 !important; position: relative !important; }
+          .midori-edit-mode [data-block-id="menu-basic"][data-type="image"] {z-index: 9999 !important; position: relative !important; }
+          .midori-edit-mode [data-block-id="hero-basic"] [data-type="image"] { z-index: 10 !important; }
+          .midori-edit-mode [data-block-id="hero-basic"] [data-type="heading"] { z-index: 100 !important; }
+          .midori-edit-mode [data-block-id="hero-basic"] [data-type="text"] { z-index: 100 !important; }
         \`;
         document.head.appendChild(style);
 

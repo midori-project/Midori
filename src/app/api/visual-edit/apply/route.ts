@@ -13,7 +13,7 @@ interface VisualEditRequest {
   blockId: string
   field: string
   value: string
-  type?: 'text' | 'heading' | 'subheading' | 'button' | 'image'
+  type?: 'text' | 'heading' | 'subheading' | 'button' | 'image' | 'icon' | 'badge'
 }
 
 /**
@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
     
     // 🔑 Step 1: อ่านไฟล์จาก Daytona (source of truth)
     console.log('📖 [VISUAL-EDIT] Reading file from Daytona...')
+    console.log('📁 [VISUAL-EDIT] Component path:', componentPath)
+    
     const readResult = await sandbox.process.executeSessionCommand(sessionId, {
       command: `cat "${componentPath}" 2>/dev/null || echo ""`,
       runAsync: false,
@@ -77,6 +79,15 @@ export async function POST(req: NextRequest) {
     
     const currentContent = readResult.stdout || readResult.output || ''
     console.log(`✅ [VISUAL-EDIT] File read: ${currentContent.length} characters`)
+    console.log('📄 [VISUAL-EDIT] File first 500 chars:', currentContent.substring(0, 500))
+    
+    // Debug: ตรวจสอบว่ามี data-field ไหม
+    const hasDataField = currentContent.includes('data-field=')
+    console.log('🔍 [VISUAL-EDIT] File has data-field?', hasDataField)
+    if (hasDataField) {
+      const allDataFields = currentContent.match(/data-field="([^"]+)"/g)
+      console.log('📋 [VISUAL-EDIT] All data-fields in file:', allDataFields ? allDataFields.slice(0, 10) : 'none')
+    }
     
     if (!currentContent) {
       throw new Error(`File not found: ${componentPath}`)
@@ -260,10 +271,90 @@ function replaceField(
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
   
-  // Strategy 1: ค้นหา wrapped span (multiline)
+  console.log(`🔧 [REPLACE] Starting replacement for field: "${field}", type: "${type}"`)
+  
+  // 🎯 FIX: Strategy 0 - ถ้าเป็น image ให้ทำ image attribute replacement ก่อนเลย
+  if (type === 'image' || field.includes('Image') || field.includes('image')) {
+    console.log('🖼️ [REPLACE] Image field detected - trying attribute replacement first...')
+    
+    // ถ้าเป็น alt attribute
+    if (field.toLowerCase().includes('alt')) {
+      const altPattern1 = new RegExp(
+        `(data-field="${escapeRegex(field)}"[^>]*alt=")([^"]*)(")`,'gi'
+      )
+      const altPattern2 = new RegExp(
+        `(alt=")([^"]*)("[^>]*data-field="${escapeRegex(field)}")`,'gi'
+      )
+      
+      if (content.match(altPattern1)) {
+        newContent = content.replace(altPattern1, `$1${escapeHtml(newValue)}$3`)
+        replaced = true
+        console.log('✅ [REPLACE] Replaced alt attribute (pattern 1)')
+      } else if (content.match(altPattern2)) {
+        newContent = content.replace(altPattern2, `$1${escapeHtml(newValue)}$3`)
+        replaced = true
+        console.log('✅ [REPLACE] Replaced alt attribute (pattern 2)')
+      }
+    } 
+    // ถ้าเป็น src attribute
+    else {
+      const srcPattern1 = new RegExp(
+        `(data-field="${escapeRegex(field)}"[^>]*src=")([^"]*)(")`,'gi'
+      )
+      const srcPattern2 = new RegExp(
+        `(src=")([^"]*)("[^>]*data-field="${escapeRegex(field)}")`,'gi'
+      )
+      
+      if (content.match(srcPattern1)) {
+        newContent = content.replace(srcPattern1, `$1${newValue}$3`)
+        replaced = true
+        console.log('✅ [REPLACE] Replaced src attribute (pattern 1)')
+      } else if (content.match(srcPattern2)) {
+        newContent = content.replace(srcPattern2, `$1${newValue}$3`)
+        replaced = true
+        console.log('✅ [REPLACE] Replaced src attribute (pattern 2)')
+      }
+    }
+    
+    // ถ้ายังไม่สำเร็จ ลอง template format
+    if (!replaced) {
+      const templatePattern = new RegExp(
+        `(src=")\\{${escapeRegex(field)}\\}("[\\s\\S]*?data-field="${escapeRegex(field)}")`,
+        'gims'
+      )
+      
+      if (content.match(templatePattern)) {
+        newContent = content.replace(templatePattern, `$1${newValue}$2`)
+        replaced = true
+        console.log('✅ [REPLACE] Replaced template format')
+      }
+    }
+    
+    // ลอง simple template format
+    if (!replaced) {
+      const simpleTemplatePattern = new RegExp(
+        `(src=")\\{${escapeRegex(field)}\\}(")`,
+        'gims'
+      )
+      
+      if (content.match(simpleTemplatePattern)) {
+        newContent = content.replace(simpleTemplatePattern, `$1${newValue}$2`)
+        replaced = true
+        console.log('✅ [REPLACE] Replaced simple template format')
+      }
+    }
+    
+    // Return ทันทีถ้าแทนที่สำเร็จ - ไม่ต้องไป Strategy 1 หรือ 1.5 (ป้องกันแทนที่ซ้ำ)
+    if (replaced) {
+      console.log('🎉 [REPLACE] Image replacement successful, skipping text strategies')
+      return { newContent, replaced };
+    }
+  }
+  
+  // Strategy 1: ค้นหา wrapped span (multiline) - สำหรับ text content เท่านั้น
   // <span data-editable="true" data-block-id="..." data-field="..." data-type="...">OLD VALUE</span>
   const wrappedPattern = new RegExp(
-    `<span[^>]*data-field="${escapeRegex(field)}"[^>]*>([\\s\\S]*?)</span>`,
+    `<span[\\s\\S]*?data-field="${escapeRegex(field)}"[\\s\\S]*?>([\\s\\S]*?)</span>`,
     'gims'
   )
   
@@ -294,7 +385,7 @@ function replaceField(
     
     // Pattern: <anyTag data-field="fieldName">content</anyTag>
     const genericTagPattern = new RegExp(
-      `<([a-zA-Z][a-zA-Z0-9]*)[^>]*data-field="${escapeRegex(field)}"[^>]*>([\\s\\S]*?)</\\1>`,
+      `<([a-zA-Z][a-zA-Z0-9]*)[\\s\\S]*?data-field="${escapeRegex(field)}"[\\s\\S]*?>([\\s\\S]*?)</\\1>`,
       'gims'
     )
     
@@ -319,9 +410,9 @@ function replaceField(
     }
   }
   
-  // Strategy 2: ถ้าเป็น image field, ค้นหา attribute ใน <img> tag
+  // Strategy 2: ถ้าเป็น image field (fallback), ค้นหา attribute ใน <img> tag
   if (!replaced && (field.includes('Image') || field.includes('image') || type === 'image')) {
-    console.log('🖼️ [REPLACE] Trying image attribute replacement...')
+    console.log('🖼️ [REPLACE] Trying image attribute replacement (fallback)...')
     
     // ถ้าเป็น alt attribute
     if (field.toLowerCase().includes('alt')) {
@@ -414,6 +505,51 @@ function replaceField(
     }
   }
   
+  // Strategy 6: ค้นหา icon field (emoji/symbol) ใน span หรือ element
+  if (!replaced && (field.includes('icon') || field.includes('Icon') || type === 'icon')) {
+    console.log('🎨 [REPLACE] Trying icon field replacement...')
+    
+    // Pattern 1: icon ใน span tag
+    const iconSpanPattern = new RegExp(
+      `<span[^>]*data-field="${escapeRegex(field)}"[^>]*>([\\s\\S]*?)</span>`,
+      'gims'
+    )
+    
+    if (content.match(iconSpanPattern)) {
+      newContent = content.replace(iconSpanPattern, (fullMatch) => {
+        const openTagEnd = fullMatch.indexOf('>')
+        if (openTagEnd >= 0) {
+          const openTag = fullMatch.substring(0, openTagEnd + 1)
+          replaced = true
+          return `${openTag}${escapeHtml(newValue)}</span>`
+        }
+        return fullMatch
+      })
+      console.log('✅ [REPLACE] Replaced icon in span tag')
+    }
+    
+    // Pattern 2: icon ใน generic tag
+    if (!replaced) {
+      const iconTagPattern = new RegExp(
+        `<([a-zA-Z][a-zA-Z0-9]*)[^>]*data-field="${escapeRegex(field)}"[^>]*>([\\s\\S]*?)</\\1>`,
+        'gims'
+      )
+      
+      if (content.match(iconTagPattern)) {
+        newContent = content.replace(iconTagPattern, (fullMatch, tagName) => {
+          const openTagEnd = fullMatch.indexOf('>')
+          if (openTagEnd >= 0) {
+            const openTag = fullMatch.substring(0, openTagEnd + 1)
+            replaced = true
+            return `${openTag}${escapeHtml(newValue)}</${tagName}>`
+          }
+          return fullMatch
+        })
+        console.log('✅ [REPLACE] Replaced icon in generic tag')
+      }
+    }
+  }
+  
   return { newContent, replaced }
 }
 
@@ -427,6 +563,7 @@ function getComponentPath(blockId: string): string {
     'hero-basic': 'src/components/Hero.tsx',
     'about': 'src/components/About.tsx',
     'about-basic': 'src/components/About.tsx',
+    'about-minimal': 'src/components/About-minimal.tsx',
     'features': 'src/components/Features.tsx',
     'features-basic': 'src/components/Features.tsx',
     'cta': 'src/components/CTA.tsx',
