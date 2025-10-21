@@ -300,7 +300,7 @@ export class TemplateRenderer {
     }
 
     if (template.includes('{stats}')) {
-      specialReplacements['stats'] = this.generateStats(userData, colorMap);
+      specialReplacements['stats'] = this.generateStats(userData, colorMap, currentBlockId);
     }
 
     // (duplicate menuItems handler removed)
@@ -396,7 +396,7 @@ export class TemplateRenderer {
    * 🚀 OPTIMIZATION 3: Pre-resolved colors
    * 🎨 VISUAL EDIT: Added data attributes for click-to-edit
    */
-  private generateStats(userData: Record<string, any>, colorMap: Record<string, string>): string {
+  private generateStats(userData: Record<string, any>, colorMap: Record<string, string>, blockId: string = 'about-basic'): string {
     const stats = userData['About-basic']?.stats 
       || userData['about-basic']?.stats 
       || [];
@@ -409,14 +409,14 @@ export class TemplateRenderer {
     return stats.map((stat: any, index: number) => 
       `<div className="text-center"
         data-editable="true"
-        data-block-id="about-basic"
+        data-block-id="${blockId}"
         data-field="stats"
         data-item-index="${index}"
         data-type="stat"
       >
         <div className="text-3xl font-bold text-${primary}-600 mb-2"
           data-editable="true"
-          data-block-id="about-basic"
+          data-block-id="${blockId}"
           data-field="stats[${index}].number"
           data-type="text"
         >
@@ -424,7 +424,7 @@ export class TemplateRenderer {
         </div>
         <div className="text-${primary}-700"
           data-editable="true"
-          data-block-id="about-basic"
+          data-block-id="${blockId}"
           data-field="stats[${index}].label"
           data-type="text"
         >
@@ -633,6 +633,7 @@ export class TemplateRenderer {
 
   /**
    * Generate team members HTML
+   * 🎨 VISUAL EDIT: Added data attributes for click-to-edit
    */
   private generateTeamMembers(userData: Record<string, any>, colorMap: Record<string, string>): string {
     const teamMembers = userData['about-basic']?.teamMembers 
@@ -651,23 +652,48 @@ export class TemplateRenderer {
 
     const primary = colorMap['primary'] || 'blue';
     return teamMembers.map((member: any, index: number) => 
-      `<div className="text-center group">
+      `<div className="text-center group"
+        data-editable="true"
+        data-block-id="about-team-showcase"
+        data-field="teamMembers"
+        data-item-index="${index}"
+        data-type="team-member"
+      >
         <div className="relative mb-4">
           <div className="w-32 h-32 mx-auto rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
             <img 
               src="${this.escapeHtml(member.image || 'https://via.placeholder.com/128x128?text=Team+Member')}" 
               alt="${this.escapeHtml(member.name || 'Team Member')}"
               className="w-full h-full object-cover"
+              data-editable="true"
+              data-block-id="about-team-showcase"
+              data-field="teamMembers[${index}].image"
+              data-type="image"
             />
           </div>
         </div>
-        <h4 className="text-lg font-bold text-${primary}-900 mb-1">
+        <h4 className="text-lg font-bold text-${primary}-900 mb-1"
+          data-editable="true"
+          data-block-id="about-team-showcase"
+          data-field="teamMembers[${index}].name"
+          data-type="heading"
+        >
           ${this.escapeHtml(member.name || 'Team Member')}
         </h4>
-        <p className="text-sm text-${primary}-600 mb-2">
+        <p className="text-sm text-${primary}-600 mb-2"
+          data-editable="true"
+          data-block-id="about-team-showcase"
+          data-field="teamMembers[${index}].role"
+          data-type="text"
+        >
           ${this.escapeHtml(member.role || 'Role')}
         </p>
-        <p className="text-xs text-${primary}-500 leading-relaxed">
+        <p className="text-xs text-${primary}-500 leading-relaxed"
+          data-editable="true"
+          data-block-id="about-team-showcase"
+          data-field="teamMembers[${index}].bio"
+          data-type="text"
+        >
           ${this.escapeHtml(member.bio || 'Team member description')}
         </p>
       </div>`

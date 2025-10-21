@@ -350,21 +350,65 @@ return (
   <section className="py-20 bg-white">
     <div className="max-w-screen-2xl mx-auto px-4">
       <div className="text-center mb-16">
-        <h2 className="text-4xl md:text-5xl font-bold text-{primary}-900 mb-6">{title}</h2>
-        <p className="text-xl text-{primary}-700 mb-8 max-w-3xl mx-auto leading-relaxed">{description}</p>
+        <h2 
+          className="text-4xl md:text-5xl font-bold text-{primary}-900 mb-6"
+          data-editable="true"
+          data-block-id="about-team-showcase"
+          data-field="title"
+          data-type="heading"
+        >
+          {title}
+        </h2>
+        <p 
+          className="text-xl text-{primary}-700 mb-8 max-w-3xl mx-auto leading-relaxed"
+          data-editable="true"
+          data-block-id="about-team-showcase"
+          data-field="description"
+          data-type="text"
+        >
+          {description}
+        </p>
         <div className="w-24 h-1 bg-{primary}-500 mx-auto rounded-full"></div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+      <div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"
+        data-editable="true"
+        data-block-id="about-team-showcase"
+        data-field="teamMembers"
+        data-type="array"
+      >
         {teamMembers}
       </div>
       
       <div className="bg-{primary}-50 rounded-2xl p-8 md:p-12">
         <div className="text-center">
-          <h3 className="text-3xl font-bold text-{primary}-900 mb-6">{missionTitle}</h3>
-          <p className="text-lg text-{primary}-700 mb-8 max-w-2xl mx-auto leading-relaxed">{missionStatement}</p>
+          <h3 
+            className="text-3xl font-bold text-{primary}-900 mb-6"
+            data-editable="true"
+            data-block-id="about-team-showcase"
+            data-field="missionTitle"
+            data-type="heading"
+          >
+            {missionTitle}
+          </h3>
+          <p 
+            className="text-lg text-{primary}-700 mb-8 max-w-2xl mx-auto leading-relaxed"
+            data-editable="true"
+            data-block-id="about-team-showcase"
+            data-field="missionStatement"
+            data-type="text"
+          >
+            {missionStatement}
+          </p>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div 
+            className="grid grid-cols-2 md:grid-cols-4 gap-8"
+            data-editable="true"
+            data-block-id="about-team-showcase"
+            data-field="stats"
+            data-type="array"
+          >
             {stats}
           </div>
         </div>

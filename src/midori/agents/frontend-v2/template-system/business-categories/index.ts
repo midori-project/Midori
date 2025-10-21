@@ -182,7 +182,7 @@ export function getStyleBasedVariant(
   const styleMap: Record<string, string[]> = {
     'minimal': ['hero-minimal', 'about-minimal', 'footer-minimal'],
     'modern': ['hero-split', 'about-team-showcase', 'footer-minimal'],
-    'luxury': ['hero-fullscreen', 'about-minimal', 'footer-mega'],
+    'luxury': ['hero-fullscreen', 'about-team-showcase', 'footer-mega'],
     'casual': ['hero-cards', 'about-split', 'footer-centered']
   };
 

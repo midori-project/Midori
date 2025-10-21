@@ -40,7 +40,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'about-basic',
-        variantId: 'about-split', // Will be managed by variantPools
+        variantId: 'about-team-showcase', // Will be managed by variantPools
         required: false,
         customizations: {
           title: 'เกี่ยวกับร้านอาหารของเรา',
@@ -55,7 +55,29 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
             { number: '1000+', label: 'ลูกค้าพึงพอใจ' },
             { number: '50+', label: 'เมนูหลากหลาย' },
             { number: '24/7', label: 'บริการส่ง' }
-          ]
+          ],
+          teamMembers: [
+            { 
+              name: 'สมชาย ใจดี', 
+              role: 'หัวหน้าพ่อครัว', 
+              image: 'https://via.placeholder.com/128x128?text=Chef',
+              bio: 'ประสบการณ์ 20 ปีในวงการอาหาร'
+            },
+            { 
+              name: 'สมหญิง สวยงาม', 
+              role: 'ผู้จัดการร้าน', 
+              image: 'https://via.placeholder.com/128x128?text=Manager',
+              bio: 'ดูแลบริการและลูกค้า'
+            },
+            { 
+              name: 'สมศรี ยิ้มแย้ม', 
+              role: 'พนักงานต้อนรับ', 
+              image: 'https://via.placeholder.com/128x128?text=Staff',
+              bio: 'บริการด้วยรอยยิ้ม'
+            }
+          ],
+          missionTitle: 'พันธกิจของเรา',
+          missionStatement: 'มุ่งมั่นนำเสนอาหารไทยแท้ รสชาติดั้งเดิม ด้วยส่วนผสมคุณภาพสูงและบริการที่ประทับใจ'
         }
       },
       {
@@ -182,9 +204,9 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
         }
       },
       'about-basic': {
-        allowedVariants: ['about-split', 'about-timeline', 'about-minimal', 'about-team'],
-        defaultVariant: 'about-minimal',
-        randomSelection: false, // 🎲 Random selection for variety
+        allowedVariants: ['about-split', 'about-timeline', 'about-minimal', 'about-team', 'about-team-showcase'],
+        defaultVariant: 'about-team-showcase',
+        randomSelection: false,
         constraints: {
           businessType: ['restaurant', 'food-service'],
           tone: ['warm', 'friendly', 'authentic', 'minimal', 'modern', 'luxury', 'casual']

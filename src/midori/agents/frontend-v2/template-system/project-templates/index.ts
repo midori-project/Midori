@@ -233,6 +233,10 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
           .midori-edit-mode [data-block-id="hero-basic"] [data-type="image"] { z-index: 10 !important; }
           .midori-edit-mode [data-block-id="hero-basic"] [data-type="heading"] { z-index: 100 !important; }
           .midori-edit-mode [data-block-id="hero-basic"] [data-type="text"] { z-index: 100 !important; }
+          .midori-edit-mode [data-block-id="about-team-showcase"][data-field="teamMembers"] { z-index: 1 !important; }
+          .midori-edit-mode [data-block-id="about-team-showcase"][data-field="teamMembers"] [data-editable] { z-index: 100 !important; position: relative !important; }
+          .midori-edit-mode [data-block-id="about-team-showcase"][data-field="stats"] { z-index: 1 !important; }
+          .midori-edit-mode [data-block-id="about-team-showcase"][data-field="stats"] [data-editable] { z-index: 100 !important; position: relative !important; }
         \`;
         document.head.appendChild(style);
 

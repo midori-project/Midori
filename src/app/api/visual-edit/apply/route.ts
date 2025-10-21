@@ -407,8 +407,8 @@ function replaceField(
   // Strategy 1: ค้นหา wrapped span (multiline) - สำหรับ text content เท่านั้น
   // <span data-editable="true" data-block-id="..." data-field="..." data-type="...">OLD VALUE</span>
   const wrappedPattern = new RegExp(
-    `<span[\\s\\S]*?data-field="${escapeRegex(field)}"[\\s\\S]*?>([\\s\\S]*?)</span>`,
-    'gims'
+    `(<span[^>]*data-field="${escapeRegex(field)}"[^>]*>)([\\s\\S]*?)(</span>)`,
+    'gi'
   )
   
   const wrappedMatch = content.match(wrappedPattern)
@@ -416,19 +416,12 @@ function replaceField(
   if (wrappedMatch) {
     console.log('🎯 [REPLACE] Found wrapped span, replacing content...')
     
-    // แทนที่เฉพาะ content ข้างใน span
-    newContent = content.replace(wrappedPattern, (fullMatch) => {
-      // เก็บ attributes เดิมไว้ แทนที่แค่ content
-      const openTagEnd = fullMatch.indexOf('>')
-      const closeTagStart = fullMatch.lastIndexOf('</')
-      
-      if (openTagEnd >= 0 && closeTagStart > openTagEnd) {
-        const openTag = fullMatch.substring(0, openTagEnd + 1)
-        replaced = true
-        return `${openTag}${escapeHtml(newValue)}</span>`
-      }
-      
-      return fullMatch
+    // แทนที่โดยเก็บ opening และ closing tags ไว้
+    newContent = content.replace(wrappedPattern, (fullMatch, openTag, oldContent, closeTag) => {
+      replaced = true
+      console.log(`   Old content: "${oldContent.substring(0, 50)}..."`)
+      console.log(`   New content: "${newValue.substring(0, 50)}..."`)
+      return `${openTag}${newValue}${closeTag}`
     })
   }
   
@@ -437,9 +430,11 @@ function replaceField(
     console.log('🎯 [REPLACE] Trying generic tag replacement...')
     
     // Pattern: <anyTag data-field="fieldName">content</anyTag>
+    // ใช้ backreference เพื่อให้ closing tag ตรงกับ opening tag
+    // เพิ่ม s flag เพื่อให้ . จับ newline ได้
     const genericTagPattern = new RegExp(
-      `<([a-zA-Z][a-zA-Z0-9]*)[\\s\\S]*?data-field="${escapeRegex(field)}"[\\s\\S]*?>([\\s\\S]*?)</\\1>`,
-      'gims'
+      `(<(h[1-6]|p|div|span|button|a)[^>]*data-field="${escapeRegex(field)}"[^>]*>)([\\s\\S]*?)(</\\2>)`,
+      'gis'
     )
     
     const genericMatch = content.match(genericTagPattern)
@@ -447,18 +442,15 @@ function replaceField(
     if (genericMatch) {
       console.log('🎯 [REPLACE] Found generic tag, replacing content...')
       
-      newContent = content.replace(genericTagPattern, (fullMatch, tagName) => {
-        // เก็บ attributes เดิมไว้ แทนที่แค่ content
-        const openTagEnd = fullMatch.indexOf('>')
-        const closeTagStart = fullMatch.lastIndexOf('</')
-        
-        if (openTagEnd >= 0 && closeTagStart > openTagEnd) {
-          const openTag = fullMatch.substring(0, openTagEnd + 1)
-          replaced = true
-          return `${openTag}${escapeHtml(newValue)}</${tagName}>`
-        }
-        
-        return fullMatch
+      newContent = content.replace(genericTagPattern, (fullMatch, openTag, tagName, oldContent, closeTag) => {
+        replaced = true
+        console.log(`   Tag: ${tagName}`)
+        console.log(`   Old content: "${oldContent.substring(0, 50)}..."`)
+        console.log(`   New content: "${newValue.substring(0, 50)}..."`)
+        console.log(`   Full match length: ${fullMatch.length}`)
+        console.log(`   Open tag: ${openTag}`)
+        console.log(`   Close tag: ${closeTag}`)
+        return `${openTag}${newValue}${closeTag}`
       })
     }
   }
@@ -511,15 +503,29 @@ function replaceField(
     }
   }
   
-  // Strategy 3: ค้นหา plain placeholder {field}
+  // Strategy 3: ค้นหา plain placeholder {field} (ไม่จับ ${...} template strings)
   if (!replaced) {
     console.log('📝 [REPLACE] Trying plain placeholder replacement...')
-    const placeholderPattern = new RegExp(`\\{${escapeRegex(field)}\\}`, 'g')
     
-    if (content.match(placeholderPattern)) {
-      newContent = content.replace(placeholderPattern, escapeHtml(newValue))
-      replaced = true
-      console.log('✅ [REPLACE] Replaced plain placeholder')
+    // ตรวจสอบว่า field ไม่ใช่ template string variable
+    // ถ้า field เป็น select, title, description, etc. ที่อาจเป็น template variable ให้ข้าม
+    const templateVariables = [
+      'select', 'title', 'description', 'name', 'role', 'bio', 'price', 'label', 'number',
+      'heading', 'text', 'content', 'value', 'data', 'info', 'detail', 'summary',
+      'primary', 'secondary', 'accent', 'color', 'theme', 'style', 'class', 'className',
+      'lang', 'language', 'locale', 'i18n', 'translation', 'trans', 't'
+    ]
+    
+    if (!templateVariables.includes(field.toLowerCase())) {
+      const placeholderPattern = new RegExp(`\\{${escapeRegex(field)}\\}`, 'g')
+      
+      if (content.match(placeholderPattern)) {
+        newContent = content.replace(placeholderPattern, newValue)
+        replaced = true
+        console.log('✅ [REPLACE] Replaced plain placeholder')
+      }
+    } else {
+      console.log(`⚠️ [REPLACE] Skipping template variable: ${field}`)
     }
   }
   
@@ -572,6 +578,12 @@ function getComponentPath(blockId: string): string {
     'about': 'src/components/About.tsx',
     'about-basic': 'src/components/About.tsx',
     'about-minimal': 'src/components/About-minimal.tsx',
+    'about-team-showcase': 'src/components/About.tsx',
+    'about-split': 'src/components/About.tsx',
+    'about-timeline': 'src/components/About.tsx',
+    'about-hero': 'src/components/About.tsx',
+    'about-story': 'src/components/About.tsx',
+    'about-values': 'src/components/About.tsx',
     'features': 'src/components/Features.tsx',
     'features-basic': 'src/components/Features.tsx',
     'cta': 'src/components/CTA.tsx',
