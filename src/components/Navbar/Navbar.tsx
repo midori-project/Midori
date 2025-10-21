@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { logoutAction } from "@/app/(app)/(auth)/logout/action";
+import TokenDisplay from "@/components/TokenDisplay/TokenDisplay";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -115,7 +116,10 @@ export function Navbar() {
         </div>
       </div>
       {/* Desktop Auth Section */}
-      <div className="hidden md:flex items-center gap-2">
+      <div className="hidden md:flex items-center gap-4">
+        {/* Token Display */}
+        {isAuthenticated && <TokenDisplay />}
+        
         {isAuthenticated && user ? (
           <div className="relative">
             <button
@@ -151,6 +155,13 @@ export function Navbar() {
                   onClick={() => setIsUserMenuOpen(false)}
                 >
                   Workspace
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  Token Dashboard
                 </Link>
                 <Link
                   href="/profile"
@@ -262,6 +273,18 @@ export function Navbar() {
                       <p className="text-xs text-slate-500">{user.email}</p>
                     </div>
                   </div>
+                  
+                  {/* Mobile Token Display */}
+                  <div className="mb-4 p-3 bg-green-50 rounded-lg">
+                    <TokenDisplay showDashboardLink={false} />
+                  </div>
+                  <Link
+                    href="/dashboard"
+                    className="block w-full px-4 py-2 rounded-lg bg-green-100 text-green-700 font-medium hover:bg-green-200 transition-colors text-center mb-2"
+                    onClick={toggleMenu}
+                  >
+                    Token Dashboard
+                  </Link>
                   <Link
                     href="/profile"
                     className="block w-full px-4 py-2 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors text-center mb-2"

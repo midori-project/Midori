@@ -1,6 +1,7 @@
 "use server";
 import { getCurrentSession } from '@/libs/auth/session';
 import { createProjectWithCategories } from '@/libs/services/projectService';
+import { TokenGuardService } from '@/libs/billing/tokenGuard';
 import { z } from 'zod';
 
 // Input schema for creating a project
@@ -42,18 +43,60 @@ export async function createProjectAction(data: FormData | CreateProjectInput) {
       return { ok: false, error: 'Unauthenticated' };
     }
 
-    // 4. เรียก Business Service (business logic อยู่ที่นี่)
+    // 4. Check Token balance before creating project
+    const tokenGuard = new TokenGuardService();
+    const tokenCheck = await tokenGuard.canCreateProject(session.user.id);
+    
+    if (!tokenCheck.canProceed) {
+      return { 
+        ok: false, 
+        error: tokenCheck.message || 'Token ไม่เพียงพอ',
+        tokenInfo: {
+          currentBalance: tokenCheck.currentBalance,
+          requiredTokens: tokenCheck.requiredTokens
+        }
+      };
+    }
+
+    // 5. เรียก Business Service (business logic อยู่ที่นี่)
     const { name, description, visibility = 'public', categories } = parseResult.data;
     
-    const result = await createProjectWithCategories({
-      name,
-      description,
-      visibility,
-      categories,
-      userId: session.user.id,
-    });
+    try {
+      const result = await createProjectWithCategories({
+        name,
+        description,
+        visibility,
+        categories,
+        userId: session.user.id,
+      });
 
-    return { ok: true, projectId: result.projectId };
+      // 6. หัก Token หลังจากสร้างโปรเจคสำเร็จ
+      const deductResult = await tokenGuard.deductProjectCreationTokens(
+        session.user.id, 
+        result.projectId
+      );
+
+      if (!deductResult.success) {
+        console.warn('Failed to deduct tokens:', deductResult.message);
+        // ไม่ return error เพราะโปรเจคสร้างสำเร็จแล้ว
+      }
+
+      return { ok: true, projectId: result.projectId };
+
+    } catch (error) {
+      // 7. คืน Token เมื่อการสร้างโปรเจคล้มเหลว
+      try {
+        await tokenGuard.refundProjectCreationTokens(
+          session.user.id,
+          'temp-project-id', // ใช้ temp ID เพราะยังไม่ได้สร้าง
+          `Project creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      } catch (refundError) {
+        console.error('Failed to refund tokens:', refundError);
+      }
+
+      throw error; // Re-throw original error
+    }
 
   } catch (error) {
     console.error('Error in createProjectAction:', error);

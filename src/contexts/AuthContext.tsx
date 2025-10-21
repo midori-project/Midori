@@ -8,6 +8,11 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
+  tokenInfo: {
+    balance: number;
+    canCreateProject: boolean;
+    requiredTokens: number;
+  } | null;
 }
 
 interface AuthContextType extends AuthState {
@@ -16,6 +21,7 @@ interface AuthContextType extends AuthState {
   clearError: () => void;
   refetchUser: () => Promise<void>;
   validateSession: (force?: boolean) => Promise<void>;
+  refetchTokenInfo: () => Promise<void>;
 }
 
 // Actions
@@ -25,7 +31,8 @@ type AuthAction =
   | { type: 'LOGIN_ERROR'; error: string }
   | { type: 'LOGOUT' }
   | { type: 'SET_USER'; user: User }
-  | { type: 'CLEAR_ERROR' };
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'SET_TOKEN_INFO'; tokenInfo: { balance: number; canCreateProject: boolean; requiredTokens: number } };
 
 // Initial state
 const initialState: AuthState = {
@@ -33,6 +40,7 @@ const initialState: AuthState = {
   isLoading: true,
   isAuthenticated: false,
   error: null,
+  tokenInfo: null,
 };
 
 // Reducer
@@ -80,6 +88,11 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return {
         ...state,
         error: null,
+      };
+    case 'SET_TOKEN_INFO':
+      return {
+        ...state,
+        tokenInfo: action.tokenInfo,
       };
     default:
       return state;
@@ -229,6 +242,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // Refetch token info
+  const refetchTokenInfo = async () => {
+    if (!state.user) return;
+    
+    try {
+      const response = await fetch('/api/billing/balance');
+      const data = await response.json();
+      
+      if (data.success) {
+        dispatch({ 
+          type: 'SET_TOKEN_INFO', 
+          tokenInfo: {
+            balance: data.data.balance,
+            canCreateProject: data.data.canCreateProject,
+            requiredTokens: data.data.requiredTokens
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch token info:', error);
+    }
+  };
+
   // Listen for cross-tab auth changes (login/logout) via localStorage events
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -260,6 +296,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     clearError,
     refetchUser,
     validateSession,
+    refetchTokenInfo,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
