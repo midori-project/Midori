@@ -951,6 +951,21 @@ Translate now:`;
         console.log("✅ About section enhanced with dynamic image:", aboutImageData.aboutImage.substring(0, 80));
       }
 
+      // Enhance about section with hero image (for about-hero variant)
+      if (aiResponse["about-basic"]) {
+        console.log("🖼️ Enhancing about section with hero image...");
+        const heroImageData = await this.getHeroImage(
+          request.businessCategory,
+          request.keywords
+        );
+        aiResponse["about-basic"] = {
+          ...aiResponse["about-basic"],
+          heroImage: heroImageData.heroImage,
+          heroImageAlt: heroImageData.heroImageAlt,
+        };
+        console.log("✅ About section enhanced with hero image:", heroImageData.heroImage.substring(0, 80));
+      }
+
       return aiResponse;
     } catch (error) {
       console.error("❌ AI generation failed:", error);
