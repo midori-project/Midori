@@ -363,7 +363,13 @@ export class TemplateRenderer {
         data-type="feature"
       >
         <div className="w-16 h-16 bg-${primary}-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-${primary}-600 text-2xl">✨</span>
+          <span 
+            className="text-${primary}-600 text-2xl"
+            data-editable="true"
+            data-block-id="about-basic"
+            data-field="features[${index}].icon"
+            data-type="icon"
+          >✨</span>
         </div>
         <h3 className="text-xl font-semibold text-${primary}-900 mb-2"
           data-editable="true"
@@ -1121,7 +1127,7 @@ export class TemplateRenderer {
       data-block-id="${blockId}" 
       data-field="${field}"
       data-type="${type}"
-      class="midori-editable"
+      className="midori-editable"
     >${this.escapeHtml(value)}</${tag}>`;
   }
 

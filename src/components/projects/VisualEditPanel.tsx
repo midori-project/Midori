@@ -211,18 +211,20 @@ export function VisualEditPanel({
 
       {/* Content */}
       <div className="p-4">
-        {/* Text/Heading Input */}
+        {/* Text/Heading/Icon Input */}
         {(selectedElement.type === 'text' || 
           selectedElement.type === 'heading' || 
           selectedElement.type === 'subheading' ||
           selectedElement.type === 'badge' ||
-          selectedElement.type === 'button') && (
+          selectedElement.type === 'button' ||
+          selectedElement.type === 'icon') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {selectedElement.type === 'text' ? 'Text Content' : 
                selectedElement.type === 'heading' ? 'Heading' :
                selectedElement.type === 'subheading' ? 'Subheading' :
                selectedElement.type === 'badge' ? 'Badge Text' :
+               selectedElement.type === 'icon' ? 'Icon/Emoji' :
                'Button Label'}
             </label>
             {selectedElement.type === 'text' ? (
@@ -242,7 +244,7 @@ export function VisualEditPanel({
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Enter text..."
+                placeholder={selectedElement.type === 'icon' ? "ใส่ emoji หรือ icon (เช่น ✨, 🎯, ⭐)" : "Enter text..."}
                 autoFocus
               />
             )}
@@ -255,7 +257,32 @@ export function VisualEditPanel({
                   ⚠️ Badge text should be under 40 chars
                 </p>
               )}
+              {selectedElement.type === 'icon' && editValue.length > 10 && (
+                <p className="text-xs text-orange-600">
+                  ⚠️ Icon should be 1-2 characters (emoji/symbol)
+                </p>
+              )}
             </div>
+            
+            {/* Icon Tips */}
+            {selectedElement.type === 'icon' && (
+              <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="space-y-1">
+                  <p className="text-xs text-blue-700 font-semibold">
+                    💡 คำแนะนำสำหรับ Icon:
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    • ใช้ emoji เดียว (เช่น ✨, 🎯, ⭐, 💫)
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    • หรือใช้ Unicode symbols (เช่น ★, ♦, ▲, ●)
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    • หลีกเลี่ยงข้อความยาว
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -10,7 +10,7 @@ export interface VisualEditUpdate {
   blockId: string;
   field: string;
   value: any;
-  type?: 'text' | 'heading' | 'subheading' | 'button' | 'image';
+  type?: 'text' | 'heading' | 'subheading' | 'button' | 'image' | 'icon' | 'badge';
   itemIndex?: number; // สำหรับ array items
 }
 
@@ -123,8 +123,16 @@ export class VisualEditService {
         priority: newOverride.priority || merged[existingIndex].priority
       };
     } else {
-      // Add new
-      merged.push(newOverride);
+      // Add new - ensure all required fields are present
+      const normalizedOverride = {
+        blockId: newOverride.blockId,
+        customizations: newOverride.customizations || {},
+        variantId: newOverride.variantId,
+        templateOverrides: newOverride.templateOverrides,
+        placeholderOverrides: newOverride.placeholderOverrides,
+        priority: newOverride.priority
+      };
+      merged.push(normalizedOverride);
     }
     
     return merged;
