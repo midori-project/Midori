@@ -101,6 +101,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
     editMode,
     selectedElement,
     isSaving,
+    savingProgress,
     toggleEditMode,
     saveEdit,
     cancelEdit
@@ -250,6 +251,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
         selectedElement={selectedElement}
         projectId={projectId}
         isSaving={isSaving}
+        savingProgress={savingProgress}
         onSave={saveEdit}
         onCancel={cancelEdit}
       />

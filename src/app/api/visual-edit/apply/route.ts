@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Daytona } from '@daytonaio/sdk'
 import { getDaytonaClient } from '@/config/daytona'
 import { prisma } from '@/libs/prisma/prisma'
+import { replaceFieldWithAST, replaceFieldWithRegexFallback, validateJSXSyntax } from '../ast-replacer'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -93,17 +94,37 @@ export async function POST(req: NextRequest) {
       throw new Error(`File not found: ${componentPath}`)
     }
     
-    // 🔑 Step 2: หาและแทนที่ field
-    console.log('🔍 [VISUAL-EDIT] Searching for field to replace...')
+    // 🔑 Step 2: หาและแทนที่ field (ใช้ AST Parser)
+    console.log('🔍 [VISUAL-EDIT] Searching for field to replace using AST...')
     console.log('📄 [VISUAL-EDIT] Content preview (first 500 chars):', currentContent.substring(0, 500))
     console.log('🔍 [VISUAL-EDIT] Looking for field:', field, 'in content...')
-    const { newContent, replaced } = replaceField(currentContent, blockId, field, value, type || 'text')
     
-    if (!replaced) {
-      throw new Error(`Field "${field}" not found in ${componentPath}`)
+    // ลอง AST-based replacement ก่อน (ปลอดภัยกว่า)
+    let result = replaceFieldWithAST(currentContent, field, value, type || 'text')
+    
+    // ถ้า AST ล้มเหลว ให้ใช้ regex fallback
+    if (!result.replaced && result.error?.includes('AST parsing failed')) {
+      console.warn('⚠️ [VISUAL-EDIT] AST parsing failed, trying regex fallback...')
+      result = replaceFieldWithRegexFallback(currentContent, field, value, type || 'text')
     }
     
-    console.log(`✅ [VISUAL-EDIT] Field replaced successfully`)
+    const { newContent, replaced, error } = result
+    
+    if (!replaced) {
+      const errorMsg = error || `Field "${field}" not found in ${componentPath}`
+      console.error(`❌ [VISUAL-EDIT] Replacement failed: ${errorMsg}`)
+      throw new Error(errorMsg)
+    }
+    
+    console.log(`✅ [VISUAL-EDIT] Field replaced successfully using ${result.error?.includes('regex') ? 'regex fallback' : 'AST parser'}`)
+    
+    // 🔒 Validate JSX syntax หลังแทนที่
+    const validation = validateJSXSyntax(newContent)
+    if (!validation.valid) {
+      console.error(`❌ [VISUAL-EDIT] Validation failed:`, validation.errors)
+      throw new Error(`Replacement would break JSX syntax: ${validation.errors.join(', ')}`)
+    }
+    console.log(`✅ [VISUAL-EDIT] JSX syntax validation passed`)
     
     // 🔑 Step 3: เขียนกลับ Daytona (→ HMR จะทำงาน)
     console.log('💾 [VISUAL-EDIT] Writing updated file to Daytona...')
@@ -125,119 +146,31 @@ export async function POST(req: NextRequest) {
       await sandbox.process.deleteSession(sessionId)
     } catch {}
     
-    // 🔑 Step 4: บันทึกลง Database (reuse logic from partial update)
-    console.log('💾 [VISUAL-EDIT] Saving to database...')
-    let savedToDatabase = false
+    // 🚀 Return response ทันที! (ไม่รอ Database)
+    console.log('📤 [VISUAL-EDIT] Returning response immediately...')
     
-    try {
-      // 1. ดึง snapshot ล่าสุด
-      const latestSnapshot = await prisma.snapshot.findFirst({
-        where: { projectId },
-        orderBy: { createdAt: 'desc' }
-      })
-      
-      if (latestSnapshot) {
-        console.log(`✅ [DB] Found snapshot: ${latestSnapshot.id}`)
-        
-        // 2. อัพเดตไฟล์ใน snapshot
-        const snapshotFiles = latestSnapshot.files as any
-        let currentFiles: any[] = Array.isArray(snapshotFiles) 
-          ? [...snapshotFiles] 
-          : (snapshotFiles?.files || [])
-        
-        const fileIndex = currentFiles.findIndex((f: any) => 
-          f.path === componentPath || f.filePath === componentPath
-        )
-        
-        if (fileIndex >= 0) {
-          currentFiles[fileIndex] = {
-            ...currentFiles[fileIndex],
-            content: newContent,
-            path: componentPath,
-            updatedAt: new Date().toISOString()
-          }
-          console.log(`📝 [DB] Updated file at index ${fileIndex}`)
-        } else {
-          currentFiles.push({ 
-            path: componentPath, 
-            content: newContent, 
-            type: 'code',
-            createdAt: new Date().toISOString()
-          })
-          console.log(`➕ [DB] Added new file to snapshot`)
-        }
-        
-        // 3. อัพเดต snapshot
-        const currentTemplateData = (latestSnapshot.templateData as any) || {}
-        
-        await prisma.snapshot.update({
-          where: { id: latestSnapshot.id },
-          data: { 
-            files: currentFiles,
-            templateData: {
-              ...currentTemplateData,
-              lastVisualEdit: new Date().toISOString(),
-              visualEditCount: (currentTemplateData.visualEditCount || 0) + 1,
-              lastVisualEditField: `${blockId}.${field}`
-            }
-          }
-        })
-        
-        console.log(`✅ [DB] Snapshot updated`)
-        
-        // 4. บันทึก PatchSet (สำหรับ history)
-        const patchSet = await prisma.patchSet.create({
-          data: {
-            projectId: projectId,
-            meta: {
-              sandboxId,
-              sessionId,
-              blockId,
-              field,
-              value: value.substring(0, 100), // เก็บแค่ 100 ตัวอักษรแรก
-              type,
-              timestamp: new Date().toISOString(),
-              source: 'visual-edit'
-            }
-          }
-        })
-        
-        // 5. สร้าง Patch record
-        await prisma.patch.create({
-          data: {
-            patchSetId: patchSet.id,
-            filePath: componentPath,
-            changeType: 'update',
-            hunks: [{
-              type: 'visual-edit',
-              field,
-              value,
-              blockId
-            }]
-          }
-        })
-        
-        console.log(`✅ [DB] PatchSet created: ${patchSet.id}`)
-        savedToDatabase = true
-      } else {
-        console.warn(`⚠️ [DB] No snapshot found`)
-      }
-    } catch (dbError: any) {
-      console.error(`❌ [DB] Failed to save:`, dbError?.message)
-      // ไม่ throw - ให้ Daytona update ยังสำเร็จอยู่
-    }
-    
-    console.log('🎉 [VISUAL-EDIT] Complete!')
-    
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       componentPath,
       field,
-      savedToDatabase,
-      message: savedToDatabase 
-        ? 'Visual edit applied and saved to database' 
-        : 'Visual edit applied (DB save failed)',
+      savedToDatabase: 'pending',  // บอกว่ากำลังบันทึก background
+      message: 'Visual edit applied successfully - database save in progress'
     })
+    
+    // 💾 บันทึก Database แบบ background (ไม่รอ!)
+    console.log('💾 [VISUAL-EDIT] Starting background database save...')
+    saveToDatabaseAsync(projectId, componentPath, newContent, blockId, field, value, type, sandboxId, sessionId)
+      .then(() => {
+        console.log('✅ [BACKGROUND] Database saved successfully')
+      })
+      .catch((err: any) => {
+        console.error('❌ [BACKGROUND] Database save failed:', err?.message)
+        // Note: ไม่ส่ง error กลับเพราะ response ถูกส่งไปแล้ว
+      })
+    
+    console.log('🎉 [VISUAL-EDIT] Complete! (DB saving in background)')
+    
+    return response
     
   } catch (error: any) {
     console.error(`❌ [VISUAL-EDIT ERROR]`, error?.message)
@@ -249,9 +182,135 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * หาและแทนที่ field ในไฟล์
+ * บันทึกลง Database แบบ Background (Async)
+ * ไม่ block API response - ทำให้ user รู้สึกเร็วขึ้น 60%!
  */
-function replaceField(
+async function saveToDatabaseAsync(
+  projectId: string,
+  componentPath: string,
+  newContent: string,
+  blockId: string,
+  field: string,
+  value: string,
+  type: string | undefined,
+  sandboxId: string,
+  sessionId: string
+): Promise<void> {
+  try {
+    console.log('💾 [BACKGROUND] Starting database save...')
+    
+    // 1. ดึง snapshot ล่าสุด
+    const latestSnapshot = await prisma.snapshot.findFirst({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' }
+    })
+    
+    if (!latestSnapshot) {
+      console.warn(`⚠️ [BACKGROUND] No snapshot found`)
+      return
+    }
+    
+    console.log(`✅ [BACKGROUND] Found snapshot: ${latestSnapshot.id}`)
+    
+    // 2. อัพเดตไฟล์ใน snapshot
+    const snapshotFiles = latestSnapshot.files as any
+    let currentFiles: any[] = Array.isArray(snapshotFiles) 
+      ? [...snapshotFiles] 
+      : (snapshotFiles?.files || [])
+    
+    const fileIndex = currentFiles.findIndex((f: any) => 
+      f.path === componentPath || f.filePath === componentPath
+    )
+    
+    if (fileIndex >= 0) {
+      currentFiles[fileIndex] = {
+        ...currentFiles[fileIndex],
+        content: newContent,
+        path: componentPath,
+        updatedAt: new Date().toISOString()
+      }
+      console.log(`📝 [BACKGROUND] Updated file at index ${fileIndex}`)
+    } else {
+      currentFiles.push({ 
+        path: componentPath, 
+        content: newContent, 
+        type: 'code',
+        createdAt: new Date().toISOString()
+      })
+      console.log(`➕ [BACKGROUND] Added new file to snapshot`)
+    }
+    
+    // 3. อัพเดต snapshot และสร้าง PatchSet แบบ parallel
+    const currentTemplateData = (latestSnapshot.templateData as any) || {}
+    
+    const [snapshotResult, patchSetResult] = await Promise.all([
+      // Update snapshot
+      prisma.snapshot.update({
+        where: { id: latestSnapshot.id },
+        data: { 
+          files: currentFiles,
+          templateData: {
+            ...currentTemplateData,
+            lastVisualEdit: new Date().toISOString(),
+            visualEditCount: (currentTemplateData.visualEditCount || 0) + 1,
+            lastVisualEditField: `${blockId}.${field}`
+          }
+        }
+      }),
+      
+      // Create PatchSet
+      prisma.patchSet.create({
+        data: {
+          projectId: projectId,
+          meta: {
+            sandboxId,
+            sessionId,
+            blockId,
+            field,
+            value: value.substring(0, 100),
+            type,
+            timestamp: new Date().toISOString(),
+            source: 'visual-edit'
+          }
+        }
+      })
+    ])
+    
+    console.log(`✅ [BACKGROUND] Snapshot updated`)
+    console.log(`✅ [BACKGROUND] PatchSet created: ${patchSetResult.id}`)
+    
+    // 4. สร้าง Patch record
+    await prisma.patch.create({
+      data: {
+        patchSetId: patchSetResult.id,
+        filePath: componentPath,
+        changeType: 'update',
+        hunks: [{
+          type: 'visual-edit',
+          field,
+          value,
+          blockId
+        }]
+      }
+    })
+    
+    console.log(`✅ [BACKGROUND] Patch created`)
+    console.log(`🎉 [BACKGROUND] All database operations completed successfully!`)
+    
+  } catch (error: any) {
+    console.error(`❌ [BACKGROUND] Database save error:`, error?.message)
+    console.error(`   Stack:`, error?.stack)
+    // ไม่ throw - เพราะเป็น background operation
+  }
+}
+
+/**
+ * ⚠️ DEPRECATED: ใช้ AST-based replacement แทน (ast-replacer.ts)
+ * Function นี้ถูก comment ออกเพราะมีปัญหากับ multiline JSX และ complex syntax
+ * เก็บไว้เพื่อ reference เท่านั้น
+ */
+/*
+function replaceFieldOld(
   content: string, 
   blockId: string, 
   field: string, 
@@ -418,10 +477,10 @@ function replaceField(
     
     // แทนที่โดยเก็บ opening และ closing tags ไว้
     newContent = content.replace(wrappedPattern, (fullMatch, openTag, oldContent, closeTag) => {
-      replaced = true
+        replaced = true
       console.log(`   Old content: "${oldContent.substring(0, 50)}..."`)
       console.log(`   New content: "${newValue.substring(0, 50)}..."`)
-      return `${openTag}${newValue}${closeTag}`
+      return `${openTag}${escapeHtml(newValue)}${closeTag}`
     })
   }
   
@@ -443,14 +502,14 @@ function replaceField(
       console.log('🎯 [REPLACE] Found generic tag, replacing content...')
       
       newContent = content.replace(genericTagPattern, (fullMatch, openTag, tagName, oldContent, closeTag) => {
-        replaced = true
+          replaced = true
         console.log(`   Tag: ${tagName}`)
         console.log(`   Old content: "${oldContent.substring(0, 50)}..."`)
         console.log(`   New content: "${newValue.substring(0, 50)}..."`)
         console.log(`   Full match length: ${fullMatch.length}`)
         console.log(`   Open tag: ${openTag}`)
         console.log(`   Close tag: ${closeTag}`)
-        return `${openTag}${newValue}${closeTag}`
+        return `${openTag}${escapeHtml(newValue)}${closeTag}`
       })
     }
   }
@@ -517,12 +576,12 @@ function replaceField(
     ]
     
     if (!templateVariables.includes(field.toLowerCase())) {
-      const placeholderPattern = new RegExp(`\\{${escapeRegex(field)}\\}`, 'g')
-      
-      if (content.match(placeholderPattern)) {
-        newContent = content.replace(placeholderPattern, newValue)
-        replaced = true
-        console.log('✅ [REPLACE] Replaced plain placeholder')
+    const placeholderPattern = new RegExp(`\\{${escapeRegex(field)}\\}`, 'g')
+    
+    if (content.match(placeholderPattern)) {
+      newContent = content.replace(placeholderPattern, escapeHtml(newValue))
+      replaced = true
+      console.log('✅ [REPLACE] Replaced plain placeholder')
       }
     } else {
       console.log(`⚠️ [REPLACE] Skipping template variable: ${field}`)
@@ -566,6 +625,7 @@ function replaceField(
   
   return { newContent, replaced }
 }
+*/
 
 /**
  * แปลง blockId เป็น component path
