@@ -180,10 +180,10 @@ export function getStyleBasedVariant(
   
   // Style mapping
   const styleMap: Record<string, string[]> = {
-    'minimal': ['hero-minimal', 'about-minimal', 'footer-minimal'],
-    'modern': ['hero-split', 'about-team-showcase', 'footer-minimal'],
-    'luxury': ['hero-fullscreen', 'about-minimal', 'footer-mega'],
-    'casual': ['hero-cards', 'about-split', 'footer-centered']
+    'minimal': ['hero-minimal', 'about-minimal', 'contact-minimal', 'footer-minimal'],
+    'modern': ['hero-split', 'about-team-showcase', 'contact-split', 'footer-minimal'],
+    'luxury': ['hero-fullscreen', 'about-minimal', 'contact-fullscreen', 'footer-mega'],
+    'casual': ['hero-cards', 'about-split', 'contact-cards', 'footer-centered']
   };
 
   // Extract style from keywords

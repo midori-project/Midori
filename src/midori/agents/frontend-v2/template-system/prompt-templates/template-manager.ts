@@ -180,7 +180,9 @@ Generate JSON with this structure:
     "address": "123 Main St, City 10110",
     "phone": "02-123-4567",
     "email": "info@company.com",
-    "businessHours": "Mon-Sun 9:00-18:00"
+    "businessHours": "Mon-Sun 9:00-18:00",
+    "contactFormTitle": "Send us a message",
+    "contactFormCta": "Send Message"
   },
   "Footer": {
     "companyName": "Company name",

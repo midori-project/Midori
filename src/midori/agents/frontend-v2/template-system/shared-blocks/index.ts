@@ -5,6 +5,7 @@ import { heroVariants } from "./variants/hero-variants";
 import { footerVariants } from "./variants/footer-variants";
 import { aboutVariants } from "./variants/about-variants";
 import { menuVariants } from "./variants/menu-variants";
+import { contactVariants } from "./variants/contact-variants";
 
 export interface SharedBlock {
   id: string;
@@ -570,7 +571,92 @@ export default function Contact() {
         required: true,
         description: "Business hours",
       },
+      contactFormTitle: {
+        type: "string",
+        required: true,
+        maxLength: 60,
+        description: "Contact form title",
+      },
+      contactFormCta: {
+        type: "string",
+        required: true,
+        maxLength: 30,
+        description: "Contact form submit button text",
+      },
+      contactFormDescription: {
+        type: "string",
+        required: true,
+        maxLength: 200,
+        description: "Contact form description text",
+      },
+      contactInfoTitle: {
+        type: "string",
+        required: true,
+        maxLength: 60,
+        description: "Contact info section title",
+      },
+      contactInfoDescription: {
+        type: "string",
+        required: true,
+        maxLength: 200,
+        description: "Contact info section description",
+      },
+      nameLabel: {
+        type: "string",
+        required: true,
+        maxLength: 30,
+        description: "Name field label",
+      },
+      namePlaceholder: {
+        type: "string",
+        required: true,
+        maxLength: 50,
+        description: "Name field placeholder text",
+      },
+      emailLabel: {
+        type: "string",
+        required: true,
+        maxLength: 30,
+        description: "Email field label",
+      },
+      emailPlaceholder: {
+        type: "string",
+        required: true,
+        maxLength: 50,
+        description: "Email field placeholder text",
+      },
+      messageLabel: {
+        type: "string",
+        required: true,
+        maxLength: 30,
+        description: "Message field label",
+      },
+      messagePlaceholder: {
+        type: "string",
+        required: true,
+        maxLength: 100,
+        description: "Message field placeholder text",
+      },
+      addressLabel: {
+        type: "string",
+        required: true,
+        maxLength: 30,
+        description: "Address field label",
+      },
+      phoneLabel: {
+        type: "string",
+        required: true,
+        maxLength: 30,
+        description: "Phone field label",
+      },
+      businessHoursLabel: {
+        type: "string",
+        required: true,
+        maxLength: 30,
+        description: "Business hours field label",
+      },
     },
+    variants: contactVariants
   },
   {
     id: "menu-basic",

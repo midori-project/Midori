@@ -78,7 +78,21 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
           address: '123 ถนนสุขุมวิท กรุงเทพฯ 10110',
           phone: '02-123-4567',
           email: 'info@shop.com',
-          businessHours: 'จันทร์-อาทิตย์ 9:00-21:00'
+          businessHours: 'จันทร์-อาทิตย์ 9:00-21:00',
+          contactFormTitle: 'ส่งข้อความถึงเรา',
+          contactFormCta: 'ส่งข้อความ',
+          contactFormDescription: 'กรุณากรอกข้อมูลด้านล่าง เราจะติดต่อกลับโดยเร็วที่สุด',
+          contactInfoTitle: 'ข้อมูลติดต่อ',
+          contactInfoDescription: 'เราพร้อมให้บริการและตอบคำถามทุกข้อสงสัย',
+          nameLabel: 'ชื่อ-นามสกุล',
+          namePlaceholder: 'กรุณากรอกชื่อ-นามสกุล',
+          emailLabel: 'อีเมล',
+          emailPlaceholder: 'กรุณากรอกอีเมล',
+          messageLabel: 'ข้อความ',
+          messagePlaceholder: 'กรุณาเขียนข้อความที่ต้องการติดต่อ',
+          addressLabel: 'ที่อยู่',
+          phoneLabel: 'โทรศัพท์',
+          businessHoursLabel: 'เวลาทำการ'
         }
       },
       {
@@ -157,7 +171,7 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
       'hero-basic': {
         allowedVariants: ['hero-stats', 'hero-split', 'hero-cards', 'hero-minimal', 'hero-fullscreen'],
         defaultVariant: 'hero-stats',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['ecommerce', 'retail', 'online-store'],
           tone: ['professional', 'trustworthy', 'modern']
@@ -166,7 +180,7 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
       'about-basic': {
         allowedVariants: ['about-split', 'about-minimal', 'about-timeline', 'about-story', 'about-values'],
         defaultVariant: 'about-team',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['ecommerce', 'retail'],
           tone: ['professional', 'trustworthy']
@@ -175,7 +189,7 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
       'footer-basic': {
         allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
         defaultVariant: 'footer-mega',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['ecommerce', 'retail'],
           tone: ['professional', 'comprehensive']
@@ -184,10 +198,19 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
       'menu-basic': {
         allowedVariants: ['menu-list', 'menu-masonry', 'menu-carousel'],
         defaultVariant: 'menu-masonry',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['ecommerce', 'retail'],
           tone: ['professional', 'organized']
+        }
+      },
+      'contact-basic': {
+        allowedVariants: ['contact-split', 'contact-minimal', 'contact-cards', 'contact-fullscreen'],
+        defaultVariant: 'contact-fullscreen',
+        randomSelection: true,
+        constraints: {
+          businessType: ['ecommerce', 'retail', 'online-store'],
+          tone: ['professional', 'trustworthy', 'minimal', 'modern', 'luxury', 'casual']
         }
       }
     }

@@ -35,7 +35,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       {
         blockId: 'about-basic',
         variantId: 'about-minimal',
-        required: false,
+        required: true,
         customizations: {
           title: 'เกี่ยวกับฉัน',
           description: 'ฉันเป็นนักออกแบบและนักพัฒนาที่มีความหลงใหลในการสร้างสรรค์สิ่งใหม่ๆ',
@@ -55,7 +55,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       {
         blockId: 'menu-basic',
         variantId: 'menu-carousel',
-        required: true,
+        required: false,
         customizations: {
           title: 'ผลงานของฉัน',
           menuItems: [
@@ -68,14 +68,28 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'contact-basic',
-        required: false,
+        required: true,
         customizations: {
           title: 'ติดต่อฉัน',
           subtitle: 'พร้อมรับงานใหม่',
           address: 'กรุงเทพฯ, ประเทศไทย',
           phone: '081-234-5678',
           email: 'hello@portfolio.com',
-          businessHours: 'จันทร์-ศุกร์ 9:00-18:00'
+          businessHours: 'จันทร์-ศุกร์ 9:00-18:00',
+          contactFormTitle: 'เริ่มโปรเจคใหม่',
+          contactFormCta: 'ส่งข้อความ',
+          contactFormDescription: 'กรุณากรอกข้อมูลด้านล่าง เราจะติดต่อกลับโดยเร็วที่สุด',
+          contactInfoTitle: 'ข้อมูลติดต่อ',
+          contactInfoDescription: 'เราพร้อมให้บริการและตอบคำถามทุกข้อสงสัย',
+          nameLabel: 'ชื่อ-นามสกุล',
+          namePlaceholder: 'กรุณากรอกชื่อ-นามสกุล',
+          emailLabel: 'อีเมล',
+          emailPlaceholder: 'กรุณากรอกอีเมล',
+          messageLabel: 'ข้อความ',
+          messagePlaceholder: 'กรุณาเขียนข้อความที่ต้องการติดต่อ',
+          addressLabel: 'ที่อยู่',
+          phoneLabel: 'โทรศัพท์',
+          businessHoursLabel: 'เวลาทำการ'
         }
       },
       {
@@ -186,6 +200,15 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
         constraints: {
           businessType: ['portfolio', 'creative'],
           tone: ['creative', 'organized', 'showcase']
+        }
+      },
+      'contact-basic': {
+        allowedVariants: ['contact-split', 'contact-minimal', 'contact-cards', 'contact-fullscreen'],
+        defaultVariant: 'contact-minimal',
+        randomSelection: true,
+        constraints: {
+          businessType: ['portfolio', 'creative', 'designer', 'developer', 'artist'],
+          tone: ['creative', 'modern', 'minimal', 'professional', 'luxury', 'casual']
         }
       }
     }
