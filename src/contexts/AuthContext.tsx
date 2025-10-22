@@ -1,6 +1,7 @@
 'use client';
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { authService, User, AuthError, isAuthError, getErrorMessage } from '@/libs/auth/authService';
+import { tokenMemoryCache } from '@/libs/billing/tokenMemoryCache';
 
 // Types
 interface AuthState {
@@ -210,6 +211,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: 'LOADING' });
 
     try {
+      // ล้าง token cache เมื่อ logout
+      if (state.user) {
+        tokenMemoryCache.clearUserCache(state.user.id);
+        console.log(`🗑️ Cleared token cache for user ${state.user.id}`);
+      }
+
       await authService.logout();
       // Notify other tabs/windows that logout happened
       try {
@@ -243,10 +250,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Refetch token info
-  const refetchTokenInfo = async () => {
+  const refetchTokenInfo = async (forceRefresh = false) => {
     if (!state.user) return;
     
     try {
+      // ถ้าไม่ force refresh ให้ลองใช้ memory cache ก่อน
+      if (!forceRefresh) {
+        const cachedTokens = await tokenMemoryCache.getCachedTokens(state.user.id);
+        
+        if (cachedTokens) {
+          dispatch({ 
+            type: 'SET_TOKEN_INFO', 
+            tokenInfo: {
+              balance: cachedTokens.totalBalance,
+              canCreateProject: cachedTokens.totalBalance >= 1,
+              requiredTokens: 1
+            }
+          });
+          console.log(`💾 Using cached token data for user ${state.user.id}: ${cachedTokens.totalBalance} tokens`);
+          return;
+        }
+      }
+      
+      // ถ้าไม่มี cache หรือ force refresh ให้เรียก API
       const response = await fetch('/api/billing/balance');
       const data = await response.json();
       
@@ -259,6 +285,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             requiredTokens: data.data.requiredTokens
           }
         });
+        console.log(`🔄 Refreshed token info for user ${state.user.id}: ${data.data.balance} tokens`);
+      } else {
+        console.error('Failed to fetch token info:', data.error);
       }
     } catch (error) {
       console.error('Failed to fetch token info:', error);

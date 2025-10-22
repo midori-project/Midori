@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/libs/auth/session";
-import { TokenGuardService } from "@/libs/billing/tokenGuard";
+import { TokenWalletService } from "@/libs/billing/tokenWalletService";
 
 /**
  * API endpoint สำหรับดึงข้อมูล Token balance
@@ -16,12 +16,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const tokenGuard = new TokenGuardService();
-    const tokenInfo = await tokenGuard.getTokenInfo(session.user.id);
+    const walletService = new TokenWalletService();
+    const summary = await walletService.getUserTokenSummary(session.user.id);
 
     return NextResponse.json({
       success: true,
-      data: tokenInfo
+      data: {
+        balance: summary.totalBalance,
+        canCreateProject: summary.canCreateProject,
+        requiredTokens: summary.requiredTokens,
+        wallets: summary.wallets
+      }
     });
 
   } catch (error) {

@@ -2,6 +2,7 @@ import { prisma } from "@/libs/prisma/prisma";
 import { TokenTransactionType, WalletType } from "@prisma/client";
 import { calculateTokenCost } from "./tokenPricing";
 import { TokenWalletService } from "./tokenWalletService";
+import { tokenMemoryCache } from "./tokenMemoryCache";
 
 export interface TokenTransactionData {
   userId: string;
@@ -30,20 +31,32 @@ export class TokenLedgerService {
 
   /**
    * ดึงยอด Token ปัจจุบันของผู้ใช้ (รวมทุก wallet)
+   * ใช้ Memory Cache แทนการ query database
    */
   async getUserBalance(userId: string): Promise<TokenBalance> {
-    const summary = await this.walletService.getUserTokenSummary(userId);
-    const standardWallet = await this.walletService.getWalletByType(userId, 'STANDARD');
-
-    return {
-      balance: summary.totalBalance,
-      lastReset: standardWallet?.lastTokenReset || null,
-      walletType: 'STANDARD',
-    };
+    try {
+      // อ่านจาก memory cache ก่อน
+      let cachedTokens = await tokenMemoryCache.getCachedTokens(userId);
+      
+      // ถ้าไม่มี cache ให้โหลดจาก database
+      if (!cachedTokens) {
+        cachedTokens = await tokenMemoryCache.loadUserTokens(userId);
+      }
+      
+      return {
+        balance: cachedTokens.totalBalance,
+        lastReset: null, // ใช้ข้อมูลจาก wallets แทน
+        walletType: 'STANDARD',
+      };
+    } catch (error) {
+      console.error("Error getting user balance:", error);
+      throw error;
+    }
   }
 
   /**
    * หัก Token (Debit)
+   * ใช้ Memory Cache แทนการ query database
    */
   async deductTokens(
     userId: string,
@@ -53,32 +66,31 @@ export class TokenLedgerService {
     metadata?: Record<string, any>,
     preferredWalletType?: WalletType
   ): Promise<boolean> {
-    return await prisma.$transaction(async (tx) => {
-      // หัก Token จาก wallet
-      const deductResult = await this.walletService.deductTokens(
-        userId,
-        amount,
-        preferredWalletType
-      );
-
-      if (!deductResult.success) {
-        throw new Error(deductResult.message || "Insufficient tokens");
+    try {
+      // หัก Token จาก memory cache
+      const result = await tokenMemoryCache.deductTokens(userId, amount);
+      
+      if (!result.success) {
+        throw new Error(result.message || "Insufficient tokens");
       }
 
-      // บันทึก transaction
-      await tx.tokenTransaction.create({
+      // บันทึก transaction ใน database (async)
+      prisma.tokenTransaction.create({
         data: {
           userId,
-          walletId: deductResult.walletId,
+          walletId: result.walletId,
           amount: -amount, // Negative for debit
           type,
           description,
           metadata,
         },
-      });
+      }).catch(error => console.error('Failed to log transaction:', error));
 
       return true;
-    });
+    } catch (error) {
+      console.error("Token deduction error:", error);
+      throw error;
+    }
   }
 
   /**

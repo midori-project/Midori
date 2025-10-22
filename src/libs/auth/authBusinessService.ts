@@ -1,5 +1,6 @@
 import { prisma } from '@/libs/prisma/prisma';
 import { createSession } from '@/libs/auth/session';
+import { TokenWalletService } from '@/libs/billing/tokenWalletService';
 import bcrypt from 'bcryptjs';
 
 // Types for auth business service
@@ -130,6 +131,10 @@ export class AuthBusinessService {
         isVerified: false // ต้องยืนยันอีเมลก่อน
       }
     });
+
+    // สร้าง TokenWallet สำหรับผู้ใช้ใหม่
+    const tokenWalletService = new TokenWalletService();
+    await tokenWalletService.initializeUserWallets(user.id);
 
     // TODO: ส่งอีเมลยืนยัน
 

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Zap, RefreshCw, Code } from 'lucide-react';
+import { Send, Bot, User, Loader2, Zap, RefreshCw, Code, Coins } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
   id: string;
@@ -31,6 +32,9 @@ export default function ChatInterface({
   userEmail
 }: ChatInterfaceProps) {
   
+  // 🔍 เพิ่ม Token context
+  const { tokenInfo, refetchTokenInfo } = useAuth();
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [hasSentInitialMessage, setHasSentInitialMessage] = useState(false);
@@ -49,6 +53,13 @@ export default function ChatInterface({
   useEffect(() => {
     loadConversationHistory();
   }, [userId, projectId]);
+
+  // อัปเดต token balance เมื่อ component mount (ใช้ cache ก่อน)
+  useEffect(() => {
+    if (tokenInfo) {
+      refetchTokenInfo(false); // ใช้ cache ก่อน
+    }
+  }, []);
 
   // Auto focus input
   useEffect(() => {
@@ -199,6 +210,14 @@ export default function ChatInterface({
       }
 
       const result = await response.json();
+
+      // 🔄 อัปเดต Token balance หลัง Chat
+      if (result.tokenInfo) {
+        console.log(`💸 Token deducted: ${result.tokenInfo.deducted}, remaining: ${result.tokenInfo.remaining}`);
+      }
+      
+      // อัปเดต token info ใน context เสมอ (เพื่อให้ได้ข้อมูลล่าสุด)
+      await refetchTokenInfo(true); // forceRefresh = true เพื่อให้ได้ข้อมูลล่าสุด
 
       // Remove loading message and add real response
       setMessages(prev => {
@@ -377,6 +396,14 @@ export default function ChatInterface({
           </div>
           
           <div className="flex items-center space-x-2">
+            {/* 💰 Token Display */}
+            <div className="flex items-center space-x-2 px-3 py-1.5 bg-yellow-50 text-yellow-800 rounded-md border border-yellow-200">
+              <Coins className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {tokenInfo?.balance || 0} Tokens
+              </span>
+            </div>
+            
             <button 
               onClick={loadConversationHistory}
               disabled={isLoadingHistory}

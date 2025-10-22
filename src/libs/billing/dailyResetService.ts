@@ -1,14 +1,18 @@
 import { prisma } from "@/libs/prisma/prisma";
 import { TokenLedgerService } from "./tokenLedgerService";
+import { TokenWalletService } from "./tokenWalletService";
+import { tokenMemoryCache } from "./tokenMemoryCache";
 
 /**
  * Daily Reset Service - รีเซ็ต Token ทุก 0.00 น.
  */
 export class DailyResetService {
   private ledgerService: TokenLedgerService;
+  private walletService: TokenWalletService;
 
   constructor() {
     this.ledgerService = new TokenLedgerService();
+    this.walletService = new TokenWalletService();
   }
 
   /**
@@ -23,33 +27,49 @@ export class DailyResetService {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       
-      // หาผู้ใช้ที่ยังไม่ได้รีเซ็ตวันนี้
-      const usersToReset = await prisma.user.findMany({
+      // หา STANDARD wallets ที่ต้องรีเซ็ต
+      const walletsToReset = await prisma.tokenWallet.findMany({
         where: {
+          walletType: 'STANDARD',
+          isActive: true,
           OR: [
             { lastTokenReset: null },
             { lastTokenReset: { lt: today } }
           ]
         },
-        select: { id: true, email: true, balanceTokens: true }
+        select: { 
+          id: true,
+          userId: true,
+          user: {
+            select: { email: true }
+          }
+        }
       });
 
       let resetCount = 0;
 
-      for (const user of usersToReset) {
+      for (const wallet of walletsToReset) {
         try {
-          await this.ledgerService.resetDailyTokens(user.id);
+          await this.walletService.resetDailyTokens(wallet.userId);
+          
+          // ล้าง cache ของ user นี้เพื่อให้โหลดข้อมูลใหม่
+          tokenMemoryCache.clearUserCache(wallet.userId);
+          
           resetCount++;
-          console.log(`✅ Reset tokens for user ${user.email} (${user.id})`);
+          console.log(`✅ Reset tokens for wallet ${wallet.id} (user: ${wallet.user.email})`);
         } catch (error) {
-          console.error(`❌ Failed to reset tokens for user ${user.email}:`, error);
+          console.error(`❌ Failed to reset tokens for wallet ${wallet.id}:`, error);
         }
       }
+
+      // ล้าง cache ทั้งหมดหลังจาก daily reset
+      tokenMemoryCache.clearAllCache();
+      console.log('🗑️ Cleared all token cache after daily reset');
 
       return {
         success: true,
         resetCount,
-        message: `รีเซ็ต Token สำเร็จสำหรับ ${resetCount} ผู้ใช้`
+        message: `รีเซ็ต Token สำเร็จสำหรับ ${resetCount} wallets`
       };
     } catch (error) {
       console.error("Daily reset error:", error);
@@ -69,9 +89,11 @@ export class DailyResetService {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       
-      // นับจำนวนผู้ใช้ที่ยังไม่ได้รีเซ็ตวันนี้
-      const count = await prisma.user.count({
+      // นับจำนวน STANDARD wallets ที่ยังไม่ได้รีเซ็ตวันนี้
+      const count = await prisma.tokenWallet.count({
         where: {
+          walletType: 'STANDARD',
+          isActive: true,
           OR: [
             { lastTokenReset: null },
             { lastTokenReset: { lt: today } }

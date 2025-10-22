@@ -12,8 +12,8 @@ export interface TokenPricingConfig {
 }
 
 export const TOKEN_PRICING: TokenPricingConfig = {
-  projectCreation: 1,    // สร้างเว็บไซต์ใหม่
-  chatAnalysis: 0,       // วิเคราะห์ chat (ฟรีไปก่อน)
+  projectCreation: 1.5,    // สร้างเว็บไซต์ใหม่
+  chatAnalysis: 0.5,     // วิเคราะห์ chat (0.5 token ต่อครั้ง)
   previewBuild: 0,       // สร้าง preview (ฟรีไปก่อน)
   deployment: 0,         // deploy (ฟรีไปก่อน)
   dailyReset: 5,        // รีเซ็ตทุกวัน

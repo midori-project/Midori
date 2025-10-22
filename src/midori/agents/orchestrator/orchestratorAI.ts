@@ -21,6 +21,8 @@ import { projectContextSync } from './sync/projectContextSync';
 import { ConversationService, type ConversationData, type MessageData } from './services/conversationService';
 import { FrontendV2ProjectContextMapper } from './mappers/frontendV2ProjectContextMapper';
 import { randomUUID } from 'crypto';
+import { tokenMemoryCache } from '@/libs/billing/tokenMemoryCache';
+import { calculateTokenCost } from '@/libs/billing/tokenPricing';
 
 // Create singleton instance
 const chatPromptLoader = ChatPromptLoader.getInstance();
@@ -271,6 +273,19 @@ export class OrchestratorAI {
       
       // ✅ Save assistant response to database
       await this.saveAssistantMessage(conversation.id, response, message.userId);
+      
+      // 💸 หัก Token หลังประมวลผลสำเร็จ (ถ้าเป็น task ที่สร้างเว็บไซต์)
+      if (response.type === 'task' && response.taskResults?.websiteCreated) {
+        try {
+          const taskCost = calculateTokenCost('projectCreation');
+          const deductResult = await tokenMemoryCache.deductTokens(message.userId, taskCost);
+          if (deductResult.success) {
+            console.log(`💸 Deducted ${taskCost} tokens for website creation from user ${message.userId}`);
+          }
+        } catch (error) {
+          console.error('❌ Token deduction error in orchestrator:', error);
+        }
+      }
       
       // Store context
       this.conversationHistory.set(message.sessionId || message.userId, context);
