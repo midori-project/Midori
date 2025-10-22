@@ -249,7 +249,7 @@ IMPORTANT: ${isEnglish ?
 {
   "global": {
     "palette": {
-      "primary": "purple",
+      "primary": "indigo",
       "secondary": "indigo",
       "bgTone": 100
     },
@@ -322,7 +322,21 @@ ${generateAboutSection(aboutVariant)},
     "address": "[Address]",
     "phone": "[Phone Number]",
     "email": "[Email Address]",
-    "businessHours": "[Business Hours]"
+    "businessHours": "[Business Hours]",
+    "contactFormTitle": "[Contact Form Title]",
+    "contactFormCta": "[Contact Form Button]",
+    "contactFormDescription": "[Contact Form Description]",
+    "contactInfoTitle": "[Contact Info Title]",
+    "contactInfoDescription": "[Contact Info Description]",
+    "nameLabel": "[Name Label]",
+    "namePlaceholder": "[Name Placeholder]",
+    "emailLabel": "[Email Label]",
+    "emailPlaceholder": "[Email Placeholder]",
+    "messageLabel": "[Message Label]",
+    "messagePlaceholder": "[Message Placeholder]",
+    "addressLabel": "[Address Label]",
+    "phoneLabel": "[Phone Label]",
+    "businessHoursLabel": "[Business Hours Label]"
   },
   "Footer": {
     "companyName": "[Company Name]",

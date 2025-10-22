@@ -81,7 +81,21 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
           address: '123 ถนนสุขุมวิท กรุงเทพฯ 10110',
           phone: '02-123-4567',
           email: 'info@restaurant.com',
-          businessHours: 'จันทร์-อาทิตย์ 10:00-22:00'
+          businessHours: 'จันทร์-อาทิตย์ 10:00-22:00',
+          contactFormTitle: 'จองโต๊ะหรือสอบถาม',
+          contactFormCta: 'ส่งข้อความ',
+          contactFormDescription: 'กรุณากรอกข้อมูลด้านล่าง เราจะติดต่อกลับโดยเร็วที่สุด',
+          contactInfoTitle: 'ข้อมูลติดต่อ',
+          contactInfoDescription: 'เราพร้อมให้บริการและตอบคำถามทุกข้อสงสัย',
+          nameLabel: 'ชื่อ-นามสกุล',
+          namePlaceholder: 'กรุณากรอกชื่อ-นามสกุล',
+          emailLabel: 'อีเมล',
+          emailPlaceholder: 'กรุณากรอกอีเมล',
+          messageLabel: 'ข้อความ',
+          messagePlaceholder: 'กรุณาเขียนข้อความที่ต้องการติดต่อ',
+          addressLabel: 'ที่อยู่',
+          phoneLabel: 'โทรศัพท์',
+          businessHoursLabel: 'เวลาทำการ'
         }
       },
       {
@@ -206,6 +220,15 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
         constraints: {
           businessType: ['restaurant', 'food-service'],
           tone: ['appetizing', 'organized', 'clear', 'minimal', 'modern', 'luxury', 'casual']
+        }
+      },
+      'contact-basic': {
+        allowedVariants: ['contact-split', 'contact-minimal', 'contact-cards', 'contact-fullscreen'],
+        defaultVariant: 'contact-split',
+        randomSelection: true, // 🎲 Random selection for variety
+        constraints: {
+          businessType: ['restaurant', 'food-service'],
+          tone: ['warm', 'friendly', 'professional', 'minimal', 'modern', 'luxury', 'casual']
         }
       }
     }

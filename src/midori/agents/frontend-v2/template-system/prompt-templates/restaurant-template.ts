@@ -206,7 +206,7 @@ IMPORTANT: ${isEnglish ?
   "global": {
     "palette": {
       "primary": "orange",
-      "secondary": "red",
+      "secondary": "orange",
       "bgTone": 100
     },
     "tokens": {
@@ -270,7 +270,21 @@ ${generateAboutSection(aboutVariant)},
     "address": "${isEnglish ? '[Restaurant Address]' : '[ที่อยู่ร้านอาหาร]'}",
     "phone": "${isEnglish ? '[Phone Number]' : '[เบอร์โทรศัพท์]'}",
     "email": "${isEnglish ? '[Email Address]' : '[อีเมล]'}",
-    "businessHours": "${isEnglish ? '[Business Hours]' : '[เวลาทำการ]'}"
+    "businessHours": "${isEnglish ? '[Business Hours]' : '[เวลาทำการ]'}",
+    "contactFormTitle": "${isEnglish ? '[Contact Form Title]' : '[หัวข้อแบบฟอร์มติดต่อ]'}",
+    "contactFormCta": "${isEnglish ? '[Contact Form Button]' : '[ปุ่มส่งข้อความ]'}",
+    "contactFormDescription": "${isEnglish ? '[Contact Form Description]' : '[คำอธิบายแบบฟอร์มติดต่อ]'}",
+    "contactInfoTitle": "${isEnglish ? '[Contact Info Title]' : '[หัวข้อข้อมูลติดต่อ]'}",
+    "contactInfoDescription": "${isEnglish ? '[Contact Info Description]' : '[คำอธิบายข้อมูลติดต่อ]'}",
+    "nameLabel": "${isEnglish ? '[Name Label]' : '[ป้ายชื่อ]'}",
+    "namePlaceholder": "${isEnglish ? '[Name Placeholder]' : '[ข้อความแนะนำชื่อ]'}",
+    "emailLabel": "${isEnglish ? '[Email Label]' : '[ป้ายอีเมล]'}",
+    "emailPlaceholder": "${isEnglish ? '[Email Placeholder]' : '[ข้อความแนะนำอีเมล]'}",
+    "messageLabel": "${isEnglish ? '[Message Label]' : '[ป้ายข้อความ]'}",
+    "messagePlaceholder": "${isEnglish ? '[Message Placeholder]' : '[ข้อความแนะนำข้อความ]'}",
+    "addressLabel": "${isEnglish ? '[Address Label]' : '[ป้ายที่อยู่]'}",
+    "phoneLabel": "${isEnglish ? '[Phone Label]' : '[ป้ายโทรศัพท์]'}",
+    "businessHoursLabel": "${isEnglish ? '[Business Hours Label]' : '[ป้ายเวลาทำการ]'}"
   },
   "Footer": {
     "companyName": "${isEnglish ? '[Restaurant Name]' : '[ชื่อร้านอาหาร]'}",

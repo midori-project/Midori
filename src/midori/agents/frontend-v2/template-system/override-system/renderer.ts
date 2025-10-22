@@ -1126,7 +1126,7 @@ export class TemplateRenderer {
       data-block-id="${blockId}" 
       data-field="${field}"
       data-type="${type}"
-      class="midori-editable"
+      className="midori-editable"
     >${this.escapeHtml(value)}</${tag}>`;
   }
 
@@ -1160,6 +1160,13 @@ export class TemplateRenderer {
       'image', 'icon', 'logo',
       'video', 'audio'
     ];
+    
+    // Check if field is a placeholder (should not be wrapped with data attributes)
+    if (field.endsWith('Placeholder') || 
+        field.endsWith('placeholder') ||
+        field.toLowerCase().includes('placeholder')) {
+      return true;
+    }
     
     return attributeFields.includes(field.toLowerCase());
   }

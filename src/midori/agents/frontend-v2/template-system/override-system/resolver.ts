@@ -125,6 +125,12 @@ export class ManifestResolver {
     const concreteBlocks: ConcreteBlock[] = [];
 
     for (const blockUsage of businessCategory.blocks) {
+      // Skip optional blocks if not required
+      if (!blockUsage.required) {
+        console.log(`⏭️ Skipping optional block '${blockUsage.blockId}' (required: false)`);
+        continue;
+      }
+      
       try {
         const concreteBlock = this.processBlock(
           blockUsage,
