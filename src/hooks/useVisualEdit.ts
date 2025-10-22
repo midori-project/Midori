@@ -33,6 +33,7 @@ export function useVisualEdit({
   const [editMode, setEditMode] = useState(false);
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [savingProgress, setSavingProgress] = useState<number>(0);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // รับ message จาก iframe
@@ -125,7 +126,7 @@ export function useVisualEdit({
     }
   }, [editMode]);
 
-  // บันทึกการแก้ไข
+  // บันทึกการแก้ไข (พร้อม Progress Stages)
   const saveEdit = useCallback(async (newValue: any) => {
     if (!selectedElement) {
       console.warn('No element selected');
@@ -149,8 +150,23 @@ export function useVisualEdit({
     });
 
     setIsSaving(true);
+    const startTime = Date.now();
+    
     try {
-      // 🔑 ใช้ Visual Edit API
+      // 📊 Progress Bar Animation (0% → 100% ใน 2 วินาที)
+      const totalDuration = 2000; // 2 วินาที
+      const steps = 20; // อัปเดต progress 20 ครั้ง
+      const stepDuration = totalDuration / steps; // ~100ms per step
+      
+      // เริ่ม progress animation
+      const progressInterval = setInterval(() => {
+        setSavingProgress(prev => {
+          const next = prev + (100 / steps);
+          return next >= 100 ? 100 : next;
+        });
+      }, stepDuration);
+      
+      // 🔑 ใช้ Visual Edit API (พร้อมกับ progress bar)
       const success = await visualEditService.updateField({
         projectId,
         blockId: selectedElement.blockId,
@@ -160,29 +176,47 @@ export function useVisualEdit({
         itemIndex: selectedElement.itemIndex ? parseInt(selectedElement.itemIndex) : undefined
       }, sandboxId);
 
-      if (success) {
-        console.log('✅ Save successful to database via partial update');
-        
-        // ไม่ต้อง reload iframe เพราะ partial update จะอัปเดตใน sandbox ทันที
-        // แค่ปิด panel
-        setSelectedElement(null);
-        
-        if (onSaveSuccess) {
-          onSaveSuccess();
-        }
-      } else {
-        console.error('❌ Save failed');
-        if (onSaveError) {
-          onSaveError('Failed to save changes');
-        }
+      if (!success) {
+        clearInterval(progressInterval);
+        throw new Error('Save operation failed');
       }
+      
+      console.log('✅ Save API successful');
+      
+      // รอให้ progress bar ครบ 100%
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, totalDuration - elapsed);
+      
+      if (remaining > 0) {
+        await new Promise(r => setTimeout(r, remaining));
+      }
+      
+      // Force progress to 100%
+      clearInterval(progressInterval);
+      setSavingProgress(100);
+      
+      // แสดง success สักครู่
+      await new Promise(r => setTimeout(r, 300));
+      
+      const totalTime = Date.now() - startTime;
+      console.log(`✅ Save completed in ${totalTime}ms`);
+      
+      // ปิด panel
+      setSelectedElement(null);
+      
+      if (onSaveSuccess) {
+        onSaveSuccess();
+      }
+      
     } catch (error) {
       console.error('❌ Save error:', error);
+      setSavingProgress(0);
       if (onSaveError) {
         onSaveError(error instanceof Error ? error.message : 'Unknown error');
       }
     } finally {
       setIsSaving(false);
+      setSavingProgress(0);
     }
   }, [selectedElement, projectId, sandboxId, onSaveSuccess, onSaveError]);
 
@@ -209,6 +243,7 @@ export function useVisualEdit({
     editMode,
     selectedElement,
     isSaving,
+    savingProgress,
     toggleEditMode,
     saveEdit,
     cancelEdit
