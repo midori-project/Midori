@@ -212,6 +212,15 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
           businessType: ['ecommerce', 'retail', 'online-store'],
           tone: ['professional', 'trustworthy', 'minimal', 'modern', 'luxury', 'casual']
         }
+      },
+      'navbar-basic': {
+        allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-sidebar', 'navbar-minimal', 'navbar-mega', 'navbar-sticky'],
+        defaultVariant: 'navbar-centered',
+        randomSelection: true,
+        constraints: {
+          businessType: ['ecommerce', 'retail', 'online-store'],
+          tone: ['professional', 'trustworthy', 'modern', 'clean']
+        }
       }
     }
   }

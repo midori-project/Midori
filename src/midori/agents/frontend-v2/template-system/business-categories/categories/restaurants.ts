@@ -22,7 +22,6 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'hero-basic',
-        variantId: 'hero-stats', // Will be managed by variantPools
         required: true,
         customizations: {
           badge: 'ร้านอาหารคุณภาพ',
@@ -40,8 +39,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'about-basic',
-        variantId: 'about-split', // Will be managed by variantPools
-        required: false,
+        required: true,
         customizations: {
           title: 'เกี่ยวกับร้านอาหารของเรา',
           description: 'เราเป็นร้านอาหารที่ให้บริการอาหารไทยแท้ ใช้ส่วนผสมคุณภาพสูง ปรุงสดใหม่ทุกวัน',
@@ -60,7 +58,6 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'menu-basic',
-        variantId: 'menu-list', // Will be managed by variantPools
         required: true,
         customizations: {
           title: 'เมนูอาหาร',
@@ -74,7 +71,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'contact-basic',
-        required: false,
+        required: true,
         customizations: {
           title: 'ติดต่อเรา',
           subtitle: 'พร้อมให้บริการทุกวัน',
@@ -100,7 +97,6 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'footer-basic',
-        variantId: 'footer-centered', // Will be managed by variantPools
         required: true,
         customizations: {
           companyName: 'ร้านอาหารฟ้าสดใส',
@@ -198,7 +194,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       'about-basic': {
         allowedVariants: ['about-split', 'about-timeline', 'about-minimal', 'about-team'],
         defaultVariant: 'about-values',
-        randomSelection: false, // 🎲 Random selection for variety
+        randomSelection: true, // 🎲 Random selection for variety
         constraints: {
           businessType: ['restaurant', 'food-service'],
           tone: ['warm', 'friendly', 'authentic', 'minimal', 'modern', 'luxury', 'casual']
@@ -224,11 +220,20 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       'contact-basic': {
         allowedVariants: ['contact-split', 'contact-minimal', 'contact-cards', 'contact-fullscreen'],
-        defaultVariant: 'contact-split',
+        defaultVariant: 'contact-minimal',
         randomSelection: true, // 🎲 Random selection for variety
         constraints: {
           businessType: ['restaurant', 'food-service'],
           tone: ['warm', 'friendly', 'professional', 'minimal', 'modern', 'luxury', 'casual']
+        }
+      },
+      'navbar-basic': {
+        allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-sidebar', 'navbar-minimal', 'navbar-mega', 'navbar-sticky'],
+        defaultVariant: 'navbar-sidebar',
+        randomSelection: false,
+        constraints: {
+          businessType: ['restaurant', 'food-service', 'dining'],
+          tone: ['warm', 'inviting', 'appetizing', 'minimal', 'modern', 'luxury', 'casual', 'friendly']
         }
       }
     }
