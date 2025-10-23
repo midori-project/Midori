@@ -22,7 +22,6 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'hero-basic',
-        variantId: 'hero-split',
         required: true,
         customizations: {
           badge: 'Portfolio',
@@ -34,7 +33,6 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'about-basic',
-        variantId: 'about-minimal',
         required: true,
         customizations: {
           title: 'เกี่ยวกับฉัน',
@@ -54,7 +52,6 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'menu-basic',
-        variantId: 'menu-carousel',
         required: false,
         customizations: {
           title: 'ผลงานของฉัน',
@@ -94,7 +91,6 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'footer-basic',
-        variantId: 'footer-minimal',
         required: true,
         customizations: {
           companyName: 'Creative Portfolio',
@@ -209,6 +205,15 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
         constraints: {
           businessType: ['portfolio', 'creative', 'designer', 'developer', 'artist'],
           tone: ['creative', 'modern', 'minimal', 'professional', 'luxury', 'casual']
+        }
+      },
+      'navbar-basic': {
+        allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-sidebar', 'navbar-minimal', 'navbar-mega', 'navbar-sticky'],
+        defaultVariant: 'navbar-minimal',
+        randomSelection: false,
+        constraints: {
+          businessType: ['portfolio', 'creative', 'designer', 'developer', 'artist'],
+          tone: ['creative', 'modern', 'minimal', 'professional', 'clean']
         }
       }
     }

@@ -22,7 +22,6 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'hero-basic',
-        variantId: 'hero-stats',
         required: true,
         customizations: {
           badge: 'บริการสุขภาพ',
@@ -40,7 +39,6 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'about-basic',
-        variantId: 'about-split',
         required: true,
         customizations: {
           title: 'เกี่ยวกับคลินิกของเรา',
@@ -60,7 +58,6 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'menu-basic',
-        variantId: 'menu-list',
         required: true,
         customizations: {
           title: 'บริการของเรา',
@@ -100,7 +97,6 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'footer-basic',
-        variantId: 'footer-centered',
         required: true,
         customizations: {
           companyName: 'คลินิกสุขภาพดี',
@@ -215,6 +211,15 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
         constraints: {
           businessType: ['healthcare', 'medical', 'clinic', 'hospital'],
           tone: ['professional', 'trustworthy', 'reliable', 'minimal', 'modern', 'luxury', 'casual']
+        }
+      },
+      'navbar-basic': {
+        allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-sidebar', 'navbar-minimal', 'navbar-mega', 'navbar-sticky'],
+        defaultVariant: 'navbar-minimal',
+        randomSelection: false,
+        constraints: {
+          businessType: ['healthcare', 'medical', 'clinic', 'hospital'],
+          tone: ['professional', 'trustworthy', 'reliable', 'medical', 'clean']
         }
       }
     }

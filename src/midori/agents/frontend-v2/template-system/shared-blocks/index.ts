@@ -6,6 +6,7 @@ import { footerVariants } from "./variants/footer-variants";
 import { aboutVariants } from "./variants/about-variants";
 import { menuVariants } from "./variants/menu-variants";
 import { contactVariants } from "./variants/contact-variants";
+import { navbarVariants } from "./variants/navbar-variants";
 
 export interface SharedBlock {
   id: string;
@@ -257,6 +258,7 @@ export default function Navbar(){
         description: "Menu items array",
       },
     },
+    variants: navbarVariants,
   },
   {
     id: "footer-basic",
