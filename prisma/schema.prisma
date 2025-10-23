@@ -32,7 +32,9 @@ model User {
   projects           Project[]
   likes              ProjectLike[]
   sessions           Session[]
-
+  tokenWallets       TokenWallet[]
+  tokenTransactions  TokenTransaction[]
+  sandboxStates      SandboxState[]
   @@index([email])
 }
 
@@ -77,6 +79,7 @@ model Project {
   specBundles      SpecBundle[]
   testRuns         TestRun[]
   testSuites       TestSuite[]
+  sandboxStates    SandboxState[]
 
   @@index([ownerId])
   @@index([tenantId])
@@ -1074,4 +1077,95 @@ enum PreviewState {
   failed
   expired
   cancelled
+}
+
+// Token System Models
+model TokenWallet {
+  id              String              @id @default(uuid())
+  userId          String
+  balanceTokens   Decimal             @default(5) @db.Decimal(10, 2)
+  lastTokenReset  DateTime?           @default(now())
+  walletType      WalletType          @default(STANDARD)
+  isActive        Boolean             @default(true)
+  expiresAt       DateTime?           // For temporary wallets
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenTransactions  TokenTransaction[]
+
+  @@index([userId])
+  @@index([walletType])
+  @@index([isActive])
+  @@index([expiresAt])
+  @@unique([userId, walletType]) // One wallet per type per user
+}
+
+model TokenTransaction {
+  id          String              @id @default(uuid())
+  userId      String
+  walletId    String?             // Reference to specific wallet
+  amount      Decimal             @db.Decimal(10, 2) // Positive for credit, negative for debit
+  type        TokenTransactionType
+  description String?
+  metadata    Json?               // Additional data like projectId, actionType
+  createdAt   DateTime            @default(now())
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet      TokenWallet?        @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum WalletType {
+  STANDARD    // Standard daily tokens
+  PREMIUM     // Premium tokens (purchased)
+  BONUS       // Bonus tokens (promotions)
+  TRIAL       // Trial tokens (limited time)
+}
+
+enum TokenTransactionType {
+  DAILY_RESET
+  PROJECT_CREATION
+  CHAT_ANALYSIS
+  PREVIEW_BUILD
+  DEPLOYMENT
+  ADMIN_ADJUSTMENT
+  REFUND
+  WALLET_CREATION
+  WALLET_EXPIRATION
+}
+
+enum SandboxStatus {
+  creating
+  running
+  stopped
+  error
+}
+
+model SandboxState {
+  id              String        @id @default(uuid())
+  sandboxId       String        @unique
+  projectId       String?
+  userId          String?
+  status          SandboxStatus @default(creating)
+  previewUrl      String?
+  previewToken    String?
+  error           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  lastHeartbeatAt DateTime?
+  expiresAt       DateTime?
+  
+  // Relations
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user            User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([sandboxId])
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+  @@index([lastHeartbeatAt])
+  @@index([expiresAt])
 }
