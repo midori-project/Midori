@@ -52,7 +52,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'menu-basic',
-        required: false,
+        required: true,
         customizations: {
           title: 'ผลงานของฉัน',
           menuItems: [
