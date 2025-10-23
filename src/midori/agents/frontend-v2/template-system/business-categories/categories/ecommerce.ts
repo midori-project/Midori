@@ -39,7 +39,7 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'about-basic',
-        required: false,
+        required: true,
         customizations: {
           title: 'เกี่ยวกับร้านค้าออนไลน์ของเรา',
           description: 'เราเป็นร้านค้าออนไลน์ที่ให้บริการสินค้าคุณภาพสูง ราคาเป็นมิตร พร้อมบริการส่งฟรี',
@@ -71,7 +71,7 @@ export const ecommerceCategories: BusinessCategoryManifest[] = [
       },
       {
         blockId: 'contact-basic',
-        required: false,
+        required: true,
         customizations: {
           title: 'ติดต่อเรา',
           subtitle: 'พร้อมให้บริการทุกวัน',
