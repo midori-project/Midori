@@ -196,7 +196,7 @@ export class SchemaValidator {
     errors: ValidationError[],
     warnings: ValidationWarning[]
   ): void {
-    const validRadius = ['6px', '8px', '10px', '12px', '16px'];
+    const validRadius = ['4px', '6px', '8px', '10px', '12px', '16px'];
     const validSpacing = ['0.5rem', '0.75rem', '1rem', '1.25rem', '1.5rem', '2rem'];
 
     if (tokens.radius && !validRadius.includes(tokens.radius)) {

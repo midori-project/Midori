@@ -5,6 +5,12 @@ import { restaurantCategories } from "./categories/restaurants";
 import { ecommerceCategories } from "./categories/ecommerce";
 import { portfolioCategories } from "./categories/portfolio";
 import { healthcareCategories } from "./categories/healthcare";
+import { hotelCategories } from "./categories/hotels";
+import { travelCategories } from "./categories/travel";
+import { academyCategories } from "./categories/academy";
+import { bookstoreCategories } from "./categories/bookstore";
+import { bakeryCategories } from "./categories/bakery";
+import { newsCategories } from "./categories/news";
 
 export interface BusinessCategoryManifest {
   id: string;
@@ -77,7 +83,13 @@ export const BUSINESS_CATEGORIES: BusinessCategoryManifest[] = [
   ...restaurantCategories,
   ...ecommerceCategories,
   ...portfolioCategories,
-  ...healthcareCategories
+  ...healthcareCategories,
+  ...hotelCategories,
+  ...travelCategories,
+  ...academyCategories,
+  ...bookstoreCategories,
+  ...bakeryCategories,
+  ...newsCategories
 ];
 
 // ===== Variant Pool Management Functions =====
@@ -180,10 +192,15 @@ export function getStyleBasedVariant(
   
   // Style mapping
   const styleMap: Record<string, string[]> = {
-    'minimal': ['hero-minimal', 'about-minimal', 'contact-minimal', 'footer-minimal'],
-    'modern': ['hero-split', 'about-team-showcase', 'contact-split', 'footer-minimal'],
-    'luxury': ['hero-fullscreen', 'about-minimal', 'contact-fullscreen', 'footer-mega'],
-    'casual': ['hero-cards', 'about-split', 'contact-cards', 'footer-centered']
+    'minimal': ['hero-minimal', 'about-minimal', 'contact-minimal', 'footer-minimal', 'navbar-minimal'],
+    'modern': ['hero-split', 'about-team-showcase', 'contact-split', 'footer-minimal', 'navbar-sticky'],
+    'luxury': ['hero-fullscreen', 'about-minimal', 'contact-fullscreen', 'footer-mega', 'navbar-transparent'],
+    'casual': ['hero-cards', 'about-split', 'contact-cards', 'footer-centered', 'navbar-centered'],
+    'professional': ['hero-split', 'about-split', 'contact-split', 'footer-mega', 'navbar-minimal'],
+    'warm': ['hero-split', 'about-split', 'contact-minimal', 'footer-centered', 'navbar-minimal'],
+    'adventure': ['hero-fullscreen', 'about-split', 'contact-split', 'footer-centered', 'navbar-transparent'],
+    'intellectual': ['hero-minimal', 'about-minimal', 'contact-minimal', 'footer-mega', 'navbar-minimal'],
+    'serious': ['hero-minimal', 'about-minimal', 'contact-minimal', 'footer-mega', 'navbar-minimal']
   };
 
   // Extract style from keywords
@@ -201,6 +218,21 @@ export function getStyleBasedVariant(
     }
     if (lowerKeyword.includes('casual') || lowerKeyword.includes('สบายๆ') || lowerKeyword.includes('เป็นกันเอง')) {
       detectedStyles.push('casual');
+    }
+    if (lowerKeyword.includes('professional') || lowerKeyword.includes('มืออาชีพ') || lowerKeyword.includes('ธุรกิจ')) {
+      detectedStyles.push('professional');
+    }
+    if (lowerKeyword.includes('warm') || lowerKeyword.includes('อบอุ่น') || lowerKeyword.includes('น่ารัก')) {
+      detectedStyles.push('warm');
+    }
+    if (lowerKeyword.includes('adventure') || lowerKeyword.includes('ผจญภัย') || lowerKeyword.includes('ท่องเที่ยว')) {
+      detectedStyles.push('adventure');
+    }
+    if (lowerKeyword.includes('intellectual') || lowerKeyword.includes('วิชาการ') || lowerKeyword.includes('ความรู้')) {
+      detectedStyles.push('intellectual');
+    }
+    if (lowerKeyword.includes('serious') || lowerKeyword.includes('จริงจัง') || lowerKeyword.includes('ข่าว')) {
+      detectedStyles.push('serious');
     }
   }
 

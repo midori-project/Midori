@@ -115,7 +115,9 @@ export class TemplateAdapter {
       model: 'gpt-5-nano',
       temperature: 1,
       customPrompt: aiPrompt, // User prompt from Template System
-      customSystemPrompt: templateResult.systemPrompt // System prompt from Template System
+      customSystemPrompt: templateResult.systemPrompt, // System prompt from Template System
+      concreteManifest, // Pass concrete manifest for template system
+      variantInfo: templateResult.variantsUsed ? { variantsUsed: templateResult.variantsUsed } : undefined // Pass variant info
     };
     
     const result = await this.aiService.generateContent(request);
