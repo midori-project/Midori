@@ -67,6 +67,13 @@ export class TemplateManager {
     if (useOptimizedPrompt) {
       // Use optimized template system with variant support
       const optimized = generateCompatiblePrompt(businessCategory, keywords, colorHint, concreteManifest, variantInfo, language);
+      
+      // Check if optimized result is valid
+      if (!optimized || !optimized.userPrompt) {
+        console.error('❌ Template system returned invalid result, falling back to legacy prompt');
+        return this.generateLegacyPrompt(config);
+      }
+      
       result = {
         systemPrompt: optimized.systemPrompt,
         userPrompt: optimized.userPrompt,

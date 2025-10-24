@@ -7,6 +7,12 @@ import { restaurantPromptTemplate } from './restaurant-template';
 import { ecommercePromptTemplate } from './ecommerce-template';
 import { healthcarePromptTemplate } from './healthcare-template';
 import { portfolioPromptTemplate } from './portfolio-template';
+import { hotelPromptTemplate } from './hotel-template';
+import { travelPromptTemplate } from './travel-template';
+import { academyPromptTemplate } from './academy-template';
+import { bookstorePromptTemplate } from './bookstore-template';
+import { bakeryPromptTemplate } from './bakery-template';
+import { newsPromptTemplate } from './news-template';
 
 export interface OptimizedPromptResult {
   systemPrompt: string;
@@ -38,6 +44,42 @@ export function generateCompatiblePrompt(
     
     case 'portfolio':
       return portfolioPromptTemplate.getOptimizedPrompt(keywords, colorHint, concreteManifest, variantInfo, language);
+    
+    case 'hotel':
+      return {
+        systemPrompt: hotelPromptTemplate.systemPrompt,
+        userPrompt: hotelPromptTemplate.generateVariantAwarePrompt(keywords, colorHint, concreteManifest, variantInfo, language)
+      };
+    
+    case 'travel':
+      return {
+        systemPrompt: travelPromptTemplate.systemPrompt,
+        userPrompt: travelPromptTemplate.generateVariantAwarePrompt(keywords, colorHint, concreteManifest, variantInfo, language)
+      };
+    
+    case 'academy':
+      return {
+        systemPrompt: academyPromptTemplate.systemPrompt,
+        userPrompt: academyPromptTemplate.generateVariantAwarePrompt(keywords, colorHint, concreteManifest, variantInfo, language)
+      };
+    
+    case 'bookstore':
+      return {
+        systemPrompt: bookstorePromptTemplate.systemPrompt,
+        userPrompt: bookstorePromptTemplate.generateVariantAwarePrompt(keywords, colorHint, concreteManifest, variantInfo, language)
+      };
+    
+    case 'bakery':
+      return {
+        systemPrompt: bakeryPromptTemplate.systemPrompt,
+        userPrompt: bakeryPromptTemplate.generateVariantAwarePrompt(keywords, colorHint, concreteManifest, variantInfo, language)
+      };
+    
+    case 'news':
+      return {
+        systemPrompt: newsPromptTemplate.systemPrompt,
+        userPrompt: newsPromptTemplate.generateVariantAwarePrompt(keywords, colorHint, concreteManifest, variantInfo, language)
+      };
     
     default:
       // Fallback to restaurant template

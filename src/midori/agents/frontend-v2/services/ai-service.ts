@@ -7,6 +7,8 @@ import { config } from "dotenv";
 import OpenAI from "openai";
 import { UnsplashService, UnsplashImage } from "./unsplash-service";
 import { BatchUnsplashService } from "./batch-unsplash-service";
+import { generateCompatiblePrompt } from "../template-system/prompt-templates/integration";
+import { BUSINESS_CATEGORIES } from "../template-system/business-categories";
 
 // Load .env from root
 config({ path: "../../../../.env" });
@@ -19,6 +21,8 @@ export interface AIGenerationRequest {
   temperature?: number;
   customPrompt?: string; // Add support for custom prompt
   customSystemPrompt?: string; // Add support for custom system prompt
+  concreteManifest?: any; // Add support for concrete manifest
+  variantInfo?: any; // Add support for variant info
 }
 
 export interface AIGenerationResponse {
@@ -975,9 +979,44 @@ Translate now:`;
   }
 
   /**
-   * Create prompt for AI
+   * Create prompt for AI using Template System
    */
   private createPrompt(request: AIGenerationRequest): string {
+    const { businessCategory, keywords, language, concreteManifest, variantInfo } = request;
+    
+    // Find business category manifest
+    const categoryManifest = BUSINESS_CATEGORIES.find(cat => cat.id === businessCategory);
+    if (!categoryManifest) {
+      console.warn(`⚠️ Business category '${businessCategory}' not found, using fallback prompt`);
+      return this.createFallbackPrompt(request);
+    }
+    
+    // Generate color hint from keywords
+    const colorHint = this.generateColorHint(keywords);
+    
+    try {
+      // Use Template System
+      const templateResult = generateCompatiblePrompt(
+        categoryManifest,
+        keywords,
+        colorHint,
+        concreteManifest,
+        variantInfo,
+        language
+      );
+      
+      console.log(`🎯 Using template system for '${businessCategory}' category`);
+      return templateResult.userPrompt;
+    } catch (error) {
+      console.error(`❌ Template system failed for '${businessCategory}':`, error);
+      return this.createFallbackPrompt(request);
+    }
+  }
+  
+  /**
+   * Create fallback prompt (legacy system)
+   */
+  private createFallbackPrompt(request: AIGenerationRequest): string {
     const { businessCategory, keywords, language } = request;
     
     return `Generate website content for a ${businessCategory} business.
@@ -1455,5 +1494,21 @@ IMPORTANT:
       model: process.env.OPENAI_MODEL || "gpt-5-nano",
       temperature: process.env.OPENAI_TEMPERATURE || "1.0",
     };
+  }
+  
+  /**
+   * Generate color hint from keywords
+   */
+  private generateColorHint(keywords: string[]): string {
+    const colorKeywords = keywords.filter(keyword => {
+      const lowerKeyword = keyword.toLowerCase();
+      return ['blue', 'green', 'red', 'yellow', 'purple', 'pink', 'orange', 'indigo', 'brown'].includes(lowerKeyword);
+    });
+    
+    if (colorKeywords.length > 0) {
+      return `Color preference: ${colorKeywords.join(', ')}`;
+    }
+    
+    return 'Use appropriate colors for the business type';
   }
 }
