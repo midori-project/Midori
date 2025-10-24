@@ -2,7 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Daytona } from '@daytonaio/sdk'
 import { daytonaConfig, getDaytonaClient } from '@/config/daytona'
+import { PrismaClient } from '@prisma/client'
 // import testJson from '@/components/preview/test/test.json' // ✅ Remove hardcoded import
+
+// สร้าง Prisma client instance
+const prisma = new PrismaClient()
 
 // ใช้ Node APIs ได้
 export const runtime = 'nodejs'
@@ -16,7 +20,7 @@ interface ProjectFile {
 }
 interface SandboxState {
   sandboxId: string
-  status: 'idle' | 'creating' | 'running' | 'stopped' | 'error' | 'unknown'
+  status: 'creating' | 'running' | 'stopped' | 'error'
   previewUrl?: string
   previewToken?: string
   error?: string
@@ -382,7 +386,7 @@ class DaytonaCleanupService {
     const stopped = Array.from(sandboxStates.values()).filter(s => s.status === 'stopped').length
     const error = Array.from(sandboxStates.values()).filter(s => s.status === 'error').length
     const creating = Array.from(sandboxStates.values()).filter(s => s.status === 'creating').length
-    const unknown = Array.from(sandboxStates.values()).filter(s => s.status === 'unknown').length
+    const unknown = 0 // ไม่มี unknown status แล้ว
 
     // Enhanced statistics
     const now = Date.now()
@@ -442,7 +446,9 @@ async function updateSandboxStatus(
   status: SandboxState['status'],
   previewUrl?: string,
   previewToken?: string,
-  error?: string
+  error?: string,
+  projectId?: string,
+  userId?: string
 ) {
   const now = Date.now()
   const current = sandboxStates.get(sandboxId)
@@ -456,6 +462,37 @@ async function updateSandboxStatus(
     lastHeartbeatAt: now,
   }
   sandboxStates.set(sandboxId, next)
+  
+  // ✅ บันทึกลงฐานข้อมูลด้วย
+  try {
+    await prisma.sandboxState.upsert({
+      where: { sandboxId },
+      update: {
+        status,
+        previewUrl,
+        previewToken,
+        error,
+        lastHeartbeatAt: new Date(now),
+        updatedAt: new Date(),
+        ...(projectId && { projectId }),
+        ...(userId && { userId }),
+      },
+      create: {
+        sandboxId,
+        projectId,
+        userId,
+        status,
+        previewUrl,
+        previewToken,
+        error,
+        lastHeartbeatAt: new Date(now),
+        expiresAt: new Date(now + 24 * 60 * 60 * 1000), // 24 ชั่วโมง
+      }
+    })
+  } catch (dbError) {
+    console.error(`❌ [DB ERROR] Failed to update sandbox state in database:`, dbError)
+    // ไม่ throw error เพื่อไม่ให้กระทบต่อการทำงานหลัก
+  }
   
   // ✅ Log เฉพาะการเปลี่ยนสถานะที่สำคัญ (ไม่ log heartbeat ที่เป็น running)
   if (status !== 'running' || !current || current.status !== status) {
@@ -728,7 +765,11 @@ async function waitForReady(sandbox: any, maxAttempts = 20, delayMs = 2000) {
 }
 
 // ---------- Core ----------
-async function createDaytonaSandbox(projectFiles?: ProjectFile[]): Promise<{ sandboxId: string; url?: string; token?: string; status: string }> {
+async function createDaytonaSandbox(
+  projectFiles?: ProjectFile[], 
+  projectId?: string, 
+  userId?: string
+): Promise<{ sandboxId: string; url?: string; token?: string; status: string }> {
   if (!daytonaConfig?.apiKey) throw new Error('Missing DAYTONA_API_KEY')
   
   // ✅ Validate input files
@@ -737,15 +778,16 @@ async function createDaytonaSandbox(projectFiles?: ProjectFile[]): Promise<{ san
   }
   
   console.log(`🏗️ Creating Daytona sandbox with ${projectFiles.length} files`);
+  console.log(`📦 Project ID: ${projectId}`);
+  console.log(`👤 User ID: ${userId}`);
   
- 
   const daytona = new Daytona(getDaytonaClient())
   const sandbox = await daytona.create({
     ...daytonaConfig.defaultSandboxConfig,
     public: true,
   })
   const sandboxId = sandbox.id
-  await updateSandboxStatus(sandboxId, 'creating')
+  await updateSandboxStatus(sandboxId, 'creating', undefined, undefined, undefined, projectId, userId)
 
   console.log(`🚀 Creating Daytona sandbox: ${sandboxId}`)
 
@@ -768,7 +810,7 @@ async function createDaytonaSandbox(projectFiles?: ProjectFile[]): Promise<{ san
 
   // 6) ขอพรีวิวลิงก์
   const { url, token } = await sandbox.getPreviewLink(5173)
-  await updateSandboxStatus(sandboxId, 'running', url, token)
+  await updateSandboxStatus(sandboxId, 'running', url, token, undefined, projectId, userId)
   
   console.log(`✅ Sandbox ${sandboxId} created successfully with preview URL: ${url}`)
   
@@ -795,9 +837,10 @@ export async function POST(req: NextRequest) {
     console.log('🚀 POST /api/preview/daytona - Creating new sandbox')
     // ✅ Parse request body to get dynamic files
     const body = await req.json()
-    const { files, projectId } = body
+    const { files, projectId, userId } = body
     
     console.log(`📦 Received preview request for project: ${projectId}`)
+    console.log(`👤 User ID: ${userId}`)
     console.log(`📁 Files count: ${files?.length || 0}`)
     
     // ✅ Log file structure for debugging
@@ -828,8 +871,8 @@ export async function POST(req: NextRequest) {
       )
     }
     
-    // ✅ Create sandbox with dynamic files
-    const result = await createDaytonaSandbox(files)
+    // ✅ Create sandbox with dynamic files, projectId, and userId
+    const result = await createDaytonaSandbox(files, projectId, userId)
     
     // แสดงสถิติปัจจุบัน
     const stats = DaytonaCleanupService.getStats()
@@ -844,7 +887,8 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({
       ...result,
-      projectId
+      projectId,
+      userId
     }, {
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -881,7 +925,7 @@ export async function GET(req: NextRequest) {
     const daytona = new Daytona(getDaytonaClient())
     const exists = await verifySandboxExists(daytona, sandboxId)
     if (!exists) return NextResponse.json({ error: 'Sandbox not found' }, { status: 404 })
-    const fallback = await updateSandboxStatus(sandboxId, 'unknown')
+    const fallback = await updateSandboxStatus(sandboxId, 'error')
     return NextResponse.json(fallback)
   } catch (e: any) {
     console.error(`❌ [HEARTBEAT ERROR] ${e?.message}`)
@@ -900,7 +944,7 @@ export async function PUT(req: NextRequest) {
 
     // Parse request body
     const body = await req.json()
-    const { files, projectId, comparison } = body
+    const { files, projectId, userId, comparison } = body
     
     // Log comparison info if available
     if (comparison) {
@@ -952,8 +996,8 @@ export async function PUT(req: NextRequest) {
     // 🚀 Incremental Build: อัปเดตเฉพาะไฟล์ที่เปลี่ยนแปลง
     const updateResult = await updateFilesInSandbox(sandbox, files)
     
-    // Update heartbeat
-    await updateSandboxStatus(sandboxId, 'running', state.previewUrl, state.previewToken)
+    // Update heartbeat with database
+    await updateSandboxStatus(sandboxId, 'running', state.previewUrl, state.previewToken, undefined, projectId, userId)
     
     console.log(`✅ [PUT] Incremental build completed: ${updateResult.updatedCount}/${updateResult.totalFiles} files updated in sandbox: ${sandboxId}`)
     
@@ -1014,7 +1058,7 @@ export async function DELETE(req: NextRequest) {
       console.log(`⚠️ [DELETE] Sandbox ${sandboxId} not found on Daytona, updating memory only`)
     }
     
-    // ✅ อัปเดตสถานะใน memory เป็น stopped เสมอ (ไม่ว่าจะมีใน Daytona หรือไม่)
+    // ✅ อัปเดตสถานะในฐานข้อมูลเป็น stopped เสมอ (ไม่ว่าจะมีใน Daytona หรือไม่)
     await updateSandboxStatus(sandboxId, 'stopped')
 
     // แสดงสถิติหลังจากลบ
