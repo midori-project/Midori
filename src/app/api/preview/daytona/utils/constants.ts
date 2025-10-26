@@ -51,3 +51,4 @@ export const COMMANDS = {
   CHECK_REACT: 'cat package.json | grep -q "react" && echo "hasreact" || echo "noreact"',
   SHOW_TREE: 'find . -maxdepth 3 -type f \\( -name "*.ts" -o -name "*.tsx" -o -name "*.json" -o -name "*.html" -o -name "*.css" \\) | sed -n "1,50p"',
 } as const
+

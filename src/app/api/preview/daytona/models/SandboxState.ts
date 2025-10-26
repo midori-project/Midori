@@ -58,3 +58,4 @@ export interface FileComparison {
   changedFiles: number
   skippedFiles: number
 }
+

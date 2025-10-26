@@ -123,3 +123,4 @@ export function logFileStructure(files: any[], prefix = '📋 Files structure:')
     console.log(`  ... and ${files.length - 5} more files`)
   }
 }
+
