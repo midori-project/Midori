@@ -135,6 +135,9 @@ export class ProjectStructureGenerator {
     let content = fileTemplate.content;
     
     // Replace placeholders
+    const aiData = this.extractAIData(componentResult);
+    const typography = aiData?.global?.typography;
+    
     const placeholders = {
       '{projectName}': projectName,
       '{projectTitle}': projectTitle,
@@ -149,7 +152,12 @@ export class ProjectStructureGenerator {
       '{address}': this.getAddress(componentResult),
       '{phone}': this.getPhone(componentResult),
       '{appRoutes}': this.generateAppRoutes(componentResult),
-      // Removed routeElements - now using fixed routes in App.tsx template
+      // Font placeholders
+      '{googleFontImport}': typography?.googleFont 
+        ? `<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=${typography.googleFont}&display=swap" rel="stylesheet">`
+        : '',
+      '{fontFamily}': typography?.fontFamily || 'Inter',
+      '{fallbackFonts}': typography?.fallback?.join(', ') || 'sans-serif',
     };
 
     for (const [placeholder, value] of Object.entries(placeholders)) {
@@ -486,6 +494,9 @@ import About from './pages/About';`
       let content = fileTemplate.content;
       
       // 2. Replace basic placeholders ที่ยังไม่ได้ replace
+      const aiData = this.extractAIData(componentResult);
+      const typography = aiData?.global?.typography;
+      
       const placeholders = {
         '{projectName}': projectName,
         '{projectTitle}': projectTitle,
@@ -500,7 +511,12 @@ import About from './pages/About';`
         '{address}': this.getAddress(componentResult),
         '{phone}': this.getPhone(componentResult),
         '{appRoutes}': this.generateAppRoutes(componentResult),
-        // Removed routeElements - now using fixed routes in App.tsx template
+        // Font placeholders ⭐
+        '{googleFontImport}': typography?.googleFont 
+          ? `<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=${typography.googleFont}&display=swap" rel="stylesheet">`
+          : '',
+        '{fontFamily}': typography?.fontFamily || 'Inter',
+        '{fallbackFonts}': typography?.fallback?.join(', ') || 'sans-serif',
       };
 
       for (const [placeholder, value] of Object.entries(placeholders)) {
