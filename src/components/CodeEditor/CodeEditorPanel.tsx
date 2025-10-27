@@ -177,6 +177,7 @@ export function CodeEditorPanel({
           >
             🔧 Partial Update
           </button>
+          
         </div>
       </div>
 

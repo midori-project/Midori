@@ -355,6 +355,7 @@ export function VisualEditPanel({
                     e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Invalid+URL';
                   }}
                 />
+                
               </div>
             )}
             
@@ -466,12 +467,12 @@ export function VisualEditPanel({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>กำลังอัปโหลด...</span>
+                      <span>Uploading...</span>
                     </>
                   ) : (
                     <>
                       <span>📤</span>
-                      <span>อัปโหลดรูปภาพ</span>
+                      <span>Upload</span>
                     </>
                   )}
                 </button>
@@ -505,17 +506,7 @@ export function VisualEditPanel({
               </div>
             )}
             
-            {/* Tips */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="space-y-1">
-                <p className="text-xs text-blue-700">
-                  💡 <strong>คำแนะนำ:</strong> ใช้รูปภาพคุณภาพสูง (JPEG, PNG, WEBP) ไม่เกิน 10MB
-                </p>
-                <p className="text-xs text-blue-600">
-                  ⚡ <strong>Auto-Optimize:</strong> ระบบจะบีบอัดรูปภาพอัตโนมัติเพื่อความเร็วที่ดีขึ้น
-                </p>
-              </div>
-            </div>
+
           </div>
         )}
 
@@ -542,7 +533,7 @@ export function VisualEditPanel({
       </div>
 
       {/* Actions */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50 flex gap-2">
+      <div className="px-4 py-1  flex gap-2">
         <button
           onClick={handleSave}
           disabled={isSaving || !editValue.trim()}
@@ -573,15 +564,21 @@ export function VisualEditPanel({
 
       {/* Keyboard Shortcuts Info */}
       <div className="px-4 py-2 bg-gray-100 border-t border-gray-200 text-xs text-gray-600">
-        <p className="flex items-center gap-2">
-          <kbd className="px-2 py-0.5 bg-white border border-gray-300 rounded">Ctrl/Cmd + Enter</kbd> 
-          to save
-        </p>
-
-        <p className="flex items-center gap-2 mt-1">
-          <kbd className="px-2 py-0.5 bg-white border border-gray-300 rounded">Esc</kbd> 
-          to cancel
-        </p>
+      
+                    {/* Tips */}
+                    <div >
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2 font-bold">
+                  <svg width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 4.5H9V8.5H15V4.5Z" fill="#000000"/>
+                    <path d="M4 10.5H9V14.5H15V10.5H20V19.5H4V10.5Z" fill="#000000"/>
+                  </svg>
+                     <a href="https://unsplash.com/" target="_blank" rel="noopener noreferrer"> 
+                     Images Powered by Unsplash</a>
+                </div>
+              
+              </div>
+            </div>
       </div>
     </div>
   );

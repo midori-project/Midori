@@ -84,6 +84,7 @@ export function CodeEditor({
           currentFile={currentFile}
           onFileSelect={handleFileSelect}
         />
+        
       </div>
 
       {/* Code Editor */}
