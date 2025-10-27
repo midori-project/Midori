@@ -24,14 +24,16 @@ export class DaytonaSandboxService {
   async createSandbox(files: ProjectFile[]): Promise<SandboxResult> {
     console.log(`🏗️ Creating Daytona sandbox with ${files.length} files`)
     
-    // Create sandbox
+    // Create sandbox with auto-delete interval (ตามเอกสาร Daytona SDK)
     const sandbox = await this.daytona.create({
       ...daytonaConfig.defaultSandboxConfig,
       public: true,
+      autoDeleteInterval: SANDBOX_CONFIG.AUTO_DELETE_MINUTES, // 15 นาที
     })
     
     const sandboxId = sandbox.id
     console.log(`🚀 Creating Daytona sandbox: ${sandboxId}`)
+    console.log(`⏰ Auto-delete set to ${SANDBOX_CONFIG.AUTO_DELETE_MINUTES} minutes for sandbox: ${sandboxId}`)
 
     try {
       // Setup sandbox with files

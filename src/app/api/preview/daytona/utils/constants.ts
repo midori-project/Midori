@@ -15,6 +15,7 @@ export const SANDBOX_CONFIG = {
   READY_DELAY_MS: 2000,
   START_DELAY_MS: 3000,
   EXPIRES_HOURS: 24,
+  AUTO_DELETE_MINUTES: 15, // 15 นาทีตามเอกสาร Daytona SDK
 } as const
 
 export const RESPONSE_HEADERS = {
