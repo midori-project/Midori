@@ -112,7 +112,7 @@ export default function Navbar(){
                 <span className="text-white font-bold text-sm">{brandFirstChar}</span>
               </div>
               <span className={\`font-bold text-xl \${
-                isScrolled ? 'text-{primary}-700' : 'text-white'
+                isScrolled ? 'text-{primary}-700' : 'text-{primary}-700 drop-shadow-lg'
               }\`}>{brand}</span>
             </Link>
 
@@ -126,7 +126,7 @@ export default function Navbar(){
               <Link to="/contact" className={\`px-6 py-2 rounded-full font-semibold transition-all duration-300 \${
                 isScrolled 
                   ? 'bg-gradient-to-r from-{primary}-500 to-{secondary}-500 text-white hover:shadow-lg transform hover:-translate-y-0.5' 
-                  : 'bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30'
+                  : 'bg-{primary}-500 text-white border border-{primary}-600 hover:bg-{primary}-600 shadow-lg'
               }\`}>
                 {ctaButton}
               </Link>
@@ -136,7 +136,7 @@ export default function Navbar(){
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className={\`md:hidden p-2 rounded-lg transition-colors duration-200 \${
-                isScrolled ? 'text-{primary}-700 hover:bg-{primary}-50' : 'text-white hover:bg-white/20'
+                isScrolled ? 'text-{primary}-700 hover:bg-{primary}-50' : 'text-{primary}-700 hover:bg-{primary}-50 bg-white/80 backdrop-blur-sm'
               }\`}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {isMenuOpen ? (

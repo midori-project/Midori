@@ -109,6 +109,7 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{projectTitle}</title>
+    {googleFontImport}
     <link rel="stylesheet" href="/src/index.css" />
   </head>
   <body>
@@ -438,7 +439,7 @@ export default Home;`,
     background-color: #fffaf0;
   }
   body {
-    font-family: 'Inter', sans-serif;
+    font-family: {fontFamily}, {fallbackFonts};
     margin: 0;
     padding: 0;
   }

@@ -40,8 +40,15 @@ export interface GlobalSettings {
     radius: string;
     spacing: string;
   };
+  typography?: TypographyConfig;  // ⭐ Optional typography config
   tone?: string;
   reasoning?: string;
+}
+
+export interface TypographyConfig {
+  fontFamily: string;
+  googleFont?: string;
+  fallback?: string[];
 }
 
 export interface CategoryOverrides {
@@ -76,6 +83,28 @@ export interface VariantConstraints {
   excludedVariants?: string[];
   businessType?: string[];
   tone?: string[];
+}
+
+/**
+ * Font Pool - Similar to VariantPools but for fonts
+ */
+export interface FontPool {
+  allowedFonts: string[];  // Array of font preset keys
+  defaultFont?: string;
+  randomSelection?: boolean;
+  constraints?: FontConstraints;
+}
+
+export interface FontConstraints {
+  businessType?: string[];
+  tone?: string[];
+}
+
+/**
+ * Font Pool for each category
+ */
+export interface FontPools {
+  [categoryId: string]: FontPool;
 }
 
 // Business Category Definitions
@@ -252,4 +281,193 @@ export function getStyleBasedVariant(
   }
   
   return pool.defaultVariant;
+}
+
+// ===== Font Pool Management Functions =====
+
+/**
+ * Font Pools for each business category
+ * Define which fonts can be used for each category
+ */
+export const CATEGORY_FONT_POOLS: FontPools = {
+  'restaurant': {
+    allowedFonts: ['playfair', 'crimson', 'poppins', 'nunito', 'inter'],
+    defaultFont: 'poppins',
+    randomSelection: true,
+    constraints: {
+      businessType: ['restaurant', 'food-service', 'dining'],
+      tone: ['warm', 'luxury', 'elegant', 'friendly', 'casual']
+    }
+  },
+  'ecommerce': {
+    allowedFonts: ['inter', 'roboto', 'poppins'],
+    defaultFont: 'inter',
+    randomSelection: false,
+    constraints: {
+      businessType: ['ecommerce', 'retail', 'online-store'],
+      tone: ['professional', 'modern', 'minimal']
+    }
+  },
+  'portfolio': {
+    allowedFonts: ['montserrat', 'inter', 'poppins', 'playfair'],
+    defaultFont: 'montserrat',
+    randomSelection: true,
+    constraints: {
+      businessType: ['portfolio', 'creative', 'design'],
+      tone: ['creative', 'modern', 'elegant', 'minimal']
+    }
+  },
+  'healthcare': {
+    allowedFonts: ['inter', 'roboto', 'poppins'],
+    defaultFont: 'inter',
+    randomSelection: false,
+    constraints: {
+      businessType: ['healthcare', 'medical', 'clinic'],
+      tone: ['professional', 'trustworthy', 'warm']
+    }
+  },
+  'news': {
+    allowedFonts: ['lora', 'merriweather', 'inter'],
+    defaultFont: 'lora',
+    randomSelection: false,
+    constraints: {
+      businessType: ['news', 'media', 'content'],
+      tone: ['serious', 'intellectual', 'professional']
+    }
+  },
+  'hotels': {
+    allowedFonts: ['playfair', 'montserrat', 'inter', 'poppins'],
+    defaultFont: 'montserrat',
+    randomSelection: true,
+    constraints: {
+      businessType: ['hotel', 'hospitality', 'accommodation'],
+      tone: ['luxury', 'welcoming', 'elegant', 'modern']
+    }
+  },
+  'travel': {
+    allowedFonts: ['montserrat', 'poppins', 'playfair', 'inter'],
+    defaultFont: 'montserrat',
+    randomSelection: true,
+    constraints: {
+      businessType: ['travel', 'tourism', 'adventure'],
+      tone: ['adventure', 'exciting', 'luxury', 'casual', 'modern']
+    }
+  },
+  'academy': {
+    allowedFonts: ['inter', 'roboto', 'lora'],
+    defaultFont: 'inter',
+    randomSelection: false,
+    constraints: {
+      businessType: ['academy', 'education', 'school'],
+      tone: ['intellectual', 'professional', 'serious', 'modern']
+    }
+  },
+  'bookstore': {
+    allowedFonts: ['lora', 'merriweather', 'crimson', 'inter'],
+    defaultFont: 'lora',
+    randomSelection: true,
+    constraints: {
+      businessType: ['bookstore', 'books', 'literature'],
+      tone: ['intellectual', 'traditional', 'warm', 'serious']
+    }
+  },
+  'bakery': {
+    allowedFonts: ['poppins', 'nunito', 'playfair', 'inter'],
+    defaultFont: 'poppins',
+    randomSelection: true,
+    constraints: {
+      businessType: ['bakery', 'cafe', 'food'],
+      tone: ['warm', 'friendly', 'welcoming', 'casual']
+    }
+  }
+};
+
+/**
+ * Get allowed fonts for a category
+ */
+export function getAllowedFonts(categoryId: string): string[] {
+  return CATEGORY_FONT_POOLS[categoryId]?.allowedFonts || [];
+}
+
+/**
+ * Get default font for a category
+ */
+export function getDefaultFont(categoryId: string): string | undefined {
+  return CATEGORY_FONT_POOLS[categoryId]?.defaultFont;
+}
+
+/**
+ * Check if a font is allowed for a category
+ */
+export function isFontAllowed(categoryId: string, fontKey: string): boolean {
+  const allowedFonts = getAllowedFonts(categoryId);
+  return allowedFonts.includes(fontKey);
+}
+
+/**
+ * Get random font from allowed pool
+ */
+export function getRandomFontFromPool(categoryId: string): string | undefined {
+  const pool = CATEGORY_FONT_POOLS[categoryId];
+  if (!pool || pool.allowedFonts.length === 0) return undefined;
+  
+  const randomIndex = Math.floor(Math.random() * pool.allowedFonts.length);
+  return pool.allowedFonts[randomIndex];
+}
+
+/**
+ * Validate font selection for a category
+ */
+export function validateFontSelection(
+  categoryId: string,
+  fontKey: string
+): { valid: boolean; reason?: string } {
+  if (!isFontAllowed(categoryId, fontKey)) {
+    return {
+      valid: false,
+      reason: `Font '${fontKey}' is not allowed for category '${categoryId}'`
+    };
+  }
+  return { valid: true };
+}
+
+/**
+ * Get font pool for a category
+ */
+export function getCategoryFontPool(categoryId: string): FontPool | undefined {
+  return CATEGORY_FONT_POOLS[categoryId];
+}
+
+/**
+ * Select appropriate font based on tone and category
+ */
+export function selectFontForCategory(
+  categoryId: string,
+  tone?: string
+): string {
+  const pool = CATEGORY_FONT_POOLS[categoryId];
+  if (!pool) return 'inter'; // Default fallback
+  
+  // If tone is specified, try to match with font presets
+  if (tone) {
+    const fontsByTone = pool.allowedFonts.filter(fontKey => {
+      // Import font configs if needed
+      // This would require importing from font-presets
+      return true; // Simplified for now
+    });
+    
+    if (fontsByTone.length > 0) {
+      const selectedFont = pool.randomSelection 
+        ? fontsByTone[Math.floor(Math.random() * fontsByTone.length)]
+        : fontsByTone[0];
+      return selectedFont || 'inter';
+    }
+  }
+  
+  // Default or random selection
+  if (pool.randomSelection) {
+    return getRandomFontFromPool(categoryId) || pool.defaultFont || 'inter';
+  }
+  
+  return pool.defaultFont || 'inter';
 }
