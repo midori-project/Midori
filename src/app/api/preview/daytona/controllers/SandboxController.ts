@@ -10,12 +10,12 @@ import { validateFiles, logFileStructure } from '../utils/sandboxHelpers'
 export class SandboxController {
   private sandboxService: DaytonaSandboxService
   private cleanupService: CleanupService
-  private sandboxStates: Map<string, SandboxState>
+  private sandboxCache: Map<string, SandboxState> // เปลี่ยนชื่อเป็น Cache
 
   constructor() {
-    this.sandboxStates = new Map<string, SandboxState>()
+    this.sandboxCache = new Map<string, SandboxState>() // เปลี่ยนชื่อเป็น Cache
     this.sandboxService = new DaytonaSandboxService()
-    this.cleanupService = CleanupService.getInstance(this.sandboxStates)
+    this.cleanupService = CleanupService.getInstance(this.sandboxCache) // ส่ง Cache แทน Memory
     
     // Initialize cleanup service
     this.initializeCleanupService()
@@ -47,7 +47,7 @@ export class SandboxController {
     // Create sandbox with dynamic files, projectId, and userId
     const result = await this.sandboxService.createSandbox(files)
     
-    // Update sandbox status in memory and database
+    // Update sandbox status in database (primary) and cache (secondary)
     await this.updateSandboxStatus(result.sandboxId, 'running', result.url, result.token, undefined, projectId, userId)
     
     // Show current stats
@@ -75,21 +75,53 @@ export class SandboxController {
       throw new Error('Missing sandboxId')
     }
 
-    const state = this.sandboxStates.get(sandboxId)
-    if (state) {
-      // Update heartbeat and return updated state
-      const updated = await this.updateSandboxStatus(sandboxId, state.status, state.previewUrl, state.previewToken, state.error)
-      return updated
-    }
+    // เปลี่ยนลำดับ: เช็ค Database ก่อน, Cache เป็น secondary
+    try {
+      // 1. เช็ค Database ก่อน
+      const dbState = await prisma.sandboxState.findUnique({
+        where: { sandboxId }
+      })
 
-    // No state in memory → check with Daytona
-    const exists = await this.sandboxService.sandboxExists(sandboxId)
-    if (!exists) {
-      throw new Error('Sandbox not found')
+      if (dbState) {
+        // 2. อัพเดท Cache จาก Database
+        const cacheState: SandboxState = {
+          sandboxId: dbState.sandboxId,
+          status: dbState.status as SandboxState['status'],
+          previewUrl: dbState.previewUrl || undefined,
+          previewToken: dbState.previewToken || undefined,
+          error: dbState.error || undefined,
+          createdAt: dbState.createdAt.getTime(),
+          lastHeartbeatAt: dbState.lastHeartbeatAt?.getTime() || Date.now(),
+        }
+        this.sandboxCache.set(sandboxId, cacheState)
+
+        // 3. อัพเดท heartbeat และ return
+        const updated = await this.updateSandboxStatus(sandboxId, dbState.status as SandboxState['status'], dbState.previewUrl || undefined, dbState.previewToken || undefined, dbState.error || undefined)
+        return updated
+      }
+
+      // 4. ถ้าไม่มีใน Database → เช็ค Cache
+      const cacheState = this.sandboxCache.get(sandboxId)
+      if (cacheState) {
+        // 5. อัพเดท heartbeat และ return
+        const updated = await this.updateSandboxStatus(sandboxId, cacheState.status, cacheState.previewUrl, cacheState.previewToken, cacheState.error)
+        return updated
+      }
+
+      // 6. ถ้าไม่มีทั้ง Database และ Cache → เช็คกับ Daytona
+      const exists = await this.sandboxService.sandboxExists(sandboxId)
+      if (!exists) {
+        throw new Error('Sandbox not found')
+      }
+      
+      // 7. สร้าง state ใหม่
+      const fallback = await this.updateSandboxStatus(sandboxId, 'error')
+      return fallback
+
+    } catch (error) {
+      console.error(`❌ [GET STATUS] Error getting sandbox status for ${sandboxId}:`, error)
+      throw error
     }
-    
-    const fallback = await this.updateSandboxStatus(sandboxId, 'error')
-    return fallback
   }
 
   /**
@@ -119,48 +151,70 @@ export class SandboxController {
       throw new Error(validation.error)
     }
 
-    // Check if sandbox exists and is running
-    const state = this.sandboxStates.get(sandboxId)
-    if (!state) {
-      throw new Error('Sandbox not found in memory')
-    }
+    // เปลี่ยนลำดับ: เช็ค Database ก่อน, Cache เป็น secondary
+    try {
+      // 1. เช็ค Database ก่อน
+      const dbState = await prisma.sandboxState.findUnique({
+        where: { sandboxId }
+      })
 
-    if (state.status !== 'running') {
-      throw new Error('Sandbox is not running')
-    }
+      if (!dbState) {
+        throw new Error('Sandbox not found in database')
+      }
 
-    // Verify sandbox exists on Daytona
-    const sandboxExists = await this.sandboxService.sandboxExists(sandboxId)
-    if (!sandboxExists) {
-      throw new Error('Sandbox not found on Daytona')
-    }
+      if (dbState.status !== 'running') {
+        throw new Error('Sandbox is not running')
+      }
 
-    // Update files incrementally
-    const updateResult = await this.sandboxService.updateSandbox(sandboxId, files)
-    
-    // Update heartbeat with database
-    await this.updateSandboxStatus(sandboxId, 'running', state.previewUrl, state.previewToken, undefined, projectId, userId)
-    
-    console.log(`✅ [PUT] Incremental build completed: ${updateResult.updatedCount}/${updateResult.totalFiles} files updated in sandbox: ${sandboxId}`)
-    
-    // Performance optimization log
-    if (comparison && comparison.changedFiles < 5) {
-      console.log(`⚡ [PUT] Small change detected (${comparison.changedFiles} files) - using optimized rebuild`)
-    }
-    
-    return {
-      success: true,
-      updatedFiles: updateResult.updatedCount,
-      totalFiles: updateResult.totalFiles,
-      skippedFiles: comparison?.skippedFiles || 0,
-      errors: updateResult.errors,
-      message: `Successfully updated ${updateResult.updatedCount} files${comparison?.skippedFiles ? `, skipped ${comparison.skippedFiles} unchanged files` : ''}`,
-      projectId,
-      comparison: comparison ? {
-        totalFiles: comparison.totalFiles,
-        changedFiles: comparison.changedFiles,
-        skippedFiles: comparison.skippedFiles
-      } : undefined
+      // 2. อัพเดท Cache จาก Database
+      const cacheState: SandboxState = {
+        sandboxId: dbState.sandboxId,
+        status: dbState.status as SandboxState['status'],
+        previewUrl: dbState.previewUrl || undefined,
+        previewToken: dbState.previewToken || undefined,
+        error: dbState.error || undefined,
+        createdAt: dbState.createdAt.getTime(),
+        lastHeartbeatAt: dbState.lastHeartbeatAt?.getTime() || Date.now(),
+      }
+      this.sandboxCache.set(sandboxId, cacheState)
+
+      // 3. Verify sandbox exists on Daytona
+      const sandboxExists = await this.sandboxService.sandboxExists(sandboxId)
+      if (!sandboxExists) {
+        throw new Error('Sandbox not found on Daytona')
+      }
+
+      // 4. Update files incrementally
+      const updateResult = await this.sandboxService.updateSandbox(sandboxId, files)
+      
+      // 5. Update heartbeat with database
+      await this.updateSandboxStatus(sandboxId, 'running', dbState.previewUrl || undefined, dbState.previewToken || undefined, undefined, projectId, userId)
+      
+      console.log(`✅ [PUT] Incremental build completed: ${updateResult.updatedCount}/${updateResult.totalFiles} files updated in sandbox: ${sandboxId}`)
+      
+      // Performance optimization log
+      if (comparison && comparison.changedFiles < 5) {
+        console.log(`⚡ [PUT] Small change detected (${comparison.changedFiles} files) - using optimized rebuild`)
+      }
+      
+      return {
+        success: true,
+        updatedFiles: updateResult.updatedCount,
+        totalFiles: updateResult.totalFiles,
+        skippedFiles: comparison?.skippedFiles || 0,
+        errors: updateResult.errors,
+        message: `Successfully updated ${updateResult.updatedCount} files${comparison?.skippedFiles ? `, skipped ${comparison.skippedFiles} unchanged files` : ''}`,
+        projectId,
+        comparison: comparison ? {
+          totalFiles: comparison.totalFiles,
+          changedFiles: comparison.changedFiles,
+          skippedFiles: comparison.skippedFiles
+        } : undefined
+      }
+
+    } catch (error) {
+      console.error(`❌ [UPDATE FILES] Error updating sandbox files for ${sandboxId}:`, error)
+      throw error
     }
   }
 
@@ -290,7 +344,7 @@ export class SandboxController {
   }
 
   /**
-   * Update sandbox status in memory and database
+   * Update sandbox status in database (primary) and cache (secondary)
    */
   private async updateSandboxStatus(
     sandboxId: string,
@@ -302,19 +356,8 @@ export class SandboxController {
     userId?: string
   ): Promise<SandboxState> {
     const now = Date.now()
-    const current = this.sandboxStates.get(sandboxId)
-    const next: SandboxState = {
-      sandboxId,
-      status,
-      previewUrl,
-      previewToken,
-      error,
-      createdAt: current?.createdAt ?? now,
-      lastHeartbeatAt: now,
-    }
-    this.sandboxStates.set(sandboxId, next)
     
-    // Save to database
+    // 1. อัพเดท Database ก่อน (Primary)
     try {
       await prisma.sandboxState.upsert({
         where: { sandboxId },
@@ -344,6 +387,19 @@ export class SandboxController {
       console.error(`❌ [DB ERROR] Failed to update sandbox state in database:`, dbError)
       // Don't throw error to avoid affecting main functionality
     }
+    
+    // 2. อัพเดท Cache หลัง (Secondary)
+    const current = this.sandboxCache.get(sandboxId)
+    const next: SandboxState = {
+      sandboxId,
+      status,
+      previewUrl,
+      previewToken,
+      error,
+      createdAt: current?.createdAt ?? now,
+      lastHeartbeatAt: now,
+    }
+    this.sandboxCache.set(sandboxId, next)
     
     // Log only important status changes (not heartbeat spam)
     if (status !== 'running' || !current || current.status !== status) {

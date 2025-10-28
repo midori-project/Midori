@@ -2,7 +2,7 @@
 import { HeartbeatConfig, CacheConfig, DebounceConfig } from '../types/preview'
 
 export const HEARTBEAT_CONFIG: HeartbeatConfig = {
-  interval: 2 * 60 * 1000, // 2 minutes
+  interval: 5 * 60 * 1000, // 5 minutes (ให้ตรงกับ backend)
   timeout: 30 * 1000, // 30 seconds
 }
 
