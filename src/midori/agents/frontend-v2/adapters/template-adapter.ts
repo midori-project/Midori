@@ -349,9 +349,10 @@ export class TemplateAdapter {
     // 🎨 Inject Typography from Font Pool ⭐
     const businessCategoryId = templateRequest.businessCategoryId;
     const categoryTone = aiGeneratedData.global?.tone || 'warm';
+    const language = detectedLanguage || task.aiSettings?.language || 'en';
     
     try {
-      const fontKey = selectFontForCategory(businessCategoryId, categoryTone);
+      const fontKey = selectFontForCategory(businessCategoryId, categoryTone, language);
       const fontConfig = getFontConfig(fontKey);
       
       if (fontConfig) {

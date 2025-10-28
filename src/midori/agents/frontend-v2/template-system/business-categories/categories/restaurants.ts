@@ -251,7 +251,7 @@ export const restaurantCategories: BusinessCategoryManifest[] = [
       },
       'navbar-basic': {
         allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-sidebar', 'navbar-minimal', 'navbar-mega', 'navbar-sticky'],
-        defaultVariant: 'navbar-sidebar',
+        defaultVariant: 'navbar-transparent',
         randomSelection: false,
         constraints: {
           businessType: ['restaurant', 'food-service', 'dining'],
