@@ -84,7 +84,6 @@ export async function DELETE(req: NextRequest) {
     return controller.handleError(error, status)
   }
 }
-
 /**
  * Get cleanup service statistics
  * This would typically be a separate admin endpoint, but kept here for compatibility

@@ -65,7 +65,7 @@ export class CleanupService {
   }
 
   /**
-   * Manual cleanup of expired states
+   * Manual cleanup of expired states (เปลี่ยนสถานะเป็น stopped แทนการลบ)
    */
   cleanupExpiredStates(): void {
     const startTime = Date.now()
@@ -87,21 +87,26 @@ export class CleanupService {
         return
       }
       
-      let cleanedCount = 0
+      let processedCount = 0
       for (const state of expiredStates) {
         try {
-          await prisma.sandboxState.delete({
-            where: { sandboxId: state.sandboxId }
+          // เปลี่ยนสถานะเป็น stopped แทนการลบ
+          await prisma.sandboxState.update({
+            where: { sandboxId: state.sandboxId },
+            data: { 
+              status: 'stopped',
+              updatedAt: new Date()
+            }
           })
-          cleanedCount++
-          console.log(`🗑️ [EXPIRED CLEANUP] Removed expired sandbox state: ${state.sandboxId} (age: ${Math.round((Date.now() - (state.lastHeartbeatAt?.getTime() || state.createdAt.getTime())) / 60000)} minutes, status: ${state.status})`)
+          processedCount++
+          console.log(`📝 [EXPIRED CLEANUP] Marked expired sandbox state as stopped: ${state.sandboxId} (age: ${Math.round((Date.now() - (state.lastHeartbeatAt?.getTime() || state.createdAt.getTime())) / 60000)} minutes, status: ${state.status})`)
         } catch (error) {
-          console.error(`❌ [EXPIRED CLEANUP] Failed to delete expired state ${state.sandboxId}:`, error)
+          console.error(`❌ [EXPIRED CLEANUP] Failed to update expired state ${state.sandboxId}:`, error)
         }
       }
       
       const duration = Date.now() - startTime
-      console.log(`✅ [EXPIRED CLEANUP] Completed: cleaned ${cleanedCount}/${expiredStates.length} expired sandbox states in ${duration}ms`)
+      console.log(`✅ [EXPIRED CLEANUP] Completed: processed ${processedCount}/${expiredStates.length} expired sandbox states in ${duration}ms`)
     }).catch(error => {
       console.error('❌ [EXPIRED CLEANUP] Failed to query expired states:', error)
     })
@@ -180,11 +185,15 @@ export class CleanupService {
         
         if (!sandboxExists) {
           if (this.isDebugMode) {
-            console.log(`🗑️ [IDLE CLEANUP] Sandbox ${sandboxId} not found on Daytona, removing from database`)
+            console.log(`📝 [IDLE CLEANUP] Sandbox ${sandboxId} not found on Daytona, marking as stopped`)
           }
-          // Remove from database
-          await prisma.sandboxState.delete({
-            where: { sandboxId }
+          // เปลี่ยนสถานะเป็น stopped แทนการลบ
+          await prisma.sandboxState.update({
+            where: { sandboxId },
+            data: { 
+              status: 'stopped',
+              updatedAt: new Date()
+            }
           })
           cleanedCount++
           continue
@@ -267,14 +276,19 @@ export class CleanupService {
         select: { sandboxId: true, status: true }
       })
 
-      const removedIds: string[] = []
+      const updatedIds: string[] = []
       for (const dbState of dbStates) {
         try {
           const exists = await verifySandboxExists(daytona, dbState.sandboxId)
           if (!exists) {
-            removedIds.push(`${dbState.sandboxId}:${dbState.status}`)
-            await prisma.sandboxState.delete({
-              where: { sandboxId: dbState.sandboxId }
+            updatedIds.push(`${dbState.sandboxId}:${dbState.status}`)
+            // เปลี่ยนสถานะเป็น stopped แทนการลบ
+            await prisma.sandboxState.update({
+              where: { sandboxId: dbState.sandboxId },
+              data: { 
+                status: 'stopped',
+                updatedAt: new Date()
+              }
             })
             removedCount++
           } else {
@@ -285,8 +299,8 @@ export class CleanupService {
         }
       }
       
-      if (removedIds.length > 0) {
-        console.log(`🗑️ [SYNC] Removed non-existent: [${removedIds.join(', ')}]`)
+      if (updatedIds.length > 0) {
+        console.log(`📝 [SYNC] Updated non-existent to stopped: [${updatedIds.join(', ')}]`)
       }
 
       console.log(`✅ [SYNC] Completed: ${syncedCount} synced, ${removedCount} removed`)
@@ -296,7 +310,7 @@ export class CleanupService {
   }
 
   /**
-   * Cleanup stopped sandboxes
+   * Cleanup stopped sandboxes (ไม่ลบข้อมูลจากฐานข้อมูล)
    */
   cleanupStoppedSandboxes(): void {
     const startTime = Date.now()
@@ -319,29 +333,28 @@ export class CleanupService {
         return
       }
       
-      let cleanedCount = 0
-      const removedIds: string[] = []
+      let processedCount = 0
+      const processedIds: string[] = []
       
       for (const state of stoppedStates) {
         try {
           const stoppedTime = Date.now() - (state.lastHeartbeatAt?.getTime() || state.createdAt.getTime())
-          removedIds.push(`${state.sandboxId}:${state.status}:${Math.round(stoppedTime / 60000)}m`)
+          processedIds.push(`${state.sandboxId}:${state.status}:${Math.round(stoppedTime / 60000)}m`)
           
-          await prisma.sandboxState.delete({
-            where: { sandboxId: state.sandboxId }
-          })
-          cleanedCount++
+          // ไม่ลบข้อมูล แต่ log ข้อมูลที่พบ
+          console.log(`📝 [STOPPED CLEANUP] Found stopped sandbox: ${state.sandboxId} (stopped for ${Math.round(stoppedTime / 60000)} minutes)`)
+          processedCount++
         } catch (error) {
-          console.error(`❌ [STOPPED CLEANUP] Failed to delete stopped state ${state.sandboxId}:`, error)
+          console.error(`❌ [STOPPED CLEANUP] Failed to process stopped state ${state.sandboxId}:`, error)
         }
       }
       
-      if (removedIds.length > 0) {
-        console.log(`🗑️ [STOPPED CLEANUP] Removed: [${removedIds.join(', ')}]`)
+      if (processedIds.length > 0) {
+        console.log(`📝 [STOPPED CLEANUP] Processed: [${processedIds.join(', ')}]`)
       }
 
       const duration = Date.now() - startTime
-      console.log(`✅ [STOPPED CLEANUP] Completed: cleaned ${cleanedCount}/${stoppedStates.length} stopped sandbox states in ${duration}ms`)
+      console.log(`✅ [STOPPED CLEANUP] Completed: processed ${processedCount}/${stoppedStates.length} stopped sandbox states in ${duration}ms`)
     }).catch(error => {
       console.error('❌ [STOPPED CLEANUP] Failed to query stopped states:', error)
     })
