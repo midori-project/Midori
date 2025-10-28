@@ -101,10 +101,22 @@ export interface FontConstraints {
 }
 
 /**
- * Font Pool for each category
+ * Font Pool for each category (legacy - use FontPoolsLanguageBased)
  */
 export interface FontPools {
   [categoryId: string]: FontPool;
+}
+
+/**
+ * Font Pools separated by language
+ * แยก font pools ตามภาษา (thai vs english)
+ */
+export interface FontPoolsLanguageBased {
+  [categoryId: string]: {
+    thai?: FontPool;  // Fonts specifically for Thai websites
+    english?: FontPool;  // Fonts for English websites
+    default?: FontPool;  // Fallback fonts (supports both languages)
+  };
 }
 
 // Business Category Definitions
@@ -291,8 +303,8 @@ export function getStyleBasedVariant(
  */
 export const CATEGORY_FONT_POOLS: FontPools = {
   'restaurant': {
-    allowedFonts: ['playfair', 'crimson', 'poppins', 'nunito', 'inter'],
-    defaultFont: 'poppins',
+    allowedFonts: ['playfair', 'crimson', 'poppins', 'nunito', 'inter', 'prompt', 'kanit'],
+    defaultFont: 'prompt',
     randomSelection: true,
     constraints: {
       businessType: ['restaurant', 'food-service', 'dining'],
@@ -300,16 +312,16 @@ export const CATEGORY_FONT_POOLS: FontPools = {
     }
   },
   'ecommerce': {
-    allowedFonts: ['inter', 'roboto', 'poppins'],
+    allowedFonts: ['inter', 'roboto', 'poppins', 'prompt', 'kanit'],
     defaultFont: 'inter',
-    randomSelection: false,
+    randomSelection: true,
     constraints: {
-      businessType: ['ecommerce', 'retail', 'online-store'],
+      businessType: ['ecommerce', 'retail', 'online-store', 'prompt', 'kanit'],
       tone: ['professional', 'modern', 'minimal']
     }
   },
   'portfolio': {
-    allowedFonts: ['montserrat', 'inter', 'poppins', 'playfair'],
+    allowedFonts: ['montserrat', 'inter', 'poppins', 'playfair', 'prompt', 'kanit'],
     defaultFont: 'montserrat',
     randomSelection: true,
     constraints: {
@@ -318,25 +330,25 @@ export const CATEGORY_FONT_POOLS: FontPools = {
     }
   },
   'healthcare': {
-    allowedFonts: ['inter', 'roboto', 'poppins'],
+    allowedFonts: ['inter', 'roboto', 'poppins', 'prompt', 'kanit'],
     defaultFont: 'inter',
-    randomSelection: false,
+    randomSelection: true,
     constraints: {
       businessType: ['healthcare', 'medical', 'clinic'],
       tone: ['professional', 'trustworthy', 'warm']
     }
   },
   'news': {
-    allowedFonts: ['lora', 'merriweather', 'inter'],
+    allowedFonts: ['lora', 'merriweather', 'inter', 'prompt', 'kanit'],
     defaultFont: 'lora',
-    randomSelection: false,
+    randomSelection: true,
     constraints: {
       businessType: ['news', 'media', 'content'],
       tone: ['serious', 'intellectual', 'professional']
     }
   },
   'hotels': {
-    allowedFonts: ['playfair', 'montserrat', 'inter', 'poppins'],
+    allowedFonts: ['playfair', 'montserrat', 'inter', 'poppins', 'prompt', 'kanit'],
     defaultFont: 'montserrat',
     randomSelection: true,
     constraints: {
@@ -345,7 +357,7 @@ export const CATEGORY_FONT_POOLS: FontPools = {
     }
   },
   'travel': {
-    allowedFonts: ['montserrat', 'poppins', 'playfair', 'inter'],
+    allowedFonts: ['montserrat', 'poppins', 'playfair', 'inter', 'prompt', 'kanit'],
     defaultFont: 'montserrat',
     randomSelection: true,
     constraints: {
@@ -354,16 +366,16 @@ export const CATEGORY_FONT_POOLS: FontPools = {
     }
   },
   'academy': {
-    allowedFonts: ['inter', 'roboto', 'lora'],
+    allowedFonts: ['inter', 'roboto', 'lora', 'prompt', 'kanit'],
     defaultFont: 'inter',
-    randomSelection: false,
+    randomSelection: true,
     constraints: {
       businessType: ['academy', 'education', 'school'],
       tone: ['intellectual', 'professional', 'serious', 'modern']
     }
   },
   'bookstore': {
-    allowedFonts: ['lora', 'merriweather', 'crimson', 'inter'],
+    allowedFonts: ['lora', 'merriweather', 'crimson', 'inter', 'prompt', 'kanit'],
     defaultFont: 'lora',
     randomSelection: true,
     constraints: {
@@ -372,7 +384,7 @@ export const CATEGORY_FONT_POOLS: FontPools = {
     }
   },
   'bakery': {
-    allowedFonts: ['poppins', 'nunito', 'playfair', 'inter'],
+    allowedFonts: ['poppins', 'nunito', 'playfair', 'inter', 'prompt', 'kanit'],
     defaultFont: 'poppins',
     randomSelection: true,
     constraints: {
@@ -439,35 +451,95 @@ export function getCategoryFontPool(categoryId: string): FontPool | undefined {
 }
 
 /**
- * Select appropriate font based on tone and category
+ * Select appropriate font based on tone, category, and language
  */
 export function selectFontForCategory(
   categoryId: string,
-  tone?: string
+  tone?: string,
+  language?: string
 ): string {
+  console.log(`\n🎨 Font Selection - Category: ${categoryId}, Tone: ${tone}, Language: ${language}`);
+  
   const pool = CATEGORY_FONT_POOLS[categoryId];
-  if (!pool) return 'inter'; // Default fallback
+  if (!pool) {
+    console.log('❌ No font pool found, using fallback: inter');
+    return 'inter'; // Default fallback
+  }
+  
+  console.log(`📝 Pool allowedFonts: ${pool.allowedFonts.join(', ')}`);
+  console.log(`📝 Pool defaultFont: ${pool.defaultFont}`);
+  
+  // Import font presets to check language support
+  const { getFontConfig } = require('../shared-blocks/font-presets');
+  
+  // Filter fonts by language support
+  let availableFonts = pool.allowedFonts;
+  
+  if (language === 'th') {
+    console.log(`🌏 Filtering for THAI language support...`);
+    // For Thai: only fonts that support 'th' or 'all'
+    availableFonts = pool.allowedFonts.filter(fontKey => {
+      const config = getFontConfig(fontKey);
+      if (!config?.supportsLanguages) return true; // Allow if not specified
+      return config.supportsLanguages.includes('th') || config.supportsLanguages.includes('all');
+    });
+    
+    // If no Thai-supporting fonts, fallback to Thai fonts
+    if (availableFonts.length === 0) {
+      console.log(`⚠️  No Thai-supporting fonts found, using Thai fallback fonts`);
+      availableFonts = ['noto-sans-thai', 'sarabun', 'kanit', 'mitr', 'prompt'];
+    }
+    console.log(`✅ Available fonts (THAI): ${availableFonts.join(', ')}`);
+  } else if (language === 'en') {
+    console.log(`🌏 Filtering for ENGLISH language support...`);
+    // For English: prefer fonts that support 'en' or 'all', but allow others as fallback
+    availableFonts = pool.allowedFonts.filter(fontKey => {
+      const config = getFontConfig(fontKey);
+      if (!config?.supportsLanguages) return true; // Allow if not specified
+      return config.supportsLanguages.includes('en') || config.supportsLanguages.includes('all');
+    });
+    
+    // If still empty, use original pool (most English fonts work fine)
+    if (availableFonts.length === 0) {
+      console.log(`⚠️  No English-supporting fonts found, using original pool`);
+      availableFonts = pool.allowedFonts;
+    }
+    console.log(`✅ Available fonts (ENGLISH): ${availableFonts.join(', ')}`);
+  } else {
+    console.log(`🌍 No language specified, using all available fonts`);
+  }
   
   // If tone is specified, try to match with font presets
   if (tone) {
-    const fontsByTone = pool.allowedFonts.filter(fontKey => {
-      // Import font configs if needed
-      // This would require importing from font-presets
-      return true; // Simplified for now
+    console.log(`🎭 Filtering for tone: '${tone}'`);
+    const fontsByTone = availableFonts.filter(fontKey => {
+      const config = getFontConfig(fontKey);
+      if (!config) return true; // Include if config not found
+      return config.tone.includes(tone);
     });
     
     if (fontsByTone.length > 0) {
+      console.log(`✅ Fonts matching tone: ${fontsByTone.join(', ')}`);
       const selectedFont = pool.randomSelection 
         ? fontsByTone[Math.floor(Math.random() * fontsByTone.length)]
         : fontsByTone[0];
+      console.log(`✅ Selected font (by tone): ${selectedFont}`);
       return selectedFont || 'inter';
+    } else {
+      console.log(`⚠️  No fonts matching tone '${tone}', continuing...`);
     }
   }
   
-  // Default or random selection
+  // Default or random selection from available fonts
   if (pool.randomSelection) {
-    return getRandomFontFromPool(categoryId) || pool.defaultFont || 'inter';
+    const randomIndex = Math.floor(Math.random() * availableFonts.length);
+    const selectedFont = availableFonts[randomIndex] || pool.defaultFont || 'inter';
+    console.log(`✅ Selected font (random): ${selectedFont}`);
+    return selectedFont;
   }
   
-  return pool.defaultFont || 'inter';
+  // Use first available font or default
+  const selectedFont = availableFonts[0] || pool.defaultFont || 'inter';
+  console.log(`✅ Selected font (default): ${selectedFont}\n`);
+  return selectedFont;
 }

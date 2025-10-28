@@ -10,6 +10,7 @@ export interface FontConfig {
   category: string;
   description: string;
   tone: string[];  // Tones that work well with this font
+  supportsLanguages?: string[];  // Supported languages: 'en', 'th', 'all'
 }
 
 export const FONT_PRESETS: Record<string, FontConfig> = {
@@ -20,7 +21,8 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["sans-serif"],
     category: "professional",
     description: "Modern, clean sans-serif for professional websites",
-    tone: ["professional", "modern", "clean", "serious", "minimal"]
+    tone: ["professional", "modern", "clean", "serious", "minimal"],
+    supportsLanguages: ["en",]
   },
   
   roboto: {
@@ -29,7 +31,8 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["sans-serif"],
     category: "professional",
     description: "Professional sans-serif for business and tech",
-    tone: ["professional", "modern", "business", "minimal", "clean"]
+    tone: ["professional", "modern", "business", "minimal", "clean"],
+    supportsLanguages: ["en",]
   },
   
   // Elegant & Luxury
@@ -39,7 +42,8 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["serif"],
     category: "luxury",
     description: "Elegant serif for luxury restaurants and businesses",
-    tone: ["luxury", "elegant", "sophisticated", "premium", "traditional"]
+    tone: ["luxury", "elegant", "sophisticated", "premium", "traditional"],
+    supportsLanguages: ["en",]  // Limited Thai support
   },
   
   crimson: {
@@ -48,7 +52,8 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["serif"],
     category: "luxury",
     description: "Classic serif for elegant and traditional websites",
-    tone: ["luxury", "elegant", "traditional", "sophisticated"]
+    tone: ["luxury", "elegant", "traditional", "sophisticated"],
+    supportsLanguages: ["en"]  // Limited Thai support
   },
   
   // Warm & Friendly
@@ -58,7 +63,8 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["sans-serif"],
     category: "friendly",
     description: "Friendly rounded sans-serif for warm businesses",
-    tone: ["warm", "friendly", "inviting", "casual", "welcoming"]
+    tone: ["warm", "friendly", "inviting", "casual", "welcoming"],
+    supportsLanguages: ["en"]  // Good Thai support
   },
   
   nunito: {
@@ -67,7 +73,8 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["sans-serif"],
     category: "friendly",
     description: "Rounded sans-serif for friendly and approachable websites",
-    tone: ["warm", "friendly", "casual", "welcoming", "comfortable"]
+    tone: ["warm", "friendly", "casual", "welcoming", "comfortable"],
+    supportsLanguages: ["en"]  // Good Thai support
   },
   
   // Minimal & Clean
@@ -76,7 +83,8 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["sans-serif"],
     category: "minimal",
     description: "System fonts for minimal and fast-loading websites",
-    tone: ["minimal", "clean", "simple", "fast", "system"]
+    tone: ["minimal", "clean", "simple", "fast", "system"],
+    supportsLanguages: ["en",]
   },
   
   // Artistic & Creative
@@ -86,7 +94,8 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["sans-serif"],
     category: "creative",
     description: "Geometric sans-serif for creative and artistic websites",
-    tone: ["creative", "artistic", "modern", "bold", "unique"]
+    tone: ["creative", "artistic", "modern", "bold", "unique"],
+    supportsLanguages: ["en",]  // Good Thai support
   },
   
   // Traditional & Serious
@@ -96,7 +105,8 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["serif"],
     category: "serious",
     description: "Reading-optimized serif for news and content-heavy sites",
-    tone: ["serious", "intellectual", "traditional", "professional", "news"]
+    tone: ["serious", "intellectual", "traditional", "professional", "news"],
+    supportsLanguages: ["en"]  // Limited Thai support
   },
   
   merriweather: {
@@ -105,7 +115,59 @@ export const FONT_PRESETS: Record<string, FontConfig> = {
     fallback: ["serif"],
     category: "serious",
     description: "Readable serif for long-form content and news",
-    tone: ["serious", "intellectual", "traditional", "news", "content"]
+    tone: ["serious", "intellectual", "traditional", "news", "content"],
+    supportsLanguages: ["en"]  // Limited Thai support
+  },
+  
+  // Thai Supportive Fonts
+  'noto-sans-thai': {
+    fontFamily: "Noto Sans Thai",
+    googleFont: "Noto+Sans+Thai:wght@300;400;500;600;700",
+    fallback: ["sans-serif"],
+    category: "professional",
+    description: "Comprehensive Thai and Latin support - professional sans-serif",
+    tone: ["professional", "modern", "clean", "serious", "minimal"],
+    supportsLanguages: ["th",]
+  },
+  
+  'sarabun': {
+    fontFamily: "Sarabun",
+    googleFont: "Sarabun:wght@300;400;500;600;700",
+    fallback: ["sans-serif"],
+    category: "friendly",
+    description: "Thai and Latin support - friendly and readable",
+    tone: ["warm", "friendly", "inviting", "casual", "welcoming"],
+    supportsLanguages: ["th",]
+  },
+  
+  'kanit': {
+    fontFamily: "Kanit",
+    googleFont: "Kanit:wght@300;400;500;600;700",
+    fallback: ["sans-serif"],
+    category: "creative",
+    description: "Modern Thai and Latin support - bold and creative",
+    tone: ["creative", "artistic", "modern", "bold", "unique"],
+    supportsLanguages: ["th"]
+  },
+  
+  'mitr': {
+    fontFamily: "Mitr",
+    googleFont: "Mitr:wght@300;400;500;600;700",
+    fallback: ["sans-serif"],
+    category: "professional",
+    description: "Clean Thai and Latin support - professional and modern",
+    tone: ["professional", "modern", "clean", "serious", "minimal"],
+    supportsLanguages: ["en"]
+  },
+  
+  'prompt': {
+    fontFamily: "Prompt",
+    googleFont: "Prompt:wght@300;400;500;600;700",
+    fallback: ["sans-serif"],
+    category: "friendly",
+    description: "Rounded Thai and Latin support - friendly and approachable",
+    tone: ["warm", "friendly", "casual", "welcoming", "comfortable"],
+    supportsLanguages: ["th",]
   }
 };
 
