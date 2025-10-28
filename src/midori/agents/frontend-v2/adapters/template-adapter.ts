@@ -15,6 +15,8 @@ import { AIService, AIGenerationRequest } from '../services/ai-service';
 import { categoryService } from '../services/category-service';
 import { ProjectStructureGenerator, createProjectStructureGenerator } from '../template-system/project-structure-generator';
 import { persistFrontendV2Result } from '../services/persistence-service';
+import { selectFontForCategory } from '../template-system/business-categories';
+import { getFontConfig } from '../template-system/shared-blocks/font-presets';
 
 export class TemplateAdapter {
   private overrideSystem: OverrideSystem;
@@ -115,7 +117,9 @@ export class TemplateAdapter {
       model: 'gpt-5-nano',
       temperature: 1,
       customPrompt: aiPrompt, // User prompt from Template System
-      customSystemPrompt: templateResult.systemPrompt // System prompt from Template System
+      customSystemPrompt: templateResult.systemPrompt, // System prompt from Template System
+      concreteManifest, // Pass concrete manifest for template system
+      variantInfo: templateResult.variantsUsed ? { variantsUsed: templateResult.variantsUsed } : undefined // Pass variant info
     };
     
     const result = await this.aiService.generateContent(request);
@@ -340,6 +344,28 @@ export class TemplateAdapter {
       aiGeneratedData["navbar-basic"] = aiGeneratedData["navbar-basic"] || {};
       aiGeneratedData["navbar-basic"].brand = extractedBrand;
       aiGeneratedData["navbar-basic"].brandFirstChar = this.safeFirstChar(extractedBrand);
+    }
+
+    // 🎨 Inject Typography from Font Pool ⭐
+    const businessCategoryId = templateRequest.businessCategoryId;
+    const categoryTone = aiGeneratedData.global?.tone || 'warm';
+    const language = detectedLanguage || task.aiSettings?.language || 'en';
+    
+    try {
+      const fontKey = selectFontForCategory(businessCategoryId, categoryTone, language);
+      const fontConfig = getFontConfig(fontKey);
+      
+      if (fontConfig) {
+        console.log(`🎨 Injecting typography: ${fontConfig.fontFamily}`);
+        aiGeneratedData.global = aiGeneratedData.global || {};
+        aiGeneratedData.global.typography = {
+          fontFamily: fontConfig.fontFamily,
+          googleFont: fontConfig.googleFont,
+          fallback: fontConfig.fallback
+        };
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to inject typography:', error);
     }
 
     // 3. ✅ ใช้ renderTemplates แทน generateWebsite (ไม่ resolve manifest ซ้ำ)

@@ -239,8 +239,14 @@ User Input: "${userInput}"
 Available categories:
 - restaurant: Food service, dining, cafe, restaurant
 - ecommerce: Online store, shopping, products, books, retail
-- portfolio: Personal portfolio, professional showcase
+- portfolio: Personal portfolio, professional showcase, creative work
 - healthcare: Medical, health, clinic, hospital
+- academy: Educational institutions, learning platforms, training centers, courses
+- hotel: Hotels, accommodation, hospitality, lodging
+- travel: Travel agency, tourism, vacation planning
+- bookstore: Book stores, libraries, reading, literature
+- bakery: Bakeries, pastry shops, bread, desserts
+- news: News websites, media outlets, journalism
 Respond with ONLY the category ID (e.g., "ecommerce" or "restaurant"):`;
 
       console.log("🤖 Calling LLM for category detection...");

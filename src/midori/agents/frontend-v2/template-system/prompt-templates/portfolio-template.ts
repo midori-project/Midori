@@ -10,7 +10,7 @@ Rules:
 - Use the specified language for all text content (Thai or English)
 - Focus on creative, design, and professional work-related content
 - Use appropriate work categories: design, creative, development, art, professional
-- Generate 4-6 portfolio items with realistic creative work names in the specified language
+- Generate 6 portfolio items with realistic creative work names in the specified language
 - Use placeholder images: https://via.placeholder.com/400x300?text=Work+Name
 - All fields are REQUIRED - provide actual content, not placeholders
 

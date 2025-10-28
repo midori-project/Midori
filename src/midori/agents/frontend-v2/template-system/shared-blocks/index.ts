@@ -745,3 +745,6 @@ export function getSharedBlock(id: string): SharedBlock | undefined {
 export function getSharedBlocksByCategory(category: string): SharedBlock[] {
   return SHARED_BLOCKS.filter((block) => block.category === category);
 }
+
+// Re-export font presets
+export * from './font-presets';

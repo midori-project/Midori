@@ -268,13 +268,13 @@ class RealAgentClient {
   private extractKeywords(userInput: string): string[] {
     if (!userInput) return ['website'];
     
-    // Simple keyword extraction
+    // Enhanced keyword extraction
     const keywords = userInput
       .toLowerCase()
       .split(/\s+/)
       .filter(word => word.length > 2)
-      .filter(word => !['สร้าง', 'ทำ', 'ต้องการ', 'อยาก', 'ให้', 'เป็น', 'แบบ', 'สี', 'สไตล์'].includes(word))
-      .slice(0, 100); // Limit to 5 keywords
+      .filter(word => !['สร้าง', 'ทำ', 'ต้องการ', 'อยาก', 'ให้', 'เป็น', 'แบบ', 'สี', 'สไตล์', 'and', 'or', 'the', 'a', 'an'].includes(word))
+      .slice(0, 40); // Limit to 40 keywords (optimal for AI processing)
     
     return keywords.length > 0 ? keywords : ['website'];
   }

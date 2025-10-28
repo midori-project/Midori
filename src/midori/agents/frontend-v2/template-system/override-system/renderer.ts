@@ -196,13 +196,17 @@ export class TemplateRenderer {
     // Step 2: Apply global color settings to replacements (pre-resolve colors)
     const colorMap = this.getColorMap(userData.global);
     
+    // Step 2.5: Apply font settings for CSS files ⭐
+    const fontMap = this.getFontMap(userData.global);
+    
     // Step 3: Apply special placeholders with pre-resolved colors
     template = this.applySpecialPlaceholders(block.id, template, userData, colorMap);
 
-    // Step 4: Batch replace all placeholders
+    // Step 4: Batch replace all placeholders (colors + fonts)
     template = this.batchReplace(template, {
       ...replacements,
-      ...colorMap
+      ...colorMap,
+      ...fontMap  // ⭐ Add fonts
     });
 
     // Step 5: Localization pass for any residual static Thai strings inside templates
@@ -249,6 +253,43 @@ export class TemplateRenderer {
     }
 
     return colorMap;
+  }
+
+  /**
+   * 🎨 NEW: Get font map for typography
+   */
+  private getFontMap(globalData: any): Record<string, string> {
+    const fontMap: Record<string, string> = {
+      googleFontImport: '', // Default empty (no Google Font)
+      fontFamily: 'Inter', // Default font
+      fallbackFonts: 'sans-serif' // Default fallback
+    };
+    
+    if (!globalData?.typography) return fontMap;
+
+    const { fontFamily, googleFont, fallback } = globalData.typography;
+    
+    // Set font family
+    if (fontFamily) {
+      fontMap['fontFamily'] = fontFamily;
+    }
+    
+    // Set Google Font import if provided
+    if (googleFont) {
+      fontMap['googleFontImport'] = `<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=${googleFont}&display=swap" rel="stylesheet">`;
+    } else {
+      // If no Google Font, keep it empty string
+      fontMap['googleFontImport'] = '';
+    }
+    
+    // Set fallback fonts
+    if (fallback && Array.isArray(fallback)) {
+      fontMap['fallbackFonts'] = fallback.join(', ');
+    } else if (fallback) {
+      fontMap['fallbackFonts'] = fallback;
+    }
+
+    return fontMap;
   }
 
   /**
