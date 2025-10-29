@@ -36,6 +36,7 @@ interface ExecutionStatus {
 
 // Real agent clients - Call actual agent implementations
 import { runFrontendAgentV2 as frontendAgent } from '../../frontend-v2/runners/run';
+import { codeEditService } from '../../frontend-v2/services/code-edit-service';
 
 class RealAgentClient {
   constructor(private agentName: string) {}
@@ -49,9 +50,15 @@ class RealAgentClient {
       
       // Call real agent based on agent name
       if (this.agentName === 'frontend') {
-        // Transform task to frontend format if needed
-        const frontendTask = await this.transformToFrontendTask(task);
-        result = await frontendAgent(frontendTask);
+        // 🔧 Check if this is a code edit task
+        if (task.action === 'edit_website' || task.action === 'update_content') {
+          console.log('🔧 Routing to Code Edit Service...');
+          result = await this.callCodeEditService(task);
+        } else {
+          // Transform task to frontend format for template system
+          const frontendTask = await this.transformToFrontendTask(task);
+          result = await frontendAgent(frontendTask);
+        }
         
       } else if (this.agentName === 'backend') {
         console.log('⚙️ Calling Backend Agent...');
@@ -216,6 +223,87 @@ class RealAgentClient {
         styling: null
       }
     };
+  }
+
+  /**
+   * 🔧 Call Code Edit Service - NEW!
+   */
+  private async callCodeEditService(task: Task): Promise<any> {
+    try {
+      console.log('🔧 Calling Code Edit Service...');
+      
+      const projectContext = task.payload.projectContext;
+      if (!projectContext?.projectId) {
+        throw new Error('Project ID is required for code edit');
+      }
+      
+      // Get project data from database
+      const prisma = (globalThis as any).prisma;
+      const project = await prisma.project.findUnique({
+        where: { id: projectContext.projectId },
+        include: {
+          files: true,
+          generations: {
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          },
+          projectContext: {
+            select: {
+              projectType: true
+            }
+          }
+        }
+      });
+      
+      if (!project) {
+        throw new Error('Project not found');
+      }
+      
+      // Prepare project data for code edit service
+      const projectData = {
+        projectId: project.id,
+        userId: project.ownerId,  // ✅ เพิ่ม userId จาก project owner
+        projectName: project.name,
+        projectType: project.projectContext?.projectType || 'website',
+        files: project.files,
+        recentGeneration: project.generations[0]
+      };
+      
+      // Call code edit service
+      const editResult = await codeEditService.processEditRequest(
+        task.payload.userInput || task.description,
+        projectData,
+        {
+          intent: 'edit',
+          parameters: task.payload.parameters || {}
+        }
+      );
+      
+      // Transform to standard result format
+      return {
+        success: editResult.success,
+        result: {
+          filesModified: editResult.filesModified,
+          changes: editResult.changes,
+          summary: editResult.summary,
+          executionTime: editResult.executionTime,
+          errors: editResult.errors
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Code Edit Service error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        result: {
+          filesModified: [],
+          changes: [],
+          summary: 'Failed to edit code',
+          executionTime: 0
+        }
+      };
+    }
   }
   
   /**

@@ -22,6 +22,7 @@ export interface LLMRequest {
   maxTokens?: number;
   // 🎯 Response Configuration
   maxCompletionTokens?: number;
+  responseFormat?: { type: 'json_object' | 'text' };  // ✅ เพิ่ม JSON mode
   reasoning?: {
     effort: 'minimal' | 'low' | 'medium' | 'high';
   };

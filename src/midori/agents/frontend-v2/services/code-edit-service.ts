@@ -73,10 +73,22 @@ export interface CodeEditResult {
 export class CodeEditService {
   private llmAdapter: LLMAdapter;
   private prisma: any;
+  private initialized: boolean = false;
 
   constructor() {
     this.llmAdapter = new LLMAdapter();
     this.prisma = (globalThis as any).prisma;
+  }
+
+  /**
+   * Initialize LLM adapter
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized) {
+      await this.llmAdapter.initialize();
+      this.initialized = true;
+      console.log('✅ CodeEditService LLM initialized');
+    }
   }
 
   /**
@@ -92,7 +104,10 @@ export class CodeEditService {
     try {
       console.log('🔧 Processing code edit request:', userRequest);
       
-      // 1. สร้าง Website Context
+      // 1. Initialize LLM if not already done
+      await this.ensureInitialized();
+      
+      // 2. สร้าง Website Context
       const context = await this.buildWebsiteContext(projectData.projectId);
       console.log('📋 Website context built:', {
         projectId: context.projectId,
@@ -100,24 +115,25 @@ export class CodeEditService {
         projectType: context.projectType
       });
       
-      // 2. เลือกไฟล์ที่เกี่ยวข้อง
+      // 3. เลือกไฟล์ที่เกี่ยวข้อง
       const relevantFiles = await this.selectRelevantFiles(userRequest, context);
       console.log('🎯 Selected relevant files:', relevantFiles.map(f => f.path));
       
-      // 3. สร้าง Edit Prompt
+      // 4. สร้าง Edit Prompt
       const prompt = this.createEditPrompt(userRequest, relevantFiles, context);
       
-      // 4. เรียก LLM
+      // 5. เรียก LLM
       const llmResponse = await this.llmAdapter.callLLM(prompt, {
         useSystemPrompt: true,
         temperature: 0.3,
-        maxTokens: 4000
+        maxTokens: 4000,
+        maxCompletionTokens: 40000  // ✅ เพิ่ม max completion tokens สำหรับ GPT-5
       });
       
-      // 5. แปลงเป็น Code Changes
+      // 6. แปลงเป็น Code Changes
       const changes = this.parseCodeChanges(llmResponse.content);
       
-      // 6. Validate changes
+      // 7. Validate changes
       const validation = await this.validateCodeChanges(changes);
       if (!validation.isValid) {
         return {
@@ -130,8 +146,8 @@ export class CodeEditService {
         };
       }
       
-      // 7. บันทึกการเปลี่ยนแปลง
-      await this.saveCodeChanges(projectData.projectId, changes);
+      // 8. บันทึกการเปลี่ยนแปลง
+      await this.saveCodeChanges(projectData.projectId, projectData.userId, changes);
       
       return {
         success: true,
@@ -168,7 +184,14 @@ export class CodeEditService {
       // ดึงข้อมูลโปรเจ็กต์
       const project = await this.prisma.project.findUnique({
         where: { id: projectId },
-        select: { name: true, projectType: true }
+        select: { 
+          name: true,
+          projectContext: {
+            select: {
+              projectType: true
+            }
+          }
+        }
       });
       
       // ดึงการเปลี่ยนแปลงล่าสุด
@@ -182,13 +205,13 @@ export class CodeEditService {
       return {
         projectId,
         projectName: project?.name || 'Unknown Project',
-        projectType: project?.projectType || 'website',
-        files: files.map(f => ({
+        projectType: project?.projectContext?.projectType || 'website',
+        files: files.map((f: any) => ({
           path: f.path,
           content: f.content || '',
           type: f.type
         })),
-        recentChanges: recentChanges.map(c => ({
+        recentChanges: recentChanges.map((c: any) => ({
           prompt: c.promptJson,
           timestamp: c.createdAt
         })),
@@ -225,7 +248,8 @@ Example: ["src/components/Navbar.tsx", "src/index.css"]
       const response = await this.llmAdapter.callLLM(prompt, {
         useSystemPrompt: false,
         temperature: 0.1,
-        maxTokens: 500
+        maxTokens: 500,
+        maxCompletionTokens: 40000  // ✅ เพิ่มสำหรับ GPT-5
       });
       
       const selectedPaths = JSON.parse(response.content);
@@ -246,6 +270,7 @@ Example: ["src/components/Navbar.tsx", "src/index.css"]
     files: FileSelection[],
     context: WebsiteContext
   ): string {
+    const exampleClassName = 'className={`flex $' + '{isOpen ? \'block\' : \'hidden\'}`}';
     
     return `
 You are an expert React/TypeScript developer. Your task is to modify the website code based on user request.
@@ -275,6 +300,11 @@ INSTRUCTIONS:
 3. Follow React/TypeScript best practices
 4. Maintain consistent styling
 5. Return ONLY the modified code sections
+6. CRITICAL: Return valid, unescaped code - use proper JSX syntax:
+   - Use backticks for template literals with dynamic expressions
+   - Use regular quotes (") for string literals
+   - Do NOT escape quotes in JSX attributes
+   - Example: ${exampleClassName}
 
 RESPONSE FORMAT:
 {
@@ -290,7 +320,7 @@ RESPONSE FORMAT:
           "reason": "Changed navbar color to green as requested"
         }
       ],
-      "newContent": "// Full file content with changes applied"
+      "newContent": "// Full file content with changes applied - VALID JSX CODE"
     }
   ],
   "summary": "Brief description of changes made"
@@ -313,13 +343,40 @@ RESPONSE FORMAT:
       return parsed.files.map((file: any) => ({
         filePath: file.path,
         changes: file.changes,
-        newContent: file.newContent,
+        newContent: this.unescapeContent(file.newContent),  // ✅ Unescape content
         summary: file.summary || parsed.summary
       }));
       
     } catch (error) {
       console.error('Failed to parse LLM response:', error);
       throw new Error('Invalid LLM response format');
+    }
+  }
+
+  /**
+   * Unescape content from LLM (removes extra escaping)
+   */
+  private unescapeContent(content: string): string {
+    if (!content) return content;
+    
+    try {
+      // If content is a JSON string, parse it to unescape
+      // This handles cases where LLM returns escaped strings like \"
+      if (content.startsWith('"') && content.endsWith('"')) {
+        return JSON.parse(content);
+      }
+      
+      // Manual unescape for common cases
+      return content
+        .replace(/\\"/g, '"')     // \" → "
+        .replace(/\\'/g, "'")     // \' → '
+        .replace(/\\n/g, '\n')    // \\n → \n
+        .replace(/\\t/g, '\t')    // \\t → \t
+        .replace(/\\\\/g, '\\');  // \\\\ → \\
+      
+    } catch (error) {
+      console.warn('Failed to unescape content, using as-is:', error);
+      return content;
     }
   }
 
@@ -357,12 +414,13 @@ RESPONSE FORMAT:
   /**
    * บันทึกการเปลี่ยนแปลงลง database
    */
-  private async saveCodeChanges(projectId: string, changes: CodeChange[]): Promise<void> {
+  private async saveCodeChanges(projectId: string, userId: string, changes: CodeChange[]): Promise<void> {
     try {
       // 1. สร้าง Generation record
       const generation = await this.prisma.generation.create({
         data: {
           projectId,
+          userId,
           model: 'gpt-5-nano',
           promptJson: { type: 'code_edit', changes },
           options: { editType: 'chat_edit' }
@@ -393,6 +451,25 @@ RESPONSE FORMAT:
       
       // 3. สร้าง Snapshot
       await this.createSnapshot(projectId, generation.id);
+      
+      // 4. อัปเดต project และ project context
+      await this.prisma.project.update({
+        where: { id: projectId },
+        data: { 
+          updatedAt: new Date()
+        }
+      });
+      
+      // Update project context status
+      await this.prisma.projectContext.updateMany({
+        where: { projectId },
+        data: {
+          status: 'in_progress',  // Mark as in progress after edit
+          lastModified: new Date()
+        }
+      });
+      
+      console.log(`✅ Code changes saved and preview will auto-update for project ${projectId}`);
       
     } catch (error) {
       console.error('Failed to save code changes:', error);

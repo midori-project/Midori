@@ -118,6 +118,7 @@ export class LLMAdapter {
       temperature?: number;
       maxTokens?: number;
       maxCompletionTokens?: number;
+      responseFormat?: { type: 'json_object' | 'text' };  // ✅ เพิ่ม JSON mode
       reasoning?: {
         effort: "minimal" | "low" | "medium" | "high";
       };
@@ -149,6 +150,7 @@ export class LLMAdapter {
       maxCompletionTokens: isGpt5
         ? options.maxCompletionTokens || config.max_completion_tokens || 8000
         : undefined,
+      responseFormat: options.responseFormat,  // ✅ ส่ง responseFormat ไปด้วย
       reasoning: options.reasoning,
       text: options.text,
     };

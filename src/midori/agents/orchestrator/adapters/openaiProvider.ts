@@ -118,6 +118,7 @@ export class OpenAIProvider implements LLMProvider {
           { role: 'user', content: request.prompt }
         ],
         ...(request.temperature !== undefined && { temperature: request.temperature }),
+        ...(request.responseFormat && { response_format: request.responseFormat }),  // ✅ เพิ่ม JSON mode
         ...(request.reasoning && { reasoning: request.reasoning }),
         ...(request.text && { text: request.text })
       };

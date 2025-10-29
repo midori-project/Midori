@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -31,10 +31,11 @@ model User {
   oauths             OAuthConnection[]
   projects           Project[]
   likes              ProjectLike[]
-  sessions           Session[]
-  tokenWallets       TokenWallet[]
-  tokenTransactions  TokenTransaction[]
   sandboxStates      SandboxState[]
+  sessions           Session[]
+  tokenTransactions  TokenTransaction[]
+  tokenWallets       TokenWallet[]
+
   @@index([email])
 }
 
@@ -75,11 +76,11 @@ model Project {
   categories       ProjectCategory[]
   projectContext   ProjectContext?
   likes            ProjectLike[]
+  sandboxStates    SandboxState[]
   snapshots        Snapshot[]
   specBundles      SpecBundle[]
   testRuns         TestRun[]
   testSuites       TestSuite[]
-  sandboxStates    SandboxState[]
 
   @@index([ownerId])
   @@index([tenantId])
@@ -911,6 +912,68 @@ model ArtifactLink {
   @@index([artifactId, kind])
 }
 
+model TokenWallet {
+  id                String             @id @default(uuid())
+  userId            String
+  balanceTokens     Decimal            @default(5) @db.Decimal(10, 2)
+  lastTokenReset    DateTime?          @default(now())
+  walletType        WalletType         @default(STANDARD)
+  isActive          Boolean            @default(true)
+  expiresAt         DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  tokenTransactions TokenTransaction[]
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, walletType])
+  @@index([userId])
+  @@index([walletType])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+model TokenTransaction {
+  id          String               @id @default(uuid())
+  userId      String
+  walletId    String?
+  amount      Decimal              @db.Decimal(10, 2)
+  type        TokenTransactionType
+  description String?
+  metadata    Json?
+  createdAt   DateTime             @default(now())
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet      TokenWallet?         @relation(fields: [walletId], references: [id])
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model SandboxState {
+  id              String        @id @default(uuid())
+  sandboxId       String        @unique
+  projectId       String?
+  userId          String?
+  status          SandboxStatus @default(creating)
+  previewUrl      String?
+  previewToken    String?
+  error           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  lastHeartbeatAt DateTime?
+  expiresAt       DateTime?
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user            User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sandboxId])
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+  @@index([lastHeartbeatAt])
+  @@index([expiresAt])
+}
+
 enum Visibility {
   private
   unlisted
@@ -1079,50 +1142,11 @@ enum PreviewState {
   cancelled
 }
 
-// Token System Models
-model TokenWallet {
-  id              String              @id @default(uuid())
-  userId          String
-  balanceTokens   Decimal             @default(5) @db.Decimal(10, 2)
-  lastTokenReset  DateTime?           @default(now())
-  walletType      WalletType          @default(STANDARD)
-  isActive        Boolean             @default(true)
-  expiresAt       DateTime?           // For temporary wallets
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenTransactions  TokenTransaction[]
-
-  @@index([userId])
-  @@index([walletType])
-  @@index([isActive])
-  @@index([expiresAt])
-  @@unique([userId, walletType]) // One wallet per type per user
-}
-
-model TokenTransaction {
-  id          String              @id @default(uuid())
-  userId      String
-  walletId    String?             // Reference to specific wallet
-  amount      Decimal             @db.Decimal(10, 2) // Positive for credit, negative for debit
-  type        TokenTransactionType
-  description String?
-  metadata    Json?               // Additional data like projectId, actionType
-  createdAt   DateTime            @default(now())
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  wallet      TokenWallet?        @relation(fields: [walletId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([walletId])
-  @@index([type])
-  @@index([createdAt])
-}
-
 enum WalletType {
-  STANDARD    // Standard daily tokens
-  PREMIUM     // Premium tokens (purchased)
-  BONUS       // Bonus tokens (promotions)
-  TRIAL       // Trial tokens (limited time)
+  STANDARD
+  PREMIUM
+  BONUS
+  TRIAL
 }
 
 enum TokenTransactionType {
@@ -1142,30 +1166,4 @@ enum SandboxStatus {
   running
   stopped
   error
-}
-
-model SandboxState {
-  id              String        @id @default(uuid())
-  sandboxId       String        @unique
-  projectId       String?
-  userId          String?
-  status          SandboxStatus @default(creating)
-  previewUrl      String?
-  previewToken    String?
-  error           String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  lastHeartbeatAt DateTime?
-  expiresAt       DateTime?
-  
-  // Relations
-  project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user            User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([sandboxId])
-  @@index([projectId])
-  @@index([userId])
-  @@index([status])
-  @@index([lastHeartbeatAt])
-  @@index([expiresAt])
 }

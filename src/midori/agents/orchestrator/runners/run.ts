@@ -18,6 +18,10 @@ enum CommandType {
   SELECT_TEMPLATE = 'select_template',
   CUSTOMIZE_TEMPLATE = 'customize_template',
   
+  // Code Edit Commands (NEW!)
+  EDIT_WEBSITE = 'edit_website',
+  UPDATE_CONTENT = 'update_content',
+  
   // Frontend Commands
   CREATE_COMPONENT = 'create_component',
   UPDATE_COMPONENT = 'update_component', 
@@ -199,6 +203,16 @@ function classifyCommand(command: Command): {
     };
   }
   
+  // Code Edit commands - quick and simple
+  if (command.commandType === CommandType.EDIT_WEBSITE || 
+      command.commandType === CommandType.UPDATE_CONTENT) {
+    return {
+      complexity: 'simple',
+      requiredAgents: [TaskType.FRONTEND],
+      estimatedDuration: 20  // Quick edits
+    };
+  }
+  
   // Frontend-only commands
   const frontendCommands = [
     CommandType.CREATE_COMPONENT,
@@ -288,6 +302,27 @@ function breakdownCommand(command: Command): Task[] {
       agent: TaskType.FRONTEND,
       description: 'Customize template according to requirements',
       estimatedDuration: 30
+    }];
+  }
+  
+  // Code Edit: Frontend handles code edits
+  if (command.commandType === CommandType.EDIT_WEBSITE) {
+    return [{
+      ...baseTask,
+      agent: TaskType.FRONTEND,
+      action: 'edit_website',
+      description: 'Edit existing website code based on user request',
+      estimatedDuration: 20
+    }];
+  }
+  
+  if (command.commandType === CommandType.UPDATE_CONTENT) {
+    return [{
+      ...baseTask,
+      agent: TaskType.FRONTEND,
+      action: 'update_content',
+      description: 'Update website content',
+      estimatedDuration: 15
     }];
   }
   
@@ -628,6 +663,96 @@ async function handleTemplateCommand(
   };
 }
 
+/**
+ * 🔧 Handle Code Edit Command (Fast Track)
+ */
+async function handleCodeEditCommand(
+  command: Command,
+  startTime: number,
+  warnings: string[],
+  validationErrors: string[]
+): Promise<OrchestratorResult> {
+  console.log('🔧 Code Edit Fast Track');
+  
+  // Ensure we have project context
+  if (!command.payload.projectContext?.projectId) {
+    return {
+      success: false,
+      error: 'Project ID is required for code edit',
+      warnings: ['No project context provided'],
+      chatResponse: {
+        message: 'ไม่พบโปรเจ็กต์ที่จะแก้ไข กรุณาสร้างเว็บไซต์ก่อนครับ',
+        tone: 'helpful',
+        suggestions: ['สร้างเว็บไซต์ใหม่'],
+        timestamp: new Date().toISOString()
+      },
+      metadata: {
+        processingTimeMs: performance.now() - startTime,
+        validationErrors
+      }
+    };
+  }
+  
+  // Create edit task
+  const task: Task = {
+    taskId: crypto.randomUUID(),
+    agent: TaskType.FRONTEND,
+    action: 'edit_website',
+    description: command.payload.description || 'Edit website code',
+    payload: command.payload,
+    dependencies: [],
+    estimatedDuration: 20,
+    priority: command.priority,
+    status: 'pending' as const,
+    resourceRequirements: { cpu: 1, memory: 2 }
+  };
+  
+  // Create execution plan
+  const plan: ExecutionPlan = {
+    planId: crypto.randomUUID(),
+    commandId: command.commandId,
+    tasks: [task],
+    executionStages: [{
+      stageId: crypto.randomUUID(),
+      parallelTasks: [task.taskId],
+      estimatedDuration: task.estimatedDuration,
+      dependencies: [],
+      resourceRequirements: { maxCpu: 1, maxMemory: 2, maxConcurrency: 1 }
+    }],
+    qualityGates: [],
+    estimatedTotalDuration: task.estimatedDuration,
+    totalResourceRequirements: {
+      maxParallelTasks: 1,
+      totalCpuUnits: 1,
+      totalMemoryUnits: 2
+    },
+    metadata: {
+      createdAt: new Date().toISOString(),
+      aiGenerated: false
+    }
+  };
+  
+  // Execute edit task
+  console.log('🚀 Executing code edit task...');
+  const executionResult = await executeTasks(plan);
+  
+  return {
+    success: true,
+    plan,
+    chatResponse: {
+      message: '🔧 กำลังแก้ไขโค้ดตามที่คุณขอ...',
+      tone: 'helpful',
+      suggestions: ['ตรวจสอบ preview', 'แก้ไขเพิ่มเติม'],
+      timestamp: new Date().toISOString()
+    },
+    warnings,
+    metadata: {
+      processingTimeMs: performance.now() - startTime,
+      validationErrors
+    }
+  };
+}
+
 // ============================================================================
 // MAIN ORCHESTRATOR FUNCTION
 // ============================================================================
@@ -650,7 +775,14 @@ export async function run(rawCommand: unknown): Promise<OrchestratorResult> {
       return await handleTemplateCommand(command, startTime, warnings, validationErrors);
     }
     
-    // 2. Process with AI for intelligent planning (for other commands)
+    // 2.5. 🔧 Code Edit: Use direct execution for edit commands
+    if (command.commandType === CommandType.EDIT_WEBSITE || 
+        command.commandType === CommandType.UPDATE_CONTENT) {
+      console.log('🔧 Using Code Edit approach for:', command.commandType);
+      return await handleCodeEditCommand(command, startTime, warnings, validationErrors);
+    }
+    
+    // 3. Process with AI for intelligent planning (for other commands)
     console.log('🤖 Processing with AI...');
     const aiResult = await processWithAI(command);
     

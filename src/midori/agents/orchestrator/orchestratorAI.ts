@@ -73,6 +73,10 @@ export enum CommandType {
   SELECT_TEMPLATE = 'select_template',
   CUSTOMIZE_TEMPLATE = 'customize_template',
   
+  // Code Edit Commands (NEW!)
+  EDIT_WEBSITE = 'edit_website',
+  UPDATE_CONTENT = 'update_content',
+  
   // Frontend Commands
   CREATE_COMPONENT = 'create_component',
   UPDATE_COMPONENT = 'update_component', 
@@ -300,7 +304,7 @@ export class OrchestratorAI {
   ): Promise<IntentAnalysis> {
     
     // Quick detection สำหรับคำถามพื้นฐาน
-    const quickIntent = this.detectQuickIntent(input);
+    const quickIntent = this.detectQuickIntent(input, context);
     if (quickIntent) {
       return quickIntent;
     }
@@ -311,6 +315,7 @@ export class OrchestratorAI {
     const analysisConfig = getResponseConfig('intentAnalysis');
     const llmOptions = this.getModelSpecificOptions({
       useSystemPrompt: false,
+      responseFormat: { type: 'json_object' },  // ✅ บังคับให้ LLM ตอบเป็น JSON
       ...toLLMOptions(analysisConfig)
     });
     
@@ -339,8 +344,32 @@ export class OrchestratorAI {
         }
       }
       
-      // ลอง parse JSON
-      const analysis = JSON.parse(jsonContent);
+      // ✅ Try to parse JSON, with auto-fix on failure
+      let analysis;
+      try {
+        analysis = JSON.parse(jsonContent);
+      } catch (firstError) {
+        console.warn('⚠️ Initial JSON parse failed, attempting auto-fix...');
+        
+        // Auto-fix common JSON errors
+        const fixedContent = jsonContent
+          // Fix: missing comma between } and "
+          .replace(/}\s*"/g, '},"')
+          // Fix: missing comma between } and {
+          .replace(/}\s*{/g, '},{')
+          // Fix: trailing commas before }
+          .replace(/,\s*}/g, '}')
+          // Fix: trailing commas before ]
+          .replace(/,\s*]/g, ']');
+        
+        try {
+          analysis = JSON.parse(fixedContent);
+          console.log('✅ JSON auto-fixed successfully');
+        } catch (secondError) {
+          console.error('❌ Auto-fix failed:', secondError);
+          throw firstError; // Throw original error
+        }
+      }
       
       // ✅ Validate และ map parameters.type
       const validatedAnalysis = this.validateAndMapAnalysis(analysis, input);
@@ -424,6 +453,7 @@ export class OrchestratorAI {
     ];
     
     const validTaskTypes = [
+      'website_creation', 'website_edit', 'template_selection', 'template_customization',
       'frontend_task', 'backend_task', 'devops_task', 'full_stack_task'
     ];
     
@@ -449,7 +479,7 @@ export class OrchestratorAI {
   /**
    * ตรวจจับ intent ที่ง่าย ๆ ไม่ต้องใช้ AI
    */
-  private detectQuickIntent(input: string): IntentAnalysis | null {
+  private detectQuickIntent(input: string, context?: ConversationContext): IntentAnalysis | null {
     const lowerInput = input.toLowerCase().trim();
     
     //️ Security-sensitive requests
@@ -559,6 +589,40 @@ export class OrchestratorAI {
         taskType: 'Template customization request detected',
         parameters: { type: 'template_customization' }
       };
+    }
+    
+    // 🔧 Edit/Modify existing website patterns (NEW!)
+    if (lowerInput.includes('แก้ไข') ||
+        lowerInput.includes('เปลี่ยน') ||
+        lowerInput.includes('ปรับ') ||
+        lowerInput.includes('แก้') ||
+        lowerInput.includes('เพิ่ม') ||
+        lowerInput.includes('ลบ') ||
+        lowerInput.includes('อัพเดต') ||
+        lowerInput.includes('อัปเดต') ||
+        lowerInput.includes('edit') ||
+        lowerInput.includes('change') ||
+        lowerInput.includes('modify') ||
+        lowerInput.includes('update') ||
+        lowerInput.includes('add') ||
+        lowerInput.includes('remove')) {
+      // Check if we have context (existing project)
+      const hasExistingProject = context?.currentProject || 
+                                  context?.previousMessages.some((msg: string) => 
+                                    msg.includes('สร้างเว็บ') || 
+                                    msg.includes('project')
+                                  );
+      
+      if (hasExistingProject) {
+        return {
+          intent: 'simple_task',
+          confidence: 0.95,
+          requiredAgents: ['frontend'],
+          complexity: 'low',
+          taskType: 'Website edit request detected',
+          parameters: { type: 'website_edit' }
+        };
+      }
     }
     
     // Website creation patterns - now use template selection
@@ -698,6 +762,11 @@ export class OrchestratorAI {
     context: ConversationContext
   ): Promise<OrchestratorResponse> {
     
+    // 🔧 Check if this is a code edit request
+    if (analysis.parameters?.type === 'website_edit') {
+      return this.handleCodeEdit(message, analysis, context);
+    }
+    
     // Create structured command with project context
     const command = await this.createCommand(message, analysis);
     
@@ -744,6 +813,79 @@ export class OrchestratorAI {
         confidence: analysis.confidence
       }
     };
+  }
+
+  /**
+   * 🔧 Handle Code Edit requests - Direct editing of existing websites
+   */
+  private async handleCodeEdit(
+    message: UserMessage,
+    analysis: IntentAnalysis,
+    context: ConversationContext
+  ): Promise<OrchestratorResponse> {
+    console.log('🔧 Handling code edit request:', message.content);
+    
+    try {
+      // Create edit command
+      const command = await this.createCommand(message, analysis);
+      
+      // Ensure we have project context
+      if (!command.payload.projectContext?.projectId) {
+        return {
+          type: 'chat',
+          content: 'ขออภัยครับ ไม่พบโปรเจ็กต์ที่จะแก้ไข กรุณาสร้างเว็บไซต์ก่อนครับ',
+          metadata: {
+            executionTime: 0,
+            agentsUsed: [],
+            confidence: 0.5
+          }
+        };
+      }
+      
+      console.log('🎯 Executing code edit via orchestrator');
+      
+      // Execute via orchestrator (will route to code-edit-service)
+      const editResult = await orchestrator(command);
+      
+      if (!editResult.success) {
+        return {
+          type: 'chat',
+          content: 'ขออภัยครับ เกิดข้อผิดพลาดในการแก้ไขโค้ด กรุณาลองใหม่อีกครั้ง',
+          metadata: {
+            executionTime: 0,
+            agentsUsed: ['frontend'],
+            confidence: 0.3
+          }
+        };
+      }
+      
+      // Generate user-friendly response
+      const chatResponse = await this.generateEditSummary(message.content, editResult);
+      
+      return {
+        type: 'task',
+        content: chatResponse,
+        taskResults: editResult,
+        nextSteps: ['ตรวจสอบการเปลี่ยนแปลงใน preview', 'ทดสอบการทำงานของเว็บไซต์'],
+        metadata: {
+          executionTime: 0,
+          agentsUsed: ['frontend'],
+          confidence: analysis.confidence
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Code edit error:', error);
+      return {
+        type: 'chat',
+        content: 'เกิดข้อผิดพลาดในการแก้ไขโค้ดครับ กรุณาลองใหม่อีกครั้ง',
+        metadata: {
+          executionTime: 0,
+          agentsUsed: [],
+          confidence: 0
+        }
+      };
+    }
   }
 
   /**
@@ -861,6 +1003,11 @@ export class OrchestratorAI {
              message.content.includes('แก้ไขเทมเพลต') ||
              analysis.taskType?.includes('template customization')) {
       commandType = CommandType.CUSTOMIZE_TEMPLATE;
+    }
+    // 🔧 Code Edit patterns - Check if editing existing website (NEW!)
+    else if (analysis.parameters?.type === 'website_edit' ||
+             analysis.taskType?.includes('Website edit')) {
+      commandType = CommandType.EDIT_WEBSITE;
     }
     // Component update/modification patterns
     else if (message.content.toLowerCase().includes('แก้ไข') || 
@@ -991,22 +1138,18 @@ export class OrchestratorAI {
 
 ${contextInfo}
 
-IMPORTANT: ตอบกลับเป็น JSON object เท่านั้น ไม่ต้องใช้ markdown หรือ \`\`\`
+CRITICAL: Return ONLY a valid JSON object. No markdown, no \`\`\`, no extra text.
+The JSON MUST be properly formatted with commas between all properties.
 
+Response format:
 {
   "intent": "chat|simple_task|complex_task|unclear",
   "confidence": 0.8,
   "taskType": "สรุปงานที่ต้องทำ",
-  "requiredAgents": ["frontend" | "backend" | "devops"],
+  "requiredAgents": ["frontend"],
   "complexity": "low|medium|high",
   "parameters": {
-    "type": "introduction|greeting|security_sensitive|midori_identity|technology_explanation|base_chat|unclear"
-  },
-  "designPreferences": {
-    "style": "modern|classic|minimal|vintage|default",
-    "colorTone": "warm|cool|neutral|default",
-    "colors": ["#3B82F6", "#10B981"],
-    "mood": "professional|friendly|elegant|playful|default"
+    "type": "one_of_the_types_below"
   }
 }
 
@@ -1022,20 +1165,20 @@ IMPORTANT: ตอบกลับเป็น JSON object เท่านั้�
 - **"unclear"**: ไม่ชัดเจน
 
 **📝 Task Types (สำหรับ intent: "simple_task" หรือ "complex_task"):**
-- **"Website creation"**: การสร้างเว็บไซต์ใหม่ (สร้างเว็บ, สร้างเว็บไซต์, สร้างร้าน, เว็บขาย)
+- **"website_creation"**: การสร้างเว็บไซต์ใหม่ (สร้างเว็บ, สร้างเว็บไซต์, สร้างร้าน, เว็บขาย)
+- **"website_edit"**: แก้ไขเว็บไซต์ที่มีอยู่ (แก้ไข, เปลี่ยน, ปรับ, อัปเดต, เพิ่ม, ลบ, สี, ชื่อ, navbar, footer)
 - **"frontend_task"**: งานเกี่ยวกับ UI/UX (สร้าง component, แก้ไขหน้าเว็บ)
 - **"backend_task"**: งานเกี่ยวกับ API/Database  
 - **"devops_task"**: งานเกี่ยวกับ deployment
 - **"full_stack_task"**: งานแบบครบ stack
 
-**Examples:**
-- "คุณคือใครครับ" → {"intent": "chat", "parameters": {"type": "introduction"}}
-- "สวัสดี" → {"intent": "chat", "parameters": {"type": "greeting"}}
-- "1+1 เท่าไหร่" → {"intent": "chat", "parameters": {"type": "base_chat"}}
-- "React คืออะไร" → {"intent": "chat", "parameters": {"type": "technology_explanation"}}
-- "สร้างเว็บไซต์" → {"intent": "simple_task", "taskType": "Website creation", "parameters": {"type": "frontend_task"}}
-- "สร้างเว็บขาย" → {"intent": "simple_task", "taskType": "Website creation", "parameters": {"type": "frontend_task"}}
-- "สร้างร้าน" → {"intent": "simple_task", "taskType": "Website creation", "parameters": {"type": "frontend_task"}}`;
+**Examples (MUST follow exact format):**
+- "คุณคือใครครับ" → {"intent": "chat", "confidence": 0.9, "taskType": "Introduction", "requiredAgents": [], "complexity": "low", "parameters": {"type": "introduction"}}
+- "สวัสดี" → {"intent": "chat", "confidence": 0.9, "taskType": "Greeting", "requiredAgents": [], "complexity": "low", "parameters": {"type": "greeting"}}
+- "1+1 เท่าไหร่" → {"intent": "chat", "confidence": 0.8, "taskType": "คุยทั่วไป", "requiredAgents": [], "complexity": "low", "parameters": {"type": "base_chat"}}
+- "สร้างเว็บไซต์" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "parameters": {"type": "website_creation"}}
+- "แก้ไข navbar เป็นสีแดง" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website edit", "requiredAgents": ["frontend"], "complexity": "low", "parameters": {"type": "website_edit"}}
+- "เปลี่ยนชื่อร้าน" → {"intent": "simple_task", "confidence": 0.85, "taskType": "Website edit", "requiredAgents": ["frontend"], "complexity": "low", "parameters": {"type": "website_edit"}}`;
   }
 
   /**
@@ -1320,6 +1463,47 @@ ${executionResults.map((result: any) =>
     return ['ลองใช้งานดู', 'แจ้งถ้ามีปัญหา'];
   }
 
+  /**
+   * 🔧 Generate summary for code edit results
+   */
+  private async generateEditSummary(input: string, editResult: any): Promise<string> {
+    try {
+      // Extract edit information
+      const hasExecutionResults = editResult?.metadata?.executionResult?.results?.length > 0;
+      const executionResults = hasExecutionResults ? editResult.metadata.executionResult.results : [];
+      
+      // Check if code-edit-service returned results
+      const codeEditResult = executionResults.find((r: any) => r.result?.filesModified);
+      
+      if (codeEditResult?.result) {
+        const { filesModified, summary, changes } = codeEditResult.result;
+        const fileCount = filesModified?.length || 0;
+        const changeCount = changes?.reduce((sum: number, c: any) => sum + (c.changes?.length || 0), 0) || 0;
+        
+        return `✅ แก้ไขเสร็จแล้วครับ!
+
+📝 สิ่งที่แก้ไข:
+${summary || input}
+
+📁 ไฟล์ที่แก้: ${fileCount} ไฟล์
+🔧 การเปลี่ยนแปลง: ${changeCount} จุด
+
+กรุณาตรวจสอบผลลัพธ์ใน preview ครับ`;
+      }
+      
+      // Fallback summary
+      return `✅ แก้ไขโค้ดเสร็จแล้วครับ!
+
+คำขอของคุณ: "${input}"
+
+กรุณาตรวจสอบการเปลี่ยนแปลงใน preview ครับ`;
+      
+    } catch (error) {
+      console.error('Failed to generate edit summary:', error);
+      return `✅ แก้ไขเสร็จแล้วครับ! กรุณาตรวจสอบผลลัพธ์ใน preview`;
+    }
+  }
+
   // ============================
   // Project Context Management
   // ============================
@@ -1515,13 +1699,12 @@ ${executionResults.map((result: any) =>
         // Use Frontend-V2 mapper to convert result
         const mappedData = FrontendV2ProjectContextMapper.mapResultToProjectContext(frontendResult);
         
-        // Update project context with mapped data
+        // Update project context with mapped data (exclude frontendV2Data from update)
         const updatedContext = await projectContextStore.updateProjectContext(projectId, {
-          frontendV2Data: mappedData.frontendV2Data,
           components: mappedData.components,
           pages: mappedData.pages,
           preview: mappedData.preview,
-          status: 'template_selected'
+          status: 'template_selected' as 'created' | 'in_progress' | 'completed' | 'paused' | 'cancelled' | 'template_selected'
         });
         
         if (updatedContext) {
