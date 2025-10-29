@@ -1,15 +1,21 @@
 import React from 'react';
-import { CheckCircle, ExternalLink, Loader, Rocket } from 'lucide-react';
-import { DeploymentSuccess } from '@/hooks/useDeployment';
+import { Loader, Rocket, PenLine, Wallpaper, Monitor, Tablet, Smartphone } from 'lucide-react';
+
+type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
 interface PreviewFooterProps {
   filesCount: number;
   status: string;
   sandboxId: string | null;
-  deploymentSuccess: DeploymentSuccess | null;
   isDeploying: boolean;
   hasSnapshot: boolean;
   onDeploy: () => void;
+  isCodeEditorVisible: boolean;
+  onToggleEditor: () => void;
+  editMode?: boolean;
+  onToggleEditMode?: () => void;
+  deviceType: DeviceType;
+  onDeviceChange: (device: DeviceType) => void;
 }
 
 /**
@@ -19,70 +25,110 @@ export function PreviewFooter({
   filesCount,
   status,
   sandboxId,
-  deploymentSuccess,
   isDeploying,
   hasSnapshot,
   onDeploy,
+  isCodeEditorVisible,
+  onToggleEditor,
+  editMode,
+  onToggleEditMode,
+  deviceType,
+  onDeviceChange,
 }: PreviewFooterProps) {
   return (
-    <div className="bg-white border-t border-gray-200 p-4">
+    <div className="bg-gradient-to-r from-[#8EE8E7] to-[#3C593C] border-t border-gray-200 p-4">
       <div className="flex items-center justify-between">
         {/* Left Section - Action Buttons */}
-        <div className="flex items-center space-x-3">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
-            Invite
-          </button>
-          <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium">
-            Upgrade
+        <div className="flex items-center space-x-2 ">
+          {/* Toggle Editor Button */}
+          <button
+            onClick={onToggleEditor}
+            className={`px-4 py-2 text-sm rounded-md transition-all font-bold focus:outline-none flex items-center space-x-2 hover:outline-3 hover:outline-[#75c9a7]
+              transform ${
+              isCodeEditorVisible
+                ? 'bg-[#79b426] text-[#e5e48f] hover:shadow-md hover:-translate-y-0.5 '
+                : 'bg-[#8aac8a] text-[#384538] hover:shadow-xl hover:-translate-y-0.5 shadow-lg'
+            }`}
+          >
+            <PenLine className="w-4 h-4" />
+            <span>{isCodeEditorVisible ? ' HideEditor ' : 'CodeEditor'}</span>
           </button>
 
-          {/* Deployment Status */}
-          {deploymentSuccess ? (
-            <a
-              href={deploymentSuccess.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center space-x-2"
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>Deployed: {deploymentSuccess.subdomain}</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          ) : (
+          {/* 🎨 Visual Edit Mode Toggle */}
+          {onToggleEditMode && (
             <button
-              onClick={onDeploy}
-              disabled={!hasSnapshot || isDeploying}
-              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={onToggleEditMode}
+                className={`px-4 py-2 text-sm rounded-md transition-all font-bold focus:outline-none flex items-center space-x-2 hover:outline-3 hover:outline-[#75c9a7]
+                transform ${
+                 editMode
+                   ? 'bg-[#79b426] text-[#e5e48f] hover:shadow-md hover:-translate-y-0.5'
+                   : 'bg-[#8aac8a] text-[#384538] shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+               }`}
             >
-              {isDeploying ? (
-                <>
-                  <Loader className="w-4 h-4 animate-spin" />
-                  <span>กำลัง Deploy...</span>
-                </>
-              ) : (
-                <>
-                  <Rocket className="w-4 h-4" />
-                  <span>Deploy</span>
-                </>
-              )}
+              <Wallpaper className="w-4 h-4" />
+              <span>{editMode ? 'VisualEditor ' : 'VisualEditor '}</span>
             </button>
           )}
-        </div>
-
-        {/* Right Section - Status Info */}
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <div>
-            <span className="font-medium">Files:</span> {filesCount} |
-            <span className="font-medium ml-2">Status:</span> {status}
-            {sandboxId && (
+          
+        
+          {/* Deploy Button */}
+          <button
+            onClick={onDeploy}
+            disabled={!hasSnapshot || isDeploying}
+            className="px-4 py-2 rounded-md transition-colors transform transition-all text-sm font-bold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 bg-[#8aac8a] text-[#384538] hover:outline-3 hover:outline-[#75c9a7]"
+          >
+            {isDeploying ? (
               <>
-                {' '}
-                | <span className="font-medium ml-2">Sandbox:</span>{' '}
-                {sandboxId.substring(0, 12)}...
+                <Loader className="w-4 h-4 animate-spin" />
+                <span>กำลัง Deploy... </span>
+              </>
+            ) : (
+              <>
+                <Rocket className="w-4 h-4" />
+                <span>Deploy</span>
               </>
             )}
+          </button>
+          
+          {/* Device Type Selector */}
+          <div className="flex bg-[#8aac8a] rounded-lg p-1 ml-2">
+            <button
+              onClick={() => onDeviceChange('desktop')}
+              className={`p-2 rounded-md transition-colors ${
+                deviceType === 'desktop'
+                  ? 'bg-[#79b426] text-[#e5e48f] hover:shadow-md hover:-translate-y-0.5'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Monitor className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onDeviceChange('tablet')}
+              className={`p-2 rounded-md transition-colors ${
+                deviceType === 'tablet'
+                  ? 'bg-[#79b426] text-[#e5e48f] hover:shadow-md hover:-translate-y-0.5'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Tablet className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onDeviceChange('mobile')}
+              className={`p-2 rounded-md transition-colors ${
+                deviceType === 'mobile'
+                  ? 'bg-[#79b426] text-[#e5e48f] hover:shadow-md hover:-translate-y-0.5'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Smartphone className="w-4 h-4" />
+            </button>
+
           </div>
+          
         </div>
+        <div className='pr-8'>
+            <img src="/img/projects-lotus-crop.png" alt="Projects Lotus" className="h-12 w-auto object-contain opacity-90" aria-hidden="true" />
+          </div>
       </div>
     </div>
   );

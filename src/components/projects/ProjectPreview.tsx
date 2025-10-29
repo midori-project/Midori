@@ -49,7 +49,7 @@ const loadingMessages = [
 const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
   // ==================== Local State ====================
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
-  const [isCodeEditorVisible, setIsCodeEditorVisible] = useState(true);
+  const [isCodeEditorVisible, setIsCodeEditorVisible] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [isDeployDialogOpen, setIsDeployDialogOpen] = useState(false);  // 🆕 Dialog state
 
@@ -186,23 +186,15 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
         isLoading={isLoadingData}
         hasSnapshot={hasSnapshot}
         status={status}
-        deviceType={deviceType}
         wsConnected={wsConnected}
         previewUrl={previewUrl ?? null}
         dataError={dataError}
         filesCount={templateFiles.length}
         loadingMessage={loading ? getCurrentLoadingMessage() : 'Start Preview'}
-        onDeviceChange={setDeviceType}
         onRefresh={refetchProjectData}
         onStartPreview={startPreview}
         onStopPreview={stopPreview}
-        onToggleEditor={() => setIsCodeEditorVisible(!isCodeEditorVisible)}
-        onDeploy={() => setIsDeployDialogOpen(true)}  // 🆕 เปิด dialog แทนที่จะ deploy ตรงๆ
-        isDeploying={isDeploying}
-        isCodeEditorVisible={isCodeEditorVisible}
-        generateSubdomain={generateSubdomain}
-        editMode={editMode}
-        onToggleEditMode={toggleEditMode}
+        deploymentSuccess={deploymentSuccess}
       />
 
       {/* Content */}
@@ -227,10 +219,15 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
         filesCount={templateFiles.length}
         status={status}
         sandboxId={sandboxId ?? null}
-        deploymentSuccess={deploymentSuccess}
         isDeploying={isDeploying}
         hasSnapshot={hasSnapshot}
         onDeploy={() => setIsDeployDialogOpen(true)}  // 🆕 เปิด dialog ใน footer ด้วย
+        isCodeEditorVisible={isCodeEditorVisible}
+        onToggleEditor={() => setIsCodeEditorVisible(!isCodeEditorVisible)}
+        editMode={editMode}
+        onToggleEditMode={toggleEditMode}
+        deviceType={deviceType}
+        onDeviceChange={setDeviceType}
       />
 
       {/* Toast Notifications */}
