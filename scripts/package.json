@@ -1,0 +1,20 @@
+{
+  "name": "daily-token-reset-script",
+  "version": "1.0.0",
+  "description": "Script for daily token reset using Supabase",
+  "main": "daily-token-reset.js",
+  "scripts": {
+    "reset": "node daily-token-reset.js reset",
+    "check": "node daily-token-reset.js check",
+    "test": "node daily-token-reset.js check"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
+

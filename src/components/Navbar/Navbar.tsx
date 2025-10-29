@@ -18,6 +18,11 @@ export function Navbar() {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
+  const openTokenDashboard = () => {
+    // เปิด Token Dashboard Modal ผ่าน global state หรือ event
+    window.dispatchEvent(new CustomEvent('openTokenDashboard'));
+    setIsUserMenuOpen(false);
+  };
 
   const handleLogout = async () => {
     try {
@@ -156,13 +161,12 @@ export function Navbar() {
                 >
                   Workspace
                 </Link>
-                <Link
-                  href="/dashboard"
-                  className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                  onClick={() => setIsUserMenuOpen(false)}
+                <button
+                  onClick={openTokenDashboard}
+                  className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                 >
                   Token Dashboard
-                </Link>
+                </button>
                 <Link
                   href="/profile"
                   className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
@@ -324,6 +328,7 @@ export function Navbar() {
           </div>,
           document.body
         )}
+
     </nav>
   );
 }

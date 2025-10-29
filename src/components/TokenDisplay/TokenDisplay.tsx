@@ -40,28 +40,9 @@ export default function TokenDisplay({
       <div className="flex items-center space-x-1">
         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
         <span className="text-sm font-medium text-gray-700">
-          {tokenInfo.balance} Token
+          {parseFloat(tokenInfo.balance.toString()) === 0 ? '0' : parseFloat(tokenInfo.balance.toString())} Token
         </span>
       </div>
-
-      {/* Status Indicator */}
-      <div className={`text-xs px-2 py-1 rounded-full ${
-        tokenInfo.canCreateProject 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-red-100 text-red-800'
-      }`}>
-        {tokenInfo.canCreateProject ? 'พร้อมใช้งาน' : 'Token ไม่เพียงพอ'}
-      </div>
-
-      {/* Dashboard Link */}
-      {showDashboardLink && (
-        <Link 
-          href="/dashboard" 
-          className="text-xs text-blue-600 hover:text-blue-800 underline"
-        >
-          จัดการ Token
-        </Link>
-      )}
     </div>
   );
 }

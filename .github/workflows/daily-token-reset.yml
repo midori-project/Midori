@@ -1,0 +1,247 @@
+name: Daily Token Reset
+
+on:
+  schedule:
+    # รันทุก 0.00 น. UTC (7.00 น. ไทย)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # อนุญาตให้รันด้วยตนเอง
+
+jobs:
+  reset-tokens:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          npm install @supabase/supabase-js
+
+      - name: Reset Daily Tokens
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "🕛 Starting daily token reset..."
+          
+          # สร้าง script สำหรับรีเซ็ต Token
+          cat > reset-tokens.js << 'EOF'
+          const { createClient } = require('@supabase/supabase-js');
+          
+          async function resetDailyTokens() {
+            try {
+              // Initialize Supabase client
+              const supabase = createClient(
+                process.env.SUPABASE_URL,
+                process.env.SUPABASE_SERVICE_ROLE_KEY
+              );
+              
+              console.log('🔍 Checking wallets that need reset...');
+              
+              // 1. หา STANDARD wallets ที่ต้องรีเซ็ต
+              const { data: wallets, error: walletsError } = await supabase
+                .from('token_wallet')
+                .select(`
+                  id,
+                  user_id,
+                  balance_tokens,
+                  last_token_reset,
+                  user:auth.users(email)
+                `)
+                .eq('wallet_type', 'STANDARD')
+                .eq('is_active', true)
+                .or('last_token_reset.is.null,last_token_reset.lt.' + new Date().toISOString().split('T')[0]);
+              
+              if (walletsError) {
+                throw new Error(`Failed to fetch wallets: ${walletsError.message}`);
+              }
+              
+              if (!wallets || wallets.length === 0) {
+                console.log('✅ No wallets need reset');
+                return {
+                  success: true,
+                  resetCount: 0,
+                  message: 'ไม่จำเป็นต้องรีเซ็ต Token ในขณะนี้'
+                };
+              }
+              
+              console.log(`📊 Found ${wallets.length} wallets to reset`);
+              
+              let resetCount = 0;
+              const errors = [];
+              
+              // 2. รีเซ็ตแต่ละ wallet
+              for (const wallet of wallets) {
+                try {
+                  console.log(`🔄 Resetting wallet ${wallet.id} for user ${wallet.user?.email || wallet.user_id}`);
+                  
+                  // อัปเดต wallet
+                  const { error: updateError } = await supabase
+                    .from('token_wallet')
+                    .update({
+                      balance_tokens: 5,
+                      last_token_reset: new Date().toISOString(),
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('id', wallet.id);
+                  
+                  if (updateError) {
+                    throw new Error(`Failed to update wallet: ${updateError.message}`);
+                  }
+                  
+                  // บันทึก transaction
+                  const { error: transactionError } = await supabase
+                    .from('token_transaction')
+                    .insert({
+                      user_id: wallet.user_id,
+                      wallet_id: wallet.id,
+                      amount: 5,
+                      type: 'DAILY_RESET',
+                      description: 'Daily token reset',
+                      metadata: {
+                        reset_date: new Date().toISOString(),
+                        wallet_type: 'STANDARD'
+                      }
+                    });
+                  
+                  if (transactionError) {
+                    console.warn(`⚠️ Failed to log transaction for wallet ${wallet.id}: ${transactionError.message}`);
+                  }
+                  
+                  resetCount++;
+                  console.log(`✅ Reset successful for wallet ${wallet.id}`);
+                  
+                } catch (error) {
+                  console.error(`❌ Failed to reset wallet ${wallet.id}:`, error.message);
+                  errors.push({
+                    walletId: wallet.id,
+                    userId: wallet.user_id,
+                    error: error.message
+                  });
+                }
+              }
+              
+              const result = {
+                success: true,
+                resetCount,
+                message: `รีเซ็ต Token สำเร็จสำหรับ ${resetCount} wallets`,
+                errors: errors.length > 0 ? errors : undefined,
+                timestamp: new Date().toISOString()
+              };
+              
+              console.log('📊 Reset Summary:', JSON.stringify(result, null, 2));
+              return result;
+              
+            } catch (error) {
+              console.error('❌ Daily reset failed:', error);
+              return {
+                success: false,
+                resetCount: 0,
+                error: error.message,
+                timestamp: new Date().toISOString()
+              };
+            }
+          }
+          
+          // รัน function
+          resetDailyTokens()
+            .then(result => {
+              console.log('🎯 Final Result:', JSON.stringify(result, null, 2));
+              process.exit(result.success ? 0 : 1);
+            })
+            .catch(error => {
+              console.error('💥 Script failed:', error);
+              process.exit(1);
+            });
+          EOF
+          
+          # รัน script
+          node reset-tokens.js
+
+      - name: Verify Reset
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "🔍 Verifying reset status..."
+          
+          # สร้าง script สำหรับตรวจสอบ
+          cat > check-status.js << 'EOF'
+          const { createClient } = require('@supabase/supabase-js');
+          
+          async function checkResetStatus() {
+            try {
+              const supabase = createClient(
+                process.env.SUPABASE_URL,
+                process.env.SUPABASE_SERVICE_ROLE_KEY
+              );
+              
+              // นับจำนวน wallets ที่ยังต้องรีเซ็ต
+              const { count: pendingCount, error: countError } = await supabase
+                .from('token_wallet')
+                .select('*', { count: 'exact', head: true })
+                .eq('wallet_type', 'STANDARD')
+                .eq('is_active', true)
+                .or('last_token_reset.is.null,last_token_reset.lt.' + new Date().toISOString().split('T')[0]);
+              
+              if (countError) {
+                throw new Error(`Failed to check status: ${countError.message}`);
+              }
+              
+              // นับจำนวน wallets ที่รีเซ็ตวันนี้
+              const { count: resetTodayCount, error: todayError } = await supabase
+                .from('token_transaction')
+                .select('*', { count: 'exact', head: true })
+                .eq('type', 'DAILY_RESET')
+                .gte('created_at', new Date().toISOString().split('T')[0]);
+              
+              if (todayError) {
+                console.warn(`⚠️ Failed to count today's resets: ${todayError.message}`);
+              }
+              
+              const status = {
+                shouldReset: pendingCount > 0,
+                pendingCount: pendingCount || 0,
+                resetTodayCount: resetTodayCount || 0,
+                message: pendingCount > 0 ? 'มี wallets ที่ต้องรีเซ็ต' : 'ไม่จำเป็นต้องรีเซ็ต',
+                timestamp: new Date().toISOString()
+              };
+              
+              console.log('📊 Status Check:', JSON.stringify(status, null, 2));
+              return status;
+              
+            } catch (error) {
+              console.error('❌ Status check failed:', error);
+              return {
+                shouldReset: false,
+                error: error.message,
+                timestamp: new Date().toISOString()
+              };
+            }
+          }
+          
+          checkResetStatus()
+            .then(result => {
+              console.log('🎯 Status Result:', JSON.stringify(result, null, 2));
+              process.exit(0);
+            })
+            .catch(error => {
+              console.error('💥 Status check failed:', error);
+              process.exit(1);
+            });
+          EOF
+          
+          # รัน status check
+          node check-status.js
+
+      - name: Send Notification (Optional)
+        if: always()
+        run: |
+          echo "📧 Daily token reset workflow completed"
+          echo "Check the logs above for detailed results"

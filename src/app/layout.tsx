@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ConditionalNavbar } from "@/components/Layout/ConditionalNavbar";
 import { ConditionalLayout } from "@/components/Layout/ConditionalLayout";
 import { ConditionalFooter } from "@/components/Layout/ConditionalFooter";
+import TokenDashboardProvider from "@/components/TokenDashboard/TokenDashboardProvider";
 
 
 const geistSans = Geist({
@@ -52,6 +53,7 @@ export default function RootLayout({
               {children}
             </ConditionalLayout>
             <ConditionalFooter />
+            <TokenDashboardProvider />
           </div>
         </AuthProvider>
       </body>
