@@ -6,6 +6,8 @@ interface Message {
   id: string;
   role: "system" | "assistant" | "user";
   text: string;
+  codeChanges?: any;
+  type?: string;
 }
 
 interface InfoChatClientProps {
@@ -57,20 +59,70 @@ export default function InfoChatClient({ projectId }: InfoChatClientProps) {
     setMessages((s) => [...s, newMsg]);
     setValue("");
     
-    // TODO: Implement new AI flow integration here
-    // For now, just show a placeholder response
-    setTimeout(() => {
+    try {
+      // ส่งไปยัง API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          userId: 'current-user',
+          context: { currentProject: projectId }
+        })
+      });
+      
+      const result = await response.json();
+      
+      // แสดงผลลัพธ์
       const reply: Message = {
         id: `assistant-${Date.now()}-${Math.random()}`,
         role: "assistant",
-        text: "ขอบคุณสำหรับข้อความของคุณ ระบบ AI ใหม่กำลังพัฒนาอยู่",
+        text: result.content,
+        codeChanges: result.codeChanges,
+        type: result.type
       };
+      
       setMessages((s) => [...s, reply]);
+      
+      // ถ้าเป็น code edit ให้อัปเดต preview
+      if (result.type === 'code_edit' && result.codeChanges) {
+        await updatePreview(result.codeChanges);
+      }
+      
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMsg: Message = {
+        id: `assistant-${Date.now()}-${Math.random()}`,
+        role: "assistant",
+        text: "❌ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง"
+      };
+      setMessages((s) => [...s, errorMsg]);
+    } finally {
       setIsSending(false);
-    }, 1000);
+    }
   };
 
-
+  const updatePreview = async (codeChanges: any[]) => {
+    try {
+      // ส่งการเปลี่ยนแปลงไปยัง preview system
+      const response = await fetch('/api/preview/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          changes: codeChanges
+        })
+      });
+      
+      if (response.ok) {
+        // แสดง notification
+        console.log('✅ Website updated successfully!');
+        // TODO: Add proper notification system
+      }
+    } catch (error) {
+      console.error('Preview update error:', error);
+    }
+  };
 
   return (
     <div className="relative rounded-xl">
@@ -103,6 +155,25 @@ export default function InfoChatClient({ projectId }: InfoChatClientProps) {
                       <div className="max-w-[65ch] mx-auto whitespace-pre-wrap break-words break-all">
                         {m.text}
                       </div>
+                      
+                      {/* Code Changes Display */}
+                      {m.type === 'code_edit' && m.codeChanges && m.codeChanges.length > 0 && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="text-xs font-semibold text-blue-800 mb-2">
+                            🔧 Code Changes Applied:
+                          </div>
+                          {m.codeChanges.map((change: any, index: number) => (
+                            <div key={index} className="text-xs text-blue-700 mb-1">
+                              📁 {change.filePath}
+                              {change.changes && change.changes.map((c: any, i: number) => (
+                                <div key={i} className="ml-2 text-gray-600">
+                                  • {c.reason}
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
