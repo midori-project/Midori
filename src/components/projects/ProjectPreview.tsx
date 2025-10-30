@@ -32,6 +32,7 @@ interface ProjectPreviewProps {
   projectId: string;
   userId?: string; // ✅ เพิ่ม userId เพื่อเช็คว่าเป็นเจ้าของโปรเจ็คหรือไม่
   onToggleChat?: () => void; // ✅ เพิ่ม prop สำหรับ toggle chat sidebar
+  isChatOpen?: boolean; // ✅ เพิ่ม prop สำหรับเช็คสถานะ chat
 }
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
@@ -48,7 +49,7 @@ const loadingMessages = [
   'กินข้าวผัดหมู...',
 ];
 
-const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId, userId, onToggleChat }) => {
+const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId, userId, onToggleChat, isChatOpen }) => {
   // ==================== Local State ====================
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
   const [isCodeEditorVisible, setIsCodeEditorVisible] = useState(false);
@@ -236,6 +237,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId, userId, onTo
         onDeviceChange={setDeviceType}
         isOwner={isOwner} // ✅ ส่ง isOwner prop
         onToggleChat={onToggleChat} // ✅ Toggle chat
+        isChatOpen={isChatOpen} // ✅ ส่งสถานะ chat
       />
 
       {/* Toast Notifications */}

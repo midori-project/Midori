@@ -59,7 +59,7 @@ export function PreviewContent({
   };
 
   return (
-    <div className="flex-1 overflow-hidden bg-[#407c4c] opacity-90 p-4">
+    <div className="flex-1 overflow-hidden bg-[#407c4c] opacity-90 p-2 sm:p-4">
       {/* Loading State */}
       {isLoading ? (
         <LoadingState />
@@ -79,13 +79,15 @@ export function PreviewContent({
       ) : (
         /* Main Content - Code Editor + Live Preview */
         <div
-          className={`grid gap-4 h-full ${
-            isCodeEditorVisible ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'
+          className={`grid gap-2 sm:gap-4 h-full ${
+            isCodeEditorVisible 
+              ? 'grid-cols-1 xl:grid-cols-3' 
+              : 'grid-cols-1'
           }`}
         >
           {/* Code Editor Section */}
           {isCodeEditorVisible && (
-            <div className="lg:col-span-2">
+            <div className="xl:col-span-2 h-[50vh] xl:h-full">
               <CodeEditor
                 sandboxId={sandboxId}
                 projectId={projectId}
@@ -96,9 +98,13 @@ export function PreviewContent({
           )}
 
           {/* Live Preview Section */}
-          <div className={isCodeEditorVisible ? 'lg:col-span-1' : 'col-span-1'}>
-            <div className="h-full  rounded-lg  overflow-hidden">
-              <div className="h-full">
+          <div className={`${
+            isCodeEditorVisible 
+              ? 'xl:col-span-1 h-[50vh] xl:h-full' 
+              : 'col-span-1 h-full'
+          }`}>
+            <div className="h-full rounded-lg overflow-hidden">
+              <div className="h-full flex items-center justify-center">
                 {previewUrl ? (
                   <div
                     className="w-full h-full"
@@ -110,7 +116,7 @@ export function PreviewContent({
                   >
                     <iframe
                       src={previewUrl}
-                      className="w-full h-full border-0"
+                      className="w-full h-full border-0 rounded-lg"
                       title="Project Preview"
                       data-preview="true"
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
@@ -125,9 +131,9 @@ export function PreviewContent({
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500">
-                    <div className="text-center">
-                      <div className="text-2xl mb-2">🔄</div>
-                      <div>Loading preview...</div>
+                    <div className="text-center px-4">
+                      <div className="text-2xl sm:text-3xl mb-2">🔄</div>
+                      <div className="text-sm sm:text-base">Loading preview...</div>
                     </div>
                   </div>
                 )}
