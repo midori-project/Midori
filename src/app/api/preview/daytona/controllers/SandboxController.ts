@@ -22,10 +22,10 @@ export class SandboxController {
   }
 
   /**
-   * Create new sandbox
+   * Create new sandbox or reuse existing running sandbox
    */
   async createSandbox(body: any) {
-    console.log('🚀 POST /api/preview/daytona - Creating new sandbox')
+    console.log('🚀 POST /api/preview/daytona - Creating or reusing sandbox')
     
     const { files, projectId, userId } = body
     
@@ -44,7 +44,80 @@ export class SandboxController {
       throw new Error(validation.error)
     }
     
-    // Create sandbox with dynamic files, projectId, and userId
+    // 1) เช็ค DB หา sandbox เดิมที่ยัง running โดยผูกกับ projectId/userId
+    if (projectId || userId) {
+      console.log(`🔍 Checking for existing running sandbox...`)
+      
+      const existing = await prisma.sandboxState.findFirst({
+        where: {
+          status: 'running',
+          ...(projectId ? { projectId } : {}),
+          ...(userId ? { userId } : {}),
+        },
+        orderBy: { updatedAt: 'desc' },
+      })
+
+      if (existing) {
+        console.log(`📌 Found existing sandbox: ${existing.sandboxId}`)
+        
+        // 2) ยืนยันว่ามีอยู่จริงบน Daytona
+        const existsOnDaytona = await this.sandboxService.sandboxExists(existing.sandboxId)
+        
+        if (existsOnDaytona) {
+          console.log(`✅ Sandbox ${existing.sandboxId} is still running on Daytona, reusing...`)
+          
+          // 3) เช็คและ restart dev server ถ้าจำเป็น
+          const devServerRunning = await this.sandboxService.ensureDevServerRunning(existing.sandboxId)
+          
+          if (!devServerRunning) {
+            console.log(`⚠️ Failed to ensure dev server is running, will create new sandbox`)
+            // Mark as error and create new one
+            await prisma.sandboxState.update({
+              where: { sandboxId: existing.sandboxId },
+              data: { status: 'error', error: 'Dev server failed to start', updatedAt: new Date() },
+            })
+          } else {
+            // 4) อัปเดต heartbeat + ส่งคืน sandbox เดิม
+            const updated = await this.updateSandboxStatus(
+              existing.sandboxId,
+              'running',
+              existing.previewUrl ?? undefined,
+              existing.previewToken ?? undefined,
+              undefined,
+              projectId,
+              userId
+            )
+            
+            // Show current stats
+            const stats = this.cleanupService.getStats()
+            console.log(`📊 Current sandbox stats:`, stats)
+            
+            return {
+              sandboxId: updated.sandboxId,
+              url: updated.previewUrl,
+              token: updated.previewToken,
+              status: updated.status,
+              projectId,
+              userId,
+              reused: true,
+            }
+          }
+        } else {
+          console.log(`⚠️ Sandbox ${existing.sandboxId} not found on Daytona, marking as stopped`)
+          
+          // ถ้า DB มีแต่ Daytona ไม่มี → mark stopped
+          await prisma.sandboxState.update({
+            where: { sandboxId: existing.sandboxId },
+            data: { status: 'stopped', updatedAt: new Date() },
+          })
+        }
+      } else {
+        console.log(`🆕 No existing running sandbox found`)
+      }
+    }
+    
+    // 4) ไม่พบที่ reuse → สร้างใหม่ตามเดิม
+    console.log(`🏗️ Creating new sandbox...`)
     const result = await this.sandboxService.createSandbox(files)
     
     // Update sandbox status in database (primary) and cache (secondary)
@@ -63,7 +136,8 @@ export class SandboxController {
     return {
       ...result,
       projectId,
-      userId
+      userId,
+      reused: false,
     }
   }
 

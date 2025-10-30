@@ -70,8 +70,6 @@ export class CleanupService {
   cleanupExpiredStates(): void {
     const startTime = Date.now()
     
-    console.log(`🧹 [EXPIRED CLEANUP] Starting expired states cleanup at ${new Date().toISOString()}`)
-    
     // Query expired states from database instead of memory
     const expiredThreshold = new Date(Date.now() - CLEANUP_CONFIG.MAX_AGE)
     prisma.sandboxState.findMany({
@@ -83,7 +81,6 @@ export class CleanupService {
       }
     }).then(async (expiredStates) => {
       if (expiredStates.length === 0) {
-        console.log('⏭️ [EXPIRED CLEANUP] No expired sandbox states found')
         return
       }
       
@@ -99,14 +96,10 @@ export class CleanupService {
             }
           })
           processedCount++
-          console.log(`📝 [EXPIRED CLEANUP] Marked expired sandbox state as stopped: ${state.sandboxId} (age: ${Math.round((Date.now() - (state.lastHeartbeatAt?.getTime() || state.createdAt.getTime())) / 60000)} minutes, status: ${state.status})`)
         } catch (error) {
           console.error(`❌ [EXPIRED CLEANUP] Failed to update expired state ${state.sandboxId}:`, error)
         }
       }
-      
-      const duration = Date.now() - startTime
-      console.log(`✅ [EXPIRED CLEANUP] Completed: processed ${processedCount}/${expiredStates.length} expired sandbox states in ${duration}ms`)
     }).catch(error => {
       console.error('❌ [EXPIRED CLEANUP] Failed to query expired states:', error)
     })
@@ -295,17 +288,11 @@ export class CleanupService {
             syncedCount++
           }
         } catch (error) {
-          console.error(`❌ [SYNC] Error checking sandbox ${dbState.sandboxId}:`, error)
         }
       }
       
-      if (updatedIds.length > 0) {
-        console.log(`📝 [SYNC] Updated non-existent to stopped: [${updatedIds.join(', ')}]`)
-      }
-
-      console.log(`✅ [SYNC] Completed: ${syncedCount} synced, ${removedCount} removed`)
+      
     } catch (error) {
-      console.error('❌ [SYNC] Failed to sync with Daytona:', error)
     }
   }
 
@@ -313,10 +300,6 @@ export class CleanupService {
    * Cleanup stopped sandboxes (ไม่ลบข้อมูลจากฐานข้อมูล)
    */
   cleanupStoppedSandboxes(): void {
-    const startTime = Date.now()
-    
-    console.log(`🧹 [STOPPED CLEANUP] Starting stopped sandboxes cleanup at ${new Date().toISOString()}`)
-    
     // Query stopped/error states from database instead of memory
     const stoppedThreshold = new Date(Date.now() - CLEANUP_CONFIG.STOPPED_TIMEOUT)
     prisma.sandboxState.findMany({
@@ -329,32 +312,17 @@ export class CleanupService {
       }
     }).then(async (stoppedStates) => {
       if (stoppedStates.length === 0) {
-        console.log('⏭️ [STOPPED CLEANUP] No stopped/error sandbox states found')
         return
       }
       
-      let processedCount = 0
-      const processedIds: string[] = []
-      
       for (const state of stoppedStates) {
         try {
-          const stoppedTime = Date.now() - (state.lastHeartbeatAt?.getTime() || state.createdAt.getTime())
-          processedIds.push(`${state.sandboxId}:${state.status}:${Math.round(stoppedTime / 60000)}m`)
-          
-          // ไม่ลบข้อมูล แต่ log ข้อมูลที่พบ
-          console.log(`📝 [STOPPED CLEANUP] Found stopped sandbox: ${state.sandboxId} (stopped for ${Math.round(stoppedTime / 60000)} minutes)`)
-          processedCount++
+          // ไม่ลบข้อมูล แค่นับจำนวน
+          // Do nothing, just count
         } catch (error) {
           console.error(`❌ [STOPPED CLEANUP] Failed to process stopped state ${state.sandboxId}:`, error)
         }
       }
-      
-      if (processedIds.length > 0) {
-        console.log(`📝 [STOPPED CLEANUP] Processed: [${processedIds.join(', ')}]`)
-      }
-
-      const duration = Date.now() - startTime
-      console.log(`✅ [STOPPED CLEANUP] Completed: processed ${processedCount}/${stoppedStates.length} stopped sandbox states in ${duration}ms`)
     }).catch(error => {
       console.error('❌ [STOPPED CLEANUP] Failed to query stopped states:', error)
     })

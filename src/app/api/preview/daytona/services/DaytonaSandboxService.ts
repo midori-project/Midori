@@ -111,6 +111,52 @@ export class DaytonaSandboxService {
   }
 
   /**
+   * Check if dev server is running and restart if needed
+   */
+  async ensureDevServerRunning(sandboxId: string): Promise<boolean> {
+    console.log(`🔍 [DEV SERVER] Checking dev server status for sandbox: ${sandboxId}`)
+    
+    try {
+      const sandbox = await this.daytona.get(sandboxId)
+      
+      // Create probe session if not exists
+      try {
+        await sandbox.process.createSession(SESSION_IDS.PROBE)
+      } catch (error) {
+        // Session might already exist, continue
+      }
+      
+      // Check if dev server is running
+      const devCheck = await sandbox.process.executeSessionCommand(SESSION_IDS.PROBE, {
+        command: COMMANDS.CHECK_DEV_RUNNING,
+        runAsync: false,
+      })
+      
+      const isDevRunning = !(devCheck.stdout || devCheck.output || '').includes('notrunning')
+      
+      if (isDevRunning) {
+        console.log(`✅ [DEV SERVER] Dev server is already running`)
+        return true
+      }
+      
+      console.log(`⚠️ [DEV SERVER] Dev server not running, restarting...`)
+      
+      // Restart dev server
+      await this.startDevServer(sandbox, '.')
+      
+      // Wait for it to be ready
+      await this.waitForReady(sandbox)
+      
+      console.log(`✅ [DEV SERVER] Dev server restarted successfully`)
+      return true
+      
+    } catch (error) {
+      console.error(`❌ [DEV SERVER] Failed to check/restart dev server:`, error)
+      return false
+    }
+  }
+
+  /**
    * Setup sandbox with project files and development environment
    */
   private async setupSandbox(sandbox: any, files: ProjectFile[]): Promise<void> {
