@@ -1071,16 +1071,16 @@ enum GateStatus {
 }
 
 enum ProjectType {
-  coffee_shop
   restaurant
-  e_commerce
-  portfolio
-  blog
-  landing_page
-  business
-  personal
-  healthcare
+  ecommerce
   hotel
+  bakery
+  academy
+  bookstore
+  healthcare
+  news
+  portfolio
+  travel
 }
 
 enum ProjectStatus {

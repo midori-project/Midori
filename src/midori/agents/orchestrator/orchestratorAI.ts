@@ -21,6 +21,7 @@ import { projectContextSync } from './sync/projectContextSync';
 import { ConversationService, type ConversationData, type MessageData } from './services/conversationService';
 import { FrontendV2ProjectContextMapper } from './mappers/frontendV2ProjectContextMapper';
 import { randomUUID } from 'crypto';
+import { BUSINESS_CATEGORIES } from '../frontend-v2/template-system/business-categories';
 
 // Create singleton instance
 const chatPromptLoader = ChatPromptLoader.getInstance();
@@ -59,6 +60,8 @@ export interface IntentAnalysis {
   taskType?: string;
   requiredAgents: ('frontend' | 'backend' | 'devops')[];
   complexity: 'low' | 'medium' | 'high';
+  // ✅ รองรับ category IDs จาก BUSINESS_CATEGORIES: restaurant, ecommerce, hotel, bakery, academy, bookstore, healthcare, news, portfolio, travel
+  projectType?: 'restaurant' | 'ecommerce' | 'hotel' | 'bakery' | 'academy' | 'bookstore' | 'healthcare' | 'news' | 'portfolio' | 'travel';
   parameters?: Record<string, any>;
   designPreferences?: {
     style: 'modern' | 'classic' | 'minimal' | 'vintage' | 'default';
@@ -111,15 +114,11 @@ export interface Command {
     target?: string;
     parameters: Record<string, any>;
     userInput?: string;
-    // ✅ Minimal project context สำหรับ template selection
+    // ✅ Minimal project context - ลบ userPreferences ออก
     projectContext?: {
       projectId: string;
       projectType: string;
       status: string;
-      userPreferences: {
-        theme: string;
-        language: string;
-      };
       conversationHistory: {
         currentContext: string;
         lastIntent: string;
@@ -311,6 +310,10 @@ export class OrchestratorAI {
     
     const analysisPrompt = this.buildIntentAnalysisPrompt(input, context);
     
+    // 🐛 DEBUG: Log prompt to verify project type mapping
+    console.log('🔍 Intent Analysis Prompt (first 500 chars):', analysisPrompt.substring(0, 500));
+    console.log('🔍 Project Type Mapping in prompt:', analysisPrompt.includes('restaurant') ? '✅ Contains restaurant' : '❌ Missing restaurant');
+    
     // ใช้ response config สำหรับ intent analysis
     const analysisConfig = getResponseConfig('intentAnalysis');
     const llmOptions = this.getModelSpecificOptions({
@@ -320,6 +323,9 @@ export class OrchestratorAI {
     });
     
     const response = await this.llmAdapter.callLLM(analysisPrompt, llmOptions);
+
+    // 🐛 DEBUG: Log LLM response
+    console.log('🤖 LLM Response:', JSON.stringify(response.content?.substring(0, 300)));
 
     try {
       // แก้ไข JSON parsing เพื่อรองรับ markdown และ empty response
@@ -1077,8 +1083,9 @@ export class OrchestratorAI {
         console.log(`✅ Using project ID from home page: ${projectId}`);
       }
       
-      // ใช้ default project type - Frontend-V2 จะส่ง projectType กลับมา
-      const projectType = 'e_commerce' as 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal';
+      // ✅ ใช้ projectType จาก Intent Analysis แทน hardcode (fallback to 'ecommerce')
+      const projectType = (analysis.projectType || 'ecommerce') as 'restaurant' | 'ecommerce' | 'hotel' | 'bakery' | 'academy' | 'bookstore' | 'healthcare' | 'news' | 'portfolio' | 'travel';
+      console.log(`🎯 Using project type from analysis: ${projectType}`);
       
       // สร้าง Project record ก่อน (เฉพาะเมื่อสร้าง project ID ใหม่)
       if (!message.context?.currentProject) {
@@ -1092,7 +1099,7 @@ export class OrchestratorAI {
         this.extractProjectName(message.content),
         message.content
       );
-      console.log(`✅ Created new project context: ${projectId}`);
+      console.log(`✅ Created new project context: ${projectId} (type: ${projectType})`);
     }
 
     return {
@@ -1103,15 +1110,11 @@ export class OrchestratorAI {
         target: analysis.parameters?.target,
         parameters: analysis.parameters || {},
         userInput: message.content,
-        // ✅ ส่งเฉพาะข้อมูลที่จำเป็นสำหรับ template selection
+        // ✅ ส่งเฉพาะข้อมูลที่จำเป็น - ลบ userPreferences ออก
         projectContext: projectContext ? {
           projectId: projectContext.projectId,
           projectType: projectContext.projectType,
           status: projectContext.status,
-          userPreferences: {
-            theme: projectContext.userPreferences.theme,
-            language: projectContext.userPreferences.language
-          },
           conversationHistory: {
             currentContext: projectContext.conversationHistory.currentContext,
             lastIntent: projectContext.conversationHistory.lastIntent
@@ -1127,10 +1130,32 @@ export class OrchestratorAI {
     };
   }
 
+  /**
+   * ✅ สร้าง Project Type Mapping จาก Business Categories
+   * ดึง category IDs และ keywords จาก BUSINESS_CATEGORIES
+   */
+  private static getProjectTypeMapping(): { categoryIds: string[]; mappingText: string } {
+    const categoryIds = BUSINESS_CATEGORIES.map(cat => cat.id);
+    
+    const mappingLines = BUSINESS_CATEGORIES.map(category => {
+      const keywords = category.keywords.slice(0, 10).join(', '); // เอา 10 keywords แรก
+      return `- **"${category.id}"**: ${keywords}`;
+    });
+    
+    return {
+      categoryIds,
+      mappingText: mappingLines.join('\n')
+    };
+  }
+
   private buildIntentAnalysisPrompt(input: string, context: ConversationContext): string {
     const contextInfo = context.previousMessages.length > 0 
       ? `**Previous Messages:** ${context.previousMessages.join(' | ')}`
       : '**Previous Messages:** (none)';
+    
+    // ✅ ดึง Project Type Mapping จาก Business Categories
+    const { categoryIds, mappingText } = OrchestratorAI.getProjectTypeMapping();
+    const projectTypeEnum = categoryIds.join('|');
     
     return `คุณเป็น AI ที่วิเคราะห์ intent ของ user input สำหรับระบบสร้างเว็บไซต์
 
@@ -1148,10 +1173,22 @@ Response format:
   "taskType": "สรุปงานที่ต้องทำ",
   "requiredAgents": ["frontend"],
   "complexity": "low|medium|high",
+  "projectType": "${projectTypeEnum}",
   "parameters": {
     "type": "one_of_the_types_below"
   }
 }
+
+**🏢 Project Type Detection (สำหรับ website_creation และ website_edit):**
+วิเคราะห์จาก keywords ในข้อความเพื่อหา business category ที่ตรงที่สุด:
+
+${mappingText}
+
+**หมายเหตุ:** 
+- ถ้าไม่ใช่ website_creation/website_edit → ไม่ต้องใส่ projectType
+- ถ้าไม่แน่ใจ → ใช้ "ecommerce" เป็น default
+- ให้ความสำคัญกับ keyword แรกที่พบในข้อความ
+- Keywords รองรับทั้งภาษาไทยและภาษาอังกฤษ
 
 **CRITICAL: parameters.type ต้องเป็นค่าใดค่าหนึ่งเท่านั้น:**
 
@@ -1176,8 +1213,12 @@ Response format:
 - "คุณคือใครครับ" → {"intent": "chat", "confidence": 0.9, "taskType": "Introduction", "requiredAgents": [], "complexity": "low", "parameters": {"type": "introduction"}}
 - "สวัสดี" → {"intent": "chat", "confidence": 0.9, "taskType": "Greeting", "requiredAgents": [], "complexity": "low", "parameters": {"type": "greeting"}}
 - "1+1 เท่าไหร่" → {"intent": "chat", "confidence": 0.8, "taskType": "คุยทั่วไป", "requiredAgents": [], "complexity": "low", "parameters": {"type": "base_chat"}}
-- "สร้างเว็บไซต์" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "parameters": {"type": "website_creation"}}
-- "แก้ไข navbar เป็นสีแดง" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website edit", "requiredAgents": ["frontend"], "complexity": "low", "parameters": {"type": "website_edit"}}
+- "สร้างเว็บไซต์" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "projectType": "ecommerce", "parameters": {"type": "website_creation"}}
+- "สร้างเว็บร้านอาหาร" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "projectType": "restaurant", "parameters": {"type": "website_creation"}}
+- "สร้างเว็บโรงแรม" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "projectType": "hotel", "parameters": {"type": "website_creation"}}
+- "สร้างเว็บร้านขนมปัง" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "projectType": "bakery", "parameters": {"type": "website_creation"}}
+- "สร้างเว็บสถาบันการศึกษา" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "projectType": "academy", "parameters": {"type": "website_creation"}}
+- "แก้ไข navbar เป็นสีแดง" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website edit", "requiredAgents": ["frontend"], "complexity": "low", "projectType": "ecommerce", "parameters": {"type": "website_edit"}}
 - "เปลี่ยนชื่อร้าน" → {"intent": "simple_task", "confidence": 0.85, "taskType": "Website edit", "requiredAgents": ["frontend"], "complexity": "low", "parameters": {"type": "website_edit"}}`;
   }
 
@@ -1514,7 +1555,7 @@ ${summary || input}
   async initializeProject(
     projectId: string,
     specBundleId: string,
-    projectType: 'e_commerce' | 'coffee_shop' | 'restaurant' | 'portfolio' | 'blog' | 'landing_page' | 'business' | 'personal',
+    projectType: 'restaurant' | 'ecommerce' | 'hotel' | 'bakery' | 'academy' | 'bookstore' | 'healthcare' | 'news' | 'portfolio' | 'travel',
     name: string,
     userInput?: string
   ): Promise<ProjectContextData> {
@@ -1878,8 +1919,8 @@ ${summary || input}
   private getProjectTypeFromFrontendResult(frontendResult: any): string {
     console.log('🔍 Getting project type from Frontend-V2 result:', frontendResult?.result?.projectType);
     
-    // Use projectType from Frontend-V2 result, fallback to 'e_commerce'
-    return frontendResult?.result?.projectType || 'e_commerce';
+    // Use projectType from Frontend-V2 result, fallback to 'ecommerce'
+    return frontendResult?.result?.projectType || 'ecommerce';
   }
 
   /**
