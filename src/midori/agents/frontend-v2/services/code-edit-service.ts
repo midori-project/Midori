@@ -132,6 +132,14 @@ export class CodeEditService {
       
       // 6. แปลงเป็น Code Changes
       const changes = this.parseCodeChanges(llmResponse.content);
+      console.log('🔄 Code changes parsed:', {
+        filesCount: changes.length,
+        files: changes.map(c => ({
+          path: c.filePath,
+          changesCount: c.changes?.length || 0,
+          contentLength: c.newContent?.length || 0
+        }))
+      });
       
       // 7. Validate changes
       const validation = await this.validateCodeChanges(changes);
@@ -147,12 +155,19 @@ export class CodeEditService {
       }
       
       // 8. บันทึกการเปลี่ยนแปลง
+      console.log('💾 Saving changes to database...');
       await this.saveCodeChanges(projectData.projectId, projectData.userId, changes);
+      
+      const summary = this.generateSummary(changes);
+      console.log('✅ Code edit completed successfully!');
+      console.log('📊 Summary:', summary);
+      console.log('📁 Files modified:', changes.map(c => c.filePath));
+      console.log(`⏱️  Execution time: ${Date.now() - startTime}ms`);
       
       return {
         success: true,
         changes,
-        summary: this.generateSummary(changes),
+        summary,
         filesModified: changes.map(c => c.filePath),
         executionTime: Date.now() - startTime
       };
@@ -299,14 +314,56 @@ INSTRUCTIONS:
 2. Preserve existing functionality
 3. Follow React/TypeScript best practices
 4. Maintain consistent styling
-5. Return ONLY the modified code sections
-6. CRITICAL: Return valid, unescaped code - use proper JSX syntax:
+5. CRITICAL: Return valid, unescaped code - use proper JSX syntax:
    - Use backticks for template literals with dynamic expressions
    - Use regular quotes (") for string literals
    - Do NOT escape quotes in JSX attributes
    - Example: ${exampleClassName}
 
-RESPONSE FORMAT:
+IMAGE HANDLING RULES (CRITICAL):
+- When user requests image changes (photos, pictures, icons, illustrations):
+  * Use REAL, DIRECT URLs from Unsplash in src attribute
+  * Format: src="https://images.unsplash.com/photo-[PHOTO_ID]?w=800&q=80"
+  * Do NOT create variables, constants, arrays, or functions for image URLs
+  * Do NOT use template literals or curly braces for static URLs
+  * Do NOT write src="{variableName}" - this is INVALID JSX
+  * Do NOT use useMemo, useState, or any hooks for selecting images
+  * Do NOT create random/dynamic image selection logic
+  * ALWAYS use static, hardcoded URL directly in the src attribute
+  * Example CORRECT: <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800" alt="Cat" />
+  * Example WRONG: <img src="{catImage}" alt="Cat" /> ❌
+  * Example WRONG: const catImage = "..."; <img src={catImage} /> ❌
+  * Example WRONG: const images = [...]; const random = useMemo(...); ❌
+
+- How to select Photo IDs:
+  * You can use ANY valid Unsplash photo ID that matches the user's request
+  * Photo ID format: Usually 13-22 alphanumeric characters (e.g., "1514888286974-6c03e2ca1dba")
+  * Search strategy: Think of appropriate keywords and use realistic photo IDs
+  * Common examples (you can use these or find similar ones):
+    - Cats: photo-1514888286974-6c03e2ca1dba, photo-1519052537078-e6302a4968d4
+    - Dogs: photo-1587300003388-59208cc962cb, photo-1561037404-61cd46aa615b, photo-1543466835-00a7907e9de1
+    - Horses: photo-1553284965-83fd3e82fa5a, photo-1598924111933-059bb019d110
+    - Birds: photo-1552728089-57bdde30beb3, photo-1444464666168-49d633b86797
+    - Ocean/Sea: photo-1505142468610-359e7d316be0, photo-1439405326854-014607f694d7
+    - Mountains: photo-1506905925346-21bda4d32df4, photo-1464822759023-fed622ff2c3b
+    - Forests: photo-1448375240586-882707db888b, photo-1511497584788-876760111969
+    - Food: photo-1546069901-ba9599a7e63c, photo-1504674900247-0877df9cc836
+    - Coffee: photo-1447933601403-0c6688de566e, photo-1509042239860-f550ce710b93
+    - Technology: photo-1518770660439-4636190af475, photo-1519389950473-47ba0277781c
+    - Business: photo-1497366216548-37526070297c, photo-1486406146926-c627a92ad1ab
+    - People: photo-1438761681033-6461ffad8d80, photo-1507003211169-0a1dd7228f2d
+  * For subjects not in the list: Use your knowledge to select appropriate photo IDs
+  * IMPORTANT: Always use realistic-looking photo IDs with correct format
+
+
+CRITICAL REQUIREMENT FOR "newContent":
+- You MUST provide the COMPLETE file content with changes applied
+- Do NOT use placeholders, comments, or summaries
+- Do NOT write "// Full file content..." or similar placeholders
+- Write the ACTUAL, COMPLETE, WORKING code
+- The code must be ready to save and run immediately
+
+RESPONSE FORMAT (with REAL CODE example):
 {
   "files": [
     {
@@ -320,7 +377,7 @@ RESPONSE FORMAT:
           "reason": "Changed navbar color to green as requested"
         }
       ],
-      "newContent": "// Full file content with changes applied - VALID JSX CODE"
+      "newContent": "import React from 'react';\\n\\nexport default function Navbar() {\\n  return (\\n    <nav style={{ backgroundColor: '#10b981' }}>\\n      <h1>My Site</h1>\\n    </nav>\\n  );\\n}"
     }
   ],
   "summary": "Brief description of changes made"
@@ -333,23 +390,66 @@ RESPONSE FORMAT:
    */
   private parseCodeChanges(llmResponse: string): CodeChange[] {
     try {
+      console.log('🔍 Raw LLM response length:', llmResponse?.length || 0);
+      
       const cleanResponse = llmResponse
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
       
-      const parsed = JSON.parse(cleanResponse);
+      console.log('🔍 Cleaned response length:', cleanResponse.length);
+      console.log('🔍 Response preview:', cleanResponse.substring(0, 200) + '...');
       
-      return parsed.files.map((file: any) => ({
+      const parsed = JSON.parse(cleanResponse);
+      console.log('✅ JSON parsed successfully:', {
+        hasFiles: !!parsed.files,
+        filesCount: parsed.files?.length || 0,
+        hasSummary: !!parsed.summary
+      });
+      
+      const changes = parsed.files.map((file: any) => ({
         filePath: file.path,
         changes: file.changes,
         newContent: this.unescapeContent(file.newContent),  // ✅ Unescape content
         summary: file.summary || parsed.summary
       }));
       
+      // ✅ Validate that newContent is not a placeholder
+      for (const change of changes) {
+        if (this.isPlaceholderContent(change.newContent)) {
+          console.error('❌ LLM returned placeholder instead of actual code:', {
+            file: change.filePath,
+            content: change.newContent?.substring(0, 100)
+          });
+          throw new Error(
+            `LLM returned placeholder content for ${change.filePath}. ` +
+            'This is a critical error - the model must provide complete, working code.'
+          );
+        }
+      }
+      
+      console.log('📝 Changes details:');
+      changes.forEach((change: CodeChange) => {
+        console.log(`\n📄 File: ${change.filePath}`);
+        console.log(`   Summary: ${change.summary}`);
+        console.log(`   Content length: ${change.newContent?.length || 0} characters`);
+        if (change.changes && change.changes.length > 0) {
+          console.log(`   Changes:`);
+          change.changes.forEach((c: any, idx: number) => {
+            console.log(`     ${idx + 1}. ${c.type}: ${c.old} → ${c.new}`);
+            console.log(`        Reason: ${c.reason}`);
+          });
+        }
+      });
+      
+      return changes;
+      
     } catch (error) {
-      console.error('Failed to parse LLM response:', error);
-      throw new Error('Invalid LLM response format');
+      console.error('❌ Failed to parse LLM response:', error);
+      
+      // Preserve original error message if available
+      const errorMessage = error instanceof Error ? error.message : 'Invalid LLM response format';
+      throw new Error(`Failed to parse LLM response: ${errorMessage}`);
     }
   }
 
@@ -378,6 +478,46 @@ RESPONSE FORMAT:
       console.warn('Failed to unescape content, using as-is:', error);
       return content;
     }
+  }
+
+  /**
+   * Detect if content is a placeholder/comment instead of actual code
+   */
+  private isPlaceholderContent(content: string): boolean {
+    if (!content || content.trim().length === 0) {
+      return true;
+    }
+    
+    const trimmed = content.trim();
+    
+    // Check for common placeholder patterns
+    const placeholderPatterns = [
+      /^\/\/\s*full\s+file\s+content/i,
+      /^\/\/\s*complete\s+code/i,
+      /^\/\/\s*.*code.*here/i,
+      /^\/\/\s*valid\s+jsx\s+code/i,
+      /^\/\*.*code.*\*\/$/s,
+      /^\[.*code.*\]$/i,
+      /^<.*code.*>$/i,
+      /^\.\.\.$/,
+      /^todo:/i,
+      /^placeholder/i
+    ];
+    
+    // If content is ONLY a comment or placeholder
+    for (const pattern of placeholderPatterns) {
+      if (pattern.test(trimmed)) {
+        return true;
+      }
+    }
+    
+    // If content is too short to be real code (less than 50 chars)
+    // and contains only comments
+    if (trimmed.length < 50 && (trimmed.startsWith('//') || trimmed.startsWith('/*'))) {
+      return true;
+    }
+    
+    return false;
   }
 
   /**
@@ -416,7 +556,10 @@ RESPONSE FORMAT:
    */
   private async saveCodeChanges(projectId: string, userId: string, changes: CodeChange[]): Promise<void> {
     try {
+      console.log(`💾 Starting database save for project ${projectId}...`);
+      
       // 1. สร้าง Generation record
+      console.log('📝 Creating Generation record...');
       const generation = await this.prisma.generation.create({
         data: {
           projectId,
@@ -426,10 +569,13 @@ RESPONSE FORMAT:
           options: { editType: 'chat_edit' }
         }
       });
+      console.log(`✅ Generation created: ${generation.id}`);
       
       // 2. อัปเดตไฟล์
+      console.log(`📂 Updating ${changes.length} file(s)...`);
       for (const change of changes) {
         // อัปเดตไฟล์หลัก
+        console.log(`   Updating file: ${change.filePath}`);
         await this.prisma.file.update({
           where: { projectId_path: { projectId, path: change.filePath } },
           data: { 
@@ -447,12 +593,16 @@ RESPONSE FORMAT:
             changeType: 'update'
           }
         });
+        console.log(`   ✅ ${change.filePath} updated`);
       }
       
       // 3. สร้าง Snapshot
+      console.log('📸 Creating snapshot...');
       await this.createSnapshot(projectId, generation.id);
+      console.log('✅ Snapshot created');
       
       // 4. อัปเดต project และ project context
+      console.log('🔄 Updating project metadata...');
       await this.prisma.project.update({
         where: { id: projectId },
         data: { 
@@ -468,11 +618,12 @@ RESPONSE FORMAT:
           lastModified: new Date()
         }
       });
+      console.log('✅ Project metadata updated');
       
       console.log(`✅ Code changes saved and preview will auto-update for project ${projectId}`);
       
     } catch (error) {
-      console.error('Failed to save code changes:', error);
+      console.error('❌ Failed to save code changes:', error);
       throw error;
     }
   }
@@ -532,17 +683,87 @@ RESPONSE FORMAT:
   }
 
   private async validateTypeScript(content: string): Promise<boolean> {
-    // Basic TypeScript validation
+    // Enhanced TypeScript validation
     try {
-      // Check for basic syntax errors
+      // 1. Check for basic syntax errors
       if (content.includes('import') && !content.includes('from')) {
+        console.warn('⚠️ Invalid import statement without "from"');
         return false;
       }
+      
+      // 2. Check for duplicate exports
       if (content.includes('export') && content.includes('export export')) {
+        console.warn('⚠️ Duplicate export statement');
         return false;
       }
+      
+      // 3. Check for unclosed brackets/braces
+      const openBraces = (content.match(/{/g) || []).length;
+      const closeBraces = (content.match(/}/g) || []).length;
+      if (openBraces !== closeBraces) {
+        console.warn('⚠️ Unmatched braces: {', openBraces, '} vs }', closeBraces);
+        return false;
+      }
+      
+      const openBrackets = (content.match(/\[/g) || []).length;
+      const closeBrackets = (content.match(/]/g) || []).length;
+      if (openBrackets !== closeBrackets) {
+        console.warn('⚠️ Unmatched brackets');
+        return false;
+      }
+      
+      const openParens = (content.match(/\(/g) || []).length;
+      const closeParens = (content.match(/\)/g) || []).length;
+      if (openParens !== closeParens) {
+        console.warn('⚠️ Unmatched parentheses');
+        return false;
+      }
+      
+      // 4. Check for escaped quotes in JSX (common LLM error)
+      if (content.includes('className=\\"') || content.includes('className=\\\'')) {
+        console.warn('⚠️ Found escaped quotes in JSX - should use unescaped');
+        return false;
+      }
+      
+      // 5. Check for invalid JSX attribute syntax: src="{variable}" or href="{link}"
+      const invalidJSXPattern = /\s(src|href|alt|className|style)="\{[^}]+\}"/g;
+      const invalidMatches = content.match(invalidJSXPattern);
+      if (invalidMatches) {
+        console.warn('⚠️ Invalid JSX syntax found:', invalidMatches.join(', '));
+        console.warn('   Should be: src={variable} or src="https://..."');
+        console.warn('   Not: src="{variable}"');
+        return false;
+      }
+      
+      // 6. Check for image URLs with variables when they should be direct URLs
+      const imageVarPattern = /(const|let|var)\s+\w+Image(s)?\s*=\s*/g;
+      if (imageVarPattern.test(content)) {
+        console.warn('⚠️ Found image variable declaration - consider using direct URL in src attribute');
+        console.warn('   Prefer: <img src="https://images.unsplash.com/..." />');
+        console.warn('   Over: const catImage = "..."; <img src={catImage} />');
+        // This is a warning, not an error, so we don't return false
+      }
+      
+      // 7. Check for React hooks used for image selection (useMemo, useState)
+      const imageHooksPattern = /(useMemo|useState|useCallback).*[Ii]mage/g;
+      if (imageHooksPattern.test(content)) {
+        console.warn('⚠️ Found React hooks for image selection - use static URLs instead');
+        console.warn('   Prefer: <img src="https://images.unsplash.com/..." />');
+        console.warn('   Not: const img = useMemo(() => ..., []);');
+        return false;
+      }
+      
+      // 8. Check for random/dynamic image selection logic
+      const randomPattern = /(Math\.random|Math\.floor.*random|getRandomImage|selectRandomImage)/gi;
+      if (randomPattern.test(content)) {
+        console.warn('⚠️ Found random image selection logic - use static URL instead');
+        console.warn('   User wants ONE specific image, not random selection');
+        return false;
+      }
+      
       return true;
-    } catch {
+    } catch (error) {
+      console.error('Error validating TypeScript:', error);
       return false;
     }
   }
@@ -564,7 +785,20 @@ RESPONSE FORMAT:
     }
     
     const fileCount = changes.length;
-    const changeCount = changes.reduce((sum, change) => sum + change.changes.length, 0);
+    const changeCount = changes.reduce((sum, change) => {
+      // ป้องกัน undefined - บาง LLM response อาจไม่มี changes array
+      return sum + (change.changes?.length || 0);
+    }, 0);
+    
+    // สร้าง summary จาก file summaries
+    const summaries = changes
+      .map(c => c.summary)
+      .filter(s => s)
+      .join('; ');
+    
+    if (summaries) {
+      return `Modified ${fileCount} file(s): ${summaries}`;
+    }
     
     return `Modified ${fileCount} file(s) with ${changeCount} change(s)`;
   }
