@@ -72,7 +72,7 @@ export function CustomDomainDialog({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <Globe className="w-5 h-5 text-purple-600" />
+            <Globe className="w-5 h-5 text-[#748a74]" />
             เลือกโดเมนสำหรับ Deploy
           </h2>
           <button
@@ -87,7 +87,7 @@ export function CustomDomainDialog({
         {/* Content */}
         <div className="p-6 space-y-4">
           {/* Option 1: Midori.lol subdomain */}
-          <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
+          <div className={`border-2 rounded-lg p-4 ${!useCustomDomain ? 'bg-[#bcccbc] border-[#8aac8a]' : 'bg-white'}`}>
             <label className="flex items-start space-x-3 cursor-pointer">
               <input
                 type="radio"
@@ -99,13 +99,13 @@ export function CustomDomainDialog({
               />
               <div className="flex-1">
                 <div className="font-medium text-gray-900 mb-1 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-600" />
+                  <Check className="w-4 h-4 text-green-600 font-bold" />
                   ใช้ subdomain ของ Midori (แนะนำ)
                 </div>
                 <div className="text-sm text-gray-600 mb-2">
                   ระบบจะสร้างโดเมนให้อัตโนมัติจากชื่อโปรเจค
                 </div>
-                <div className="bg-white border border-purple-200 rounded-md px-3 py-2 text-sm font-mono text-purple-700">
+                <div className="bg-white border border-purple-200 rounded-md px-3 py-2 text-sm font-mono ">
                   {defaultSubdomain}
                 </div>
                 <div className="text-xs text-gray-500 mt-2">
@@ -118,7 +118,7 @@ export function CustomDomainDialog({
           </div>
 
           {/* Option 2: Custom domain */}
-          <div className="border-2 border-gray-200 rounded-lg p-4">
+          <div className={`border-2 rounded-lg p-4 ${useCustomDomain ? 'bg-[#bcccbc] border-[#8aac8a]' : 'bg-white border-gray-200'}`}>
             <label className="flex items-start space-x-3 cursor-pointer">
               <input
                 type="radio"
@@ -130,7 +130,7 @@ export function CustomDomainDialog({
               />
               <div className="flex-1">
                 <div className="font-medium text-gray-900 mb-1 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-blue-600" />
+                  <Globe className="w-4 h-4 text-[#748a74] font-bold" />
                   ใช้โดเมนของฉันเอง
                 </div>
                 <div className="text-sm text-gray-600 mb-2">
@@ -148,7 +148,7 @@ export function CustomDomainDialog({
                         setError('');
                       }}
                       disabled={isDeploying}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 font-mono text-sm"
+                      className="w-full px-3 py-2 border bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 font-mono text-sm"
                     />
                     
                     <div className="mt-3 bg-amber-50 border border-amber-200 rounded-md p-3">
@@ -194,7 +194,7 @@ export function CustomDomainDialog({
           <button
             onClick={handleDeploy}
             disabled={isDeploying || (useCustomDomain && !customDomain)}
-            className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-md hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+            className="px-4 py-2 text-sm font-medium text-white border-[#72856E] bg-gradient-to-r from-[#3D8080] to-[#72856E] rounded-md hover:from-[#3D8080]/80 hover:to-[#72856E]/80 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-md "
           >
             {isDeploying ? 'กำลัง Deploy...' : 'Deploy เลย 🚀'}
           </button>
