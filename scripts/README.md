@@ -149,3 +149,5 @@ DEBUG=true node daily-token-reset.js reset
 3. ตรวจสอบ Supabase Dashboard
 
 
+
+

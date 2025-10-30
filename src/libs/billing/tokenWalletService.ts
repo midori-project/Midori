@@ -11,8 +11,15 @@ export interface TokenWalletInfo {
 }
 
 export interface UserTokenSummary {
-  totalBalance: number;
-  wallets: TokenWalletInfo[];
+  totalBalance: number;  // Convert to number for API response
+  wallets: Array<{
+    id: string;
+    balanceTokens: number;  // Convert to number
+    lastTokenReset: Date | null;
+    walletType: WalletType;
+    isActive: boolean;
+    expiresAt: Date | null;
+  }>;
   canCreateProject: boolean;
   requiredTokens: number;
 }
@@ -71,7 +78,7 @@ export class TokenWalletService {
 
     return wallets.map(wallet => ({
       id: wallet.id,
-      balanceTokens: wallet.balanceTokens,
+      balanceTokens: Number(wallet.balanceTokens),  // Convert Decimal to number
       lastTokenReset: wallet.lastTokenReset,
       walletType: wallet.walletType,
       isActive: wallet.isActive,
@@ -115,12 +122,19 @@ export class TokenWalletService {
    */
   async getUserTokenSummary(userId: string): Promise<UserTokenSummary> {
     const wallets = await this.getUserWallets(userId);
-    const totalBalance = wallets.reduce((sum, wallet) => sum + wallet.balanceTokens, 0);
+    const totalBalance = wallets.reduce((sum, wallet) => sum + Number(wallet.balanceTokens), 0);
     const requiredTokens = 1; // สร้างโปรเจคใช้ 1 Token
 
     return {
-      totalBalance,
-      wallets,
+      totalBalance: Number(totalBalance),  // Ensure it's a number
+      wallets: wallets.map(w => ({
+        id: w.id,
+        balanceTokens: Number(w.balanceTokens),  // Convert to number
+        lastTokenReset: w.lastTokenReset,
+        walletType: w.walletType,
+        isActive: w.isActive,
+        expiresAt: w.expiresAt,
+      })),
       canCreateProject: totalBalance >= requiredTokens,
       requiredTokens,
     };

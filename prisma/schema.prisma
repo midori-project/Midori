@@ -31,11 +31,10 @@ model User {
   oauths             OAuthConnection[]
   projects           Project[]
   likes              ProjectLike[]
-  SandboxState       SandboxState[]
   sessions           Session[]
+  tokenWallets       TokenWallet[]
   tokenTransactions  TokenTransaction[]
   sandboxStates      SandboxState[]
-  tokenWallets       TokenWallet[]
 
   @@index([email])
 }
@@ -77,7 +76,6 @@ model Project {
   categories       ProjectCategory[]
   projectContext   ProjectContext?
   likes            ProjectLike[]
-  SandboxState     SandboxState[]
   snapshots        Snapshot[]
   specBundles      SpecBundle[]
   testRuns         TestRun[]
@@ -953,7 +951,7 @@ model TokenTransaction {
 }
 
 model SandboxState {
-  id              String        @id
+  id              String        @id @default(uuid())
   sandboxId       String        @unique
   projectId       String?
   userId          String?
@@ -962,18 +960,20 @@ model SandboxState {
   previewToken    String?
   error           String?
   createdAt       DateTime      @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime      @updatedAt
   lastHeartbeatAt DateTime?
   expiresAt       DateTime?
-  Project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  User            User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([expiresAt])
-  @@index([lastHeartbeatAt])
-  @@index([projectId])
+  
+  // Relations
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user            User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   @@index([sandboxId])
-  @@index([status])
+  @@index([projectId])
   @@index([userId])
+  @@index([status])
+  @@index([lastHeartbeatAt])
+  @@index([expiresAt])
 }
 
 enum Visibility {
@@ -1168,37 +1168,4 @@ enum SandboxStatus {
   running
   stopped
   error
-}
-
-enum SandboxStatus {
-  creating
-  running
-  stopped
-  error
-}
-
-model SandboxState {
-  id              String        @id @default(uuid())
-  sandboxId       String        @unique
-  projectId       String?
-  userId          String?
-  status          SandboxStatus @default(creating)
-  previewUrl      String?
-  previewToken    String?
-  error           String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  lastHeartbeatAt DateTime?
-  expiresAt       DateTime?
-  
-  // Relations
-  project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user            User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([sandboxId])
-  @@index([projectId])
-  @@index([userId])
-  @@index([status])
-  @@index([lastHeartbeatAt])
-  @@index([expiresAt])
 }

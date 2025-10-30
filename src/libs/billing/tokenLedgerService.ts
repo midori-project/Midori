@@ -221,4 +221,62 @@ export class TokenLedgerService {
       { projectId, originalType: "PROJECT_CREATION" }
     );
   }
+
+  /**
+   * บันทึก Token transaction (สำหรับ Admin และระบบอื่นๆ)
+   */
+  async recordTransaction(
+    userId: string,
+    amount: number,
+    type: TokenTransactionType,
+    description?: string,
+    metadata?: Record<string, any>,
+    walletId?: string
+  ): Promise<void> {
+    await prisma.tokenTransaction.create({
+      data: {
+        userId,
+        walletId,
+        amount,
+        type,
+        description,
+        metadata,
+      },
+    });
+  }
+
+  /**
+   * เพิ่ม Token โดยไม่หัก Wallet (สำหรับ Admin)
+   */
+  async grantTokens(
+    userId: string,
+    amount: number,
+    type: TokenTransactionType,
+    description?: string,
+    metadata?: Record<string, any>
+  ): Promise<boolean> {
+    try {
+      // เพิ่ม Token โดยตรงใน STANDARD wallet
+      const result = await this.walletService.addTokens(userId, amount, 'STANDARD');
+      
+      if (!result.success) {
+        return false;
+      }
+
+      // บันทึก transaction
+      await this.recordTransaction(
+        userId,
+        amount,
+        type,
+        description,
+        metadata,
+        result.walletId
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Grant tokens error:', error);
+      return false;
+    }
+  }
 }
