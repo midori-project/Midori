@@ -30,6 +30,7 @@ import { VisualEditPanel } from './VisualEditPanel';
 
 interface ProjectPreviewProps {
   projectId: string;
+  userId?: string; // ✅ เพิ่ม userId เพื่อเช็คว่าเป็นเจ้าของโปรเจ็คหรือไม่
 }
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
@@ -46,7 +47,7 @@ const loadingMessages = [
   'กินข้าวผัดหมู...',
 ];
 
-const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
+const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId, userId }) => {
   // ==================== Local State ====================
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
   const [isCodeEditorVisible, setIsCodeEditorVisible] = useState(false);
@@ -60,11 +61,15 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
     projectData,
     projectFiles,
     projectName,
+    projectOwnerId,
     isLoading: isLoadingData,
     error: dataError,
     hasSnapshot,
     refetch: refetchProjectData,
   } = useProjectData(projectId);
+
+  // ✅ เช็คว่าผู้ใช้เป็นเจ้าของโปรเจ็คหรือไม่
+  const isOwner = userId ? userId === projectOwnerId : true;
 
   // จัดการ Deployment
   const {
@@ -228,6 +233,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId }) => {
         onToggleEditMode={toggleEditMode}
         deviceType={deviceType}
         onDeviceChange={setDeviceType}
+        isOwner={isOwner} // ✅ ส่ง isOwner prop
       />
 
       {/* Toast Notifications */}

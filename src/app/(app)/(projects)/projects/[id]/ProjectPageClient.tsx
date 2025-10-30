@@ -70,7 +70,7 @@ export default function ProjectPageClient({
           bg-gray-50
         `}
       >
-        <ProjectPreview projectId={projectId} />
+        <ProjectPreview projectId={projectId} userId={userId} />
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ export interface ProjectData {
     id: string;
     name: string;
     description: string | null;
+    ownerId?: string; // ✅ เพิ่ม ownerId
   };
   templateData: any;
   files: Array<{
@@ -38,6 +39,7 @@ export function useProjectData(projectId: string) {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [projectFiles, setProjectFiles] = useState<Array<{ path: string; content: string; type: string }>>([]);
   const [projectName, setProjectName] = useState<string>('');
+  const [projectOwnerId, setProjectOwnerId] = useState<string | undefined>(undefined); // ✅ เพิ่ม state สำหรับ ownerId
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasSnapshot, setHasSnapshot] = useState<boolean>(false);
@@ -67,6 +69,7 @@ export function useProjectData(projectId: string) {
         setProjectData(result.data);
         setProjectFiles(result.data.files || []);
         setProjectName(result.data.project?.name || projectId);
+        setProjectOwnerId(result.data.project?.ownerId); // ✅ เก็บ ownerId
         setHasSnapshot(result.hasSnapshot !== false);
 
         if (result.hasSnapshot) {
@@ -97,6 +100,7 @@ export function useProjectData(projectId: string) {
     projectData,
     projectFiles,
     projectName,
+    projectOwnerId, // ✅ return ownerId
     isLoading,
     error,
     hasSnapshot,

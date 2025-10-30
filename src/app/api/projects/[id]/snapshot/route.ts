@@ -28,11 +28,10 @@ export async function GET(
 
     const { id: projectId } = await params
 
-    // ดึงข้อมูล project และ snapshot ล่าสุด
+    // ดึงข้อมูล project และ snapshot ล่าสุด (อนุญาตให้ผู้ใช้ที่ไม่ใช่เจ้าของเข้าดูได้)
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
-        ownerId: session.user.id
       },
       include: {
         snapshots: {
@@ -65,6 +64,7 @@ export async function GET(
             id: project.id,
             name: project.name,
             description: project.description,
+            ownerId: project.ownerId, // ✅ เพิ่ม ownerId เพื่อเช็คว่าเป็นเจ้าของโปรเจ็คหรือไม่
           },
           snapshot: null,
           templateData: null,
@@ -115,6 +115,7 @@ export async function GET(
           id: project.id,
           name: project.name,
           description: project.description,
+          ownerId: project.ownerId, // ✅ เพิ่ม ownerId เพื่อเช็คว่าเป็นเจ้าของโปรเจ็คหรือไม่
         },
         templateData: templateData || {},
         files: formattedFiles,

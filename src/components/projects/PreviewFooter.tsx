@@ -16,6 +16,7 @@ interface PreviewFooterProps {
   onToggleEditMode?: () => void;
   deviceType: DeviceType;
   onDeviceChange: (device: DeviceType) => void;
+  isOwner?: boolean; // ✅ เพิ่ม prop เพื่อเช็คว่าเป็นเจ้าของโปรเจ็คหรือไม่
 }
 
 /**
@@ -34,61 +35,67 @@ export function PreviewFooter({
   onToggleEditMode,
   deviceType,
   onDeviceChange,
+  isOwner = true, // ✅ Default เป็น true (backward compatible)
 }: PreviewFooterProps) {
   return (
     <div className="bg-gradient-to-r from-[#8EE8E7] to-[#3C593C] border-t border-gray-200 p-4">
       <div className="flex items-center justify-between">
         {/* Left Section - Action Buttons */}
         <div className="flex items-center space-x-2 ">
-          {/* Toggle Editor Button */}
-          <button
-            onClick={onToggleEditor}
-            className={`px-4 py-2 text-sm rounded-md transition-all font-bold focus:outline-none flex items-center space-x-2 hover:outline-3 hover:outline-[#75c9a7]
-              transform ${
-              isCodeEditorVisible
-                ? 'bg-[#79b426] text-[#e5e48f] hover:shadow-md hover:-translate-y-0.5 '
-                : 'bg-[#8aac8a] text-[#384538] hover:shadow-xl hover:-translate-y-0.5 shadow-lg'
-            }`}
-          >
-            <PenLine className="w-4 h-4" />
-            <span>{isCodeEditorVisible ? ' HideEditor ' : 'CodeEditor'}</span>
-          </button>
-
-          {/* 🎨 Visual Edit Mode Toggle */}
-          {onToggleEditMode && (
-            <button
-              onClick={onToggleEditMode}
+          {/* ✅ แสดงปุ่มเฉพาะเจ้าของโปรเจ็ค */}
+          {isOwner && (
+            <>
+              {/* Toggle Editor Button */}
+              <button
+                onClick={onToggleEditor}
                 className={`px-4 py-2 text-sm rounded-md transition-all font-bold focus:outline-none flex items-center space-x-2 hover:outline-3 hover:outline-[#75c9a7]
-                transform ${
-                 editMode
-                   ? 'bg-[#79b426] text-[#e5e48f] hover:shadow-md hover:-translate-y-0.5'
-                   : 'bg-[#8aac8a] text-[#384538] shadow-lg hover:shadow-xl hover:-translate-y-0.5'
-               }`}
-            >
-              <Wallpaper className="w-4 h-4" />
-              <span>{editMode ? 'VisualEditor ' : 'VisualEditor '}</span>
-            </button>
+                  transform ${
+                  isCodeEditorVisible
+                    ? 'bg-[#79b426] text-[#e5e48f] hover:shadow-md hover:-translate-y-0.5 '
+                    : 'bg-[#8aac8a] text-[#384538] hover:shadow-xl hover:-translate-y-0.5 shadow-lg'
+                }`}
+              >
+                <PenLine className="w-4 h-4" />
+                <span>{isCodeEditorVisible ? ' HideEditor ' : 'CodeEditor'}</span>
+              </button>
+
+              {/* 🎨 Visual Edit Mode Toggle */}
+              {onToggleEditMode && (
+                <button
+                  onClick={onToggleEditMode}
+                    className={`px-4 py-2 text-sm rounded-md transition-all font-bold focus:outline-none flex items-center space-x-2 hover:outline-3 hover:outline-[#75c9a7]
+                    transform ${
+                     editMode
+                       ? 'bg-[#79b426] text-[#e5e48f] hover:shadow-md hover:-translate-y-0.5'
+                       : 'bg-[#8aac8a] text-[#384538] shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+                   }`}
+                >
+                  <Wallpaper className="w-4 h-4" />
+                  <span>{editMode ? 'VisualEditor ' : 'VisualEditor '}</span>
+                </button>
+              )}
+              
+            
+              {/* Deploy Button */}
+              <button
+                onClick={onDeploy}
+                disabled={!hasSnapshot || isDeploying}
+                className="px-4 py-2 rounded-md transition-colors transform transition-all text-sm font-bold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 bg-[#8aac8a] text-[#384538] hover:outline-3 hover:outline-[#75c9a7]"
+              >
+                {isDeploying ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    <span>กำลัง Deploy... </span>
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="w-4 h-4" />
+                    <span>Deploy</span>
+                  </>
+                )}
+              </button>
+            </>
           )}
-          
-        
-          {/* Deploy Button */}
-          <button
-            onClick={onDeploy}
-            disabled={!hasSnapshot || isDeploying}
-            className="px-4 py-2 rounded-md transition-colors transform transition-all text-sm font-bold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 bg-[#8aac8a] text-[#384538] hover:outline-3 hover:outline-[#75c9a7]"
-          >
-            {isDeploying ? (
-              <>
-                <Loader className="w-4 h-4 animate-spin" />
-                <span>กำลัง Deploy... </span>
-              </>
-            ) : (
-              <>
-                <Rocket className="w-4 h-4" />
-                <span>Deploy</span>
-              </>
-            )}
-          </button>
           
           {/* Device Type Selector */}
           <div className="flex bg-[#8aac8a] rounded-lg p-1 ml-2">
