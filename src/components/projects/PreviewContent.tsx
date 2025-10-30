@@ -59,7 +59,7 @@ export function PreviewContent({
   };
 
   return (
-    <div className="flex-1 overflow-hidden bg-gray-100 p-4">
+    <div className="flex-1 overflow-hidden bg-[#407c4c] opacity-90 p-4">
       {/* Loading State */}
       {isLoading ? (
         <LoadingState />
@@ -97,21 +97,7 @@ export function PreviewContent({
 
           {/* Live Preview Section */}
           <div className={isCodeEditorVisible ? 'lg:col-span-1' : 'col-span-1'}>
-            <div className="h-full bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="p-3 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-sm font-semibold text-gray-700 flex items-center">
-                  🔴 Live Preview
-                  <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                    Connected
-                  </span>
-                  {!isCodeEditorVisible && (
-                    <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                      Full Screen
-                    </span>
-                  )}
-                </h3>
-              </div>
-
+            <div className="h-full  rounded-lg  overflow-hidden">
               <div className="h-full">
                 {previewUrl ? (
                   <div

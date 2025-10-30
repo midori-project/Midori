@@ -376,20 +376,7 @@ export default function ChatInterface({
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={loadConversationHistory}
-              disabled={isLoadingHistory}
-              className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoadingHistory ? 'animate-spin' : ''}`} />
-              <span>{isLoadingHistory ? 'Loading...' : 'Restore'}</span>
-            </button>
-            <button className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center space-x-1">
-              <Code className="w-4 h-4" />
-              <span>Code</span>
-            </button>
-          </div>
+
         </div>
       </div>
 

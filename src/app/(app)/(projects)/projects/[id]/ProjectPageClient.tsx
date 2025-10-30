@@ -42,26 +42,6 @@ export default function ProjectPageClient({
         </div>
       </div>
 
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        className={`
-          absolute top-4 z-10
-          ${isChatOpen ? 'left-[calc(25%-1rem)] lg:left-[calc(25%-1rem)]' : 'left-4'}
-          bg-blue-500 hover:bg-blue-600 text-white
-          rounded-full p-2 shadow-lg
-          transition-all duration-300 ease-in-out
-          focus:outline-none focus:ring-2 focus:ring-blue-400
-        `}
-        aria-label={isChatOpen ? 'ปิดแชท' : 'เปิดแชท'}
-      >
-        {isChatOpen ? (
-          <ChevronLeft className="w-5 h-5" />
-        ) : (
-          <ChevronRight className="w-5 h-5" />
-        )}
-      </button>
-
       {/* Preview Section - Right Side */}
       <div
         className={`
@@ -70,7 +50,11 @@ export default function ProjectPageClient({
           bg-gray-50
         `}
       >
-        <ProjectPreview projectId={projectId} userId={userId} />
+        <ProjectPreview 
+          projectId={projectId} 
+          userId={userId} 
+          onToggleChat={() => setIsChatOpen(!isChatOpen)}
+        />
       </div>
     </div>
   );

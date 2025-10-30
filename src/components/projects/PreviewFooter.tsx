@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader, Rocket, PenLine, Wallpaper, Monitor, Tablet, Smartphone } from 'lucide-react';
+import { Loader, Rocket, PenLine, Wallpaper, Monitor, Tablet, Smartphone, MessageSquare } from 'lucide-react';
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
@@ -17,6 +17,7 @@ interface PreviewFooterProps {
   deviceType: DeviceType;
   onDeviceChange: (device: DeviceType) => void;
   isOwner?: boolean; // ✅ เพิ่ม prop เพื่อเช็คว่าเป็นเจ้าของโปรเจ็คหรือไม่
+  onToggleChat?: () => void; // ✅ เพิ่ม prop สำหรับ toggle chat
 }
 
 /**
@@ -36,15 +37,29 @@ export function PreviewFooter({
   deviceType,
   onDeviceChange,
   isOwner = true, // ✅ Default เป็น true (backward compatible)
+  onToggleChat,
 }: PreviewFooterProps) {
   return (
-    <div className="bg-gradient-to-r from-[#8EE8E7] to-[#3C593C] border-t border-gray-200 p-4">
+    <div className="bg-gradient-to-r from-[#ecf39e] to-[#90a955] opacity-90  p-4">
       <div className="flex items-center justify-between">
         {/* Left Section - Action Buttons */}
         <div className="flex items-center space-x-2 ">
           {/* ✅ แสดงปุ่มเฉพาะเจ้าของโปรเจ็ค */}
           {isOwner && (
             <>
+            
+          {/* Chat Button */}
+          {onToggleChat && (
+            <button
+              onClick={onToggleChat}
+              className="px-4 py-2 text-sm rounded-md transition-all font-bold focus:outline-none flex items-center space-x-2 hover:outline-3 hover:outline-[#75c9a7] transform hover:shadow-xl hover:-translate-y-0.5 bg-[#8aac8a] text-[#384538] shadow-lg"
+            >
+              <MessageSquare className="w-4 h-4" />
+              
+              <span>Call Midori</span>
+            </button>
+          )}
+
               {/* Toggle Editor Button */}
               <button
                 onClick={onToggleEditor}
@@ -131,6 +146,7 @@ export function PreviewFooter({
             </button>
 
           </div>
+
           
         </div>
         <div className='pr-8'>
