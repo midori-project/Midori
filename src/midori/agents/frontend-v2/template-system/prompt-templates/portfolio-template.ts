@@ -17,7 +17,15 @@ Rules:
 Color Rules:
 - Primary/Secondary colors: ONLY use blue, green, purple, pink, orange, red, yellow, indigo
 - bgTone: ONLY use 50, 100, 200, 300, 400, 500, 600, 700, 800, 900
-- DO NOT use teal, cyan, or any other colors not listed above`,
+- DO NOT use teal, cyan, or any other colors not listed above
+
+CRITICAL: Text Length Limits:
+- heading: MAX 80 characters (keep it short, impactful, and memorable)
+- subheading: MAX 150 characters
+- badge: MAX 40 characters
+- menuItems[].name: MAX 50 characters
+- menuItems[].description: MAX 120 characters
+- description: MAX 200 characters`,
 
   generateVariantAwarePrompt: (keywords: string[], colorHint: string, concreteManifest?: any, variantInfo?: any, language?: string): string => {
     const detectedLanguage = language || 'th';

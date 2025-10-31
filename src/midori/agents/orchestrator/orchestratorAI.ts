@@ -378,7 +378,9 @@ export class OrchestratorAI {
       }
       
       // ✅ Validate และ map parameters.type
+      console.log('🔍 Raw LLM Analysis before validation:', JSON.stringify(analysis, null, 2));
       const validatedAnalysis = this.validateAndMapAnalysis(analysis, input);
+      console.log('🔍 After validateAndMapAnalysis:', JSON.stringify(validatedAnalysis, null, 2));
       
       return validatedAnalysis;
     } catch (error) {
@@ -450,6 +452,8 @@ export class OrchestratorAI {
   private validateAndMapAnalysis(analysis: any, input: string): IntentAnalysis {
     const lowerInput = input.toLowerCase().trim();
     
+    console.log('🔍 validateAndMapAnalysis - Input analysis.projectType:', analysis.projectType);
+    
     let mappedType = analysis.parameters?.type;
     
     // ✅ ถ้า LLM ตอบ type ที่ไม่ valid → map ใหม่
@@ -469,17 +473,22 @@ export class OrchestratorAI {
       mappedType = this.mapLLMTypeToPromptKey(mappedType || 'unknown');
     }
     
-    return {
+    const result = {
       intent: analysis.intent || 'unclear',
       confidence: analysis.confidence || 0.5,
       taskType: analysis.taskType,
       requiredAgents: analysis.requiredAgents || [],
       complexity: analysis.complexity || 'medium',
+      projectType: analysis.projectType,  // ✅ เพิ่ม projectType จาก LLM response
       parameters: {
         ...analysis.parameters,
         type: mappedType  // ✅ ใช้ mapped type
       }
     };
+    
+    console.log('🔍 validateAndMapAnalysis - Output result.projectType:', result.projectType);
+    
+    return result;
   }
 
   /**
@@ -582,22 +591,8 @@ export class OrchestratorAI {
       };
     }
     
-    // Template customization patterns (NEW!)
-    if (lowerInput.includes('ปรับแต่งเทมเพลต') || 
-        lowerInput.includes('customize template') ||
-        lowerInput.includes('แก้ไขเทมเพลต') ||
-        lowerInput.includes('ปรับแต่งแบบ')) {
-      return {
-        intent: 'simple_task',
-        confidence: 0.9,
-        requiredAgents: ['frontend'],
-        complexity: 'medium',
-        taskType: 'Template customization request detected',
-        parameters: { type: 'template_customization' }
-      };
-    }
-    
-    // 🔧 Edit/Modify existing website patterns (NEW!)
+    // 🔧 ✅ PRIORITY: Edit/Modify existing website patterns BEFORE creation patterns!
+    // This must come FIRST to catch edit requests correctly
     if (lowerInput.includes('แก้ไข') ||
         lowerInput.includes('เปลี่ยน') ||
         lowerInput.includes('ปรับ') ||
@@ -620,15 +615,36 @@ export class OrchestratorAI {
                                   );
       
       if (hasExistingProject) {
+        // ✅ ตรวจจับ projectType จาก keywords (ถ้ามี)
+        const projectType = this.detectProjectTypeFromKeywords(input);
+        
+        console.log(`🔧 Website EDIT request detected: "${input}" with projectType: ${projectType}`);
+        
         return {
           intent: 'simple_task',
           confidence: 0.95,
           requiredAgents: ['frontend'],
           complexity: 'low',
           taskType: 'Website edit request detected',
+          projectType,  // ✅ เพิ่ม projectType (อาจเป็น undefined ถ้าไม่เจอ keyword)
           parameters: { type: 'website_edit' }
         };
       }
+    }
+
+    // Template customization patterns
+    if (lowerInput.includes('ปรับแต่งเทมเพลต') || 
+        lowerInput.includes('customize template') ||
+        lowerInput.includes('แก้ไขเทมเพลต') ||
+        lowerInput.includes('ปรับแต่งแบบ')) {
+      return {
+        intent: 'simple_task',
+        confidence: 0.9,
+        requiredAgents: ['frontend'],
+        complexity: 'medium',
+        taskType: 'Template customization request detected',
+        parameters: { type: 'template_customization' }
+      };
     }
     
     // Website creation patterns - now use template selection
@@ -641,12 +657,17 @@ export class OrchestratorAI {
         lowerInput.includes('เว็บไซต์ขาย') ||
         lowerInput.includes('create website') ||
         lowerInput.includes('build website')) {
+      
+      // ✅ ตรวจจับ projectType จาก keywords
+      const projectType = this.detectProjectTypeFromKeywords(input);
+      
       return {
         intent: 'simple_task',
         confidence: 0.9,
         requiredAgents: ['frontend'],
         complexity: 'medium',
         taskType: 'Website creation request detected - will use template selection',
+        projectType,  // ✅ เพิ่ม projectType
         parameters: { type: 'website_creation' }
       };
     }
@@ -1146,6 +1167,43 @@ export class OrchestratorAI {
       categoryIds,
       mappingText: mappingLines.join('\n')
     };
+  }
+
+  /**
+   * ✅ ตรวจจับ projectType จาก keywords ในข้อความ
+   * ใช้เหมือนกับ frontend-v2 agent
+   */
+  private detectProjectTypeFromKeywords(input: string): 'restaurant' | 'ecommerce' | 'hotel' | 'bakery' | 'academy' | 'bookstore' | 'healthcare' | 'news' | 'portfolio' | 'travel' | undefined {
+    const lowerInput = input.toLowerCase();
+    
+    // Score แต่ละ category
+    const scores: Record<string, number> = {};
+    
+    for (const category of BUSINESS_CATEGORIES) {
+      let score = 0;
+      
+      for (const keyword of category.keywords) {
+        if (lowerInput.includes(keyword.toLowerCase())) {
+          score += keyword.length; // Longer keyword = higher score
+        }
+      }
+      
+      if (score > 0) {
+        scores[category.id] = score;
+      }
+    }
+    
+    // หา category ที่ score สูงสุด
+    if (Object.keys(scores).length === 0) {
+      return undefined; // ไม่เจอ keyword ไหนเลย
+    }
+    
+    const bestCategory = Object.entries(scores).reduce((best, current) => 
+      current[1] > best[1] ? current : best
+    );
+    
+    console.log(`🎯 Quick Intent detected projectType: ${bestCategory[0]} (score: ${bestCategory[1]})`);
+    return bestCategory[0] as 'restaurant' | 'ecommerce' | 'hotel' | 'bakery' | 'academy' | 'bookstore' | 'healthcare' | 'news' | 'portfolio' | 'travel';
   }
 
   private buildIntentAnalysisPrompt(input: string, context: ConversationContext): string {

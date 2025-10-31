@@ -164,7 +164,7 @@ export const hotelCategories: BusinessCategoryManifest[] = [
       'hero-basic': {
         allowedVariants: ['hero-minimal', 'hero-split', 'hero-fullscreen'],
         defaultVariant: 'hero-split',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['hotel', 'accommodation', 'resort'],
           tone: ['luxury', 'professional', 'modern', 'elegant']
@@ -173,7 +173,7 @@ export const hotelCategories: BusinessCategoryManifest[] = [
       'about-basic': {
         allowedVariants: ['about-split', 'about-minimal', 'about-team', 'about-timeline'],
         defaultVariant: 'about-split',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['hotel', 'accommodation'],
           tone: ['professional', 'luxury', 'trustworthy']
@@ -182,7 +182,7 @@ export const hotelCategories: BusinessCategoryManifest[] = [
       'footer-basic': {
         allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
         defaultVariant: 'footer-mega',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['hotel', 'accommodation'],
           tone: ['professional', 'luxury', 'comprehensive']
@@ -191,7 +191,7 @@ export const hotelCategories: BusinessCategoryManifest[] = [
       'menu-basic': {
         allowedVariants: ['menu-list', 'menu-masonry', 'menu-carousel'],
         defaultVariant: 'menu-masonry',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['hotel', 'accommodation'],
           tone: ['luxury', 'organized', 'showcase']
@@ -209,7 +209,7 @@ export const hotelCategories: BusinessCategoryManifest[] = [
       'navbar-basic': {
         allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-minimal', 'navbar-sticky'],
         defaultVariant: 'navbar-transparent',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['hotel', 'accommodation', 'resort'],
           tone: ['luxury', 'professional', 'elegant', 'modern']

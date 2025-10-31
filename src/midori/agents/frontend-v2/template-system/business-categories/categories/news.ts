@@ -164,7 +164,7 @@ export const newsCategories: BusinessCategoryManifest[] = [
       'hero-basic': {
         allowedVariants: ['hero-minimal', 'hero-split', 'hero-fullscreen'],
         defaultVariant: 'hero-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['news', 'media', 'journalism'],
           tone: ['professional', 'serious', 'modern', 'urgent']
@@ -173,7 +173,7 @@ export const newsCategories: BusinessCategoryManifest[] = [
       'about-basic': {
         allowedVariants: ['about-split', 'about-minimal', 'about-team', 'about-timeline'],
         defaultVariant: 'about-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['news', 'media'],
           tone: ['professional', 'serious', 'trustworthy']
@@ -182,7 +182,7 @@ export const newsCategories: BusinessCategoryManifest[] = [
       'footer-basic': {
         allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
         defaultVariant: 'footer-mega',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['news', 'media'],
           tone: ['professional', 'comprehensive', 'serious']
@@ -191,7 +191,7 @@ export const newsCategories: BusinessCategoryManifest[] = [
       'menu-basic': {
         allowedVariants: ['menu-list', 'menu-masonry', 'menu-carousel'],
         defaultVariant: 'menu-list',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['news', 'media'],
           tone: ['professional', 'organized', 'serious']
@@ -209,7 +209,7 @@ export const newsCategories: BusinessCategoryManifest[] = [
       'navbar-basic': {
         allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-minimal', 'navbar-sticky'],
         defaultVariant: 'navbar-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['news', 'media', 'journalism'],
           tone: ['professional', 'serious', 'clean', 'modern']

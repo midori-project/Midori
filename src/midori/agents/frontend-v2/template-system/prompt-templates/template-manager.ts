@@ -108,7 +108,14 @@ Rules:
 - Use ONLY English color names: blue, green, purple, pink, orange, red, yellow, indigo
 - bgTone must be a NUMBER (50-900)
 - Generate realistic content based on keywords
-- All fields are REQUIRED - provide actual content, not placeholders`;
+- All fields are REQUIRED - provide actual content, not placeholders
+
+CRITICAL: Text Length Limits:
+- heading: MAX 80 characters (keep it short and impactful)
+- subheading: MAX 150 characters
+- badge: MAX 40 characters
+- menuItems[].name: MAX 50 characters
+- menuItems[].description: MAX 120 characters`;
     
     const userPrompt = `Keywords: ${keywords.join(", ")}
 ${colorHint}

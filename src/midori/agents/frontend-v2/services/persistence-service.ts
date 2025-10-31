@@ -172,12 +172,19 @@ function mapFileType(type: string): 'code' | 'text' | 'config' | 'asset' {
 function mapProjectType(category: string): any {
   const map: Record<string, string> = {
     restaurant: 'restaurant',
-    ecommerce: 'e_commerce',
-    portfolio: 'portfolio',
+    ecommerce: 'ecommerce',
+    hotel: 'hotel',
+    bakery: 'bakery',
+    academy: 'academy',
+    bookstore: 'bookstore',
     healthcare: 'healthcare',
+    news: 'news',
+    portfolio: 'portfolio',
+    travel: 'travel',
+    // Aliases
     pharmacy: 'healthcare',
   };
-  return (map[category] as any) || 'e_commerce';
+  return (map[category] as any) || 'ecommerce';
 }
 
 function buildFrontendV2Data(result: ComponentResultV2) {

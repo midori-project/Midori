@@ -164,7 +164,7 @@ export const travelCategories: BusinessCategoryManifest[] = [
       'hero-basic': {
         allowedVariants: ['hero-minimal', 'hero-split', 'hero-fullscreen'],
         defaultVariant: 'hero-fullscreen',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['travel', 'tourism', 'adventure'],
           tone: ['adventure', 'exciting', 'modern', 'dynamic']
@@ -173,7 +173,7 @@ export const travelCategories: BusinessCategoryManifest[] = [
       'about-basic': {
         allowedVariants: ['about-split', 'about-minimal', 'about-team', 'about-timeline'],
         defaultVariant: 'about-split',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['travel', 'tourism'],
           tone: ['adventure', 'friendly', 'professional']
@@ -182,7 +182,7 @@ export const travelCategories: BusinessCategoryManifest[] = [
       'footer-basic': {
         allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
         defaultVariant: 'footer-centered',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['travel', 'tourism'],
           tone: ['friendly', 'adventure', 'accessible']
@@ -191,7 +191,7 @@ export const travelCategories: BusinessCategoryManifest[] = [
       'menu-basic': {
         allowedVariants: ['menu-list', 'menu-masonry', 'menu-carousel'],
         defaultVariant: 'menu-carousel',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['travel', 'tourism'],
           tone: ['adventure', 'exciting', 'showcase']
@@ -209,7 +209,7 @@ export const travelCategories: BusinessCategoryManifest[] = [
       'navbar-basic': {
         allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-minimal', 'navbar-sticky'],
         defaultVariant: 'navbar-transparent',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['travel', 'tourism', 'adventure'],
           tone: ['adventure', 'friendly', 'modern', 'dynamic']

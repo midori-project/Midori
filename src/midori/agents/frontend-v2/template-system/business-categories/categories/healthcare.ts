@@ -171,7 +171,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       'hero-basic': {
         allowedVariants: ['hero-stats', 'hero-split', 'hero-cards', 'hero-minimal', 'hero-fullscreen'],
         defaultVariant: 'hero-stats',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['healthcare', 'medical', 'clinic', 'hospital'],
           tone: ['professional', 'trustworthy', 'reliable', 'medical']
@@ -180,7 +180,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       'about-basic': {
         allowedVariants: ['about-split', 'about-minimal', 'about-timeline', 'about-story', 'about-values'],
         defaultVariant: 'about-split',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['healthcare', 'medical'],
           tone: ['professional', 'trustworthy', 'medical']
@@ -189,7 +189,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       'footer-basic': {
         allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
         defaultVariant: 'footer-mega',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['healthcare', 'medical'],
           tone: ['professional', 'comprehensive', 'trustworthy']
@@ -198,7 +198,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       'menu-basic': {
         allowedVariants: ['menu-list', 'menu-masonry'],
         defaultVariant: 'menu-list',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['healthcare', 'medical'],
           tone: ['professional', 'organized', 'clear']
@@ -216,7 +216,7 @@ export const healthcareCategories: BusinessCategoryManifest[] = [
       'navbar-basic': {
         allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-sidebar', 'navbar-minimal', 'navbar-mega', 'navbar-sticky'],
         defaultVariant: 'navbar-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['healthcare', 'medical', 'clinic', 'hospital'],
           tone: ['professional', 'trustworthy', 'reliable', 'medical', 'clean']

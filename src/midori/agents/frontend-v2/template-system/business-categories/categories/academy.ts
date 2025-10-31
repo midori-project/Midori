@@ -164,7 +164,7 @@ export const academyCategories: BusinessCategoryManifest[] = [
       'hero-basic': {
         allowedVariants: ['hero-minimal', 'hero-split', 'hero-fullscreen'],
         defaultVariant: 'hero-split',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['academy', 'education', 'school'],
           tone: ['professional', 'academic', 'modern', 'trustworthy']
@@ -173,7 +173,7 @@ export const academyCategories: BusinessCategoryManifest[] = [
       'about-basic': {
         allowedVariants: ['about-split', 'about-minimal', 'about-team', 'about-timeline'],
         defaultVariant: 'about-split',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['academy', 'education'],
           tone: ['professional', 'academic', 'trustworthy']
@@ -182,7 +182,7 @@ export const academyCategories: BusinessCategoryManifest[] = [
       'footer-basic': {
         allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
         defaultVariant: 'footer-mega',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['academy', 'education'],
           tone: ['professional', 'academic', 'comprehensive']
@@ -191,7 +191,7 @@ export const academyCategories: BusinessCategoryManifest[] = [
       'menu-basic': {
         allowedVariants: ['menu-list', 'menu-masonry', 'menu-carousel'],
         defaultVariant: 'menu-list',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['academy', 'education'],
           tone: ['professional', 'organized', 'academic']
@@ -209,7 +209,7 @@ export const academyCategories: BusinessCategoryManifest[] = [
       'navbar-basic': {
         allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-minimal', 'navbar-sticky'],
         defaultVariant: 'navbar-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['academy', 'education', 'school'],
           tone: ['professional', 'academic', 'clean', 'modern']

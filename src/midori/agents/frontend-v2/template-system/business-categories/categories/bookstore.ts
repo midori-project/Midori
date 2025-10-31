@@ -164,7 +164,7 @@ export const bookstoreCategories: BusinessCategoryManifest[] = [
       'hero-basic': {
         allowedVariants: ['hero-minimal', 'hero-split', 'hero-fullscreen'],
         defaultVariant: 'hero-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['bookstore', 'library', 'education'],
           tone: ['warm', 'friendly', 'cozy', 'intellectual']
@@ -173,7 +173,7 @@ export const bookstoreCategories: BusinessCategoryManifest[] = [
       'about-basic': {
         allowedVariants: ['about-split', 'about-minimal', 'about-team', 'about-timeline'],
         defaultVariant: 'about-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['bookstore', 'library'],
           tone: ['warm', 'friendly', 'intellectual']
@@ -182,7 +182,7 @@ export const bookstoreCategories: BusinessCategoryManifest[] = [
       'footer-basic': {
         allowedVariants: ['footer-minimal', 'footer-centered', 'footer-mega'],
         defaultVariant: 'footer-centered',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['bookstore', 'library'],
           tone: ['warm', 'friendly', 'accessible']
@@ -191,7 +191,7 @@ export const bookstoreCategories: BusinessCategoryManifest[] = [
       'menu-basic': {
         allowedVariants: ['menu-list', 'menu-masonry', 'menu-carousel'],
         defaultVariant: 'menu-list',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['bookstore', 'library'],
           tone: ['organized', 'intellectual', 'cozy']
@@ -209,7 +209,7 @@ export const bookstoreCategories: BusinessCategoryManifest[] = [
       'navbar-basic': {
         allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-minimal', 'navbar-sticky'],
         defaultVariant: 'navbar-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['bookstore', 'library', 'education'],
           tone: ['warm', 'friendly', 'cozy', 'intellectual']

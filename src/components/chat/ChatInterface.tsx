@@ -425,16 +425,6 @@ export default function ChatInterface({
                 {message.content}
               </div>
               
-              {/* Task Results (if any) */}
-              {message.taskResults && (
-                <div className="mt-3 p-3 bg-white/50 rounded-lg border border-white/30">
-                  <p className="text-xs font-medium text-gray-600 mb-2">📋 Task Results:</p>
-                  <pre className="text-xs text-gray-700 overflow-x-auto">
-                    {JSON.stringify(message.taskResults, null, 2)}
-                  </pre>
-                </div>
-              )}
-              
               {/* Timestamp */}
               <div className="mt-2 text-xs opacity-60">
                 {message.timestamp.toLocaleTimeString('th-TH', { 

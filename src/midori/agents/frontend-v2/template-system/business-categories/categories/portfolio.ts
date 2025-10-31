@@ -165,7 +165,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       'hero-basic': {
         allowedVariants: ['hero-minimal', 'hero-split', 'hero-fullscreen'],
         defaultVariant: 'hero-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['portfolio', 'creative', 'designer', 'developer', 'artist'],
           tone: ['creative', 'modern', 'minimal', 'professional']
@@ -174,7 +174,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       'about-basic': {
         allowedVariants: ['about-split', 'about-minimal', 'about-team', 'about-timeline', 'about-story', 'about-values'],
         defaultVariant: 'about-split',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['portfolio', 'creative'],
           tone: ['creative', 'personal', 'professional']
@@ -183,7 +183,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       'footer-basic': {
         allowedVariants: ['footer-minimal', 'footer-centered'],
         defaultVariant: 'footer-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['portfolio', 'creative'],
           tone: ['minimal', 'clean', 'professional']
@@ -192,7 +192,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       'menu-basic': {
         allowedVariants: ['menu-list', 'menu-masonry'],
         defaultVariant: 'menu-masonry',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['portfolio', 'creative'],
           tone: ['creative', 'organized', 'showcase']
@@ -210,7 +210,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
       'navbar-basic': {
         allowedVariants: ['navbar-centered', 'navbar-transparent', 'navbar-sidebar', 'navbar-minimal', 'navbar-mega', 'navbar-sticky'],
         defaultVariant: 'navbar-minimal',
-        randomSelection: false,
+        randomSelection: true,
         constraints: {
           businessType: ['portfolio', 'creative', 'designer', 'developer', 'artist'],
           tone: ['creative', 'modern', 'minimal', 'professional', 'clean']
