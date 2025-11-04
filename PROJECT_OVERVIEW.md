@@ -1131,3 +1131,4 @@ Response: "Midori เป็น AI platform สำหรับ..."
 Midori เป็นแพลตฟอร์มที่รวม AI-powered website generation, visual editing, และ deployment automation เข้าด้วยกัน โดยมีสถาปัตยกรรมที่ชัดเจน แยกหน้าที่กันระหว่าง layers และมีระบบ governance ที่ครอบคลุมสำหรับติดตามและควบคุมการใช้ AI resources
 
 
+adasdasd
