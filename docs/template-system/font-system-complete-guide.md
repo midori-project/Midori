@@ -244,10 +244,10 @@ const font = selectFontForCategory('restaurant', 'warm', 'th');
 ### 4. สุ่ม Font
 
 ```typescript
-import { getRandomFontFromPool } from './business-categories';
+import { getRandomFontFromCategoryPool } from './business-categories';
 
-const font = getRandomFontFromPool('restaurant');
-// สุ่มจาก allowedFonts
+const font = getRandomFontFromCategoryPool('restaurant');
+// สุ่มจาก allowedFonts สำหรับ category
 ```
 
 ---

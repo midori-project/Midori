@@ -83,22 +83,22 @@ export class OverrideLogger {
   /**
    * Log Performance Metrics
    */
-  logPerformanceMetrics(component: string, metrics: {
+  logPerformanceMetrics(component: 'resolver' | 'renderer' | 'ai' | 'validation', metrics: {
     startTime: number;
     endTime: number;
     duration: number;
     memoryUsage?: number;
   }): void {
-    this.log('debug', component as any, '[Performance]', metrics);
+    this.log('debug', component, '[Performance]', metrics);
   }
 
   /**
    * Log Memory Usage
    */
-  logMemoryUsage(component: string): void {
+  logMemoryUsage(component: 'resolver' | 'renderer' | 'ai' | 'validation'): void {
     if (typeof process !== 'undefined' && process.memoryUsage) {
       const memoryUsage = process.memoryUsage();
-      this.log('debug', component as any, '[Memory Usage]', {
+      this.log('debug', component, '[Memory Usage]', {
         rss: memoryUsage.rss,
         heapTotal: memoryUsage.heapTotal,
         heapUsed: memoryUsage.heapUsed,
@@ -204,7 +204,7 @@ export class OverrideLogger {
   /**
    * Core Log Method
    */
-  private log(level: 'debug' | 'info' | 'warn' | 'error', component: string, message: string, data?: any): void {
+  private log(level: 'debug' | 'info' | 'warn' | 'error', component: 'resolver' | 'renderer' | 'ai' | 'validation', message: string, data?: any): void {
     if (!this.config.enabled) return;
 
     const logLevels = { debug: 0, info: 1, warn: 2, error: 3 };

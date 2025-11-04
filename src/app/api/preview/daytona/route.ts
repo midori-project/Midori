@@ -84,30 +84,3 @@ export async function DELETE(req: NextRequest) {
     return controller.handleError(error, status)
   }
 }
-/**
- * Get cleanup service statistics
- * This would typically be a separate admin endpoint, but kept here for compatibility
- */
-export async function GET_STATS(req: NextRequest) {
-  try {
-    const result = controller.getCleanupStats()
-    return controller.createSuccessResponse(result)
-  } catch (error: any) {
-    return controller.handleError(error, 500)
-  }
-}
-
-/**
- * Control cleanup service (admin endpoint)
- * This would typically be a separate admin endpoint, but kept here for compatibility
- */
-export async function POST_CLEANUP(req: NextRequest) {
-  try {
-    const { action } = await req.json()
-    const result = await controller.controlCleanupService(action)
-    return controller.createSuccessResponse(result)
-  } catch (error: any) {
-    const status = error.message.includes('Invalid action') ? 400 : 500
-    return controller.handleError(error, status)
-  }
-}

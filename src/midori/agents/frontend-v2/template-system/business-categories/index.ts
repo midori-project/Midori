@@ -417,9 +417,9 @@ export function isFontAllowed(categoryId: string, fontKey: string): boolean {
 }
 
 /**
- * Get random font from allowed pool
+ * Get random font from allowed pool for a category
  */
-export function getRandomFontFromPool(categoryId: string): string | undefined {
+export function getRandomFontFromCategoryPool(categoryId: string): string | undefined {
   const pool = CATEGORY_FONT_POOLS[categoryId];
   if (!pool || pool.allowedFonts.length === 0) return undefined;
   
