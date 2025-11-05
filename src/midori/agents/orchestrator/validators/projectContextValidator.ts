@@ -3,7 +3,7 @@
  * Data validation and consistency checks for project context
  */
 
-import { ProjectContextData, ComponentStateData, PageStateData, StylingStateData, ComponentStyling } from '../types/projectContext';
+import { ProjectContextData, ComponentStateData, PageStateData, StylingStateData, ComponentStyling, ThemeConfig } from '../types/projectContext';
 import { ProjectType, ProjectStatus } from '@prisma/client';
 
 export interface ValidationResult {
@@ -332,7 +332,7 @@ export class ProjectContextValidator {
 
     // Theme validation
     if (context.styling.theme) {
-      const requiredThemeFields = ['primary', 'secondary', 'accent'];
+      const requiredThemeFields: (keyof ThemeConfig)[] = ['primary', 'secondary', 'accent'];
       for (const field of requiredThemeFields) {
         if (!context.styling.theme[field]) {
           warnings.push(`Theme missing ${field} color`);
@@ -358,8 +358,8 @@ export class ProjectContextValidator {
     const warnings: string[] = [];
     const suggestions: string[] = [];
 
-    // Coffee shop specific validation
-    if (context.projectType === 'coffee_shop') {
+    // Restaurant-like validation
+    if (context.projectType === 'restaurant') {
       const hasMenuPage = context.pages.some(p => p.name.toLowerCase().includes('menu'));
       if (!hasMenuPage) {
         suggestions.push('Coffee shop should have a menu page');
@@ -372,7 +372,7 @@ export class ProjectContextValidator {
     }
 
     // E-commerce specific validation
-    if (context.projectType === 'e_commerce') {
+    if (context.projectType === 'ecommerce') {
       const hasProductPage = context.pages.some(p => p.name.toLowerCase().includes('product'));
       if (!hasProductPage) {
         suggestions.push('E-commerce should have product pages');
