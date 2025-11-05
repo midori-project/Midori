@@ -50,7 +50,18 @@ export class LLMAdapter {
 
   async loadConfig(): Promise<void> {
     try {
-      // รองรับกำหนดพาธผ่าน ENV, ถ้าไม่มีก็ลอง public ก่อน แล้วค่อย fallback ไป src
+      // วิธีที่ 1: ลอง import จาก TypeScript config (bundled with build)
+      try {
+        const { agentConfig } = await import("../agentConfig");
+        this.config = agentConfig.model as LLMConfig;
+        console.log("✅ Loaded config from TypeScript module");
+        return;
+      } catch (importError) {
+        // ถ้า import ไม่ได้ ให้ fallback ไปอ่าน YAML
+        console.log("⚠️ TypeScript config not available, trying YAML files...");
+      }
+
+      // วิธีที่ 2: Fallback ไปอ่าน YAML (สำหรับ development)
       const projectRoot = process.env.MIDORI_PROJECT_ROOT || process.cwd();
       const envPath = process.env.MIDORI_AGENT_CONFIG_PATH;
       const publicPath = path.join(
@@ -72,6 +83,7 @@ export class LLMAdapter {
           const agentConfig = yaml.load(content) as AgentConfig;
           this.config = agentConfig.model;
           loaded = p;
+          console.log(`✅ Loaded config from YAML: ${p}`);
           break;
         } catch (err) {
           lastError = err;
