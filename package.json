@@ -11,7 +11,7 @@
     "ai:test": "npm run ai:validate && echo 'AI agent tests would run here'",
     "ai:dev": "echo 'AI agent dev server would start here'",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma migrate deploy && next build"
+    "vercel-build": "prisma migrate deploy || prisma db push && next build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.913.0",
