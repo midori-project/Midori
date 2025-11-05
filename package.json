@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "ai:validate": "node scripts/validate-ai-config.js",
     "ai:test": "npm run ai:validate && echo 'AI agent tests would run here'",
-    "ai:dev": "echo 'AI agent dev server would start here'"
+    "ai:dev": "echo 'AI agent dev server would start here'",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.913.0",
@@ -41,7 +42,6 @@
     "nanoid": "^5.1.6",
     "next": "15.5.0",
     "openai": "^5.20.3",
-    "prisma": "^6.14.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwind-merge": "^3.3.1",
@@ -64,6 +64,7 @@
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tw-animate-css": "^1.3.7",
-    "typescript": "^5"
+    "typescript": "^5",
+    "prisma": "^6.14.0"
   }
 }
