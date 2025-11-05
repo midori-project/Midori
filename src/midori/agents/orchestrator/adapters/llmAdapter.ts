@@ -50,26 +50,38 @@ export class LLMAdapter {
 
   async loadConfig(): Promise<void> {
     try {
-      // Use absolute path เพื่อแก้ปัญหา path เมื่อรันจาก directory อื่น
+      // รองรับกำหนดพาธผ่าน ENV, ถ้าไม่มีก็ลอง public ก่อน แล้วค่อย fallback ไป src
       const projectRoot = process.env.MIDORI_PROJECT_ROOT || process.cwd();
-      console.log("🔍 Loading config from:", {
+      const envPath = process.env.MIDORI_AGENT_CONFIG_PATH;
+      const publicPath = path.join(
         projectRoot,
-        cwd: process.cwd(),
-      });
-      const configPath = path.join(
+        "public/midori/agents/orchestrator/agent.yaml"
+      );
+      const srcPath = path.join(
         projectRoot,
         "src/midori/agents/orchestrator/agent.yaml"
       );
-      console.log("📄 Config path:", configPath);
-      const configFile = await fs.readFile(configPath, "utf-8");
-      const agentConfig = yaml.load(configFile) as AgentConfig;
 
-      this.config = agentConfig.model;
-      // console.log('⚙️ LLM config loaded:', { // Reduced logging
-      //   model: this.config.name,
-      //   temperature: this.config.temperature,
-      //   fallback: this.config.fallback?.name
-      // });
+      const candidates = [envPath, publicPath, srcPath].filter(Boolean) as string[];
+
+      let loaded: string | null = null;
+      let lastError: any = null;
+      for (const p of candidates) {
+        try {
+          const content = await fs.readFile(p, "utf-8");
+          const agentConfig = yaml.load(content) as AgentConfig;
+          this.config = agentConfig.model;
+          loaded = p;
+          break;
+        } catch (err) {
+          lastError = err;
+          continue;
+        }
+      }
+
+      if (!loaded) {
+        throw lastError || new Error("Agent config file not found in any candidate paths");
+      }
     } catch (error) {
       console.error("❌ Failed to load LLM config:", error);
       throw error;
