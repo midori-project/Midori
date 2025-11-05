@@ -36,7 +36,7 @@ export class ProjectContextSync {
   /**
    * Add WebSocket connection for a project
    */
-  addWebSocketConnection(projectId: string, ws: WebSocket): void {
+  addWebSocketConnection(projectId: string, ws: any): void {
     if (!this.wsConnections.has(projectId)) {
       this.wsConnections.set(projectId, new Set());
     }
@@ -56,7 +56,7 @@ export class ProjectContextSync {
   /**
    * Remove WebSocket connection
    */
-  removeWebSocketConnection(projectId: string, ws: WebSocket): void {
+  removeWebSocketConnection(projectId: string, ws: any): void {
     const connections = this.wsConnections.get(projectId);
     if (connections) {
       connections.delete(ws);
@@ -189,10 +189,21 @@ export class ProjectContextSync {
 
       for (const response of connections) {
         try {
-          // Check if response is still writable
-          if (!response.writableEnded) {
-            response.write(message);
+          // For SSE, we need to check if response is a Node.js response or Web Response
+          // Node.js response has write() method, Web Response uses ReadableStream
+          const nodeResponse = response as any;
+          if (typeof nodeResponse.write === 'function') {
+            // Node.js response - check if writable is ended
+            if (!nodeResponse.writableEnded && !nodeResponse.writableDestroyed) {
+              nodeResponse.write(message);
+            } else {
+              deadConnections.push(response);
+            }
           } else {
+            // Web Response API - use ReadableStream
+            // Note: This requires the response to be created with a ReadableStream
+            // For Next.js SSE, typically we'd use a different approach
+            console.warn('⚠️ Web Response API SSE not fully supported in this context');
             deadConnections.push(response);
           }
         } catch (error) {
@@ -241,7 +252,11 @@ export class ProjectContextSync {
           context,
           timestamp: new Date().toISOString()
         };
-        response.write(`data: ${JSON.stringify(event)}\n\n`);
+        // Use Node.js response write method if available
+        const nodeResponse = response as any;
+        if (typeof nodeResponse.write === 'function' && !nodeResponse.writableEnded) {
+          nodeResponse.write(`data: ${JSON.stringify(event)}\n\n`);
+        }
       }
     } catch (error) {
       console.error(`❌ Error sending current context to SSE for ${projectId}:`, error);

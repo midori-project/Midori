@@ -89,7 +89,7 @@ export function PreviewContent({
           {isCodeEditorVisible && (
             <div className="xl:col-span-2 h-[50vh] xl:h-full">
               <CodeEditor
-                sandboxId={sandboxId}
+                sandboxId={sandboxId ?? undefined}
                 projectId={projectId}
                 initialFiles={files}
                 className="h-full"

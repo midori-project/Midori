@@ -8,10 +8,9 @@ import {
   ComponentStateData, 
   PageStateData, 
   PreviewData,
-  FrontendV2ProjectData,
-  ComponentType,
-  PageType
+  FrontendV2ProjectData
 } from '../types/projectContext';
+import { ComponentType, PageType } from '@prisma/client';
 
 export class FrontendV2ProjectContextMapper {
   /**

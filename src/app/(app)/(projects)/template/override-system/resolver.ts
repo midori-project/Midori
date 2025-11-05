@@ -89,8 +89,9 @@ export class ManifestResolver {
       this.processingStats.endTime = Date.now();
       this.processingStats.duration = this.processingStats.endTime - this.processingStats.startTime;
       
+      const errorMessage = error instanceof Error ? error.message : String(error);
       throw new ManifestResolutionError(
-        `Failed to resolve manifest for business category '${businessCategoryId}': ${error.message}`,
+        `Failed to resolve manifest for business category '${businessCategoryId}': ${errorMessage}`,
         businessCategoryId
       );
     }
@@ -130,8 +131,9 @@ export class ManifestResolver {
         );
         concreteBlocks.push(concreteBlock);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         throw new Error(
-          `Failed to process block '${blockUsage.blockId}': ${error.message}`
+          `Failed to process block '${blockUsage.blockId}': ${errorMessage}`
         );
       }
     }

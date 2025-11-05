@@ -3,6 +3,8 @@
  * จัดการ prompt templates แบบ modular
  */
 
+import type { PlaceholderConfig } from '../shared-blocks';
+
 export interface PromptTemplate {
   systemPrompt: string;
   userPrompt: (keywords: string[], colorHint: string) => string;
@@ -172,10 +174,11 @@ function getBlockSchema(block: any): any {
   const schema: any = {};
   
   for (const [placeholder, config] of Object.entries(block.placeholders)) {
-    if (config.type === "array") {
+    const placeholderConfig = config as PlaceholderConfig;
+    if (placeholderConfig.type === "array") {
       schema[placeholder] = getArrayExample(placeholder, block.id);
     } else {
-      schema[placeholder] = config.description || `appropriate ${config.type} value`;
+      schema[placeholder] = placeholderConfig.description || `appropriate ${placeholderConfig.type} value`;
     }
   }
   

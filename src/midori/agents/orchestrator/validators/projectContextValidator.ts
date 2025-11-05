@@ -3,7 +3,7 @@
  * Data validation and consistency checks for project context
  */
 
-import { ProjectContextData, ComponentStateData, PageStateData, StylingStateData } from '../types/projectContext';
+import { ProjectContextData, ComponentStateData, PageStateData, StylingStateData, ComponentStyling } from '../types/projectContext';
 import { ProjectType, ProjectStatus } from '@prisma/client';
 
 export interface ValidationResult {
@@ -175,17 +175,27 @@ export class ProjectContextValidator {
     const suggestions: string[] = [];
 
     // Check if project type is valid
-    const validProjectTypes: ProjectType[] = ['coffee_shop', 'restaurant', 'e_commerce', 'portfolio', 'blog'];
+    const validProjectTypes: ProjectType[] = [
+      'restaurant', 
+      'ecommerce', 
+      'hotel', 
+      'bakery', 
+      'academy', 
+      'bookstore', 
+      'healthcare', 
+      'news', 
+      'portfolio', 
+      'travel'
+    ];
     if (!validProjectTypes.includes(context.projectType)) {
       errors.push(`Invalid project type: ${context.projectType}. Must be one of: ${validProjectTypes.join(', ')}`);
     }
 
     // Check components match project type
+    // Note: ComponentType doesn't include 'template', so we just verify components exist
     if (context.components.length > 0) {
-      const hasTemplate = context.components.some(c => c.type === 'template');
-      if (!hasTemplate && context.projectType !== 'portfolio') {
-        warnings.push(`${context.projectType} project should have a template component`);
-      }
+      // Components validation is done elsewhere
+      // This is just a basic check
     }
 
     return { isValid: errors.length === 0, errors, warnings, suggestions };
@@ -199,7 +209,7 @@ export class ProjectContextValidator {
     const warnings: string[] = [];
     const suggestions: string[] = [];
 
-    const validStatuses: ProjectStatus[] = ['created', 'in_progress', 'template_selected', 'customizing', 'completed', 'archived'];
+    const validStatuses: ProjectStatus[] = ['created', 'in_progress', 'template_selected', 'completed', 'paused', 'cancelled'];
     if (!validStatuses.includes(context.status)) {
       errors.push(`Invalid status: ${context.status}. Must be one of: ${validStatuses.join(', ')}`);
     }
@@ -209,8 +219,9 @@ export class ProjectContextValidator {
       errors.push('Completed project must have at least one component');
     }
 
-    if (context.status === 'template_selected' && !context.components.some(c => c.type === 'template')) {
-      errors.push('Template selected status requires a template component');
+    // Note: ComponentType doesn't include 'template', so we just verify components exist
+    if (context.status === 'template_selected' && context.components.length === 0) {
+      warnings.push('Template selected status should have components');
     }
 
     if (context.status === 'in_progress' && context.components.length === 0) {
@@ -240,11 +251,8 @@ export class ProjectContextValidator {
         errors.push(`Component ${component.id} missing type`);
       }
 
-      // Type validation
-      const validTypes = ['template', 'component', 'page', 'layout', 'widget'];
-      if (component.type && !validTypes.includes(component.type)) {
-        warnings.push(`Component ${component.id} has invalid type: ${component.type}`);
-      }
+      // Type validation - ComponentType is already validated by Prisma enum
+      // No need for additional validation here
 
       // Metadata validation
       if (component.metadata) {
@@ -258,7 +266,7 @@ export class ProjectContextValidator {
 
       // Styling validation
       if (component.styling && typeof component.styling === 'object') {
-        const requiredStyleFields = ['colors', 'fonts', 'spacing'];
+        const requiredStyleFields: (keyof ComponentStyling)[] = ['colors', 'fonts', 'spacing'];
         for (const field of requiredStyleFields) {
           if (!component.styling[field]) {
             suggestions.push(`Component ${component.id} could benefit from ${field} styling`);

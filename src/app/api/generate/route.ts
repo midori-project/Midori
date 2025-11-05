@@ -62,9 +62,9 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Error generating website:", error);
     return NextResponse.json(
-      { 
+      {
         error: "Failed to generate website",
-        details: error.message,
+        details: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       },
       { status: 500 }
@@ -103,6 +103,7 @@ async function generateUserDataFromKeywords(
   } catch (parseError) {
     console.error('AI Response Parse Error:', parseError);
     console.error('Raw AI Response:', content);
-    throw new Error(`Failed to parse AI response: ${parseError.message}`);
+    const errorMessage = parseError instanceof Error ? parseError.message : String(parseError);
+    throw new Error(`Failed to parse AI response: ${errorMessage}`);
   }
 }

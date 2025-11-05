@@ -13,7 +13,7 @@ export class OverrideLogger {
   private config: LoggerConfig;
   private logEntries: LogEntry[] = [];
 
-  private constructor(config?: Partial<LoggerConfig>) {
+  protected constructor(config?: Partial<LoggerConfig>) {
     this.config = {
       enabled: true,
       logLevel: 'info',
@@ -28,6 +28,13 @@ export class OverrideLogger {
       OverrideLogger.instance = new OverrideLogger(config);
     }
     return OverrideLogger.instance;
+  }
+
+  /**
+   * Create a new logger instance (for factory pattern)
+   */
+  static create(config?: Partial<LoggerConfig>): OverrideLogger {
+    return new OverrideLogger(config);
   }
 
   /**
@@ -379,7 +386,7 @@ export class LoggerFactory {
    */
   static getLogger(name: string, config?: Partial<LoggerConfig>): OverrideLogger {
     if (!this.loggers.has(name)) {
-      this.loggers.set(name, new OverrideLogger(config));
+      this.loggers.set(name, OverrideLogger.create(config));
     }
     return this.loggers.get(name)!;
   }

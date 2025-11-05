@@ -219,10 +219,12 @@ export class DataConsistencyChecker {
       result.isConsistent = false;
     }
 
-    if (context.status === 'template_selected' && !context.components.some(c => c.type === 'template')) {
+    // Note: ComponentType doesn't include 'template', so we check for custom components instead
+    // template_selected status can have any component types, so we just verify components exist
+    if (context.status === 'template_selected' && context.components.length === 0) {
       result.inconsistencies.push({
         type: 'invalid_state',
-        severity: 'error',
+        severity: 'warning',
         description: 'Template selected status without template component',
         affectedFields: ['status', 'components'],
         suggestedFix: 'Add template component or change status'

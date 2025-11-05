@@ -182,7 +182,7 @@ async function generateWebsite(layoutOption: LayoutOption | null, customKeywords
       console.log(`└─ Blocks: ${result.result.blocksGenerated.join(', ')}`);
 
       if (result.projectStructure) {
-        log(`\n📦 Project Structure:', colors.bright + colors.cyan);
+        log(`\n📦 Project Structure:`, colors.bright + colors.cyan);    
         console.log(`├─ Name: ${result.projectStructure.projectStructure.name}`);
         console.log(`├─ Type: ${result.projectStructure.projectStructure.type}`);
         console.log(`└─ Total Files: ${result.projectStructure.files.length}`);

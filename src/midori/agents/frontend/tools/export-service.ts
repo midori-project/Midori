@@ -2,8 +2,23 @@
  * Export Service สำหรับสร้างไฟล์ใหม่จาก template ที่เติม slots แล้ว
  */
 
-import { TemplateService } from './template-service';
-import { SlotsFiller, FillSlotsResult } from './slots-filler';
+// TODO: Re-implement TemplateService and SlotsFiller or remove this file
+// import { TemplateService } from './template-service';
+// import { SlotsFiller, FillSlotsResult } from './slots-filler';
+
+// Temporary stub interfaces
+interface TemplateService {
+  getFiles(templateKey: string, version: number): Promise<Array<{ path: string; content: string }>>;
+}
+
+interface FillSlotsResult {
+  filledSlots: Record<string, any>;
+  summary: {
+    totalSlots: number;
+    filledSlots: number;
+    mockedSlots: number;
+  };
+}
 
 export interface ExportBundleInput {
   templateKey: string;
@@ -35,10 +50,10 @@ export interface ExportBundleResult {
 }
 
 export class ExportService {
-  private templateService: TemplateService;
+  private templateService: TemplateService | null;
 
-  constructor(templateService: TemplateService) {
-    this.templateService = templateService;
+  constructor(templateService?: TemplateService) {
+    this.templateService = templateService || null;
   }
 
   /**
@@ -140,6 +155,9 @@ export class ExportService {
     fileName: string,
     resolveExternal: string
   ): Promise<ExportBundleResult> {
+    if (!this.templateService) {
+      throw new Error('TemplateService is not available');
+    }
     const files = await this.templateService.getFiles(templateKey, version);
     
     // ประมวลผลไฟล์แต่ละไฟล์
@@ -274,6 +292,9 @@ export class ExportService {
    * นับจำนวนไฟล์ใน template version
    */
   private async getFilesCount(templateKey: string, version: number): Promise<number> {
+    if (!this.templateService) {
+      return 0;
+    }
     const files = await this.templateService.getFiles(templateKey, version);
     return files.length;
   }

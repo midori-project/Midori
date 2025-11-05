@@ -2,31 +2,43 @@
  * Jest Setup for Frontend-V2 Agent Tests
  */
 
+// Type definitions for Jest (if not available in build context)
+declare const beforeAll: (fn: () => void) => void;
+declare const afterAll: (fn: () => void) => void;
+declare const jest: {
+  fn: () => any;
+  setTimeout: (ms: number) => void;
+};
+
 // Mock console methods to reduce noise in tests
 const originalConsole = console;
 
-beforeAll(() => {
-  // Suppress console.log in tests unless explicitly enabled
-  if (!process.env.DEBUG_TESTS) {
-    console.log = jest.fn();
-    console.warn = jest.fn();
-    console.error = jest.fn();
-  }
-});
+if (typeof beforeAll !== 'undefined') {
+  beforeAll(() => {
+    // Suppress console.log in tests unless explicitly enabled
+    if (!process.env.DEBUG_TESTS) {
+      console.log = jest.fn();
+      console.warn = jest.fn();
+      console.error = jest.fn();
+    }
+  });
 
-afterAll(() => {
-  // Restore original console
-  console.log = originalConsole.log;
-  console.warn = originalConsole.warn;
-  console.error = originalConsole.error;
-});
+  afterAll(() => {
+    // Restore original console
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
+  });
 
-// Global test timeout
-jest.setTimeout(30000);
+  // Global test timeout
+  jest.setTimeout(30000);
+}
 
-// Mock environment variables
-process.env.NODE_ENV = 'test';
-process.env.OPENAI_API_KEY = 'test-api-key';
+// Mock environment variables (only in test context)
+if (process.env.NODE_ENV !== 'production') {
+  (process.env as any).NODE_ENV = 'test';
+  (process.env as any).OPENAI_API_KEY = 'test-api-key';
+}
 
 // Global test utilities
 (global as any).testUtils = {

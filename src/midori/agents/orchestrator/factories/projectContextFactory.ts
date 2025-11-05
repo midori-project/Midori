@@ -133,13 +133,35 @@ export class ProjectContextFactory {
         title: 'Modal Title',
         showCloseButton: true
       },
-      [ComponentType.dropdown]: {
+      [ComponentType.gallery]: {
         items: [],
-        placeholder: 'Select an option'
-      }
+        columns: 3
+      },
+      [ComponentType.testimonial]: {
+        items: []
+      },
+      [ComponentType.pricing]: {
+        plans: []
+      },
+      [ComponentType.contact]: {
+        fields: []
+      },
+      [ComponentType.about]: {
+        content: 'About us content'
+      },
+      [ComponentType.services]: {
+        items: []
+      },
+      [ComponentType.products]: {
+        items: []
+      },
+      [ComponentType.blog]: {
+        posts: []
+      },
+      [ComponentType.custom]: {}
     };
 
-    return defaultProps[componentType] || {};
+    return (defaultProps as any)[componentType] || {};
   }
 
   // ============================
@@ -539,24 +561,10 @@ export class ProjectContextFactory {
         },
         borders: {},
         shadows: {}
-      },
-      [ComponentType.dropdown]: {
-        colors: {
-          background: '#FFFFFF',
-          text: '#000000',
-          border: '#D1D5DB'
-        },
-        fonts: {},
-        spacing: {
-          padding: '0.5rem',
-          margin: '0'
-        },
-        borders: {},
-        shadows: {}
       }
     };
 
-    return defaultStyling[componentType] || {
+    return (defaultStyling as any)[componentType] || {
       colors: {},
       fonts: {},
       spacing: {},

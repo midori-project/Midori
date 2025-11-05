@@ -59,8 +59,13 @@ export class CloudflareR2Provider implements StorageProvider {
         buffer = file
         mimeType = contentType || 'application/octet-stream'
       } else {
-        buffer = Buffer.from(await file.arrayBuffer())
-        mimeType = file.type || contentType || 'application/octet-stream'
+        if (file instanceof File) {
+          buffer = Buffer.from(await file.arrayBuffer())
+          mimeType = file.type || contentType || 'application/octet-stream'
+        } else {
+          buffer = file as Buffer
+          mimeType = contentType || 'application/octet-stream'
+        }
       }
 
       console.log(`📤 Uploading to R2: ${path}`)

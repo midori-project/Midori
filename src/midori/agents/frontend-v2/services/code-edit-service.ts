@@ -496,7 +496,7 @@ RESPONSE FORMAT (with REAL CODE example):
       /^\/\/\s*complete\s+code/i,
       /^\/\/\s*.*code.*here/i,
       /^\/\/\s*valid\s+jsx\s+code/i,
-      /^\/\*.*code.*\*\/$/s,
+      /^\/\*[\s\S]*code[\s\S]*\*\/$/,
       /^\[.*code.*\]$/i,
       /^<.*code.*>$/i,
       /^\.\.\.$/,

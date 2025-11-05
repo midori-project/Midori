@@ -16,7 +16,7 @@ interface PartialUpdate {
   strategy: 'patch' | 'full'
 }
 
-interface CodeEditorFile {
+export interface CodeEditorFile {
   path: string
   content: string
   language: string

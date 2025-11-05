@@ -237,12 +237,12 @@ export interface AIResponse {
 
 export type {
   PlaceholderConfig,
-  SharedBlock,
-  BusinessCategoryManifest,
-  GlobalSettings
+  SharedBlock
 } from '../shared-blocks';
 
 export type {
+  BusinessCategoryManifest,
+  GlobalSettings,
   BusinessCategoryManifest as BusinessCategory,
   GlobalSettings as CategoryGlobalSettings
 } from '../business-categories';

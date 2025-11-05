@@ -367,30 +367,34 @@ export class ProjectContextOrchestratorService {
   }
 
   private static getDefaultComponentTypes(projectType: ProjectType): ComponentType[] {
-    const componentMap = {
-      [ProjectType.coffee_shop]: [ComponentType.header, ComponentType.hero, ComponentType.menu, ComponentType.footer],
+    const componentMap: Record<ProjectType, ComponentType[]> = {
       [ProjectType.restaurant]: [ComponentType.header, ComponentType.hero, ComponentType.menu, ComponentType.footer],
-      [ProjectType.e_commerce]: [ComponentType.header, ComponentType.hero, ComponentType.card, ComponentType.footer],
+      [ProjectType.ecommerce]: [ComponentType.header, ComponentType.hero, ComponentType.card, ComponentType.footer],
       [ProjectType.portfolio]: [ComponentType.header, ComponentType.hero, ComponentType.card, ComponentType.footer],
-      [ProjectType.blog]: [ComponentType.header, ComponentType.content, ComponentType.sidebar, ComponentType.footer],
-      [ProjectType.landing_page]: [ComponentType.header, ComponentType.hero, ComponentType.card, ComponentType.footer],
-      [ProjectType.business]: [ComponentType.header, ComponentType.hero, ComponentType.content, ComponentType.footer],
-      [ProjectType.personal]: [ComponentType.header, ComponentType.hero, ComponentType.content, ComponentType.footer]
+      [ProjectType.healthcare]: [ComponentType.header, ComponentType.hero, ComponentType.content, ComponentType.footer],
+      [ProjectType.hotel]: [ComponentType.header, ComponentType.hero, ComponentType.card, ComponentType.footer],
+      [ProjectType.travel]: [ComponentType.header, ComponentType.hero, ComponentType.gallery, ComponentType.footer],
+      [ProjectType.academy]: [ComponentType.header, ComponentType.hero, ComponentType.content, ComponentType.footer],
+      [ProjectType.bookstore]: [ComponentType.header, ComponentType.hero, ComponentType.card, ComponentType.footer],
+      [ProjectType.bakery]: [ComponentType.header, ComponentType.hero, ComponentType.menu, ComponentType.footer],
+      [ProjectType.news]: [ComponentType.header, ComponentType.content, ComponentType.sidebar, ComponentType.footer]
     };
 
     return componentMap[projectType] || [ComponentType.header, ComponentType.content, ComponentType.footer];
   }
 
   private static getDefaultPageTypes(projectType: ProjectType): PageType[] {
-    const pageMap = {
-      [ProjectType.coffee_shop]: [PageType.home, PageType.menu, PageType.about, PageType.contact],
+    const pageMap: Record<ProjectType, PageType[]> = {
       [ProjectType.restaurant]: [PageType.home, PageType.menu, PageType.about, PageType.contact],
-      [ProjectType.e_commerce]: [PageType.home, PageType.products, PageType.about, PageType.contact],
+      [ProjectType.ecommerce]: [PageType.home, PageType.products, PageType.about, PageType.contact],
       [ProjectType.portfolio]: [PageType.home, PageType.about, PageType.gallery, PageType.contact],
-      [ProjectType.blog]: [PageType.home, PageType.blog, PageType.about, PageType.contact],
-      [ProjectType.landing_page]: [PageType.home],
-      [ProjectType.business]: [PageType.home, PageType.about, PageType.services, PageType.contact],
-      [ProjectType.personal]: [PageType.home, PageType.about, PageType.gallery, PageType.contact]
+      [ProjectType.healthcare]: [PageType.home, PageType.about, PageType.services, PageType.contact],
+      [ProjectType.hotel]: [PageType.home, PageType.about, PageType.gallery, PageType.contact],
+      [ProjectType.travel]: [PageType.home, PageType.about, PageType.gallery, PageType.contact],
+      [ProjectType.academy]: [PageType.home, PageType.about, PageType.services, PageType.contact],
+      [ProjectType.bookstore]: [PageType.home, PageType.products, PageType.about, PageType.contact],
+      [ProjectType.bakery]: [PageType.home, PageType.menu, PageType.about, PageType.contact],
+      [ProjectType.news]: [PageType.home, PageType.blog, PageType.about, PageType.contact]
     };
 
     return pageMap[projectType] || [PageType.home, PageType.about, PageType.contact];
