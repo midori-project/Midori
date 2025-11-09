@@ -38,10 +38,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl font-bold text-[#0B4421] sm:text-5xl md:text-8xl">
             Grow your site with
-            <span className="text-green-600"> Midori</span>
+            <span className="text-green-600"> Wiivoor</span>
           </h1>
           <p className="mt-6 text-lg text-[#0B4421] max-w-3xl mx-auto">
-            Midori is an assistant to create, manage, and grow your website.
+            Wiivoor is an assistant to create, manage, and grow your website.
           </p>
         </div>
       </main>

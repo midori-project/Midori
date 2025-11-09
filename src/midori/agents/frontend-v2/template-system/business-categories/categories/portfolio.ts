@@ -190,7 +190,7 @@ export const portfolioCategories: BusinessCategoryManifest[] = [
         }
       },
       'menu-basic': {
-        allowedVariants: ['menu-list', 'menu-masonry'],
+        allowedVariants: ['menu-list', 'menu-masonry','menu-carousel'],
         defaultVariant: 'menu-masonry',
         randomSelection: true,
         constraints: {
