@@ -49,48 +49,7 @@ export function useVisualEdit({
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // หา iframe reference - retry ทุก 500ms จนกว่าจะเจอ
-  useEffect(() => {
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    const findIframe = () => {
-      const iframe = document.querySelector('iframe[data-preview]') as HTMLIFrameElement;
-      if (iframe) {
-        iframeRef.current = iframe;
-        console.log('✅ Found iframe with data-preview attribute');
-        return true;
-      }
-      
-      // ลองหา iframe ทั่วไป
-      const anyIframe = document.querySelector('iframe') as HTMLIFrameElement;
-      if (anyIframe) {
-        iframeRef.current = anyIframe;
-        console.log('✅ Found iframe (fallback - no data-preview attribute)');
-        return true;
-      }
-      
-      return false;
-    };
-    
-    // ลองหาทันที
-    if (findIframe()) return;
-    
-    // ถ้าไม่เจอ retry ทุก 500ms
-    const interval = setInterval(() => {
-      attempts++;
-      console.log(`🔍 Looking for iframe... (attempt ${attempts}/${maxAttempts})`);
-      
-      if (findIframe()) {
-        clearInterval(interval);
-      } else if (attempts >= maxAttempts) {
-        console.error('❌ Could not find iframe after', maxAttempts, 'attempts');
-        clearInterval(interval);
-      }
-    }, 500);
-    
-    return () => clearInterval(interval);
-  }, []);
+  
 
   // Toggle edit mode
   const toggleEditMode = useCallback(() => {
