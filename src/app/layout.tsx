@@ -25,9 +25,9 @@ export const metadata: Metadata = {
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.codesandbox.io",
       "style-src 'self' 'unsafe-inline' https://*.codesandbox.io",
-      "frame-src 'self' https://*.codesandbox.io",
+      "frame-src 'self' https://*.codesandbox.io https://*.proxy.daytona.works https://*.daytona.work http://*.proxy.daytona.works http://*.daytona.work",
       "worker-src 'self' blob:",
-      "connect-src 'self' https://*.codesandbox.io",
+      "connect-src 'self' https://*.codesandbox.io https://*.proxy.daytona.works https://*.daytona.work http://*.proxy.daytona.works http://*.daytona.work wss://*.proxy.daytona.works wss://*.daytona.work ws://*.proxy.daytona.works ws://*.daytona.work",
       "img-src 'self' data: blob: https://*.codesandbox.io",
       "font-src 'self' data: https://*.codesandbox.io",
       "media-src 'self' blob: https://*.codesandbox.io"
