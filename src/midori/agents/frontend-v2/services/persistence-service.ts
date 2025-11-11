@@ -1,4 +1,5 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import { prisma } from '../../../../libs/prisma/prisma';
 import type { FrontendTaskV2, ComponentResultV2 } from '../schemas/types';
 
 type PersistOptions = {
@@ -12,10 +13,6 @@ export async function persistFrontendV2Result(
   options: PersistOptions
 ) {
   const { projectId, userId } = options;
-  const prisma: any = (globalThis as any).prisma;
-  if (!prisma) {
-    throw new Error('Prisma client is not initialized on globalThis.prisma');
-  }
 
   // Resolve a valid user id: provided -> project.ownerId -> first active user
   const validUserId = await resolveValidUserId(userId, projectId);
@@ -126,34 +123,42 @@ export async function persistFrontendV2Result(
 
   // 5) Update ProjectContext.frontendV2Data summary
   try {
+    const updateData: any = {
+      frontendV2Data: {
+        ...(buildFrontendV2Data(result) as any),
+        exportedJson,
+        exportFormatVersion: 'v1',
+      } as unknown as Prisma.InputJsonValue,
+      lastModified: new Date(),
+    };
+    if (result.preview) {
+      updateData.preview = result.preview as unknown as Prisma.InputJsonValue;
+    }
+
+    const createData: any = {
+      projectId,
+      specBundleId: 'unknown',
+      projectType: mapProjectType(result.result.businessCategory),
+      status: 'template_selected',
+      components: {} as unknown as Prisma.InputJsonValue,
+      pages: {} as unknown as Prisma.InputJsonValue,
+      styling: {} as unknown as Prisma.InputJsonValue,
+      conversationHistory: {} as unknown as Prisma.InputJsonValue,
+      userPreferences: {} as unknown as Prisma.InputJsonValue,
+      frontendV2Data: {
+        ...(buildFrontendV2Data(result) as any),
+        exportedJson,
+        exportFormatVersion: 'v1',
+      } as unknown as Prisma.InputJsonValue,
+    };
+    if (result.preview) {
+      createData.preview = result.preview as unknown as Prisma.InputJsonValue;
+    }
+
     await prisma.projectContext.upsert({
       where: { projectId },
-      update: {
-        frontendV2Data: {
-          ...(buildFrontendV2Data(result) as any),
-          exportedJson,
-          exportFormatVersion: 'v1',
-        } as unknown as Prisma.InputJsonValue,
-        preview: (result.preview ? (result.preview as unknown as Prisma.InputJsonValue) : undefined),
-        lastModified: new Date(),
-      },
-      create: {
-        projectId,
-        specBundleId: 'unknown',
-        projectType: mapProjectType(result.result.businessCategory),
-        status: 'template_selected',
-        components: {} as unknown as Prisma.InputJsonValue,
-        pages: {} as unknown as Prisma.InputJsonValue,
-        styling: {} as unknown as Prisma.InputJsonValue,
-        conversationHistory: {} as unknown as Prisma.InputJsonValue,
-        userPreferences: {} as unknown as Prisma.InputJsonValue,
-        frontendV2Data: {
-          ...(buildFrontendV2Data(result) as any),
-          exportedJson,
-          exportFormatVersion: 'v1',
-        } as unknown as Prisma.InputJsonValue,
-        preview: (result.preview ? (result.preview as unknown as Prisma.InputJsonValue) : undefined),
-      },
+      update: updateData,
+      create: createData,
     });
   } catch (err) {
     // Non-fatal
@@ -249,7 +254,6 @@ function buildExportedJson(result: ComponentResultV2, filesToPersist: Array<any>
 }
 
 async function resolveValidUserId(userId: string | undefined, projectId: string) {
-  const prisma: any = (globalThis as any).prisma;
   // 1) Provided userId
   if (userId) {
     try {
@@ -280,45 +284,23 @@ async function resolveValidUserId(userId: string | undefined, projectId: string)
 
 async function createGenerationSafe(args: {
   projectId: string;
-  userId?: string | undefined;
+  userId: string;
   model: string;
   prompt: FrontendTaskV2;
   options: Record<string, unknown>;
 }) {
-  const prisma: any = (globalThis as any).prisma;
-  try {
-    return await prisma.generation.create({
-      data: {
-        project: { connect: { id: args.projectId } },
-        ...(args.userId ? { user: { connect: { id: args.userId } } } : {}),
-        model: args.model,
-        promptJson: args.prompt as unknown as Prisma.InputJsonValue,
-        options: args.options as unknown as Prisma.InputJsonValue,
-        tokensInput: 0,
-        tokensOutput: 0,
-        costUsd: 0,
-      },
-    });
-  } catch (err: any) {
-    // Retry without userId on FK constraint
-    const code = err?.code;
-    if (code === 'P2003' && args.userId) {
-      // eslint-disable-next-line no-console
-      console.warn('persistFrontendV2Result: FK error on userId, retrying without userId');
-      return await prisma.generation.create({
-        data: {
-          project: { connect: { id: args.projectId } },
-          model: args.model,
-          promptJson: args.prompt as unknown as Prisma.InputJsonValue,
-          options: args.options as unknown as Prisma.InputJsonValue,
-          tokensInput: 0,
-          tokensOutput: 0,
-          costUsd: 0,
-        },
-      });
-    }
-    throw err;
-  }
+  return await prisma.generation.create({
+    data: {
+      project: { connect: { id: args.projectId } },
+      user: { connect: { id: args.userId } },
+      model: args.model,
+      promptJson: args.prompt as unknown as Prisma.InputJsonValue,
+      options: args.options as unknown as Prisma.InputJsonValue,
+      tokensInput: 0,
+      tokensOutput: 0,
+      costUsd: 0,
+    } as any,
+  });
 }
 
 
