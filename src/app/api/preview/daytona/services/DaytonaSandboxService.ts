@@ -42,11 +42,14 @@ export class DaytonaSandboxService {
       // Get preview link
       const { url, token } = await sandbox.getPreviewLink(SANDBOX_CONFIG.DEFAULT_PORT)
       
-      console.log(`✅ Sandbox ${sandboxId} created successfully with preview URL: ${url}`)
+      // Force HTTPS to prevent Mixed Content issues on production
+      const secureUrl = url.replace(/^http:\/\//i, 'https://')
+      
+      console.log(`✅ Sandbox ${sandboxId} created successfully with preview URL: ${secureUrl}`)
       
       return {
         sandboxId,
-        url,
+        url: secureUrl,
         token,
         status: 'running'
       }

@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 export function securityHeadersMiddleware(response: NextResponse) {
   // Content Security Policy
   const csp = [
+    "upgrade-insecure-requests",
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.codesandbox.io https://codesandbox.io", // Next.js needs unsafe-inline/eval + Sandpack
     "style-src 'self' 'unsafe-inline' https://*.codesandbox.io",

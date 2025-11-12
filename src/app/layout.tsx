@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   description: "สร้างเว็บไซต์ได้ง่ายๆ ด้วย AI ที่ทรงพลัง",
   other: {
     "Content-Security-Policy": [
+      "upgrade-insecure-requests",
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.codesandbox.io",
       "style-src 'self' 'unsafe-inline' https://*.codesandbox.io",
