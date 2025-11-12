@@ -129,7 +129,7 @@ export default function ChatInterface({
         // Fallback to welcome message
         setMessages([{
           id: 'welcome',
-          content: initialMessage || 'สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
+          content: initialMessage || 'สวัสดีครับ! ผมคือ Wiivor ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
           sender: 'assistant',
           timestamp: new Date(),
           type: 'chat'
@@ -140,7 +140,7 @@ export default function ChatInterface({
       // Fallback to welcome message
       setMessages([{
         id: 'welcome',
-        content: initialMessage || 'สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
+        content: initialMessage || 'สวัสดีครับ! ผมคือ Wiivor ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
         sender: 'assistant',
         timestamp: new Date(),
         type: 'chat'
@@ -371,7 +371,7 @@ export default function ChatInterface({
               <Bot className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Midori AI</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Wiivor</h2>
               <p className="text-sm text-gray-500">AI Assistant for Web Development</p>
             </div>
           </div>
@@ -440,7 +440,7 @@ export default function ChatInterface({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask Midori AI..."
+                placeholder="Ask Wiivor..."
                 disabled={isLoading || isLoadingHistory}
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 rows={1}

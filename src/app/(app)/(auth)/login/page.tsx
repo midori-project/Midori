@@ -43,7 +43,7 @@ function LoginContent() {
       <div className="hidden lg:flex lg:w-1/2 relative z-20">
         <div className="relative z-20 flex flex-col justify-center items-center text-white p-12">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-4">Midori</h1>
+            <h1 className="text-4xl font-bold mb-4">Wiivor</h1>
             <p className="text-xl text-white/90">
               AI-powered Website Generator
             </p>

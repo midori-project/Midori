@@ -89,16 +89,7 @@ export function Navbar() {
     <nav className={`${navBase} ${isScrolled ? navSolid : navTransparent}`}>
       {/* Left: Logo & Desktop Menu */}
       <div className="flex items-center gap-10">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/img/logo.png"
-            alt="Midori Logo"
-            width={48}
-            height={48}
-            className="rounded-full"
-          />
-          <span className="text-2xl font-bold text-[#B6E23A] ml-2">Midori</span>
-        </Link>
+        
         <div className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-base text-[#252424] font-medium">
             Home

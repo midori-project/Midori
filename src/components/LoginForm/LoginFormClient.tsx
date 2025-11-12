@@ -135,13 +135,7 @@ export function LoginFormClient() {
       <div className="shadow-xl rounded-xl border border-gray-100 p-4">
         {/* Header (Figma style) */}
         <div className="flex flex-col items-center text-center mb-6">
-          <Image
-            src="/img/logo.png"
-            alt="Midori logo"
-            width={72}
-            height={72}
-            className="rounded-full"
-          />
+      
 
           <h1 className="text-2xl font-bold text-gray-900 mb-3">Log in</h1>
         </div>

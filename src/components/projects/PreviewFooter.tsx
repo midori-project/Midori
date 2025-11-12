@@ -59,10 +59,10 @@ export function PreviewFooter({
                   ? 'bg-[#79b426] text-[#e5e48f]' 
                   : 'bg-[#8aac8a] text-[#384538]'
                 }`}
-              title="Call Midori"
+              title="Call Wiivor"
             >
               <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline ml-2">Call Midori</span>
+              <span className="hidden sm:inline ml-2">Call Wiivor</span>
             </button>
           )}
 

@@ -6,14 +6,14 @@ export default async function ChatPage() {
   // สามารถโหลดข้อมูล initial state จาก database, config files ได้ที่นี่
   // เช่น: user preferences, recent conversations, etc.
   
-  const initialMessage = `สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭`;
+  const initialMessage = `สวัสดีครับ! ผมคือ Wiivor ผู้ช่วยสร้างเว็บไซต์ 🎭`;
 
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center h-screen bg-gray-600">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">กำลังโหลด Midori AI...</p>
+          <p className="text-gray-600">กำลังโหลด Wiivor...</p>
         </div>
       </div>
     }>
