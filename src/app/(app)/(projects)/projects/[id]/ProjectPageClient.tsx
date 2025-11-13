@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import ChatInterface from '@/components/chat/ChatInterface';
 import ProjectPreview from '@/components/projects/ProjectPreview';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 
 interface ProjectPageClientProps {
   projectId: string;
@@ -18,25 +18,28 @@ export default function ProjectPageClient({
   userEmail,
   initialMessage,
 }: ProjectPageClientProps) {
-  const [isChatOpen, setIsChatOpen] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const chatPanelClasses = [
+    'transition-all duration-300 ease-in-out   flex-col h-full',
+    isChatOpen ? 'flex w-full opacity-100' : 'hidden w-0 opacity-0',
+    'lg:flex',
+    isChatOpen ? 'lg:w-1/4' : 'lg:w-0 lg:overflow-hidden',
+  ].join(' ');
+
+  const previewPanelClasses = [
+    'transition-all duration-300 ease-in-out  h-full flex-col',
+    isChatOpen ? 'hidden lg:flex' : 'flex',
+    'lg:flex',
+    isChatOpen ? 'w-full lg:w-3/4' : 'w-full',
+  ].join(' ');
 
   return (
     <div className="h-screen flex flex-col bg-gray-100 relative">
       {/* Mobile: Toggle between Chat and Preview */}
-      <div className="flex flex-col h-full lg:flex-row">
+      <div className="flex flex-col h-full lg:flex-row ">
         {/* Chat Section - Left Side (Desktop) / Toggle on Mobile */}
-        <div
-          className={`
-            ${isChatOpen ? 'flex' : 'hidden lg:flex'}
-            lg:flex
-            ${isChatOpen ? 'w-full' : 'w-0 lg:w-0'}
-            lg:${isChatOpen ? 'w-1/4' : 'w-0'}
-            transition-all duration-300 ease-in-out
-            border-r border-gray-300 bg-white flex-col
-            ${isChatOpen ? 'opacity-100' : 'opacity-0 lg:overflow-hidden'}
-            h-full
-          `}
-        >
+        <div className={chatPanelClasses}>
           {/* Chat Interface */}
           <div className="flex-1 overflow-hidden">
             <ChatInterface
@@ -49,17 +52,7 @@ export default function ProjectPageClient({
         </div>
 
         {/* Preview Section - Right Side (Desktop) / Default on Mobile */}
-        <div
-          className={`
-            ${!isChatOpen ? 'flex' : 'hidden lg:flex'}
-            lg:flex
-            ${isChatOpen ? 'w-full lg:w-3/4' : 'w-full'}
-            transition-all duration-300 ease-in-out
-            bg-gray-50
-            h-full
-            flex-col
-          `}
-        >
+        <div className={previewPanelClasses}>
         <ProjectPreview 
           projectId={projectId} 
           userId={userId} 

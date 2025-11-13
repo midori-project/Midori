@@ -348,7 +348,7 @@ export default function ChatInterface({
 
   const getMessageStyles = (message: Message) => {
     if (message.sender === 'user') {
-      return 'bg-blue-500 text-white ml-auto';
+      return 'bg-[#435c29] text-white ml-auto';
     }
     
     switch (message.type) {
@@ -362,17 +362,17 @@ export default function ChatInterface({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-[#92a57e] ">
       {/* Chat Header */}
-      <div className="bg-white border-b border-gray-200 p-4">
+      <div className="bg-[#707a65] p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#435c29] rounded-full flex items-center justify-center">
               <Bot className="w-4 h-4 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Wiivor</h2>
-              <p className="text-sm text-gray-500">AI Assistant for Web Development</p>
+              <p className="text-sm text-black">AI Assistant for Web Development</p>
             </div>
           </div>
           
@@ -431,10 +431,10 @@ export default function ChatInterface({
       </div>
 
       {/* Input */}
-      <div className="bg-white border-t border-gray-200 p-4">
+      <div className="bg-[#abc98b] p-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-end space-x-3">
-            <div className="flex-1 relative">
+            <div className="flex-1 relative flex items-center">
               <textarea
                 ref={inputRef}
                 value={input}
@@ -442,7 +442,7 @@ export default function ChatInterface({
                 onKeyDown={handleKeyDown}
                 placeholder="Ask Wiivor..."
                 disabled={isLoading || isLoadingHistory}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 pr-14 border border-black rounded-2xl resize-none focus:outline-none focus:ring-2 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 rows={1}
                 style={{ maxHeight: '120px' }}
                 onInput={(e) => {
@@ -454,7 +454,7 @@ export default function ChatInterface({
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading || isLoadingHistory}
-                className="absolute right-2 bottom-2 w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#435c29] text-white rounded-2xl flex items-center justify-center shadow-md hover:bg-[#707a65] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

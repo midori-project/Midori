@@ -29,7 +29,7 @@ export function CustomDomainDialog({
 
   if (!isOpen) return null;
 
-  const defaultSubdomain = `${generateSubdomain(projectName)}.midori.lol`;
+  const defaultSubdomain = `${generateSubdomain(projectName)}.wiivor.com`;
 
   const validateDomain = (domain: string): boolean => {
     if (!domain) return false;
@@ -100,7 +100,7 @@ export function CustomDomainDialog({
               <div className="flex-1">
                 <div className="font-medium text-gray-900 mb-1 flex items-center gap-2">
                   <Check className="w-4 h-4 text-green-600 font-bold" />
-                  ใช้ subdomain ของ Midori (แนะนำ)
+                  ใช้ subdomain ของ Wiivor (แนะนำ)
                 </div>
                 <div className="text-sm text-gray-600 mb-2">
                   ระบบจะสร้างโดเมนให้อัตโนมัติจากชื่อโปรเจค
