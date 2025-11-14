@@ -25,22 +25,15 @@ export default function Home() {
       {/* Hero Section */}
       <main className="relative z-30 pt-64 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <div 
-            className="inline-block rounded-[28px] px-8 py-10 sm:px-12 sm:py-14 shadow-lg border border-[#a5d2aa]/30"
-            style={{
-              backgroundColor: "rgba(230, 255, 242, 0.8)",
-              backdropFilter: "blur(4px)",
-              WebkitBackdropFilter: "blur(4px)",
-            }}
-          >
+          
             <h1 className="text-4xl font-bold text-[#0B4421] sm:text-5xl md:text-8xl">
               Grow your site with
-              <span className="text-green-600"> Wiivoor</span>
+              <span className="text-green-600"> Wiivor</span>
             </h1>
             <p className="mt-6 text-lg text-[#0B4421] max-w-3xl mx-auto">
-              Wiivoor is an assistant to create, manage, and grow your website.
+              Wiivor is an assistant to create, manage, and grow your website.
             </p>
-          </div>
+          
         </div>
       </main>
 
