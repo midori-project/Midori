@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Midori - AI-Powered Website Generator",
+  title: "Wiivor",
   description: "สร้างเว็บไซต์ได้ง่ายๆ ด้วย AI ที่ทรงพลัง",
   other: {
     "Content-Security-Policy": [
