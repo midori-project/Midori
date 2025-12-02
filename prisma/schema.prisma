@@ -9,34 +9,43 @@ datasource db {
 }
 
 model User {
-  id                 String                  @id @default(uuid())
-  email              String?                 @unique
-  displayName        String?
-  avatarUrl          String?
-  locale             String?                 @default("th")
-  isActive           Boolean                 @default(true)
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
-  lastLoginAt        DateTime?
-  agents             Agent[]
-  authCredentials    AuthCredential[]
-  emailVerifications AuthEmailVerification[]
-  passwordResets     AuthPasswordReset[]
-  runs               ChatRun[]
-  commands           Command[]
-  conversations      Conversation[]
-  generations        Generation[]
-  loginLogs          LoginAttempt[]
-  messages           Message[]
-  oauths             OAuthConnection[]
-  projects           Project[]
-  likes              ProjectLike[]
-  sandboxStates      SandboxState[]
-  sessions           Session[]
-  tokenTransactions  TokenTransaction[]
-  tokenWallets       TokenWallet[]
+  id                   String                  @id @default(uuid())
+  email                String?                 @unique
+  displayName          String?
+  avatarUrl            String?
+  locale               String?                 @default("th")
+  isActive             Boolean                 @default(true)
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  lastLoginAt          DateTime?
+  stripeCustomerId     String?                 @unique
+  stripeSubscriptionId String?
+  
+  // OTP & Email Verification fields
+  emailVerifiedAt      DateTime?               // เวลาที่ verify email ด้วย OTP
+  supabaseUserId       String?                 @unique // Link กับ Supabase Auth user
+  
+  agents               Agent[]
+  authCredentials      AuthCredential[]
+  emailVerifications   AuthEmailVerification[]
+  passwordResets       AuthPasswordReset[]
+  runs                 ChatRun[]
+  commands             Command[]
+  conversations        Conversation[]
+  generations          Generation[]
+  loginLogs            LoginAttempt[]
+  messages             Message[]
+  oauths               OAuthConnection[]
+  projects             Project[]
+  likes                ProjectLike[]
+  sandboxStates        SandboxState[]
+  sessions             Session[]
+  TokenPurchase        TokenPurchase[]
+  tokenTransactions    TokenTransaction[]
+  tokenWallets         TokenWallet[]
 
   @@index([email])
+  @@index([stripeCustomerId])
 }
 
 model Project {
@@ -255,6 +264,20 @@ model LoginAttempt {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+// OTP Attempt tracking for rate limiting
+model OTPAttempt {
+  id           String    @id @default(uuid())
+  email        String
+  type         String    // 'signup', 'login', 'recovery'
+  attempts     Int       @default(0)
+  lastAttempt  DateTime  @default(now())
+  blockedUntil DateTime?
+  createdAt    DateTime  @default(now())
+  
+  @@index([email, type])
+  @@index([blockedUntil])
 }
 
 model Agent {
@@ -974,6 +997,25 @@ model SandboxState {
   @@index([expiresAt])
 }
 
+model TokenPurchase {
+  id                    String        @id
+  userId                String
+  stripeSessionId       String        @unique
+  stripePaymentIntentId String?       @unique
+  amount                Decimal       @db.Decimal(10, 2)
+  currency              String        @default("usd")
+  tokensAmount          Int
+  status                PaymentStatus @default(pending)
+  metadata              Json?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime
+  User                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([userId])
+}
+
 enum Visibility {
   private
   unlisted
@@ -1159,6 +1201,7 @@ enum TokenTransactionType {
   REFUND
   WALLET_CREATION
   WALLET_EXPIRATION
+  TOKEN_PURCHASE
 }
 
 enum SandboxStatus {
@@ -1166,4 +1209,12 @@ enum SandboxStatus {
   running
   stopped
   error
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+  refunded
+  cancelled
 }
