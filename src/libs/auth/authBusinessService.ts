@@ -20,6 +20,7 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
+  supabaseUserId?: string; // From OTP verification
 }
 
 export interface UserWithSession extends User {
@@ -43,7 +44,7 @@ export class AuthBusinessService {
       where: { email },
       include: {
         authCredentials: {
-          where: { 
+          where: {
             type: 'PASSWORD',
             identifier: email
           },
@@ -60,7 +61,7 @@ export class AuthBusinessService {
     }
 
     const credential = user.authCredentials[0];
-    
+
     // ตรวจสอบว่าอีเมลได้รับการยืนยันแล้วหรือไม่
     if (!credential.isVerified) {
       throw new Error('กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ');
@@ -70,9 +71,9 @@ export class AuthBusinessService {
     if (!credential.secret) {
       throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
     }
-    
+
     const isPasswordValid = await bcrypt.compare(password, credential.secret);
-    
+
     if (!isPasswordValid) {
       throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
     }
@@ -98,7 +99,7 @@ export class AuthBusinessService {
    * ลงทะเบียนผู้ใช้ใหม่
    */
   async register(data: RegisterData): Promise<User> {
-    const { name, email, password } = data;
+    const { name, email, password, supabaseUserId } = data;
 
     // ตรวจสอบว่ามี user ที่ใช้ email นี้แล้วหรือไม่
     const existingUser = await prisma.user.findUnique({
@@ -112,11 +113,16 @@ export class AuthBusinessService {
     // เข้ารหัสรหัสผ่าน
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // ตรวจสอบว่ามี OTP verification หรือไม่
+    const isEmailVerified = !!supabaseUserId;
+
     // สร้างผู้ใช้ใหม่ก่อน
     const user = await prisma.user.create({
       data: {
         email,
-        displayName: name
+        displayName: name,
+        emailVerifiedAt: isEmailVerified ? new Date() : null,
+        supabaseUserId: supabaseUserId || null,
       }
     });
 
@@ -127,11 +133,13 @@ export class AuthBusinessService {
         type: 'PASSWORD',
         identifier: email,
         secret: hashedPassword,
-        isVerified: false // ต้องยืนยันอีเมลก่อน
+        isVerified: isEmailVerified, // ถ้ามี OTP = verified แล้ว
       }
     });
 
-    // TODO: ส่งอีเมลยืนยัน
+    // Initialize token wallets for new user
+    const { tokenWalletService } = await import('@/libs/token/tokenWalletService');
+    await tokenWalletService.initializeUserWallets(user.id);
 
     return {
       id: user.id,

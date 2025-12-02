@@ -16,6 +16,9 @@ export async function registerAction(
     password: String(formData.get("password") ?? ""),
   };
 
+  // Get supabaseUserId from OTP verification (optional)
+  const supabaseUserId = String(formData.get("supabaseUserId") ?? "");
+
   // 2) Validate
   const parsed = RegisterSchema.safeParse(raw);
   if (!parsed.success) {
@@ -28,8 +31,13 @@ export async function registerAction(
   const { name, email, password } = parsed.data;
 
   try {
-    // 3) Call authBusinessService directly (Internal Flow)
-    await authBusinessService.register({ name, email, password });
+    // 3) Call authBusinessService with supabaseUserId
+    await authBusinessService.register({
+      name,
+      email,
+      password,
+      supabaseUserId: supabaseUserId || undefined,
+    });
 
     // 4) Return success result (ไม่ redirect)
     return { ok: true };

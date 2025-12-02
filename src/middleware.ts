@@ -20,6 +20,8 @@ const publicApiRoutes = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/validate',
+  '/api/auth/send-otp',    // OTP for registration
+  '/api/auth/verify-otp',  // OTP verification
   '/api/preview/daytona', // เพิ่ม Daytona preview API
   '/api/projects', // เพิ่ม projects API (สำหรับ preview)
 ];
@@ -39,14 +41,14 @@ const isDevelopment = process.env.NODE_ENV === 'development';
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   // Apply rate limiting first (before any other checks)
   const rateLimitResponse = rateLimitMiddleware(request);
   if (rateLimitResponse.status === 429) {
     console.warn('🚫 Rate limit exceeded for:', pathname);
     return securityHeadersMiddleware(rateLimitResponse);
   }
-  
+
   // Skip middleware for static files และ Next.js internals
   if (
     pathname.startsWith('/_next/') ||
@@ -59,14 +61,14 @@ export async function middleware(request: NextRequest) {
 
   // Check if route is public
   // ตรวจสอบ exact match ก่อน แล้วค่อย startsWith (ยกเว้น root path)
-  const isPublicRoute = publicRoutes.includes(pathname) || 
-                       publicRoutes.some(route => {
-                         if (route === '/') {
-                           return pathname === '/'; // Root path ต้อง exact match
-                         }
-                         return pathname.startsWith(route);
-                       });
-  
+  const isPublicRoute = publicRoutes.includes(pathname) ||
+    publicRoutes.some(route => {
+      if (route === '/') {
+        return pathname === '/'; // Root path ต้อง exact match
+      }
+      return pathname.startsWith(route);
+    });
+
   const isPublicApiRoute = publicApiRoutes.some(route => {
     if (route === '/api/projects') {
       return pathname.startsWith('/api/projects/') && pathname.endsWith('/preview');
@@ -86,12 +88,12 @@ export async function middleware(request: NextRequest) {
   try {
     // ตรวจสอบ session จาก cookie (เช็คแค่ว่ามีหรือไม่)
     const sessionCookie = request.cookies.get(sessionConfig.cookieName);
-    
+
     if (!sessionCookie?.value) {
       if (isDevelopment) {
         console.log('❌ No session cookie - redirecting to login for:', pathname);
       }
-      
+
       if (pathname.startsWith('/api/')) {
         const response = NextResponse.json(
           { success: false, error: 'Authentication required' },
@@ -99,16 +101,16 @@ export async function middleware(request: NextRequest) {
         );
         return securityHeadersMiddleware(response);
       }
-      
+
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       const response = NextResponse.redirect(loginUrl);
       return securityHeadersMiddleware(response);
     }
-    
+
     // หมายเหตุ: การตรวจสอบ session expiry จะทำใน client-side (SessionManager)
     // และใน API routes ที่ใช้ getCurrentSession() เพื่อไม่กระทบ middleware performance
-    
+
     // Check admin routes
     const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
     if (isAdminRoute) {
@@ -121,7 +123,7 @@ export async function middleware(request: NextRequest) {
       const requestHeaders = new Headers(request.headers);
       // เพิ่ม session token ใน header สำหรับ API routes
       requestHeaders.set('x-session-token', sessionCookie.value);
-      
+
       const response = NextResponse.next({
         request: {
           headers: requestHeaders,
@@ -135,7 +137,7 @@ export async function middleware(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Middleware error:', error);
-    
+
     if (pathname.startsWith('/api/')) {
       const response = NextResponse.json(
         { success: false, error: 'Authentication error' },
@@ -143,7 +145,7 @@ export async function middleware(request: NextRequest) {
       );
       return securityHeadersMiddleware(response);
     }
-    
+
     const response = NextResponse.redirect(new URL('/login', request.url));
     return securityHeadersMiddleware(response);
   }
