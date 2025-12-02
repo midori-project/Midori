@@ -1,0 +1,49 @@
+{
+  "info": {
+    "name": "Midori API Collection",
+    "description": "Collection สำหรับทดสอบ Midori API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_url}}/api/health",
+          "host": ["{{api_url}}"],
+          "path": ["api", "health"]
+        }
+      }
+    },
+    {
+      "name": "Create User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "{{api_url}}/api/users",
+          "host": ["{{api_url}}"],
+          "path": ["api", "users"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "api_url",
+      "value": "https://your-api-gateway-url.execute-api.region.amazonaws.com",
+      "description": "API Gateway URL - เปลี่ยนเป็น URL จริงของคุณ"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+steps:
+  - run: orchestrator.create_ticket
+  - run: frontend.apply_patch
+  - run: devops.publish_previews
+  - run: orchestrator.verify_acceptance

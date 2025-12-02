@@ -1,0 +1,10 @@
+name: example_skill
+description: an example skill that echoes input
+input_schema:
+  type: object
+  properties:
+    message:
+      type: string
+      minLength: 1
+  required: [message]
+tool: example_tool

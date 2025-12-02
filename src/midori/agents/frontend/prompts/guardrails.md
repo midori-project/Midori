@@ -1,0 +1,2 @@
+- Never expose secrets
+- Keep outputs concise and actionable

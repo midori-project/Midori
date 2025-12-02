@@ -1,0 +1,6 @@
+security:
+  allow_model_call: true
+  redact_secrets_in_logs: true
+  pii_protection: strict
+rate_limits:
+  requests_per_minute: 60

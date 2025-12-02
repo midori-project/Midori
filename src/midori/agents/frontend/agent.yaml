@@ -1,0 +1,144 @@
+name: frontend
+version: "1.0.0"
+role: "Vite + TypeScript implementer with a11y focus"
+description: "Frontend development agent specializing in React, TypeScript, and accessibility"
+
+# Input/Output Contracts
+consumes: ["frontend-task.schema.json", "component-request.schema.json"]
+produces: [
+  "component-result.schema.json",
+  "test-result.schema.json",
+  "build-result.schema.json"
+]
+
+# Agent Capabilities
+capabilities:
+  - component_creation          # สร้าง React components
+  - typescript_implementation  # เขียน TypeScript
+  - accessibility_compliance   # รองรับ accessibility
+  - responsive_design         # ออกแบบ responsive
+  - testing_implementation    # สร้าง tests
+  - performance_optimization  # ปรับปรุงประสิทธิภาพ
+  - code_review              # ตรวจสอบโค้ด
+  - documentation_generation  # สร้างเอกสาร
+
+# Model Configuration
+model:
+  provider: openai
+  name: gpt-5-nano
+  temperature: 1
+  max_completion_tokens: 8000
+  timeout: 120
+  fallback:
+    name: gpt-4o-mini
+    temperature: 0.3
+    max_tokens: 4000
+    timeout: 60
+  retry_policy:
+    max_retries: 2
+    fallback_on_failure: true
+    fallback_triggers: ["rate_limit", "timeout", "api_error"]
+
+# Tools Available
+tools:
+  - vite_dev              # Vite development server
+  - lighthouse            # Performance auditing
+  - ui_test              # UI testing
+  - typescript_checker   # TypeScript validation
+  - accessibility_audit  # A11y compliance check
+  - component_generator  # Component scaffolding
+  - test_generator       # Test file generation
+
+# Constraints and Safety
+constraints:
+  - "no secrets in output"
+  - "validate all schemas before output"
+  - "enforce accessibility standards (WCAG 2.1 AA)"
+  - "maintain TypeScript strict mode compliance"
+  - "follow React best practices"
+  - "ensure responsive design principles"
+  - "include comprehensive tests"
+  - "generate clean, maintainable code"
+
+# Quality Configuration
+quality:
+  smoke_checks: true
+  contract_validation: true
+  accessibility_compliance: true
+  performance_audit: true
+  typescript_strict: true
+  test_coverage_threshold: 80
+
+# Execution Policies
+policies:
+  max_parallel_tasks: 3
+  max_execution_time: 1800  # 30 minutes
+  retry_attempts: 2
+  escalation_threshold: 2   # failures before escalation
+  
+  # Frontend-specific policies
+  min_test_coverage: 80
+  accessibility_level: "AA"
+  performance_budget: 100  # Lighthouse score
+  bundle_size_limit: "500KB"
+
+# Response Templates
+response_templates:
+  component_created:
+    en: "✅ Component '{name}' created successfully with TypeScript and accessibility features"
+    th: "✅ สร้าง Component '{name}' เรียบร้อยแล้ว พร้อม TypeScript และ accessibility"
+  test_generated:
+    en: "🧪 Generated comprehensive tests for '{component}' with {coverage}% coverage"
+    th: "🧪 สร้าง tests ครบถ้วนสำหรับ '{component}' ด้วยความครอบคลุม {coverage}%"
+  build_success:
+    en: "🚀 Build successful! Bundle size: {size}, Performance score: {score}"
+    th: "🚀 Build สำเร็จ! ขนาด bundle: {size}, คะแนนประสิทธิภาพ: {score}"
+  error_fixed:
+    en: "🔧 Fixed {issue_type} in {component}. All tests passing ✅"
+    th: "🔧 แก้ไข {issue_type} ใน {component} เรียบร้อย ทดสอบผ่านทั้งหมด ✅"
+
+# Component Templates
+component_templates:
+  functional:
+    - typescript_interface
+    - accessibility_attributes
+    - responsive_classes
+    - event_handlers
+  class:
+    - lifecycle_methods
+    - state_management
+    - prop_validation
+    - error_boundaries
+
+# Testing Strategy
+testing:
+  unit_tests: true
+  integration_tests: true
+  accessibility_tests: true
+  visual_regression: false
+  performance_tests: true
+  
+  frameworks:
+    - "@testing-library/react"
+    - "@testing-library/jest-dom"
+    - "jest"
+    - "cypress"  # for e2e if needed
+
+# Accessibility Standards
+accessibility:
+  level: "AA"  # WCAG 2.1 AA compliance
+  required_attributes:
+    - "aria-label"
+    - "role"
+    - "tabindex"
+  keyboard_navigation: true
+  screen_reader_support: true
+  color_contrast_minimum: 4.5
+
+# Performance Targets
+performance:
+  lighthouse_score_min: 90
+  first_contentful_paint: "< 1.5s"
+  largest_contentful_paint: "< 2.5s"
+  cumulative_layout_shift: "< 0.1"
+  bundle_size_max: "500KB"

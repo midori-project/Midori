@@ -1,0 +1,1222 @@
+openapi: 3.0.3
+info:
+  title: Midori API
+  version: 0.1.0
+  description: >
+    OpenAPI specification สำหรับระบบ Midori - AI-powered website generation platform.
+    รองรับการจัดการ authentication, projects, templates, conversations, และ deployment.
+  contact:
+    name: Midori Team
+    url: https://midori.local
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://api.midori.production
+    description: Production server (ถ้ามี)
+
+tags:
+  - name: Authentication
+    description: การจัดการ authentication และ session
+  - name: Projects
+    description: การจัดการโปรเจกต์
+  - name: Conversations
+    description: การสนทนากับ AI agents
+  - name: Chat
+    description: Chat interface สำหรับ AI orchestrator
+  - name: Templates
+    description: การจัดการ UI templates และ source files
+  - name: Generate
+    description: การสร้างเว็บไซต์จาก keywords/business category
+  - name: Visual Edit
+    description: การแก้ไขเว็บไซต์แบบ visual/WYSIWYG
+  - name: Preview
+    description: การจัดการ Daytona sandboxes สำหรับ preview
+  - name: Deployment
+    description: การ deploy โปรเจกต์ไปยัง Vercel
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: midori-session
+      description: Session cookie สำหรับ authentication
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: เกิดข้อผิดพลาด
+        details:
+          type: object
+          additionalProperties: true
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        visibility:
+          type: string
+          enum: [private, public]
+        userId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        label:
+          type: string
+        category:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        meta:
+          $ref: '#/components/schemas/TemplateMeta'
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateVersion'
+
+    TemplateMeta:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          nullable: true
+        engine:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published, deprecated]
+        previewScreenshot:
+          type: string
+          format: uri
+          nullable: true
+
+    TemplateVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+        semver:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published, deprecated]
+          nullable: true
+        files:
+          type: object
+          additionalProperties: true
+        slots:
+          type: object
+          additionalProperties: true
+        checksum:
+          type: string
+          nullable: true
+        sizeBytes:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Deployment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          example: vercel
+        state:
+          type: string
+          enum: [pending, ready, failed]
+        url:
+          type: string
+          format: uri
+        meta:
+          type: object
+          properties:
+            subdomain:
+              type: string
+            customDomain:
+              type: string
+              nullable: true
+            snapshotId:
+              type: string
+            filesCount:
+              type: integer
+            deployedAt:
+              type: string
+              format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  # ========== Authentication ==========
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: เข้าสู่ระบบ
+      description: Login ด้วย email และ password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        '200':
+          description: เข้าสู่ระบบสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: เข้าสู่ระบบสำเร็จ
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: ข้อมูลไม่ถูกต้อง
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Email หรือ password ไม่ถูกต้อง
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: สมัครสมาชิก
+      description: สร้างบัญชีผู้ใช้ใหม่
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, displayName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                displayName:
+                  type: string
+                  minLength: 2
+      responses:
+        '200':
+          description: สมัครสมาชิกสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: ข้อมูลไม่ถูกต้องหรือ email ซ้ำ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: ออกจากระบบ
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: ออกจากระบบสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: ไม่พบ session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/validate:
+    get:
+      tags: [Authentication]
+      summary: ตรวจสอบ session validity
+      description: ใช้สำหรับตรวจสอบว่า session ยังใช้งานได้อยู่หรือไม่
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Session ยังใช้งานได้
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Session ไม่ถูกต้องหรือหมดอายุ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+    post:
+      tags: [Authentication]
+      summary: ตรวจสอบ session (POST)
+      description: รองรับ POST method สำหรับ middleware
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Session ยังใช้งานได้
+        '401':
+          description: Session ไม่ถูกต้อง
+
+  # ========== Projects ==========
+  /api/projects:
+    get:
+      tags: [Projects]
+      summary: ดึงรายการโปรเจกต์ทั้งหมด
+      description: ดึงรายการโปรเจกต์เรียงตามวันที่สร้างล่าสุด
+      responses:
+        '200':
+          description: รายการโปรเจกต์
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '500':
+          description: เกิดข้อผิดพลาด
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [Projects]
+      summary: สร้างโปรเจกต์ใหม่
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, description]
+              properties:
+                name:
+                  type: string
+                  example: My Website
+                description:
+                  type: string
+                  example: A beautiful website
+                visibility:
+                  type: string
+                  enum: [private, public]
+                  default: private
+      responses:
+        '200':
+          description: สร้างโปรเจกต์สำเร็จ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: ข้อมูลไม่ครบถ้วน
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/projects/{id}/deploy:
+    post:
+      tags: [Deployment]
+      summary: Deploy โปรเจกต์ไปยัง Vercel
+      description: Deploy โปรเจกต์จากข้อมูล snapshot ล่าสุด
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Project ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subdomain]
+              properties:
+                subdomain:
+                  type: string
+                  pattern: '^[a-z0-9-]{1,50}$'
+                  example: my-awesome-site
+                customDomain:
+                  type: string
+                  pattern: '^([a-z0-9-]+\.)*[a-z0-9-]+\.[a-z]{2,}$'
+                  example: www.example.com
+                  nullable: true
+      responses:
+        '200':
+          description: Deploy สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deployment:
+                    $ref: '#/components/schemas/Deployment'
+        '400':
+          description: ข้อมูลไม่ถูกต้อง
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: ไม่พบโปรเจกต์
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags: [Deployment]
+      summary: ดึงประวัติการ deploy
+      description: ดึงประวัติการ deploy ล่าสุด 10 รายการ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: รายการ deployments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deployments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Deployment'
+
+  # ========== Conversations ==========
+  /api/conversations:
+    get:
+      tags: [Conversations]
+      summary: ดึงรายการ conversations
+      description: ดึง conversations ของ user
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+            default: default-user
+        - name: projectId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          required: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: รายการ conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+                  count:
+                    type: integer
+
+    post:
+      tags: [Conversations]
+      summary: สร้าง conversation หรือส่งข้อความ
+      description: รองรับ actions หลายแบบ - send_message, get_conversation, archive, update_title
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, userId]
+              properties:
+                action:
+                  type: string
+                  enum: [send_message, get_conversation, archive, update_title]
+                userId:
+                  type: string
+                projectId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                content:
+                  type: string
+                  description: ข้อความที่จะส่ง (สำหรับ send_message)
+                conversationId:
+                  type: string
+                  format: uuid
+                  description: Conversation ID (สำหรับ get_conversation, archive, update_title)
+                title:
+                  type: string
+                  description: หัวข้อใหม่ (สำหรับ update_title)
+      responses:
+        '200':
+          description: ดำเนินการสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+        '400':
+          description: ข้อมูลไม่ครบถ้วน
+        '404':
+          description: ไม่พบ conversation
+
+  /api/conversations/{conversationId}:
+    get:
+      tags: [Conversations]
+      summary: ดึงข้อมูล conversation
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: ข้อมูล conversation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Conversation'
+
+  # ========== Chat ==========
+  /api/chat:
+    post:
+      tags: [Chat]
+      summary: ส่งข้อความไปยัง AI orchestrator
+      description: ประมวลผลข้อความผ่าน multi-agent orchestrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  example: สร้างเว็บไซต์ร้านอาหารให้หน่อย
+                userId:
+                  type: string
+                  default: default-user
+                sessionId:
+                  type: string
+                  nullable: true
+                context:
+                  type: object
+                  properties:
+                    previousMessages:
+                      type: array
+                      items:
+                        type: object
+                    currentProject:
+                      type: string
+                      format: uuid
+                    activeAgents:
+                      type: array
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: คำตอบจาก AI
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: string
+                  type:
+                    type: string
+                    enum: [chat, task, error]
+                  taskResults:
+                    type: array
+                    items:
+                      type: object
+                  nextSteps:
+                    type: array
+                    items:
+                      type: string
+                  metadata:
+                    type: object
+                    properties:
+                      agentsUsed:
+                        type: array
+                        items:
+                          type: string
+                      executionTime:
+                        type: number
+        '400':
+          description: ข้อความไม่ถูกต้อง
+        '500':
+          description: เกิดข้อผิดพลาด
+
+  # ========== Templates ==========
+  /api/template:
+    get:
+      tags: [Templates]
+      summary: ดึงรายการ templates
+      description: ดึงรายการ templates พร้อม filter options
+      parameters:
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: [source]
+          description: ถ้าเป็น 'source' จะดึง source files ด้วย
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter ตาม category
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Filter ตาม type/tag
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, published, deprecated]
+        - name: statusScope
+          in: query
+          schema:
+            type: string
+            enum: [meta, version]
+            default: meta
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: label
+          in: query
+          schema:
+            type: string
+          description: สำหรับ action=source เท่านั้น
+      responses:
+        '200':
+          description: รายการ templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Template'
+                  pagination:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                      count:
+                        type: integer
+
+    post:
+      tags: [Templates]
+      summary: สร้าง template หรือ version ใหม่
+      description: สร้าง template ใหม่ หรือเพิ่ม version ให้ template ที่มีอยู่ (ถ้าใส่ ?action=version)
+      parameters:
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: [version]
+          description: ถ้าเป็น 'version' จะสร้าง version ใหม่
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  title: Create Template
+                  required: [key, label]
+                  properties:
+                    key:
+                      type: string
+                      example: hero-modern
+                    label:
+                      type: string
+                      example: Modern Hero Section
+                    category:
+                      type: string
+                      example: hero
+                    meta:
+                      type: object
+                      properties:
+                        description:
+                          type: string
+                        engine:
+                          type: string
+                        status:
+                          type: string
+                          enum: [draft, published, deprecated]
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                    initialVersion:
+                      type: object
+                      properties:
+                        version:
+                          type: integer
+                        semver:
+                          type: string
+                        sourceFiles:
+                          type: array
+                          items:
+                            type: object
+                            required: [path, content]
+                            properties:
+                              path:
+                                type: string
+                              type:
+                                type: string
+                                enum: [code, text, config, asset]
+                              encoding:
+                                type: string
+                                enum: [utf8, base64, gzip+base64]
+                                default: utf8
+                              content:
+                                type: string
+
+                - type: object
+                  title: Create Template Version
+                  required: [templateId]
+                  properties:
+                    templateId:
+                      type: string
+                      format: uuid
+                    version:
+                      type: integer
+                    semver:
+                      type: string
+                    status:
+                      type: string
+                      enum: [draft, published, deprecated]
+                    sourceFiles:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          path:
+                            type: string
+                          type:
+                            type: string
+                          encoding:
+                            type: string
+                          content:
+                            type: string
+      responses:
+        '200':
+          description: สร้างสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+        '400':
+          description: ข้อมูลไม่ถูกต้อง
+        '409':
+          description: Key หรือ version ซ้ำ
+
+  # ========== Generate ==========
+  /api/generate:
+    get:
+      tags: [Generate]
+      summary: สร้างเว็บไซต์จาก keywords
+      description: ใช้ AI สร้างเว็บไซต์จาก business keywords และ override system
+      parameters:
+        - name: keywords
+          in: query
+          schema:
+            type: string
+            example: fresh,organic,homemade
+          description: Keywords คั่นด้วย comma
+      responses:
+        '200':
+          description: สร้างเว็บไซต์สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        path:
+                          type: string
+                        content:
+                          type: string
+                  businessCategory:
+                    type: string
+                  concreteManifest:
+                    type: object
+                  appliedOverrides:
+                    type: array
+                    items:
+                      type: string
+                  processingTime:
+                    type: number
+                  validationResults:
+                    type: object
+        '500':
+          description: เกิดข้อผิดพลาด
+
+  # ========== Visual Edit ==========
+  /api/visual-edit/upload-image:
+    post:
+      tags: [Visual Edit]
+      summary: Upload รูปภาพสำหรับ visual editing
+      description: Upload รูปไปยัง Cloudflare R2 และบันทึก metadata
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, projectId, blockId, field]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: ไฟล์รูปภาพ (JPEG, PNG, GIF, WEBP) ไม่เกิน 10MB
+                projectId:
+                  type: string
+                  format: uuid
+                blockId:
+                  type: string
+                field:
+                  type: string
+                compressed:
+                  type: boolean
+                  default: false
+                originalSize:
+                  type: integer
+                  description: ขนาดไฟล์เดิมก่อน compress (bytes)
+      responses:
+        '200':
+          description: Upload สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  url:
+                    type: string
+                    format: uri
+                  imageAssetId:
+                    type: string
+                    format: uuid
+                  meta:
+                    type: object
+                    properties:
+                      filename:
+                        type: string
+                      size:
+                        type: integer
+                      type:
+                        type: string
+                      uploadedAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: ข้อมูลไม่ครบหรือไฟล์ไม่ถูกต้อง
+        '500':
+          description: Upload ล้มเหลว
+
+  /api/visual-edit/apply:
+    post:
+      tags: [Visual Edit]
+      summary: แก้ไข field ในโปรเจกต์แบบ real-time
+      description: อ่านไฟล์จาก Daytona → แทนที่ field → เขียนกลับ (trigger HMR)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sandboxId, projectId, blockId, field, value]
+              properties:
+                sandboxId:
+                  type: string
+                  description: Daytona sandbox ID
+                projectId:
+                  type: string
+                  format: uuid
+                blockId:
+                  type: string
+                  example: hero
+                field:
+                  type: string
+                  example: heading
+                value:
+                  type: string
+                  example: Welcome to My Website
+                type:
+                  type: string
+                  enum: [text, heading, subheading, button, image, icon, badge]
+                  default: text
+      responses:
+        '200':
+          description: แก้ไขสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  componentPath:
+                    type: string
+                  field:
+                    type: string
+                  savedToDatabase:
+                    type: string
+                    example: pending
+                  message:
+                    type: string
+        '400':
+          description: ข้อมูลไม่ครบถ้วน
+        '500':
+          description: แก้ไขล้มเหลว
+
+  # ========== Preview (Daytona) ==========
+  /api/preview/daytona:
+    post:
+      tags: [Preview]
+      summary: สร้าง Daytona sandbox ใหม่
+      description: สร้าง sandbox สำหรับ preview โปรเจกต์
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId, files]
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                files:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      path:
+                        type: string
+                      content:
+                        type: string
+      responses:
+        '200':
+          description: สร้าง sandbox สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sandboxId:
+                    type: string
+                  url:
+                    type: string
+                    format: uri
+                  state:
+                    type: string
+
+    get:
+      tags: [Preview]
+      summary: ดึงสถานะ sandbox
+      description: ตรวจสอบสถานะและ heartbeat ของ sandbox
+      parameters:
+        - name: sandboxId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: สถานะ sandbox
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sandboxId:
+                    type: string
+                  state:
+                    type: string
+                  url:
+                    type: string
+        '400':
+          description: ไม่มี sandboxId
+        '404':
+          description: ไม่พบ sandbox
+
+    put:
+      tags: [Preview]
+      summary: อัปเดตไฟล์ใน sandbox
+      parameters:
+        - name: sandboxId
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      path:
+                        type: string
+                      content:
+                        type: string
+      responses:
+        '200':
+          description: อัปเดตสำเร็จ
+        '400':
+          description: ไม่มี sandboxId
+        '404':
+          description: ไม่พบ sandbox
+
+    delete:
+      tags: [Preview]
+      summary: ลบ sandbox
+      parameters:
+        - name: sandboxId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ลบสำเร็จ
+        '400':
+          description: ไม่มี sandboxId
+        '500':
+          description: ลบล้มเหลว

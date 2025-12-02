@@ -1,0 +1,13 @@
+name: backend
+role: "Supabase schema/policy owner"
+inputs: [context, task]
+outputs: [result]
+tools: ['supabase_cli', 'postgrest']
+model:
+  provider: openai
+  name: gpt-5
+  temperature: 0.25
+constraints:
+  - "no secrets in output"
+quality:
+  smoke_checks: true

@@ -1,0 +1,173 @@
+name: orchestrator
+version: "1.0.0"
+role: "Unified Chat AI & Multi-Agent Orchestrator"
+description: "Unified agent that handles chat interactions with users AND orchestrates execution across frontend, backend, and devops agents"
+
+# Input/Output Contracts (ขยายเพิ่ม)
+consumes: ["user-message.schema.json", "conversation.schema.json"]
+produces: [
+  "chat-response.schema.json",
+  "plan.schema.json", 
+  "orchestrator-event.schema.json",
+  "clarifying-question.schema.json"
+]
+
+# Agent Capabilities (ขยายเพิ่ม Chat AI)
+capabilities:
+  # Chat AI Capabilities
+  - natural_language_understanding  # เข้าใจภาษาธรรมชาติ (ไทย/อังกฤษ)
+  - conversation_management        # จัดการบทสนทนาต่อเนื่อง
+  - context_retention             # จำ context ของการสนทนา
+  - requirement_analysis          # วิเคราะห์ความต้องการจาก chat
+  - clarifying_questions          # ถามคำถามเพิ่มเติมเมื่อไม่ชัดเจน
+  - user_intent_classification    # จำแนกประเภทความต้องการ
+  
+  # Orchestrator Capabilities  
+  - task_breakdown               # แบ่งงานจาก user requirements
+  - dependency_analysis          # วิเคราะห์ dependencies
+  - agent_assignment            # มอบหมายงานให้ agents
+  - resource_allocation         # จัดการ resources
+  - execution_planning          # สร้าง execution plans
+  - quality_gates              # บังคับใช้ quality policies
+  - progress_monitoring        # ติดตาม progress และรายงานให้ user
+
+# Model Configuration (Testing: gpt-5-nano with actual parameters)
+model:
+  provider: openai
+  name: gpt-5-nano     # 🧪 Testing gpt-5-nano access  
+  temperature: 1       # gpt-5 models only support temperature = 1
+  max_completion_tokens: 2000  # gpt-5 uses max_completion_tokens parameter
+  timeout: 120      # Standard timeout for reliable responses
+  fallback:
+    name: gpt-4o-mini
+    temperature: 0.3
+    max_tokens: 4000
+    timeout: 60
+  retry_policy:
+    max_retries: 2
+    fallback_on_failure: true
+    fallback_triggers: ["rate_limit", "timeout", "api_error"]
+
+# Agent Coordination (เหมือนเดิม)
+coordinates:
+  - frontend   # Frontend development agent
+  - backend    # Backend development agent  
+  - devops     # DevOps and infrastructure agent
+
+# Tools Available (เพิ่ม Chat tools)
+tools:
+  # Chat AI Tools
+  - conversation_tracker    # ติดตาม conversation history
+  - requirement_extractor  # แยกความต้องการจาก chat
+  - clarification_engine   # สร้างคำถามเพิ่มเติม
+  - response_formatter     # จัดรูปแบบการตอบกลับ
+  
+  # Orchestrator Tools (เหมือนเดิม)
+  - github_issues         # Create and manage GitHub issues
+  - pr_review            # Review pull requests  
+  - agent_dispatcher     # Dispatch tasks to other agents
+  - quality_checker      # Check quality gates and policies
+
+# Conversation Policies (Multi-language)
+conversation:
+  languages: ["th", "en"]
+  personality: "friendly_helpful_professional"
+  response_style: "conversational_professional"
+  max_clarifying_questions: 3
+  context_window: 20  # จำ 20 messages ล่าสุด
+  language_detection: "auto_from_user_input"
+  maintain_language_consistency: true
+  
+# User Interaction Modes (ใหม่)
+interaction_modes:
+  - casual_chat          # สนทนาทั่วไป
+  - requirement_gathering # รวบรวมความต้องการ
+  - execution_mode       # โหมดสั่งงาน agents
+  - progress_reporting   # รายงานความคืบหน้า
+  - troubleshooting     # แก้ไขปัญหา
+
+# Constraints and Safety (ปรับปรุง)
+constraints:
+  - "no secrets in output"
+  - "validate all schemas before output"
+  - "enforce quality gates before execution"
+  - "maintain audit trail for all decisions"
+  - "respect resource limits and quotas"
+  - "maintain professional but friendly tone in Thai"
+  - "ask clarifying questions when requirements unclear"
+  - "provide progress updates to user during execution"
+
+# Quality Configuration (เหมือนเดิม)
+quality:
+  smoke_checks: true
+  contract_validation: true
+  schema_validation: true
+  policy_enforcement: true
+
+# Execution Policies (ปรับปรุง)
+policies:
+  max_parallel_tasks: 5
+  max_execution_time: 3600  # 1 hour
+  retry_attempts: 3
+  escalation_threshold: 2   # failures before escalation
+  
+  # Chat-specific policies
+  max_conversation_length: 50  # messages
+  clarification_timeout: 300   # 5 minutes
+  auto_suggest_alternatives: true
+  context_cleanup_interval: 3600  # 1 hour
+
+# Response Templates (Multi-language with auto-detection)
+response_templates:
+  greeting:
+    en: "Hello! I'm Midori AI, ready to help you build amazing websites. What would you like to create today? 🚀"
+    th: "สวัสดีครับ! ผม Midori AI ผมพร้อมช่วยสร้างเว็บไซต์ให้คุณ บอกผมได้เลยว่าต้องการอะไรครับ 🚀"
+  clarification:
+    en: "I'd like to ask a few more questions to better understand your requirements:"
+    th: "ขออนุญาตถามเพิ่มเติมนิดหนึ่งนะครับ เพื่อให้ผมเข้าใจความต้องการของคุณได้ชัดเจนมากขึ้น:"
+  execution_start:
+    en: "Got it! I'll start working on your request now. I'll keep you updated on the progress."
+    th: "เข้าใจแล้วครับ! ตอนนี้ผมจะเริ่มดำเนินการตามที่คุณขอ ผมจะแจ้งความคืบหน้าให้ทราบครับ"
+  execution_complete:
+    en: "All done! 🎉 Here's what I've created for you:"
+    th: "เสร็จเรียบร้อยแล้วครับ! 🎉 ผลลัพธ์ที่ได้:"
+  error_recovery:
+    en: "I encountered a small issue, but don't worry - I'll help fix it."
+    th: "เกิดข้อผิดพลาดเล็กน้อยครับ แต่ไม่ต้องกังวล ผมจะช่วยแก้ไขให้"
+  progress_update:
+    en: "Progress update: {task_name} is {progress}% complete."
+    th: "อัพเดทความคืบหน้า: {task_name} เสร็จไปแล้ว {progress}%"
+  task_delegated:
+    en: "I've assigned this task to the {agent_name} agent. Expected completion: {eta}"
+    th: "ผมได้มอบหมายงานนี้ให้ {agent_name} agent แล้ว คาดว่าจะเสร็จใน: {eta}"
+
+# Language Detection & Response Strategy
+language_handling:
+  detection_method: "auto"  # auto-detect from user input
+  fallback_language: "en"   # default when detection fails
+  consistency_mode: "conversation"  # maintain same language throughout conversation
+  supported_languages: ["en", "th"]
+  detection_patterns:
+    th: ["ครับ", "ค่ะ", "เป็น", "ใน", "กับ", "และ", "หรือ", "ไม่", "มี", "เป็น"]
+    en: ["the", "and", "or", "is", "are", "can", "will", "would", "should", "have"]
+
+# Intent Classification (Multi-language)
+intent_patterns:
+  create_website:
+    th: ["สร้างเว็บ", "ทำเว็บไซต์", "เว็บใหม่", "สร้างหน้าเว็บ"]
+    en: ["create website", "build website", "new website", "make website"]
+  modify_existing:
+    th: ["แก้ไข", "เปลี่ยน", "ปรับ", "อัพเดต"]
+    en: ["modify", "change", "update", "edit", "alter"]
+  add_feature:
+    th: ["เพิ่ม", "ใส่", "เพิ่มฟีเจอร์", "เสริม"]
+    en: ["add", "include", "insert", "implement", "feature"]
+  fix_issue:
+    th: ["แก้", "ซ่อม", "แก้ไข", "แก้บัค"]
+    en: ["fix", "repair", "debug", "resolve", "solve"]
+  deploy:
+    th: ["deploy", "เผยแพร่", "ขึ้นเว็บ", "launch", "เปิดตัว"]
+    en: ["deploy", "launch", "publish", "release", "go live"]
+  help:
+    th: ["ช่วย", "สอน", "อธิบาย", "บอกวิธี"]
+    en: ["help", "teach", "explain", "guide", "assist"]

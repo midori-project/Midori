@@ -1,0 +1,13 @@
+{
+  "name": "ai:validate",
+  "description": "Validate AI agent configurations and schemas",
+  "scripts": {
+    "ai:validate": "node scripts/validate-ai-config.js",
+    "ai:test": "npm run ai:validate && node scripts/test-agent-flows.js",
+    "ai:dev": "node scripts/start-agent-dev-server.js"
+  },
+  "devDependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1"
+  }
+}

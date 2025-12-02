@@ -1,0 +1,102 @@
+{
+  "id": "ecommerce",
+  "name": "E-commerce",
+  "description": "Online store and e-commerce websites",
+  "keywords": ["shop", "store", "buy", "sell", "ecommerce", "shopping", "products", "ขาย", "ร้านค้า", "ออนไลน์"],
+  "blocks": [
+    {
+      "blockId": "navbar-basic",
+      "required": true,
+      "customizations": {
+        "menuItems": [
+          { "label": "หน้าแรก", "href": "/" },
+          { "label": "สินค้า", "href": "/products" },
+          { "label": "หมวดหมู่", "href": "/categories" },
+          { "label": "เกี่ยวกับเรา", "href": "/about" },
+          { "label": "ติดต่อ", "href": "/contact" }
+        ]
+      }
+    },
+    {
+      "blockId": "hero-basic",
+      "variantId": "hero-stats",
+      "required": true,
+      "customizations": {
+        "badge": "ร้านค้าออนไลน์",
+        "heading": "สินค้าคุณภาพ ราคาดี",
+        "subheading": "เลือกซื้อสินค้าคุณภาพสูงจากร้านค้าออนไลน์ที่เชื่อถือได้ พร้อมบริการส่งฟรี",
+        "ctaLabel": "ช้อปเลย",
+        "secondaryCta": "ดูสินค้า",
+        "stat1": "1000+",
+        "stat1Label": "สินค้า",
+        "stat2": "24/7",
+        "stat2Label": "บริการ",
+        "stat3": "ฟรี",
+        "stat3Label": "ค่าส่ง"
+      }
+    },
+    {
+      "blockId": "theme-basic",
+      "required": true,
+      "customizations": {}
+    }
+  ],
+  "globalSettings": {
+    "palette": {
+      "primary": "blue",
+      "secondary": "purple",
+      "bgTone": "50"
+    },
+    "tokens": {
+      "radius": "6px",
+      "spacing": "1rem"
+    },
+    "tone": "professional",
+    "reasoning": "Blue conveys trust and reliability, essential for e-commerce"
+  },
+  "overrides": {
+    "hero-basic": {
+      "placeholders": {
+        "badge": { 
+          "required": true, 
+          "maxLength": 40, 
+          "description": "E-commerce badge text" 
+        },
+        "heading": { 
+          "required": true, 
+          "maxLength": 80, 
+          "description": "E-commerce main heading" 
+        },
+        "subheading": { 
+          "required": true, 
+          "maxLength": 160, 
+          "description": "E-commerce value proposition" 
+        },
+        "ctaLabel": { 
+          "required": true, 
+          "maxLength": 24, 
+          "description": "Primary CTA (e.g., 'ช้อปเลย', 'ซื้อสินค้า')" 
+        },
+        "secondaryCta": { 
+          "required": true, 
+          "maxLength": 24, 
+          "description": "Secondary CTA (e.g., 'ดูสินค้า', 'ค้นหา')" 
+        }
+      }
+    },
+    "navbar-basic": {
+      "placeholders": {
+        "brand": { 
+          "required": true, 
+          "minLength": 1, 
+          "description": "Store name" 
+        },
+        "ctaButton": { 
+          "required": true, 
+          "maxLength": 20, 
+          "description": "E-commerce CTA (e.g., 'ช้อปเลย', 'ตะกร้า')" 
+        }
+      }
+    }
+  }
+}

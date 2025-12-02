@@ -1,0 +1,15 @@
+agents:
+  - orchestrator
+  - frontend
+  - backend
+  - devops
+
+default_model:
+  provider: openai
+  name: gpt-5
+  temperature: 0.3
+
+timeouts:
+  default_ms: 600000   # 10 minutes
+
+retries: 2
