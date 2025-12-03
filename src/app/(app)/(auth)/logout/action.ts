@@ -10,17 +10,12 @@ export async function logoutAction() {
 
     // Try to remove common session cookie names
     try {
-      // Next.js cookies() in server actions returns a cookie store; not all runtimes
-      // support a delete() helper. Use set() with expired date as a fallback.
+      // Next.js 15: cookies() is now async
       const cookieNames = ['__Host-session', 'midori-session', 'session'];
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       for (const name of cookieNames) {
         try {
           // set expired cookie to remove in browser
-          // cookieStore.set is available in Next.js server runtime
-          // if not available, this will throw and we ignore it (best-effort)
-          // Path and SameSite are conservative to match common settings
-          // @ts-ignore - runtime-specific API
           cookieStore.set({ name, value: '', expires: new Date(0), path: '/' });
         } catch (_) {
           // ignore per-cookie failures
