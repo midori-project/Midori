@@ -12,8 +12,6 @@
     "ai:dev": "echo 'AI agent dev server would start here'",
     "postinstall": "prisma generate",
     "vercel-build": "prisma migrate deploy || prisma db push && next build",
-    "ngrok:sdk": "tsx scripts/ngrok-standalone.ts",
-    "dev:ngrok": "tsx scripts/dev-with-ngrok.ts",
     "scalar:edit": "npx scalar document serve openapi.yaml --watch --port 5050",
     "scalar:build": "npx scalar document bundle openapi.yaml --output dist/openapi.yaml"
   },
@@ -26,7 +24,6 @@
     "@codesandbox/sandpack-react": "^2.20.0",
     "@daytonaio/sdk": "^0.27.1",
     "@monaco-editor/react": "^4.7.0",
-    "@ngrok/ngrok": "^1.5.2",
     "@prisma/client": "^6.14.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-popover": "^1.1.15",
