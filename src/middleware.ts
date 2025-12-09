@@ -24,6 +24,7 @@ const publicApiRoutes = [
   '/api/auth/verify-otp',  // OTP verification
   '/api/preview/daytona', // เพิ่ม Daytona preview API
   '/api/projects', // เพิ่ม projects API (สำหรับ preview)
+  '/api/stripe/webhook', // Stripe webhook (must be public for Stripe to call)
 ];
 
 // Admin routes ที่ต้อง admin permission
