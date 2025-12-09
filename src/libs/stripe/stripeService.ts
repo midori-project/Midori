@@ -1,0 +1,124 @@
+import Stripe from 'stripe';
+import { STRIPE_CONFIG } from './stripeConfig';
+
+if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
+}
+
+/**
+ * Initialize Stripe client
+ */
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_CONFIG.apiVersion,
+    maxNetworkRetries: STRIPE_CONFIG.maxNetworkRetries,
+    timeout: STRIPE_CONFIG.timeout,
+    typescript: true,
+});
+
+/**
+ * Create or retrieve Stripe customer
+ */
+export async function getOrCreateStripeCustomer(params: {
+    userId: string;
+    email: string;
+    name?: string;
+    stripeCustomerId?: string | null;
+}): Promise<string> {
+    const { userId, email, name, stripeCustomerId } = params;
+
+    // If customer already exists, return the ID
+    if (stripeCustomerId) {
+        try {
+            await stripe.customers.retrieve(stripeCustomerId);
+            return stripeCustomerId;
+        } catch (error) {
+            console.error('Failed to retrieve existing customer:', error);
+            // Continue to create new customer
+        }
+    }
+
+    // Create new customer
+    const customer = await stripe.customers.create({
+        email,
+        name,
+        metadata: {
+            userId,
+        },
+    });
+
+    return customer.id;
+}
+
+/**
+ * Create Checkout Session for one-time payment
+ */
+export async function createCheckoutSession(params: {
+    customerId: string;
+    priceId: string;
+    quantity?: number;
+    successUrl: string;
+    cancelUrl: string;
+    metadata?: Record<string, string>;
+}): Promise<Stripe.Checkout.Session> {
+    const { customerId, priceId, quantity = 1, successUrl, cancelUrl, metadata } = params;
+
+    const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        mode: 'payment', // One-time payment
+        payment_method_types: ['card'],
+        line_items: [
+            {
+                price: priceId,
+                quantity,
+            },
+        ],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata,
+        // Allow promotion codes
+        allow_promotion_codes: true,
+        // Billing address collection
+        billing_address_collection: 'auto',
+    });
+
+    return session;
+}
+
+/**
+ * Retrieve Checkout Session
+ */
+export async function retrieveCheckoutSession(sessionId: string): Promise<Stripe.Checkout.Session> {
+    return await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ['line_items', 'customer'],
+    });
+}
+
+/**
+ * Retrieve Payment Intent
+ */
+export async function retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+    return await stripe.paymentIntents.retrieve(paymentIntentId);
+}
+
+/**
+ * Construct webhook event from request
+ */
+export function constructWebhookEvent(
+    payload: string | Buffer,
+    signature: string,
+    webhookSecret: string
+): Stripe.Event {
+    return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+}
+
+/**
+ * List customer's payment history
+ */
+export async function listCustomerPayments(customerId: string, limit = 10): Promise<Stripe.Charge[]> {
+    const charges = await stripe.charges.list({
+        customer: customerId,
+        limit,
+    });
+
+    return charges.data;
+}
