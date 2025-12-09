@@ -43,7 +43,7 @@
     "monaco": "^1.201704190613.0",
     "monaco-editor": "^0.52.2",
     "nanoid": "^5.1.6",
-    "next": "15.5.0",
+    "next": "15.5.7",
     "openai": "^5.20.3",
     "postprocessing": "^6.38.0",
     "react": "19.1.0",
