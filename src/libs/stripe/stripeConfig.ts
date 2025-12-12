@@ -67,7 +67,7 @@ export const STRIPE_URLS = {
  * Stripe configuration
  */
 export const STRIPE_CONFIG = {
-    apiVersion: '2024-11-20.acacia' as const,
+    apiVersion: '2025-11-17.clover' as const,
     maxNetworkRetries: 3,
     timeout: 30000, // 30 seconds
 };
