@@ -37,36 +37,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
-    console.log('🔔 [WEBHOOK] Received event:', {
-        type: event.type,
-        id: event.id,
-        created: new Date(event.created * 1000).toISOString(),
-    });
+    console.log(`Received webhook event: ${event.type}`);
 
     try {
         switch (event.type) {
             case 'checkout.session.completed': {
                 const session = event.data.object as Stripe.Checkout.Session;
 
-                console.log('🛒 [CHECKOUT] Session completed:', {
-                    sessionId: session.id,
-                    paymentStatus: session.payment_status,
-                    mode: session.mode,
-                    amountTotal: session.amount_total,
-                    currency: session.currency,
-                    customerEmail: session.customer_email,
-                    metadata: session.metadata,
-                });
-
                 if (session.payment_status === 'paid' && session.mode === 'payment') {
                     const userId = session.metadata?.userId;
                     const paymentIntentId = session.payment_intent as string;
 
                     if (!userId) {
-                        console.error('❌ [ERROR] Missing userId in session metadata:', {
-                            sessionId: session.id,
-                            metadata: session.metadata,
-                        });
+                        console.error('Missing userId in session metadata');
                         break;
                     }
 
@@ -77,25 +60,13 @@ export async function POST(request: NextRequest) {
                         amountTotal: session.amount_total || 0,
                         currency: session.currency || 'usd',
                     });
-                } else {
-                    console.log('ℹ️ [INFO] Session not paid or not payment mode:', {
-                        sessionId: session.id,
-                        paymentStatus: session.payment_status,
-                        mode: session.mode,
-                    });
                 }
                 break;
             }
 
             case 'payment_intent.succeeded': {
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
-                console.log('💳 [PAYMENT] Payment intent succeeded:', {
-                    paymentIntentId: paymentIntent.id,
-                    amount: paymentIntent.amount,
-                    currency: paymentIntent.currency,
-                    status: paymentIntent.status,
-                    metadata: paymentIntent.metadata,
-                });
+                console.log(`Payment succeeded: ${paymentIntent.id}`);
                 // Already handled in checkout.session.completed
                 break;
             }
@@ -103,13 +74,10 @@ export async function POST(request: NextRequest) {
             case 'payment_intent.payment_failed': {
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
 
-                console.error('❌ [PAYMENT FAILED]', {
-                    paymentIntentId: paymentIntent.id,
-                    amount: paymentIntent.amount,
-                    currency: paymentIntent.currency,
-                    lastPaymentError: paymentIntent.last_payment_error,
-                    metadata: paymentIntent.metadata,
-                });
+                // Find session by payment intent
+                // Note: This is a simplified approach. In production, you might want to store
+                // the mapping between payment_intent and session in your database
+                console.log(`Payment failed: ${paymentIntent.id}`);
 
                 await handleFailedPayment({
                     stripeSessionId: paymentIntent.metadata?.sessionId || '',
@@ -122,32 +90,17 @@ export async function POST(request: NextRequest) {
                 const charge = event.data.object as Stripe.Charge;
                 const paymentIntentId = charge.payment_intent as string;
 
-                console.log('🔄 [REFUND] Charge refunded:', {
-                    chargeId: charge.id,
-                    paymentIntentId,
-                    amountRefunded: charge.amount_refunded,
-                    amount: charge.amount,
-                    currency: charge.currency,
-                });
-
                 if (paymentIntentId) {
                     await handleRefund({
                         stripePaymentIntentId: paymentIntentId,
                         refundAmount: charge.amount_refunded,
-                    });
-                } else {
-                    console.warn('⚠️ [WARNING] No payment intent ID for refund:', {
-                        chargeId: charge.id,
                     });
                 }
                 break;
             }
 
             default:
-                console.log('ℹ️ [UNHANDLED] Event type not handled:', {
-                    type: event.type,
-                    eventId: event.id,
-                });
+                console.log(`Unhandled event type: ${event.type}`);
         }
 
         return NextResponse.json({ received: true });

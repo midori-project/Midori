@@ -1,36 +1,18 @@
 import Stripe from 'stripe';
 import { STRIPE_CONFIG } from './stripeConfig';
 
-let stripeInstance: Stripe | null = null;
-
-/**
- * Get Stripe client instance (singleton with lazy initialization)
- */
-function getStripeClient(): Stripe {
-    if (!stripeInstance) {
-        if (!process.env.STRIPE_SECRET_KEY) {
-            throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
-        }
-
-        stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
-            apiVersion: STRIPE_CONFIG.apiVersion,
-            maxNetworkRetries: STRIPE_CONFIG.maxNetworkRetries,
-            timeout: STRIPE_CONFIG.timeout,
-            typescript: true,
-        });
-    }
-
-    return stripeInstance;
+if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
 }
 
 /**
- * Stripe client getter
+ * Initialize Stripe client
  */
-export const stripe = new Proxy({} as Stripe, {
-    get: (_, prop) => {
-        const client = getStripeClient();
-        return (client as any)[prop];
-    },
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: STRIPE_CONFIG.apiVersion,
+    maxNetworkRetries: STRIPE_CONFIG.maxNetworkRetries,
+    timeout: STRIPE_CONFIG.timeout,
+    typescript: true,
 });
 
 /**
@@ -44,47 +26,24 @@ export async function getOrCreateStripeCustomer(params: {
 }): Promise<string> {
     const { userId, email, name, stripeCustomerId } = params;
 
-    // If customer already exists, try to retrieve it
+    // If customer already exists, return the ID
     if (stripeCustomerId) {
         try {
-            const customer = await stripe.customers.retrieve(stripeCustomerId);
-            if (!customer.deleted) {
-                console.log('✅ [STRIPE] Using existing customer:', {
-                    customerId: stripeCustomerId,
-                    email: customer.email,
-                });
-                return stripeCustomerId;
-            }
-        } catch (error: any) {
-            // Customer doesn't exist (e.g., switched Stripe accounts)
-            console.warn('⚠️ [STRIPE] Customer not found, creating new one:', {
-                oldCustomerId: stripeCustomerId,
-                userId,
-                email,
-                errorCode: error?.code,
-            });
+            await stripe.customers.retrieve(stripeCustomerId);
+            return stripeCustomerId;
+        } catch (error) {
+            console.error('Failed to retrieve existing customer:', error);
             // Continue to create new customer
         }
     }
 
     // Create new customer
-    console.log('✨ [STRIPE] Creating new customer:', {
-        userId,
-        email,
-        name,
-    });
-
     const customer = await stripe.customers.create({
         email,
         name,
         metadata: {
             userId,
         },
-    });
-
-    console.log('✅ [STRIPE] Customer created:', {
-        customerId: customer.id,
-        email: customer.email,
     });
 
     return customer.id;
