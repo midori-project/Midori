@@ -26,24 +26,47 @@ export async function getOrCreateStripeCustomer(params: {
 }): Promise<string> {
     const { userId, email, name, stripeCustomerId } = params;
 
-    // If customer already exists, return the ID
+    // If customer already exists, try to retrieve it
     if (stripeCustomerId) {
         try {
-            await stripe.customers.retrieve(stripeCustomerId);
-            return stripeCustomerId;
-        } catch (error) {
-            console.error('Failed to retrieve existing customer:', error);
+            const customer = await stripe.customers.retrieve(stripeCustomerId);
+            if (!customer.deleted) {
+                console.log('✅ [STRIPE] Using existing customer:', {
+                    customerId: stripeCustomerId,
+                    email: customer.email,
+                });
+                return stripeCustomerId;
+            }
+        } catch (error: any) {
+            // Customer doesn't exist (e.g., switched Stripe accounts)
+            console.warn('⚠️ [STRIPE] Customer not found, creating new one:', {
+                oldCustomerId: stripeCustomerId,
+                userId,
+                email,
+                errorCode: error?.code,
+            });
             // Continue to create new customer
         }
     }
 
     // Create new customer
+    console.log('✨ [STRIPE] Creating new customer:', {
+        userId,
+        email,
+        name,
+    });
+
     const customer = await stripe.customers.create({
         email,
         name,
         metadata: {
             userId,
         },
+    });
+
+    console.log('✅ [STRIPE] Customer created:', {
+        customerId: customer.id,
+        email: customer.email,
     });
 
     return customer.id;
