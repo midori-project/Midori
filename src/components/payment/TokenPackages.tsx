@@ -44,7 +44,13 @@ export default function TokenPackages({ userId, onPurchaseStart, onPurchaseError
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to create checkout session');
+                console.error('❌ [CHECKOUT ERROR]', {
+                    status: response.status,
+                    error: error.error,
+                    details: error.details,
+                    fullError: error,
+                });
+                throw new Error(error.details || error.error || 'Failed to create checkout session');
             }
 
             const { url } = await response.json();
@@ -56,7 +62,7 @@ export default function TokenPackages({ userId, onPurchaseStart, onPurchaseError
                 throw new Error('No checkout URL returned');
             }
         } catch (error) {
-            console.error('Purchase error:', error);
+            console.error('❌ [PURCHASE ERROR]', error);
             onPurchaseError?.(error instanceof Error ? error.message : 'Purchase failed');
             setLoading(null);
         }
