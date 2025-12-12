@@ -34,8 +34,7 @@ export async function addTokensToWallet(params: {
     }
 
     // Update wallet balance
-    const previousBalance = wallet.balanceTokens;
-    const updatedWallet = await prisma.tokenWallet.update({
+    await prisma.tokenWallet.update({
         where: { id: wallet.id },
         data: {
             balanceTokens: {
@@ -44,17 +43,8 @@ export async function addTokensToWallet(params: {
         },
     });
 
-    console.log('💰 [WALLET UPDATE]', {
-        userId,
-        walletId: wallet.id,
-        previousBalance,
-        tokensAdded: tokens,
-        newBalance: updatedWallet.balanceTokens,
-        timestamp: new Date().toISOString(),
-    });
-
     // Create transaction record
-    const transaction = await prisma.tokenTransaction.create({
+    await prisma.tokenTransaction.create({
         data: {
             userId,
             walletId: wallet.id,
@@ -63,15 +53,6 @@ export async function addTokensToWallet(params: {
             description,
             metadata,
         },
-    });
-
-    console.log('📝 [TRANSACTION CREATED]', {
-        transactionId: transaction.id,
-        userId,
-        amount: tokens,
-        type: 'TOKEN_PURCHASE',
-        description,
-        timestamp: new Date().toISOString(),
     });
 }
 
@@ -147,76 +128,43 @@ export async function handleSuccessfulPayment(params: {
 }): Promise<void> {
     const { userId, stripeSessionId, stripePaymentIntentId, amountTotal, currency } = params;
 
-    console.log('🎉 [PAYMENT SUCCESS] Processing payment...', {
-        userId,
-        stripeSessionId,
-        stripePaymentIntentId,
-        amountTotal,
-        currency,
-        timestamp: new Date().toISOString(),
-    });
-
     // Check if already processed
     const existing = await prisma.tokenPurchase.findUnique({
         where: { stripeSessionId },
     });
 
     if (existing && existing.status === 'completed') {
-        console.log('⚠️ [DUPLICATE] Payment already processed:', {
-            stripeSessionId,
-            existingStatus: existing.status,
-            tokensAmount: existing.tokensAmount,
-        });
+        console.log(`Payment already processed: ${stripeSessionId}`);
         return;
     }
 
-    // Calculate tokens from amount (amount is in cents for USD, smallest unit for other currencies)
-    const amountInMainUnit = currency.toLowerCase() === 'thb' ? amountTotal / 100 : amountTotal / 100;
+    // Calculate tokens from amount (amount is in cents)
+    const amountInDollars = amountTotal / 100;
     let tokensAmount = 0;
 
-    // Match amount to package (support both USD and THB)
-    if (amountInMainUnit === 5 || amountInMainUnit === 20) tokensAmount = 10; // $5 or ฿20
-    else if (amountInMainUnit === 10 || amountInMainUnit === 40) tokensAmount = 25; // $10 or ฿40
-    else if (amountInMainUnit === 20 || amountInMainUnit === 70) tokensAmount = 60; // $20 or ฿70
-
-    console.log('💎 [TOKENS CALCULATION]', {
-        amountTotal,
-        currency,
-        amountInMainUnit,
-        tokensAmount,
-    });
+    // Match amount to package
+    if (amountInDollars === 5) tokensAmount = 10;
+    else if (amountInDollars === 10) tokensAmount = 25;
+    else if (amountInDollars === 20) tokensAmount = 60;
 
     if (tokensAmount === 0) {
-        console.error('❌ [ERROR] Unknown payment amount:', {
-            amountTotal,
-            currency,
-            amountInMainUnit,
-            supportedAmounts: currency.toLowerCase() === 'thb' ? '฿20, ฿40, ฿70' : '$5, $10, $20',
-        });
+        console.error(`Unknown payment amount: $${amountInDollars}`);
         return;
     }
 
     // Create or update purchase record
     if (existing) {
-        console.log('🔄 [UPDATE] Updating existing purchase record...', {
-            stripeSessionId,
-            previousStatus: existing.status,
-        });
         await updateTokenPurchaseStatus({
             stripeSessionId,
             status: 'completed',
             stripePaymentIntentId,
         });
     } else {
-        console.log('✨ [CREATE] Creating new purchase record...', {
-            stripeSessionId,
-            tokensAmount,
-        });
         await createTokenPurchaseRecord({
             userId,
             stripeSessionId,
             stripePaymentIntentId,
-            amount: amountInMainUnit,
+            amount: amountInDollars,
             currency,
             tokensAmount,
             status: 'completed',
@@ -224,7 +172,6 @@ export async function handleSuccessfulPayment(params: {
     }
 
     // Add tokens to wallet
-    console.log('🎁 [ADDING TOKENS] Adding tokens to wallet...');
     await addTokensToWallet({
         userId,
         tokens: tokensAmount,
@@ -232,20 +179,11 @@ export async function handleSuccessfulPayment(params: {
         metadata: {
             stripeSessionId,
             stripePaymentIntentId,
-            packageAmount: amountInMainUnit,
-            currency,
+            packageAmount: amountInDollars,
         },
     });
 
-    console.log('✅ [SUCCESS] Payment processing completed!', {
-        userId,
-        tokensAmount,
-        stripeSessionId,
-        stripePaymentIntentId,
-        amount: amountInMainUnit,
-        currency,
-        timestamp: new Date().toISOString(),
-    });
+    console.log(`Successfully added ${tokensAmount} tokens to user ${userId}`);
 }
 
 /**
@@ -303,7 +241,7 @@ export async function handleRefund(params: {
         },
     });
 
-    if (wallet && wallet.balanceTokens.toNumber() >= purchase.tokensAmount) {
+    if (wallet && wallet.balanceTokens >= purchase.tokensAmount) {
         await prisma.tokenWallet.update({
             where: { id: wallet.id },
             data: {
