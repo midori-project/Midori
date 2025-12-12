@@ -17,28 +17,28 @@ export interface TokenPackage {
 export const TOKEN_PACKAGES: TokenPackage[] = [
     {
         id: 'tokens_10',
-        tokens: 10,
-        price: 5,
-        currency: 'usd',
+        tokens: 5,
+        price: 20,
+        currency: 'thb',
         stripePriceId: process.env.STRIPE_PRICE_ID_TOKENS_10,
     },
-    {
-        id: 'tokens_25',
-        tokens: 25,
-        price: 10,
-        currency: 'usd',
-        popular: true, // Most popular package
-        stripePriceId: process.env.STRIPE_PRICE_ID_TOKENS_25,
-    },
-    {
-        id: 'tokens_60',
-        tokens: 60,
-        price: 20,
-        currency: 'usd',
-        originalPrice: 25,
-        discount: 20, // 20% discount
-        stripePriceId: process.env.STRIPE_PRICE_ID_TOKENS_60,
-    },
+    // {
+    //     id: 'tokens_25',
+    //     tokens: 25,
+    //     price: 10,
+    //     currency: 'usd',
+    //     popular: true, // Most popular package
+    //     stripePriceId: process.env.STRIPE_PRICE_ID_TOKENS_25,
+    // },
+    // {
+    //     id: 'tokens_60',
+    //     tokens: 60,
+    //     price: 20,
+    //     currency: 'usd',
+    //     originalPrice: 25,
+    //     discount: 20, // 20% discount
+    //     stripePriceId: process.env.STRIPE_PRICE_ID_TOKENS_60,
+    // },
 ];
 
 /**
