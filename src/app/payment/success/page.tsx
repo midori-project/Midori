@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function PaymentSuccessPage() {
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [sessionData, setSessionData] = useState<any>(null);
@@ -122,5 +125,19 @@ export default function PaymentSuccessPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function PaymentSuccessPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-screen flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                </div>
+            }
+        >
+            <PaymentSuccessContent />
+        </Suspense>
     );
 }
