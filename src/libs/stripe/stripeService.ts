@@ -1,18 +1,36 @@
 import Stripe from 'stripe';
 import { STRIPE_CONFIG } from './stripeConfig';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
+let stripeInstance: Stripe | null = null;
+
+/**
+ * Get Stripe client instance (singleton with lazy initialization)
+ */
+function getStripeClient(): Stripe {
+    if (!stripeInstance) {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
+        }
+
+        stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
+            apiVersion: STRIPE_CONFIG.apiVersion,
+            maxNetworkRetries: STRIPE_CONFIG.maxNetworkRetries,
+            timeout: STRIPE_CONFIG.timeout,
+            typescript: true,
+        });
+    }
+
+    return stripeInstance;
 }
 
 /**
- * Initialize Stripe client
+ * Stripe client getter
  */
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: STRIPE_CONFIG.apiVersion,
-    maxNetworkRetries: STRIPE_CONFIG.maxNetworkRetries,
-    timeout: STRIPE_CONFIG.timeout,
-    typescript: true,
+export const stripe = new Proxy({} as Stripe, {
+    get: (_, prop) => {
+        const client = getStripeClient();
+        return (client as any)[prop];
+    },
 });
 
 /**
