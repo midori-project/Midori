@@ -107,7 +107,7 @@ export function PreviewFooter({
                 {isDeploying ? (
                   <>
                     <Loader className="w-4 h-4 animate-spin" />
-                    <span className="hidden sm:inline ml-2">กำลัง Deploy...</span>
+                    <span className="hidden sm:inline ml-2">Deploying...</span>
                   </>
                 ) : (
                   <>
