@@ -7,19 +7,17 @@ interface PreviewLoadingStateProps {
 }
 
 const loadingMessages = [
-  'กินกาแฟ...',
-  'กินหมูปิ้ง 20 ไม้...',
-  'กินข้าวกะเพรา...',
-  'กินข้าวหมูกรอบ...',
-  'กินข้าวกุ้งกะปิ...',
-  'กินข้าวผัดกระเทียม...',
-  'เกือบเสร็จแล้ว...',
-  'กินข้าวผัดตะเข้...',
-  'กินข้าวผัดหมู...',
+  'Sipping coffee...',
+  'Eating pork ribs...',
+  'Eating shrimp fried rice...',
+  'Eating Noodles...',
+  'Almost done...',
+  'Eating Burger...',
+  'Eating Pizza...',
 ];
 
 /**
- * Component แสดงสถานะก่อนเริ่ม preview หรือระหว่างโหลด
+ * Component displays status before starting preview or during loading
  */
 export function PreviewLoadingState({ 
   loading, 
@@ -38,7 +36,7 @@ export function PreviewLoadingState({
     return () => clearInterval(interval);
   }, [loading]);
 
-  const currentMessage = loadingMessages[messageIndex] || 'กำลังโหลด...';
+  const currentMessage = loadingMessages[messageIndex] || 'Loading...';
 
   return (
     <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
@@ -53,7 +51,7 @@ export function PreviewLoadingState({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
             </div>
             <p className="text-gray-500 text-sm">
-              กรุณารอสักครู่... เรากำลังเตรียมทุกอย่างให้คุณ
+              Please wait a moment... We are preparing everything for you
             </p>
           </>
         ) : (
@@ -66,7 +64,7 @@ export function PreviewLoadingState({
               Click "Start Preview" to create a Daytona sandbox and begin editing your code with
               live updates.
             </p>
-            <p className="text-gray-500 mb-6 text-sm">พบ {filesCount} ไฟล์พร้อมใช้งาน</p>
+            <p className="text-gray-500 mb-6 text-sm">Found {filesCount} files ready to use</p>
             <button
               onClick={onStartPreview}
               disabled={loading || filesCount === 0}

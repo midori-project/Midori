@@ -1,6 +1,6 @@
 /**
  * Visual Edit Panel Component
- * แสดง panel สำหรับแก้ไข content ที่เลือก
+ * Display panel for editing selected content
  */
 
 'use client';
@@ -88,15 +88,15 @@ export function VisualEditPanel({
       
       // Only compress if file is an image and larger than 500KB
       if (file.type.startsWith('image/') && file.size > 500 * 1024) {
-        setCompressionStatus('กำลังเพิ่มประสิทธิภาพรูปภาพ...');
+        setCompressionStatus('Optimizing image...');
         console.log('🔄 [UI] Compressing image...');
         
         // Compression options
         const options = {
-          maxSizeMB: 1,           // บีบอัดให้เหลือไม่เกิน 1MB
-          maxWidthOrHeight: 1920, // ขนาดสูงสุด 1920px
-          useWebWorker: true,     // ใช้ Web Worker (ไม่ block UI)
-          fileType: 'image/webp', // Convert เป็น WebP
+          maxSizeMB: 1,           // Compress to max 1MB
+          maxWidthOrHeight: 1920, // Max size 1920px
+          useWebWorker: true,     // Use Web Worker (doesn't block UI)
+          fileType: 'image/webp', // Convert to WebP
           initialQuality: 0.85    // Quality 85%
         };
         
@@ -117,7 +117,7 @@ export function VisualEditPanel({
           });
           
           fileToUpload = compressedFile;
-          setCompressionStatus(`ลดขนาด ${reduction.toFixed(0)}% (${(compressedSize / 1024 / 1024).toFixed(2)} MB)`);
+          setCompressionStatus(`Reduced size by ${reduction.toFixed(0)}% (${(compressedSize / 1024 / 1024).toFixed(2)} MB)`);
           
         } catch (compressionError) {
           console.warn('⚠️ [UI] Compression failed, uploading original:', compressionError);

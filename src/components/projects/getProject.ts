@@ -2,11 +2,11 @@
 import { prisma } from "@/libs/prisma/prisma";
 
 export async function getPromptJson(projectId: string) {
-  // ดึงข้อมูล promptJson จากตาราง Generation ที่ล่าสุดของ project นี้
+  // Fetch promptJson from the latest Generation record of this project
   const generation = await prisma.generation.findFirst({
     where: { projectId: projectId },
     select: { promptJson: true },
-    orderBy: { createdAt: 'desc' }, // เอาล่าสุด
+    orderBy: { createdAt: 'desc' }, // Get the latest
   });
   
   return generation?.promptJson;

@@ -118,7 +118,7 @@ export default function ChatInterface({
           // No conversation history, show welcome message
           setMessages([{
             id: 'welcome',
-            content: initialMessage || 'สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
+            content: initialMessage || 'Hello! I\'m Midori AI, your website building assistant 🎭\n\nI can help you with many things:\n• 🎨 Create and edit UI Components\n• ⚙️ Create APIs and manage databases\n• 🚀 Deploy and manage Infrastructure\n• 💬 Answer questions about web development\n\nTry asking me something or give me a task!',
             sender: 'assistant',
             timestamp: new Date(),
             type: 'chat'
@@ -129,7 +129,7 @@ export default function ChatInterface({
         // Fallback to welcome message
         setMessages([{
           id: 'welcome',
-          content: initialMessage || 'สวัสดีครับ! ผมคือ Wiivor ผู้ช่วยสร้างเว็บไซต์ 🎭\n\nผมสามารถช่วยคุณได้หลายอย่าง:\n• 🎨 สร้างและแก้ไข UI Components\n• ⚙️ สร้าง API และจัดการฐานข้อมูล\n• 🚀 Deploy และจัดการ Infrastructure\n• 💬 ตอบคำถามเกี่ยวกับการพัฒนาเว็บ\n\nลองถามหรือสั่งงานผมดูสิครับ!',
+          content: initialMessage || 'Hello! I\'m Wiivor, your website building assistant 🎭\n\nI can help you with many things:\n• 🎨 Create and edit UI Components\n• ⚙️ Create APIs and manage databases\n• 🚀 Deploy and manage Infrastructure\n• 💬 Answer questions about web development\n\nTry asking me something or give me a task!',
           sender: 'assistant',
           timestamp: new Date(),
           type: 'chat'
@@ -169,7 +169,7 @@ export default function ChatInterface({
       // Add loading message
       const loadingMessage: Message = {
         id: `loading-${Date.now()}`,
-        content: 'กำลังคิด...',
+        content: 'Thinking...',
         sender: 'assistant',
         timestamp: new Date(),
         loading: true
@@ -222,7 +222,7 @@ export default function ChatInterface({
         const withoutLoading = prev.filter(msg => !msg.loading);
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
-          content: 'ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง',
+          content: 'Sorry, an error occurred during processing. Please try again.',
           sender: 'assistant',
           timestamp: new Date(),
           type: 'chat'
@@ -256,7 +256,7 @@ export default function ChatInterface({
       // Add loading message
       const loadingMessage: Message = {
         id: `loading-${Date.now()}`,
-        content: 'กำลังคิด...',
+        content: 'Thinking...',
         sender: 'assistant',
         timestamp: new Date(),
         loading: true
@@ -309,7 +309,7 @@ export default function ChatInterface({
         const withoutLoading = prev.filter(msg => !msg.loading);
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
-          content: '❌ ขออภัยครับ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+          content: '❌ Sorry, an error occurred. Please try again.',
           sender: 'assistant',
           timestamp: new Date(),
           type: 'chat'

@@ -1,7 +1,7 @@
 /**
  * Empty States Components
  * 
- * ชุด components สำหรับแสดงสถานะต่างๆ ของ Preview
+ * Set of components for displaying various Preview states
  */
 
 export { LoadingState } from './LoadingState';

@@ -7,7 +7,7 @@ interface DeploymentToastProps {
 }
 
 /**
- * Toast notification สำหรับแสดงผลการ Deploy
+ * Toast notification for displaying Deploy results
  */
 export function DeploymentToast({ error, onClose }: DeploymentToastProps) {
   if (!error) return null;

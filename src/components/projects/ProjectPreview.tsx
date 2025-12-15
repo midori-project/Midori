@@ -16,37 +16,35 @@ import { VisualEditPanel } from './VisualEditPanel';
 /**
  * ProjectPreview Component
  * 
- * Component หลักสำหรับแสดงและจัดการ Preview ของโปรเจค
+ * Main component for displaying and managing Project Preview
  * 
- * ฟีเจอร์หลัก:
- * - แสดง Live Preview ผ่าน Daytona Sandbox
- * - Code Editor แบบ real-time
- * - WebSocket integration สำหรับ auto-refresh
- * - Deployment ไปยัง subdomain
- * - รองรับหลาย device types (desktop, tablet, mobile)
+ * Main features:
+ * - Display Live Preview through Daytona Sandbox
+ * - Real-time Code Editor
+ * - WebSocket integration for auto-refresh
+ * - Deployment to subdomain
+ * - Support for multiple device types (desktop, tablet, mobile)
  * 
- * @param projectId - ID ของโปรเจคที่ต้องการแสดง Preview
+ * @param projectId - ID of the project to display Preview
  */
 
 interface ProjectPreviewProps {
   projectId: string;
-  userId?: string; // ✅ เพิ่ม userId เพื่อเช็คว่าเป็นเจ้าของโปรเจ็คหรือไม่
-  onToggleChat?: () => void; // ✅ เพิ่ม prop สำหรับ toggle chat sidebar
-  isChatOpen?: boolean; // ✅ เพิ่ม prop สำหรับเช็คสถานะ chat
+  userId?: string; // ✅ Added userId to check if user is the project owner
+  onToggleChat?: () => void; // ✅ Added prop for toggling chat sidebar
+  isChatOpen?: boolean; // ✅ Added prop for checking chat status
 }
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
 const loadingMessages = [
-  'กินกาแฟ...',
-  'กินหมูปิ้ง 20 ไม้...',
-  'กินข้าวกะเพรา...',
-  'กินข้าวหมูกรอบ...',
-  'กินข้าวกุ้งกะปิ...',
-  'กินข้าวผัดกระเทียม...',
-  'เกือบเสร็จแล้ว...',
-  'กินข้าวผัดตะเข้...',
-  'กินข้าวผัดหมู...',
+  'Sipping coffee...',
+  'Eating pork ribs...',
+  'Eating shrimp fried rice...',
+  'Eating Noodles...',
+  'Almost done...',
+  'Eating Burger...',
+  'Eating Pizza...',
 ];
 
 const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId, userId, onToggleChat, isChatOpen }) => {
@@ -58,7 +56,7 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId, userId, onTo
 
   // ==================== Custom Hooks ====================
   
-  // ดึงข้อมูลโปรเจค
+  // Fetch project data
   const {
     projectData,
     projectFiles,
@@ -70,10 +68,10 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId, userId, onTo
     refetch: refetchProjectData,
   } = useProjectData(projectId);
 
-  // ✅ เช็คว่าผู้ใช้เป็นเจ้าของโปรเจ็คหรือไม่
+  // ✅ Check if user is the project owner
   const isOwner = userId ? userId === projectOwnerId : true;
 
-  // จัดการ Deployment
+  // Handle Deployment
   const {
     deploy,
     isDeploying,
@@ -228,16 +226,16 @@ const ProjectPreview: React.FC<ProjectPreviewProps> = ({ projectId, userId, onTo
         sandboxId={sandboxId ?? null}
         isDeploying={isDeploying}
         hasSnapshot={hasSnapshot}
-        onDeploy={() => setIsDeployDialogOpen(true)}  // 🆕 เปิด dialog ใน footer ด้วย
+        onDeploy={() => setIsDeployDialogOpen(true)}  
         isCodeEditorVisible={isCodeEditorVisible}
         onToggleEditor={() => setIsCodeEditorVisible(!isCodeEditorVisible)}
         editMode={editMode}
         onToggleEditMode={toggleEditMode}
         deviceType={deviceType}
         onDeviceChange={setDeviceType}
-        isOwner={isOwner} // ✅ ส่ง isOwner prop
-        onToggleChat={onToggleChat} // ✅ Toggle chat
-        isChatOpen={isChatOpen} // ✅ ส่งสถานะ chat
+        isOwner={isOwner} 
+        onToggleChat={onToggleChat} 
+        isChatOpen={isChatOpen} 
       />
 
       {/* Toast Notifications */}

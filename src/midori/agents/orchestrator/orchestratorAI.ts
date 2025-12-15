@@ -1,6 +1,6 @@
 /**
  * 🎭 Unified Orchestrator AI
- * รวม Chat AI + Template-First Orchestrator ในตัวเดียว
+ * Combines Chat AI + Template-First Orchestrator in one
  * 
  * Capabilities:
  * - Natural language processing
@@ -60,7 +60,7 @@ export interface IntentAnalysis {
   taskType?: string;
   requiredAgents: ('frontend' | 'backend' | 'devops')[];
   complexity: 'low' | 'medium' | 'high';
-  // ✅ รองรับ category IDs จาก BUSINESS_CATEGORIES: restaurant, ecommerce, hotel, bakery, academy, bookstore, healthcare, news, portfolio, travel
+  // ✅ Supports category IDs from BUSINESS_CATEGORIES: restaurant, ecommerce, hotel, bakery, academy, bookstore, healthcare, news, portfolio, travel
   projectType?: 'restaurant' | 'ecommerce' | 'hotel' | 'bakery' | 'academy' | 'bookstore' | 'healthcare' | 'news' | 'portfolio' | 'travel';
   parameters?: Record<string, any>;
   designPreferences?: {
@@ -114,7 +114,7 @@ export interface Command {
     target?: string;
     parameters: Record<string, any>;
     userInput?: string;
-    // ✅ Minimal project context - ลบ userPreferences ออก
+    // ✅ Minimal project context - removed userPreferences
     projectContext?: {
       projectId: string;
       projectType: string;
@@ -135,19 +135,19 @@ export interface Command {
 
 /**
  * Unified Orchestrator AI Class
- * รวม Chat AI และ Orchestrator capabilities
+ * Combines Chat AI and Orchestrator capabilities
  */
 export class OrchestratorAI {
   private llmAdapter: LLMAdapter;
   private conversationHistory: Map<string, ConversationContext>;
-  private activeConversations: Map<string, ConversationData>; // ✅ เพิ่มการ track active conversations
+  private activeConversations: Map<string, ConversationData>; // ✅ Added tracking for active conversations
   private initialized: boolean = false;
 
   /**
-   * ✅ Mapping table สำหรับแปลง LLM types เป็น prompt keys
+   * ✅ Mapping table for converting LLM types to prompt keys
    */
   private static readonly TYPE_MAPPING: Record<string, string> = {
-    // LLM อาจตอบแบบ descriptive
+    // LLM may respond descriptively
     'self_introduction': 'introduction',
     'identity_question': 'introduction', 
     'name_question': 'introduction',
@@ -204,7 +204,7 @@ export class OrchestratorAI {
   }
 
   /**
-   * Initialize the orchestrator - ต้องเรียกก่อนใช้งาน
+   * Initialize the orchestrator - must be called before use
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -221,7 +221,7 @@ export class OrchestratorAI {
   }
 
   /**
-   * Main entry point - รับ user input และตอบสนองตามความเหมาะสม
+   * Main entry point - receives user input and responds appropriately
    */
   async processUserInput(message: UserMessage): Promise<OrchestratorResponse> {
     const startTime = Date.now();
@@ -260,7 +260,7 @@ export class OrchestratorAI {
           
         case 'simple_task':
         case 'complex_task':
-          // Template-first approach: ทั้ง simple และ complex tasks ใช้ handler เดียวกัน
+          // Template-first approach: both simple and complex tasks use the same handler
           response = await this.handleTask(message, analysis, context);
           break;
           
@@ -284,7 +284,7 @@ export class OrchestratorAI {
       console.error('❌ Orchestrator AI error:', error);
       return {
         type: 'chat',
-        content: 'ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง',
+        content: 'Sorry, an error occurred during processing. Please try again.',
         metadata: {
           executionTime: Date.now() - startTime,
           agentsUsed: [],
@@ -295,14 +295,14 @@ export class OrchestratorAI {
   }
 
   /**
-   * วิเคราะห์ intent ของ user input
+   * Analyze intent of user input
    */
   private async analyzeIntent(
     input: string, 
     context: ConversationContext
   ): Promise<IntentAnalysis> {
     
-    // Quick detection สำหรับคำถามพื้นฐาน
+    // Quick detection for basic questions
     const quickIntent = this.detectQuickIntent(input, context);
     if (quickIntent) {
       return quickIntent;
@@ -314,11 +314,11 @@ export class OrchestratorAI {
     console.log('🔍 Intent Analysis Prompt (first 500 chars):', analysisPrompt.substring(0, 500));
     console.log('🔍 Project Type Mapping in prompt:', analysisPrompt.includes('restaurant') ? '✅ Contains restaurant' : '❌ Missing restaurant');
     
-    // ใช้ response config สำหรับ intent analysis
+    // Use response config for intent analysis
     const analysisConfig = getResponseConfig('intentAnalysis');
     const llmOptions = this.getModelSpecificOptions({
       useSystemPrompt: false,
-      responseFormat: { type: 'json_object' },  // ✅ บังคับให้ LLM ตอบเป็น JSON
+      responseFormat: { type: 'json_object' },  // ✅ Force LLM to respond in JSON
       ...toLLMOptions(analysisConfig)
     });
     
@@ -328,16 +328,16 @@ export class OrchestratorAI {
     console.log('🤖 LLM Response:', JSON.stringify(response.content?.substring(0, 300)));
 
     try {
-      // แก้ไข JSON parsing เพื่อรองรับ markdown และ empty response
+      // Fix JSON parsing to support markdown and empty response
       let jsonContent = response.content?.trim() || '';
       
-      // ตรวจสอบ empty response
+      // Check for empty response
       if (!jsonContent) {
         console.warn('⚠️ Empty response from LLM, using fallback analysis');
         return this.getFallbackAnalysis(input);
       }
       
-      // ลบ markdown code blocks ถ้ามี
+      // Remove markdown code blocks if present
       if (jsonContent.includes('```json')) {
         const jsonMatch = jsonContent.match(/```json\s*([\s\S]*?)\s*```/);
         if (jsonMatch) {
@@ -377,7 +377,7 @@ export class OrchestratorAI {
         }
       }
       
-      // ✅ Validate และ map parameters.type
+      // ✅ Validate and map parameters.type
       console.log('🔍 Raw LLM Analysis before validation:', JSON.stringify(analysis, null, 2));
       const validatedAnalysis = this.validateAndMapAnalysis(analysis, input);
       console.log('🔍 After validateAndMapAnalysis:', JSON.stringify(validatedAnalysis, null, 2));
@@ -391,7 +391,7 @@ export class OrchestratorAI {
   }
 
   /**
-   * Fallback analysis เมื่อ parse ไม่ได้
+   * Fallback analysis when parsing fails
    */
   private getFallbackAnalysis(input?: string): IntentAnalysis {
     const lowerInput = input?.toLowerCase().trim() || '';
@@ -412,7 +412,7 @@ export class OrchestratorAI {
     return {
       intent: 'chat',
       confidence: 0.3,
-      taskType: 'คุยทั่วไป',
+      taskType: 'General chat',
       requiredAgents: [],
       complexity: 'low',
       parameters: { type: fallbackType }
@@ -420,10 +420,10 @@ export class OrchestratorAI {
   }
 
   /**
-   * ✅ Map LLM type เป็น valid prompt key
+   * ✅ Map LLM type to valid prompt key
    */
   private mapLLMTypeToPromptKey(llmType: string): string {
-    // ถ้า type ตรงกับ prompt key อยู่แล้ว
+    // If type already matches prompt key
     const validKeys = [
       'introduction', 'greeting', 'security_sensitive', 'midori_identity', 
       'time_query', 'technology_explanation', 'base_chat', 'unclear',
@@ -434,7 +434,7 @@ export class OrchestratorAI {
       return llmType;
     }
     
-    // ใช้ mapping table
+    // Use mapping table
     const mappedType = OrchestratorAI.TYPE_MAPPING[llmType];
     if (mappedType) {
       console.log(`🔄 Mapped LLM type '${llmType}' → '${mappedType}'`);
@@ -447,7 +447,7 @@ export class OrchestratorAI {
   }
 
   /**
-   * ✅ Validate และ map LLM analysis ให้ตรงกับ Quick Intent patterns
+   * ✅ Validate and map LLM analysis to match Quick Intent patterns
    */
   private validateAndMapAnalysis(analysis: any, input: string): IntentAnalysis {
     const lowerInput = input.toLowerCase().trim();
@@ -456,7 +456,7 @@ export class OrchestratorAI {
     
     let mappedType = analysis.parameters?.type;
     
-    // ✅ ถ้า LLM ตอบ type ที่ไม่ valid → map ใหม่
+    // ✅ If LLM returns invalid type → remap
     const validChatTypes = [
       'introduction', 'greeting', 'security_sensitive', 'midori_identity', 
       'time_query', 'technology_explanation', 'base_chat', 'unclear'
@@ -479,10 +479,10 @@ export class OrchestratorAI {
       taskType: analysis.taskType,
       requiredAgents: analysis.requiredAgents || [],
       complexity: analysis.complexity || 'medium',
-      projectType: analysis.projectType,  // ✅ เพิ่ม projectType จาก LLM response
+      projectType: analysis.projectType,  // ✅ Add projectType from LLM response
       parameters: {
         ...analysis.parameters,
-        type: mappedType  // ✅ ใช้ mapped type
+        type: mappedType  // ✅ Use mapped type
       }
     };
     
@@ -492,7 +492,7 @@ export class OrchestratorAI {
   }
 
   /**
-   * ตรวจจับ intent ที่ง่าย ๆ ไม่ต้องใช้ AI
+   * Detect simple intents without using AI
    */
   private detectQuickIntent(input: string, context?: ConversationContext): IntentAnalysis | null {
     const lowerInput = input.toLowerCase().trim();
@@ -501,7 +501,7 @@ export class OrchestratorAI {
     const securityKeywords = [
       'รหัส env', 'env key', 'environment variable', 'api key', 'secret key',
       'password', 'รหัสผ่าน', 'token', 'credential', 'database password',
-      'config file', 'ไฟล์ config', '.env', 'env file', 'connection string'
+      'config file', 'config file', '.env', 'env file', 'connection string'
     ];
     
     if (securityKeywords.some(keyword => lowerInput.includes(keyword))) {
@@ -516,7 +516,7 @@ export class OrchestratorAI {
     }
     
     const mentionsMidori = lowerInput.includes('midori');
-    const midoriContextKeywords = ['แพลตฟอร์ม', 'platform', 'เว็บ', 'website', 'คือ', 'อะไร', 'ข้อมูล', 'แนะนำ', 'ทำอะไรได้', 'ฟีเจอร์', 'browser'];
+    const midoriContextKeywords = ['platform', 'platform', 'website', 'website', 'คือ', 'อะไร', 'ข้อมูล', 'แนะนำ', 'ทำอะไรได้', 'ฟีเจอร์', 'browser'];
     const isMidoriIdentityRequest = mentionsMidori && midoriContextKeywords.some(keyword => lowerInput.includes(keyword));
 
     if (isMidoriIdentityRequest) {
@@ -531,7 +531,7 @@ export class OrchestratorAI {
     }
     
     // ⏰ Time/Date queries
-    const timeKeywords = ['เวลา', 'กี่โมง', 'วันที่', 'วันนี้', 'ตอนนี้', 'เดี๋ยวนี้', 'time', 'date', 'now'];
+    const timeKeywords = ['time', 'time', 'date', 'today', 'now', 'now', 'time', 'date', 'now'];
     if (timeKeywords.some(keyword => lowerInput.includes(keyword))) {
       return {
         intent: 'chat',
@@ -543,7 +543,7 @@ export class OrchestratorAI {
       };
     }
 
-    // คำถามเกี่ยวกับชื่อ/ตัวตน
+    // Questions about name/identity
     if (lowerInput.includes('ชื่ออะไร') || 
         lowerInput.includes('คุณคือใคร') || 
         lowerInput.includes('แนะนำตัว') ||
@@ -552,14 +552,14 @@ export class OrchestratorAI {
       return {
         intent: 'chat',
         confidence: 0.9,
-        taskType: 'แนะนำตัว',
+        taskType: 'Introduction',
         requiredAgents: [],
         complexity: 'low',
         parameters: { type: 'introduction' }
       };
     }
 
-    // คำทักทาย (ปรับให้ทนทานขึ้น)
+    // Greetings (made more robust)
     if (lowerInput.includes('สวัสดี') || 
         lowerInput.includes('hello') || 
         lowerInput.includes('hi') ||
@@ -568,7 +568,7 @@ export class OrchestratorAI {
       return {
         intent: 'chat',
         confidence: 0.9,
-        taskType: 'ทักทาย',
+        taskType: 'Greeting',
         requiredAgents: [],
         complexity: 'low',
         parameters: { type: 'greeting' }
@@ -626,7 +626,7 @@ export class OrchestratorAI {
           requiredAgents: ['frontend'],
           complexity: 'low',
           taskType: 'Website edit request detected',
-          projectType,  // ✅ เพิ่ม projectType (อาจเป็น undefined ถ้าไม่เจอ keyword)
+          projectType,  // ✅ Add projectType (may be undefined if no keyword found)
           parameters: { type: 'website_edit' }
         };
       }
@@ -658,7 +658,7 @@ export class OrchestratorAI {
         lowerInput.includes('create website') ||
         lowerInput.includes('build website')) {
       
-      // ✅ ตรวจจับ projectType จาก keywords
+      // ✅ Detect projectType from keywords
       const projectType = this.detectProjectTypeFromKeywords(input);
       
       return {
@@ -667,7 +667,7 @@ export class OrchestratorAI {
         requiredAgents: ['frontend'],
         complexity: 'medium',
         taskType: 'Website creation request detected - will use template selection',
-        projectType,  // ✅ เพิ่ม projectType
+        projectType,  // ✅ Add projectType
         parameters: { type: 'website_creation' }
       };
     }
@@ -699,7 +699,7 @@ export class OrchestratorAI {
     
     const shortCircuitType = analysis.parameters?.type;
 
-    // ⏰ Time/Date queries - ตอบทันทีไม่ใช้ LLM
+    // ⏰ Time/Date queries - respond immediately without LLM
     if (shortCircuitType === 'time_query') {
       const timeResponse = this.formatCurrentTimeForUser();
       return {
@@ -726,7 +726,7 @@ export class OrchestratorAI {
       };
     }
 
-    // 🎯 กำหนด response config ตามประเภทการตอบ
+    // 🎯 Determine response config based on response type
     let responseConfigType: string;
     
     if (shortCircuitType === 'greeting') {
@@ -735,9 +735,9 @@ export class OrchestratorAI {
       responseConfigType = 'introduction';
     } else if (shortCircuitType === 'midori_identity') {
       responseConfigType = 'midoriIdentity';
-    } else if (analysis.taskType === 'ทักทาย') {
+    } else if (analysis.taskType === 'Greeting') {
       responseConfigType = 'greeting';
-    } else if (analysis.taskType === 'แนะนำตัว') {
+    } else if (analysis.taskType === 'Introduction') {
       responseConfigType = 'introduction';
     } else if (context.currentProject && context.lastTaskResult) {
       responseConfigType = 'projectContextAware';
@@ -749,12 +749,12 @@ export class OrchestratorAI {
 
     const chatPrompt = await this.buildChatPrompt(message.content, context, analysis);
     
-    // 🔍 Debug: เช็คว่า chatPrompt ที่ได้มาถูกต้องไหม
+    // 🔍 Debug: check if the generated chatPrompt is correct
     console.log(`🔍 Generated chatPrompt preview:`, chatPrompt.substring(0, 200));
     console.log(`🎯 Expected introduction prompt should contain: "Midori AI Agent"`);
     console.log(`✅ Does prompt contain expected text?`, chatPrompt.includes('Midori AI Agent'));
     
-    // ใช้ response configuration ที่เหมาะสม
+    // Use appropriate response configuration
     const responseConfig = getResponseConfig(responseConfigType);
     const llmOptions = this.getModelSpecificOptions({
       useSystemPrompt: false,
@@ -804,7 +804,7 @@ export class OrchestratorAI {
     
     // Update project context if task was successful and we have project context
     if (taskResult.success && command.payload.projectContext) {
-      // ถ้า Frontend-V2 ส่ง projectType กลับมา ให้อัปเดต project context
+      // If Frontend-V2 returns projectType, update project context
       if (taskResult.metadata && 'executionResult' in taskResult.metadata) {
         const executionResult = (taskResult.metadata as any).executionResult;
         if (executionResult?.results?.[0]?.result?.projectType) {
@@ -813,7 +813,7 @@ export class OrchestratorAI {
           
           console.log('🔄 Updating project type based on Frontend-V2 result:', detectedProjectType);
           
-          // อัปเดต project context ด้วย projectType ที่ถูกต้อง
+          // Update project context with correct projectType
           await this.updateProjectContext(command.payload.projectContext.projectId, {
             status: 'template_selected' as 'created' | 'in_progress' | 'completed' | 'paused' | 'cancelled' | 'template_selected'
           });
@@ -860,7 +860,7 @@ export class OrchestratorAI {
       if (!command.payload.projectContext?.projectId) {
         return {
           type: 'chat',
-          content: 'ขออภัยครับ ไม่พบโปรเจ็กต์ที่จะแก้ไข กรุณาสร้างเว็บไซต์ก่อนครับ',
+          content: 'Sorry, no project found to edit. Please create a website first.',
           metadata: {
             executionTime: 0,
             agentsUsed: [],
@@ -877,7 +877,7 @@ export class OrchestratorAI {
       if (!editResult.success) {
         return {
           type: 'chat',
-          content: 'ขออภัยครับ เกิดข้อผิดพลาดในการแก้ไขโค้ด กรุณาลองใหม่อีกครั้ง',
+          content: 'Sorry, an error occurred while editing the code. Please try again.',
           metadata: {
             executionTime: 0,
             agentsUsed: ['frontend'],
@@ -893,7 +893,7 @@ export class OrchestratorAI {
         type: 'task',
         content: chatResponse,
         taskResults: editResult,
-        nextSteps: ['ตรวจสอบการเปลี่ยนแปลงใน preview', 'ทดสอบการทำงานของเว็บไซต์'],
+        nextSteps: ['Check changes in preview', 'Test website functionality'],
         metadata: {
           executionTime: 0,
           agentsUsed: ['frontend'],
@@ -905,7 +905,7 @@ export class OrchestratorAI {
       console.error('❌ Code edit error:', error);
       return {
         type: 'chat',
-        content: 'เกิดข้อผิดพลาดในการแก้ไขโค้ดครับ กรุณาลองใหม่อีกครั้ง',
+        content: 'An error occurred while editing the code. Please try again.',
         metadata: {
           executionTime: 0,
           agentsUsed: [],
@@ -942,14 +942,14 @@ export class OrchestratorAI {
       console.error('❌ Failed to load unclear intent prompt:', error);
       
       // Fallback clarification message
-      const fallbackMessage = `คุณต้องการให้ผมช่วยอะไรครับ? จากข้อความ "${message.content}" ผมไม่แน่ใจว่าคุณต้องการ:
-      
-1. 🗣️ คุยธรรมดา (ถามคำถาม, ขอคำแนะนำ)
-2. 🎨 งานเกี่ยวกับหน้าเว็บ (แก้ไข UI, เพิ่ม component)
-3. ⚙️ งานเกี่ยวกับระบบ (สร้าง API, จัดการฐานข้อมูล)
-4. 🚀 งานเกี่ยวกับ deployment (อัปโหลดเว็บ, ติดตั้งระบบ)
+      const fallbackMessage = `What would you like me to help you with? From the message "${message.content}", I'm not sure what you want:
 
-กรุณาอธิบายเพิ่มเติมหน่อยครับ 😊`;
+1. 🗣️ General chat (ask questions, request advice)
+2. 🎨 Frontend work (edit UI, add components)
+3. ⚙️ Backend work (create APIs, manage database)
+4. 🚀 Deployment work (upload website, install system)
+
+Please provide more details 😊`;
 
       return {
         type: 'chat',
@@ -975,7 +975,7 @@ export class OrchestratorAI {
   }
 
   /**
-   * ปรับ LLM options ให้เหมาะสมกับแต่ละ model
+   * Adjust LLM options to suit each model
    */
   private getModelSpecificOptions(options: {
     useSystemPrompt?: boolean;
@@ -990,18 +990,18 @@ export class OrchestratorAI {
     };
     model?: string;
   }) {
-    // ใช้ model จาก LLMAdapter จริง ๆ
+    // Use actual model from LLMAdapter
     const currentModel = this.llmAdapter.getCurrentModel();
     
     console.log(`🤖 Using model: ${currentModel}`);
     
-    // ถ้าเป็น GPT-5 model ต้องใช้ temperature = 1 เท่านั้น
+    // If GPT-5 model, must use temperature = 1 only
     if (currentModel.includes('gpt-5')) {
       const { temperature, ...optionsWithoutTemp } = options;
-      return optionsWithoutTemp; // ไม่ส่ง temperature parameter
+      return optionsWithoutTemp; // Don't send temperature parameter
     }
     
-    // Models อื่น ๆ ใช้ค่าปกติ
+    // Other models use normal values
     return options;
   }
 
@@ -1049,14 +1049,14 @@ export class OrchestratorAI {
     else if (analysis.taskType?.includes('Website creation') || 
         message.content.includes('สร้างเว็บไซต์') || 
         message.content.includes('สร้างร้าน') ||
-        message.content.includes('ร้าน อาหาร') ||        // ✅ เพิ่ม pattern นี้
-        message.content.includes('ร้านอาหาร') ||         // ✅ เพิ่ม pattern นี้
+        message.content.includes('ร้าน อาหาร') ||        // ✅ Added this pattern
+        message.content.includes('ร้านอาหาร') ||         // ✅ Added this pattern
         message.content.includes('สร้างเว็บ') ||
         message.content.includes('เว็บขาย') ||
         message.content.includes('เว็บไซต์ขาย') ||
         message.content.includes('ขายเครื่องบิน') ||
         message.content.includes('ขาย') && message.content.includes('เว็บ')) {
-      commandType = CommandType.SELECT_TEMPLATE; // ✅ เปลี่ยนเป็น template selection
+      commandType = CommandType.SELECT_TEMPLATE; // ✅ Changed to template selection
     } 
     // Component creation patterns
     else if (analysis.taskType?.includes('Component creation') || 
@@ -1078,7 +1078,7 @@ export class OrchestratorAI {
     } 
     // Default to template selection for new projects
     else {
-      commandType = CommandType.SELECT_TEMPLATE; // ✅ เปลี่ยน default เป็น template selection
+      commandType = CommandType.SELECT_TEMPLATE; // ✅ Changed default to template selection
     }
     
     console.log('🎯 Selected command type:', commandType, 'for message:', message.content);
@@ -1090,25 +1090,25 @@ export class OrchestratorAI {
       console.log(`🔍 Looking for existing project context: ${message.context.currentProject}`);
     }
     
-    // ถ้าไม่มี project context และเป็น task ให้สร้างใหม่
+    // If no project context and it's a task, create new one
     if (!projectContext && (analysis.intent === 'simple_task' || analysis.intent === 'complex_task')) {
       console.log('🏗️ Creating new project context for task');
       
-      // ✅ ใช้ project ID ที่ส่งมาจาก home page ถ้ามี
+      // ✅ Use project ID from home page if available
       let projectId = message.context?.currentProject;
       if (!projectId) {
-        // สร้างใหม่เฉพาะเมื่อไม่มี project ID จาก home page
+        // Create new only when no project ID from home page
         projectId = `project_${Date.now()}`;
         console.log(`⚠️ No project ID from home page, creating new one: ${projectId}`);
       } else {
         console.log(`✅ Using project ID from home page: ${projectId}`);
       }
       
-      // ✅ ใช้ projectType จาก Intent Analysis แทน hardcode (fallback to 'ecommerce')
+      // ✅ Use projectType from Intent Analysis instead of hardcode (fallback to 'ecommerce')
       const projectType = (analysis.projectType || 'ecommerce') as 'restaurant' | 'ecommerce' | 'hotel' | 'bakery' | 'academy' | 'bookstore' | 'healthcare' | 'news' | 'portfolio' | 'travel';
       console.log(`🎯 Using project type from analysis: ${projectType}`);
       
-      // สร้าง Project record ก่อน (เฉพาะเมื่อสร้าง project ID ใหม่)
+      // Create Project record first (only when creating new project ID)
       if (!message.context?.currentProject) {
         await this.createProjectRecord(projectId, this.extractProjectName(message.content));
       }
@@ -1131,7 +1131,7 @@ export class OrchestratorAI {
         target: analysis.parameters?.target,
         parameters: analysis.parameters || {},
         userInput: message.content,
-        // ✅ ส่งเฉพาะข้อมูลที่จำเป็น - ลบ userPreferences ออก
+        // ✅ Send only necessary data - removed userPreferences
         projectContext: projectContext ? {
           projectId: projectContext.projectId,
           projectType: projectContext.projectType,
@@ -1152,14 +1152,14 @@ export class OrchestratorAI {
   }
 
   /**
-   * ✅ สร้าง Project Type Mapping จาก Business Categories
-   * ดึง category IDs และ keywords จาก BUSINESS_CATEGORIES
+   * ✅ Create Project Type Mapping from Business Categories
+   * Extract category IDs and keywords from BUSINESS_CATEGORIES
    */
   private static getProjectTypeMapping(): { categoryIds: string[]; mappingText: string } {
     const categoryIds = BUSINESS_CATEGORIES.map(cat => cat.id);
     
     const mappingLines = BUSINESS_CATEGORIES.map(category => {
-      const keywords = category.keywords.slice(0, 10).join(', '); // เอา 10 keywords แรก
+      const keywords = category.keywords.slice(0, 10).join(', '); // Take first 10 keywords
       return `- **"${category.id}"**: ${keywords}`;
     });
     
@@ -1170,13 +1170,13 @@ export class OrchestratorAI {
   }
 
   /**
-   * ✅ ตรวจจับ projectType จาก keywords ในข้อความ
-   * ใช้เหมือนกับ frontend-v2 agent
+   * ✅ Detect projectType from keywords in message
+   * Uses same logic as frontend-v2 agent
    */
   private detectProjectTypeFromKeywords(input: string): 'restaurant' | 'ecommerce' | 'hotel' | 'bakery' | 'academy' | 'bookstore' | 'healthcare' | 'news' | 'portfolio' | 'travel' | undefined {
     const lowerInput = input.toLowerCase();
     
-    // Score แต่ละ category
+    // Score each category
     const scores: Record<string, number> = {};
     
     for (const category of BUSINESS_CATEGORIES) {
@@ -1193,9 +1193,9 @@ export class OrchestratorAI {
       }
     }
     
-    // หา category ที่ score สูงสุด
+    // Find category with highest score
     if (Object.keys(scores).length === 0) {
-      return undefined; // ไม่เจอ keyword ไหนเลย
+      return undefined; // No keywords found
     }
     
     const bestCategory = Object.entries(scores).reduce((best, current) => 
@@ -1211,11 +1211,11 @@ export class OrchestratorAI {
       ? `**Previous Messages:** ${context.previousMessages.join(' | ')}`
       : '**Previous Messages:** (none)';
     
-    // ✅ ดึง Project Type Mapping จาก Business Categories
+    // ✅ Extract Project Type Mapping from Business Categories
     const { categoryIds, mappingText } = OrchestratorAI.getProjectTypeMapping();
     const projectTypeEnum = categoryIds.join('|');
     
-    return `คุณเป็น AI ที่วิเคราะห์ intent ของ user input สำหรับระบบสร้างเว็บไซต์
+    return `You are an AI that analyzes the intent of user input for a website building system
 
 **User Input:** "${input}"
 
@@ -1228,7 +1228,7 @@ Response format:
 {
   "intent": "chat|simple_task|complex_task|unclear",
   "confidence": 0.8,
-  "taskType": "สรุปงานที่ต้องทำ",
+  "taskType": "Summary of work to be done",
   "requiredAgents": ["frontend"],
   "complexity": "low|medium|high",
   "projectType": "${projectTypeEnum}",
@@ -1237,40 +1237,40 @@ Response format:
   }
 }
 
-**🏢 Project Type Detection (สำหรับ website_creation และ website_edit):**
-วิเคราะห์จาก keywords ในข้อความเพื่อหา business category ที่ตรงที่สุด:
+**🏢 Project Type Detection (for website_creation and website_edit):**
+Analyze keywords in the message to find the most matching business category:
 
 ${mappingText}
 
-**หมายเหตุ:** 
-- ถ้าไม่ใช่ website_creation/website_edit → ไม่ต้องใส่ projectType
-- ถ้าไม่แน่ใจ → ใช้ "ecommerce" เป็น default
-- ให้ความสำคัญกับ keyword แรกที่พบในข้อความ
-- Keywords รองรับทั้งภาษาไทยและภาษาอังกฤษ
+**Notes:** 
+- If not website_creation/website_edit → don't include projectType
+- If unsure → use "ecommerce" as default
+- Prioritize the first keyword found in the message
+- Keywords support both Thai and English
 
-**CRITICAL: parameters.type ต้องเป็นค่าใดค่าหนึ่งเท่านั้น:**
+**CRITICAL: parameters.type must be one of the following values:**
 
-**🎭 Chat Types (สำหรับ intent: "chat"):**
-- **"introduction"**: คำถามเกี่ยวกับชื่อ/ตัวตน (คุณคือใคร, ชื่ออะไร, แนะนำตัว)
-- **"greeting"**: การทักทาย (สวัสดี, hello, hi)
-- **"security_sensitive"**: คำถามเกี่ยวกับข้อมูลลับ (API key, password, .env)
-- **"midori_identity"**: คำถามเกี่ยวกับ Midori platform (Midori คืออะไร, ทำอะไรได้)
-- **"technology_explanation"**: อธิบายเทคโนโลยี (React คืออะไร, Supabase ใช้ยังไง)
-- **"base_chat"**: คำถามทั่วไป/คุยธรรมดา, คำนวณคณิตศาสตร์ (เช่น 1+1)
-- **"unclear"**: ไม่ชัดเจน
+**🎭 Chat Types (for intent: "chat"):**
+- **"introduction"**: Questions about name/identity (who are you, what's your name, introduce yourself)
+- **"greeting"**: Greetings (hello, hi)
+- **"security_sensitive"**: Questions about sensitive information (API key, password, .env)
+- **"midori_identity"**: Questions about Midori platform (what is Midori, what can it do)
+- **"technology_explanation"**: Technology explanations (what is React, how to use Supabase)
+- **"base_chat"**: General questions/casual chat, math calculations (e.g., 1+1)
+- **"unclear"**: Unclear
 
-**📝 Task Types (สำหรับ intent: "simple_task" หรือ "complex_task"):**
-- **"website_creation"**: การสร้างเว็บไซต์ใหม่ (สร้างเว็บ, สร้างเว็บไซต์, สร้างร้าน, เว็บขาย)
-- **"website_edit"**: แก้ไขเว็บไซต์ที่มีอยู่ (แก้ไข, เปลี่ยน, ปรับ, อัปเดต, เพิ่ม, ลบ, สี, ชื่อ, navbar, footer)
-- **"frontend_task"**: งานเกี่ยวกับ UI/UX (สร้าง component, แก้ไขหน้าเว็บ)
-- **"backend_task"**: งานเกี่ยวกับ API/Database  
-- **"devops_task"**: งานเกี่ยวกับ deployment
-- **"full_stack_task"**: งานแบบครบ stack
+**📝 Task Types (for intent: "simple_task" or "complex_task"):**
+- **"website_creation"**: Creating new website (create website, create site, create shop, selling website)
+- **"website_edit"**: Editing existing website (edit, change, adjust, update, add, remove, color, name, navbar, footer)
+- **"frontend_task"**: UI/UX work (create component, edit web page)
+- **"backend_task"**: API/Database work  
+- **"devops_task"**: Deployment work
+- **"full_stack_task"**: Full stack work
 
 **Examples (MUST follow exact format):**
 - "คุณคือใครครับ" → {"intent": "chat", "confidence": 0.9, "taskType": "Introduction", "requiredAgents": [], "complexity": "low", "parameters": {"type": "introduction"}}
 - "สวัสดี" → {"intent": "chat", "confidence": 0.9, "taskType": "Greeting", "requiredAgents": [], "complexity": "low", "parameters": {"type": "greeting"}}
-- "1+1 เท่าไหร่" → {"intent": "chat", "confidence": 0.8, "taskType": "คุยทั่วไป", "requiredAgents": [], "complexity": "low", "parameters": {"type": "base_chat"}}
+- "1+1 เท่าไหร่" → {"intent": "chat", "confidence": 0.8, "taskType": "General chat", "requiredAgents": [], "complexity": "low", "parameters": {"type": "base_chat"}}
 - "สร้างเว็บไซต์" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "projectType": "ecommerce", "parameters": {"type": "website_creation"}}
 - "สร้างเว็บร้านอาหาร" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "projectType": "restaurant", "parameters": {"type": "website_creation"}}
 - "สร้างเว็บโรงแรม" → {"intent": "simple_task", "confidence": 0.9, "taskType": "Website creation", "requiredAgents": ["frontend"], "complexity": "medium", "projectType": "hotel", "parameters": {"type": "website_creation"}}
@@ -1281,30 +1281,30 @@ ${mappingText}
   }
 
   /**
-   * ตรวจสอบว่า context เกี่ยวข้องกับคำถามปัจจุบันหรือไม่
+   * Check if context is relevant to current question
    */
   private isContextRelevant(input: string, previousMessages: string[]): boolean {
     const lowerInput = input.toLowerCase();
     
-    // ✅ Special case: คำถามเกี่ยวกับ chat history
+    // ✅ Special case: questions about chat history
     if (this.isChatHistoryQuestion(lowerInput)) {
       console.log('💬 Chat history question detected, using context');
       return true;
     }
     
-    // ถ้าเป็นคำถามทั่วไปที่ไม่เกี่ยวข้องกับเว็บไซต์
+    // If it's a general question unrelated to website
     if (this.isGeneralQuestion(lowerInput)) {
       console.log('🔍 General question detected, not using context');
       return false;
     }
     
-    // ถ้าเป็นคำถามใหม่ที่เปลี่ยนเรื่อง
+    // If it's a new question that changes topic
     if (this.isTopicChange(lowerInput, previousMessages)) {
       console.log('🔄 Topic change detected, not using context');
       return false;
     }
     
-    // ถ้าเป็นคำถามเกี่ยวกับเว็บไซต์และมี context ที่เกี่ยวข้อง
+    // If it's a question about website and has relevant context
     if (this.isWebRelatedQuestion(lowerInput) && this.hasRelevantContext(previousMessages)) {
       console.log('✅ Web-related question with relevant context, using context');
       return true;
@@ -1314,7 +1314,7 @@ ${mappingText}
   }
 
   /**
-   * ตรวจสอบว่าเป็นคำถามเกี่ยวกับ chat history หรือไม่
+   * Check if it's a question about chat history
    */
   private isChatHistoryQuestion(input: string): boolean {
     const chatHistoryKeywords = [
@@ -1332,7 +1332,7 @@ ${mappingText}
   }
 
   /**
-   * ตรวจสอบว่าเป็นคำถามทั่วไปที่ไม่เกี่ยวข้องกับเว็บไซต์
+   * Check if it's a general question unrelated to website
    */
   private isGeneralQuestion(input: string): boolean {
     const generalKeywords = [
@@ -1345,19 +1345,19 @@ ${mappingText}
   }
 
   /**
-   * ตรวจสอบว่าเปลี่ยนเรื่องหรือไม่
+   * Check if topic has changed
    */
   private isTopicChange(input: string, previousMessages: string[]): boolean {
     if (previousMessages.length === 0) return false;
     
     const lastMessage = previousMessages[previousMessages.length - 1].toLowerCase();
     
-    // ถ้าคำถามปัจจุบันไม่เกี่ยวข้องกับข้อความล่าสุด
+    // If current question is unrelated to last message
     const webKeywords = ['เว็บ', 'website', 'react', 'supabase', 'สร้าง', 'ออกแบบ', 'พัฒนา'];
     const currentIsWebRelated = webKeywords.some(keyword => input.includes(keyword));
     const lastIsWebRelated = webKeywords.some(keyword => lastMessage.includes(keyword));
     
-    // ถ้าจากเว็บไซต์เป็นเรื่องอื่น หรือจากเรื่องอื่นเป็นเว็บไซต์
+    // If changed from website to other topic or vice versa
     if (currentIsWebRelated !== lastIsWebRelated) {
       return true;
     }
@@ -1366,7 +1366,7 @@ ${mappingText}
   }
 
   /**
-   * ตรวจสอบว่าเป็นคำถามเกี่ยวกับเว็บไซต์
+   * Check if it's a question about website
    */
   private isWebRelatedQuestion(input: string): boolean {
     const webKeywords = [
@@ -1379,7 +1379,7 @@ ${mappingText}
   }
 
   /**
-   * ตรวจสอบว่า context มีความเกี่ยวข้องหรือไม่
+   * Check if context is relevant
    */
   private hasRelevantContext(previousMessages: string[]): boolean {
     if (previousMessages.length === 0) return false;
@@ -1406,7 +1406,7 @@ ${mappingText}
       console.log(`🎭 buildChatPrompt called with analysis:`, analysis?.parameters);
       console.log(`📚 Context has ${context.previousMessages.length} previous messages`);
       
-      // ตรวจสอบประเภทคำถาม
+      // Check question type
       const lowerInput = input.toLowerCase();
       const shortCircuitType = analysis?.parameters?.type;
       
@@ -1416,7 +1416,7 @@ ${mappingText}
         return await chatPromptLoader.getPrompt('securityDenial');
       }
       
-      const midoriIdentityKeywords = ['แพลตฟอร์ม', 'platform', 'เว็บ', 'website', 'คือ', 'อะไร', 'ข้อมูล', 'แนะนำ', 'ทำอะไรได้', 'ฟีเจอร์', 'browser'];
+      const midoriIdentityKeywords = ['platform', 'platform', 'website', 'website', 'คือ', 'อะไร', 'ข้อมูล', 'แนะนำ', 'ทำอะไรได้', 'ฟีเจอร์', 'browser'];
       const shouldUseMidoriIdentity =
         analysis?.parameters?.type === 'midori_identity' ||
         (lowerInput.includes('midori') && midoriIdentityKeywords.some(keyword => lowerInput.includes(keyword)));
@@ -1445,7 +1445,7 @@ ${mappingText}
         }
       }
       
-      // Greeting (ปรับให้ทนทานขึ้น)
+      // Greeting (made more robust)
       if (lowerInput.includes('สวัสดี') || 
           lowerInput.includes('hello') || 
           lowerInput.includes('hi') ||
@@ -1463,7 +1463,7 @@ ${mappingText}
         return await chatPromptLoader.getPrompt('technologyExplanation', { input });
       }
       
-      // Project context aware (ถ้ามี project context)
+      // Project context aware (if project context exists)
       if (context.currentProject && context.lastTaskResult) {
         console.log(`🏗️ Using project context aware prompt`);
         return await chatPromptLoader.getPrompt('projectContextAware', { 
@@ -1473,7 +1473,7 @@ ${mappingText}
         });
       }
       
-      // Context-aware (ถ้ามี conversation history และ context เกี่ยวข้อง)
+      // Context-aware (if conversation history exists and context is relevant)
       if (context.previousMessages.length > 0 && this.isContextRelevant(input, context.previousMessages)) {
         console.log(`💬 Using context-aware prompt`);
         const recentMessages = context.previousMessages.join(' | ');
@@ -1493,21 +1493,21 @@ ${mappingText}
   }
 
   /**
-   * Fallback chat prompt ถ้าโหลดไฟล์ไม่ได้
+   * Fallback chat prompt if file loading fails
    */
   private getFallbackChatPrompt(input: string): string {
-    return `คุณเป็น Midori AI ผู้ช่วยสร้างเว็บไซต์ที่เป็นมิตรและรู้จักเทคโนโลยีดี
+    return `You are Midori AI, a friendly website building assistant who knows technology well
 
-User พูดว่า: "${input}"
+User said: "${input}"
 
-ตอบแบบเป็นมิตร เป็นธรรมชาติ และให้ข้อมูลที่เป็นประโยชน์
+Respond in a friendly, natural way and provide useful information
 
-**หากถูกถามเกี่ยวกับตัวตน/ชื่อ:**
-- ชื่อ: Midori AI
-- บทบาท: ผู้ช่วยสร้างเว็บไซต์อัจฉริยะ
-- ความสามารถ: สร้าง UI, API, Deploy เว็บไซต์
+**If asked about identity/name:**
+- Name: Midori AI
+- Role: Intelligent website building assistant
+- Capabilities: Create UI, API, Deploy websites
 
-ตอบเป็นภาษาไทยแบบสั้น ๆ กระชับ (ไม่เกิน 60 คำ)`;
+Respond in Thai, short and concise (no more than 60 words)`;
   }
 
   private async generateTaskSummary(input: string, taskResult: any): Promise<string> {
@@ -1515,24 +1515,24 @@ User พูดว่า: "${input}"
     const hasExecutionResults = taskResult?.metadata?.executionResult?.results?.length > 0;
     const executionResults = hasExecutionResults ? taskResult.metadata.executionResult.results : [];
     
-    let summaryPrompt = `สรุปผลการทำงานให้ user ฟังแบบเข้าใจง่าย:
+    let summaryPrompt = `Summarize the work results for the user in an easy-to-understand way:
 
-User ขอ: "${input}"
+User requested: "${input}"
 
-ผลการทำงาน: ${JSON.stringify(taskResult, null, 2)}`;
+Work results: ${JSON.stringify(taskResult, null, 2)}`;
 
     if (hasExecutionResults) {
       summaryPrompt += `
 
-ผลการทำงานจริง:
+Actual work results:
 ${executionResults.map((result: any) => 
-  `- ${result.agent} agent: ${result.success ? 'สำเร็จ' : 'ล้มเหลว'} ${result.error ? `(${result.error})` : ''}`
+  `- ${result.agent} agent: ${result.success ? 'Success' : 'Failed'} ${result.error ? `(${result.error})` : ''}`
 ).join('\n')}`;
     }
 
     summaryPrompt += `
 
-สรุปเป็นภาษาไทยแบบสั้น ๆ บอกว่าทำอะไรเสร็จแล้วบ้าง (ไม่เกิน 80 คำ)`;
+Summarize in english, briefly, stating what has been completed (no more than 80 words)`;
 
     try {
       // ใช้ task summary config
@@ -1548,18 +1548,18 @@ ${executionResults.map((result: any) =>
       if (hasExecutionResults) {
         const successCount = executionResults.filter((r: any) => r.success).length;
         const totalCount = executionResults.length;
-        return `✅ เสร็จแล้วครับ! ได้ทำงาน ${successCount}/${totalCount} งานสำเร็จ`;
+        return `✅ Done! Completed ${successCount}/${totalCount} tasks successfully`;
       }
-      return `✅ เสร็จแล้วครับ! ได้ทำตามที่คุณขอแล้ว`;
+      return `✅ Done! Completed your request`;
     }
   }
 
   private generateNextSteps(taskResult: any): string[] {
     // Simple next steps generation
     if (taskResult?.plan?.tasks) {
-      return ['ทดสอบการทำงาน', 'ปรับแต่งตามต้องการ', 'เผยแพร่เว็บไซต์'];
+      return ['Test functionality', 'Customize as needed', 'Publish website'];
     }
-    return ['ลองใช้งานดู', 'แจ้งถ้ามีปัญหา'];
+    return ['Try it out', 'Report if there are issues'];
   }
 
   /**
@@ -1579,27 +1579,27 @@ ${executionResults.map((result: any) =>
         const fileCount = filesModified?.length || 0;
         const changeCount = changes?.reduce((sum: number, c: any) => sum + (c.changes?.length || 0), 0) || 0;
         
-        return `✅ แก้ไขเสร็จแล้วครับ!
+        return `✅ Edit completed!
 
-📝 สิ่งที่แก้ไข:
+📝 What was edited:
 ${summary || input}
 
-📁 ไฟล์ที่แก้: ${fileCount} ไฟล์
-🔧 การเปลี่ยนแปลง: ${changeCount} จุด
+📁 Files edited: ${fileCount} files
+🔧 Changes: ${changeCount} points
 
-กรุณาตรวจสอบผลลัพธ์ใน preview ครับ`;
+Please check the results in preview`;
       }
       
       // Fallback summary
-      return `✅ แก้ไขโค้ดเสร็จแล้วครับ!
+      return `✅ Code edit completed!
 
-คำขอของคุณ: "${input}"
+Your request: "${input}"
 
-กรุณาตรวจสอบการเปลี่ยนแปลงใน preview ครับ`;
+Please check the changes in preview`;
       
     } catch (error) {
       console.error('Failed to generate edit summary:', error);
-      return `✅ แก้ไขเสร็จแล้วครับ! กรุณาตรวจสอบผลลัพธ์ใน preview`;
+      return `✅ Edit completed! Please check the results in preview`;
     }
   }
 
@@ -1627,7 +1627,7 @@ ${summary || input}
 
     // Project context is now managed by ProjectContextStore (SSOT)
 
-    // อัปเดต conversation context
+    // Update conversation context
     const sessionId = `${projectId}_${Date.now()}`;
     this.conversationHistory.set(sessionId, {
       previousMessages: [],
@@ -1991,7 +1991,7 @@ ${summary || input}
       // Import prisma here to avoid circular dependency
       const { prisma } = await import('@/libs/prisma/prisma');
       
-      // สร้าง User record ก่อน (ถ้ายังไม่มี)
+      // Create User record first (if not exists)
       await this.ensureDefaultUserExists();
       
       await prisma.project.create({
@@ -2064,7 +2064,7 @@ ${summary || input}
       }
     }
     
-    return 'เว็บไซต์ใหม่'; // default
+    return 'New Website'; // default
   }
 
   /**
@@ -2087,7 +2087,7 @@ ${summary || input}
     });
     
     const formattedTime = formatter.format(now);
-    return `ตอนนี้คือ ${formattedTime} ครับ`;
+    return `Current time is ${formattedTime}`;
   }
 
   // ============================
@@ -2102,22 +2102,22 @@ ${summary || input}
     projectId?: string
   ): Promise<ConversationData> {
     try {
-      // หา conversation ที่ active อยู่
+      // Find active conversation
       let conversation = await ConversationService.getActiveConversation(userId, projectId);
       
       if (!conversation) {
-        // สร้างใหม่ถ้าไม่มี (ไม่ระบุ agentId เพื่อหลีกเลี่ยง foreign key constraint)
+        // Create new if not exists (don't specify agentId to avoid foreign key constraint)
         conversation = await ConversationService.createConversation({
           userId,
           projectId,
-          agentId: null, // ✅ ใช้ null แทน undefined
-          title: ConversationService.generateTitleFromMessage('การสนทนาใหม่')
+          agentId: null, // ✅ Use null instead of undefined
+          title: ConversationService.generateTitleFromMessage('New conversation')
         });
         
         console.log(`🗣️ Created new conversation: ${conversation.id}`);
       }
       
-      // Cache ใน memory
+      // Cache in memory
       this.activeConversations.set(userId, conversation);
       
       return conversation;
@@ -2145,7 +2145,7 @@ ${summary || input}
       });
     } catch (error) {
       console.error('❌ Failed to save user message:', error);
-      // ไม่ throw error เพื่อไม่ให้กระทบการทำงานหลัก
+      // Don't throw error to avoid affecting main functionality
     }
   }
 
@@ -2178,7 +2178,7 @@ ${summary || input}
       });
     } catch (error) {
       console.error('❌ Failed to save assistant message:', error);
-      // ไม่ throw error เพื่อไม่ให้กระทบการทำงานหลัก
+      // Don't throw error to avoid affecting main functionality
     }
   }
 
@@ -2189,12 +2189,12 @@ ${summary || input}
     sessionId: string, 
     conversationId?: string
   ): Promise<ConversationContext> {
-    // ถ้ามีใน memory อยู่แล้ว ให้ใช้
+    // If already in memory, use it
     if (this.conversationHistory.has(sessionId)) {
       return this.conversationHistory.get(sessionId)!;
     }
 
-    // ถ้ามี conversationId ให้ restore จาก database
+    // If conversationId exists, restore from database
     if (conversationId) {
       try {
         const conversationData = await ConversationService.restoreConversationHistory(conversationId);
@@ -2208,7 +2208,7 @@ ${summary || input}
             lastTaskResult: null
           };
           
-          // Cache ใน memory
+          // Cache in memory
           this.conversationHistory.set(sessionId, context);
           
           console.log(`🔄 Restored conversation context from database: ${conversationId}`);
@@ -2219,7 +2219,7 @@ ${summary || input}
       }
     }
 
-    // สร้าง context ใหม่
+    // Create new context
     const context: ConversationContext = {
       previousMessages: [],
       activeAgents: [],
@@ -2289,11 +2289,11 @@ ${summary || input}
   }
 }
 
-// Global orchestrator instance เพื่อไม่ต้อง initialize ซ้ำ
+// Global orchestrator instance to avoid re-initialization
 let globalOrchestrator: OrchestratorAI | null = null;
 
 /**
- * Helper function สำหรับใช้งาน - ใช้ singleton pattern
+ * Helper function for usage - uses singleton pattern
  */
 export async function processUserMessage(
   content: string,
@@ -2301,7 +2301,7 @@ export async function processUserMessage(
   sessionId?: string,
   context?: ConversationContext
 ): Promise<OrchestratorResponse> {
-  // ใช้ global instance หรือสร้างใหม่ถ้ายังไม่มี
+  // Use global instance or create new if not exists
   if (!globalOrchestrator) {
     globalOrchestrator = new OrchestratorAI();
     await globalOrchestrator.initialize();
@@ -2312,7 +2312,7 @@ export async function processUserMessage(
     userId,
     sessionId: sessionId || userId,
     timestamp: new Date().toISOString(),
-    context // ✅ เพิ่ม context
+    context // ✅ Add context
   };
 
   return await globalOrchestrator.processUserInput(message);

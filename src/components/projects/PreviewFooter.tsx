@@ -16,13 +16,13 @@ interface PreviewFooterProps {
   onToggleEditMode?: () => void;
   deviceType: DeviceType;
   onDeviceChange: (device: DeviceType) => void;
-  isOwner?: boolean; // ✅ เพิ่ม prop เพื่อเช็คว่าเป็นเจ้าของโปรเจ็คหรือไม่
-  onToggleChat?: () => void; // ✅ เพิ่ม prop สำหรับ toggle chat
-  isChatOpen?: boolean; // ✅ เพิ่ม prop เพื่อเช็คว่า chat เปิดอยู่หรือไม่
+  isOwner?: boolean; // ✅ Added prop to check if user is the project owner
+  onToggleChat?: () => void; // ✅ Added prop for toggling chat
+  isChatOpen?: boolean; // ✅ Added prop to check if chat is open
 }
 
 /**
- * Footer สำหรับแสดงข้อมูลสถานะและปุ่ม Deploy
+ * Footer for displaying status information and Deploy button
  */
 export function PreviewFooter({
   filesCount,

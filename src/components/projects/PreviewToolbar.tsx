@@ -28,8 +28,8 @@ interface PreviewToolbarProps {
 }
 
 /**
- * Toolbar สำหรับควบคุม Preview
- * ประกอบด้วยปุ่มต่างๆ เช่น Start Preview, Deployment Link
+ * Toolbar for controlling Preview
+ * Contains various buttons such as Start Preview, Deployment Link
  */
 export function PreviewToolbar({
   projectName,
@@ -59,7 +59,7 @@ export function PreviewToolbar({
         <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
           <FolderOpenDot className="w-5 h-5 sm:w-6 sm:h-6 text-[#e5e48f] flex-shrink-0" />
           <h2 className="text-sm sm:text-lg font-bold text-[#e5e48f] truncate">
-            {isLoading ? 'กำลังโหลด...' : (
+            {isLoading ? 'Loading...' : (
               <>
                 <span className="hidden sm:inline">Project : </span>
                 <span className="sm:hidden">P: </span>

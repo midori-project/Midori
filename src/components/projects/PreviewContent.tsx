@@ -26,8 +26,8 @@ interface PreviewContentProps {
 }
 
 /**
- * Component แสดงเนื้อหาหลักของ Preview
- * รวม Code Editor และ Live Preview iframe
+ * Component displays main content of Preview
+ * Includes Code Editor and Live Preview iframe
  */
 export function PreviewContent({
   isLoading,

@@ -19,7 +19,7 @@ const ProjectPage: NextPage<ProjectPageProps> = async ({ params }) => {
 
   // ดึง projectId จาก params
   const { id: projectId } = await params;
-  const initialMessage = `สวัสดีครับ! ผมคือ Midori AI ผู้ช่วยสร้างเว็บไซต์ 🎭`;
+  const initialMessage = `Hello! I'm Wiivor AI, the website building assistant 🎭`;
 
   return (
     <ProjectPageClient
