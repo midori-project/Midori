@@ -241,7 +241,7 @@ export async function handleRefund(params: {
         },
     });
 
-    if (wallet && wallet.balanceTokens >= purchase.tokensAmount) {
+    if (wallet && wallet.balanceTokens.toNumber() >= purchase.tokensAmount) {
         await prisma.tokenWallet.update({
             where: { id: wallet.id },
             data: {
