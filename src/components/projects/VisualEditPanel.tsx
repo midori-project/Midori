@@ -121,7 +121,7 @@ export function VisualEditPanel({
           
         } catch (compressionError) {
           console.warn('⚠️ [UI] Compression failed, uploading original:', compressionError);
-          setCompressionStatus('ใช้รูปภาพต้นฉบับ');
+          setCompressionStatus('Using original image');
           // Fallback: use original file
         }
       } else {
@@ -129,7 +129,7 @@ export function VisualEditPanel({
       }
       
       // Create FormData
-      setCompressionStatus('กำลังอัปโหลด...');
+      setCompressionStatus('Uploading...');
       const formData = new FormData();
       formData.append('file', fileToUpload);
       formData.append('projectId', projectId);
@@ -161,7 +161,7 @@ export function VisualEditPanel({
       // Set the R2 URL as the edit value
       setEditValue(result.url);
       setUploadError(null);
-      setCompressionStatus('อัปโหลดสำเร็จ!');
+      setCompressionStatus('Upload successful!');
       
       // Clear compression status after 3 seconds
       setTimeout(() => {
@@ -208,7 +208,7 @@ export function VisualEditPanel({
               {/* Progress Percentage */}
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 font-medium">
-                  กำลังบันทึก...
+                  Saving...
                 </span>
                 <span className="text-blue-600 font-bold">
                   {Math.round(savingProgress)}%
@@ -221,7 +221,7 @@ export function VisualEditPanel({
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                   </svg>
-                  <span>สำเร็จ!</span>
+                  <span>Success!</span>
                 </div>
               )}
             </div>
@@ -295,7 +295,7 @@ export function VisualEditPanel({
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={selectedElement.type === 'icon' ? "ใส่ emoji หรือ icon (เช่น ✨, 🎯, ⭐)" : "Enter text..."}
+                placeholder={selectedElement.type === 'icon' ? "Enter an emoji or icon (e.g., ✨, 🎯, ⭐)" : "Enter text..."}
                 autoFocus
               />
             )}
@@ -320,16 +320,16 @@ export function VisualEditPanel({
               <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <div className="space-y-1">
                   <p className="text-xs text-blue-700 font-semibold">
-                    💡 คำแนะนำสำหรับ Icon:
+                    💡 Icon tips:
                   </p>
                   <p className="text-xs text-blue-600">
-                    • ใช้ emoji เดียว (เช่น ✨, 🎯, ⭐, 💫)
+                    • Use a single emoji (e.g., ✨, 🎯, ⭐, 💫)
                   </p>
                   <p className="text-xs text-blue-600">
-                    • หรือใช้ Unicode symbols (เช่น ★, ♦, ▲, ●)
+                    • Or use Unicode symbols (e.g., ★, ♦, ▲, ●)
                   </p>
                   <p className="text-xs text-blue-600">
-                    • หลีกเลี่ยงข้อความยาว
+                    • Avoid long text
                   </p>
                 </div>
               </div>
@@ -341,7 +341,7 @@ export function VisualEditPanel({
         {selectedElement.type === 'image' && (
           <div className="space-y-4">
             <label className="block text-sm font-medium text-gray-700">
-              รูปภาพ
+              Image
             </label>
             
             {/* Image Preview */}
@@ -372,23 +372,23 @@ export function VisualEditPanel({
             {/* Compression Status */}
             {compressionStatus && (
               <div className={`p-3 rounded-lg border ${
-                compressionStatus.includes('สำเร็จ') 
+                compressionStatus.includes('Success') 
                   ? 'bg-green-50 border-green-200'
-                  : compressionStatus.includes('ต้นฉบับ')
+                  : compressionStatus.includes('original')
                   ? 'bg-yellow-50 border-yellow-200'
                   : 'bg-blue-50 border-blue-200'
               }`}>
                 <p className={`text-sm flex items-center gap-2 ${
-                  compressionStatus.includes('สำเร็จ')
+                  compressionStatus.includes('Success')
                     ? 'text-green-700'
-                    : compressionStatus.includes('ต้นฉบับ')
+                    : compressionStatus.includes('original')
                     ? 'text-yellow-700'
                     : 'text-blue-700'
                 }`}>
                   <span>
-                    {compressionStatus.includes('สำเร็จ') 
+                    {compressionStatus.includes('Success') 
                       ? '✅' 
-                      : compressionStatus.includes('ต้นฉบับ')
+                      : compressionStatus.includes('original')
                       ? '⚠️'
                       : '⚙️'}
                   </span>
@@ -403,17 +403,17 @@ export function VisualEditPanel({
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-green-800 flex items-center gap-1">
                     <span>📊</span>
-                    <span>สถิติการบีบอัด</span>
+                    <span>Compression stats</span>
                   </p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-gray-600">ต้นฉบับ:</span>
+                      <span className="text-gray-600">Original:</span>
                       <span className="ml-1 font-medium text-gray-800">
                         {(compressionInfo.originalSize / 1024 / 1024).toFixed(2)} MB
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-600">หลังบีบอัด:</span>
+                      <span className="text-gray-600">After compression:</span>
                       <span className="ml-1 font-medium text-green-700">
                         {(compressionInfo.compressedSize / 1024 / 1024).toFixed(2)} MB
                       </span>
@@ -421,7 +421,7 @@ export function VisualEditPanel({
                   </div>
                   <div className="pt-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">ลดขนาด:</span>
+                      <span className="text-gray-600">Reduction:</span>
                       <span className="font-bold text-green-700">
                         {compressionInfo.reduction.toFixed(1)}%
                       </span>
@@ -483,7 +483,7 @@ export function VisualEditPanel({
                 type="button"
                 onClick={() => setShowUrlInput(!showUrlInput)}
                 className="px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-                title="ใช้ URL แทน"
+                title="Use URL instead"
               >
                 🔗
               </button>
@@ -493,7 +493,7 @@ export function VisualEditPanel({
             {showUrlInput && (
               <div className="space-y-2 pt-2 border-t border-gray-200">
                 <label className="block text-xs font-medium text-gray-600">
-                  หรือวาง URL รูปภาพ
+                  Or paste an image URL
                 </label>
                 <input
                   type="url"
