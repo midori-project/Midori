@@ -82,12 +82,24 @@ export async function POST(request: NextRequest) {
             sessionId: session.id,
             url: session.url,
         });
-    } catch (error) {
-        console.error('Error creating checkout session:', error);
+    } catch (error: any) {
+        console.error('Error creating checkout session details:', {
+            message: error.message,
+            type: error.type,
+            code: error.code,
+            stack: error.stack,
+        });
+
         return NextResponse.json(
             {
                 error: 'Failed to create checkout session',
-                details: error instanceof Error ? error.message : String(error)
+                details: error.message || String(error),
+                // Additional debug info
+                debug: {
+                    type: error.type,
+                    code: error.code,
+                    stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+                }
             },
             { status: 500 }
         );
