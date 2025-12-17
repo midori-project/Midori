@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
             transactions,
         });
     } catch (error) {
-        console.error('Error fetching payment history:', error);
         return NextResponse.json({ error: 'Failed to fetch payment history' }, { status: 500 });
     }
 }

@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
 
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
-        console.error('STRIPE_WEBHOOK_SECRET is not configured');
         return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
     }
 
@@ -33,11 +32,8 @@ export async function POST(request: NextRequest) {
         // Verify webhook signature
         event = constructWebhookEvent(body, signature, webhookSecret);
     } catch (error) {
-        console.error('Webhook signature verification failed:', error);
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
-
-    console.log(`Received webhook event: ${event.type}`);
 
     try {
         switch (event.type) {
@@ -49,7 +45,6 @@ export async function POST(request: NextRequest) {
                     const paymentIntentId = session.payment_intent as string;
 
                     if (!userId) {
-                        console.error('Missing userId in session metadata');
                         break;
                     }
 
@@ -59,14 +54,14 @@ export async function POST(request: NextRequest) {
                         stripePaymentIntentId: paymentIntentId,
                         amountTotal: session.amount_total || 0,
                         currency: session.currency || 'usd',
+                        tokensAmount: Number(session.metadata?.tokensAmount) || 0,
+                        packageId: session.metadata?.packageId,
                     });
                 }
                 break;
             }
 
             case 'payment_intent.succeeded': {
-                const paymentIntent = event.data.object as Stripe.PaymentIntent;
-                console.log(`Payment succeeded: ${paymentIntent.id}`);
                 // Already handled in checkout.session.completed
                 break;
             }
@@ -77,8 +72,6 @@ export async function POST(request: NextRequest) {
                 // Find session by payment intent
                 // Note: This is a simplified approach. In production, you might want to store
                 // the mapping between payment_intent and session in your database
-                console.log(`Payment failed: ${paymentIntent.id}`);
-
                 await handleFailedPayment({
                     stripeSessionId: paymentIntent.metadata?.sessionId || '',
                     stripePaymentIntentId: paymentIntent.id,
@@ -100,12 +93,12 @@ export async function POST(request: NextRequest) {
             }
 
             default:
-                console.log(`Unhandled event type: ${event.type}`);
+                // Unhandled event type
+                break;
         }
 
         return NextResponse.json({ received: true });
     } catch (error) {
-        console.error('Error processing webhook:', error);
         return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
     }
 }

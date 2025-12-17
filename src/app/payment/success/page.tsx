@@ -12,6 +12,7 @@ function PaymentSuccessContent() {
     const router = useRouter();
     const [sessionData, setSessionData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [redirecting, setRedirecting] = useState(false);
 
     useEffect(() => {
         const sessionId = searchParams.get('session_id');
@@ -19,6 +20,14 @@ function PaymentSuccessContent() {
             // Optionally fetch session details from your API
             // For now, we'll just show a success message
             setLoading(false);
+            setRedirecting(true);
+
+            // Redirect back to token dashboard after showing success
+            const timer = setTimeout(() => {
+                router.push('/payment');
+            }, 2000);
+
+            return () => clearTimeout(timer);
         } else {
             // No session ID, redirect to home
             router.push('/');
@@ -94,9 +103,14 @@ function PaymentSuccessContent() {
                                 <div className="text-sm text-blue-700 dark:text-blue-300">
                                     <p className="font-medium mb-1">What's next?</p>
                                     <p>
-                                        Your tokens are now available in your wallet. You can use them to create
-                                        projects, generate content, and more!
+                                        Your tokens are now available in your wallet. You will be redirected to your
+                                        token dashboard shortly.
                                     </p>
+                                    {redirecting && (
+                                        <p className="mt-1 text-xs text-blue-600 dark:text-blue-300">
+                                            Redirecting to token dashboard...
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>

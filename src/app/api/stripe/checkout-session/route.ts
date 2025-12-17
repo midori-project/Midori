@@ -83,13 +83,6 @@ export async function POST(request: NextRequest) {
             url: session.url,
         });
     } catch (error: any) {
-        console.error('Error creating checkout session details:', {
-            message: error.message,
-            type: error.type,
-            code: error.code,
-            stack: error.stack,
-        });
-
         return NextResponse.json(
             {
                 error: 'Failed to create checkout session',

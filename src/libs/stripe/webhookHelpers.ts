@@ -1,5 +1,6 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/libs/prisma/prisma';
-import { getTokenPackageByAmount } from './stripeConfig';
+// Note: All token/package mappings are derived from checkout session metadata
 
 /**
  * Add tokens to user's wallet
@@ -8,7 +9,7 @@ export async function addTokensToWallet(params: {
     userId: string;
     tokens: number;
     description: string;
-    metadata?: Record<string, any>;
+    metadata?: Prisma.InputJsonValue;
 }): Promise<void> {
     const { userId, tokens, description, metadata } = params;
 
@@ -21,16 +22,18 @@ export async function addTokensToWallet(params: {
         },
     });
 
+    // Create wallet if doesn't exist
+    wallet ??= await prisma.tokenWallet.create({
+        data: {
+            userId,
+            walletType: 'STANDARD',
+            balanceTokens: 0,
+            isActive: true,
+        },
+    });
+
     if (!wallet) {
-        // Create wallet if doesn't exist
-        wallet = await prisma.tokenWallet.create({
-            data: {
-                userId,
-                walletType: 'STANDARD',
-                balanceTokens: 0,
-                isActive: true,
-            },
-        });
+        throw new Error('Failed to create or retrieve wallet');
     }
 
     // Update wallet balance
@@ -67,7 +70,7 @@ export async function createTokenPurchaseRecord(params: {
     currency: string;
     tokensAmount: number;
     status: 'pending' | 'completed' | 'failed';
-    metadata?: Record<string, any>;
+    metadata?: Prisma.InputJsonValue;
 }): Promise<void> {
     const {
         userId,
@@ -125,30 +128,22 @@ export async function handleSuccessfulPayment(params: {
     stripePaymentIntentId: string;
     amountTotal: number;
     currency: string;
+    tokensAmount: number;
+    packageId?: string;
 }): Promise<void> {
-    const { userId, stripeSessionId, stripePaymentIntentId, amountTotal, currency } = params;
+    const { userId, stripeSessionId, stripePaymentIntentId, amountTotal, currency, tokensAmount, packageId } = params;
 
     // Check if already processed
     const existing = await prisma.tokenPurchase.findUnique({
         where: { stripeSessionId },
     });
 
-    if (existing && existing.status === 'completed') {
-        console.log(`Payment already processed: ${stripeSessionId}`);
+    if (existing?.status === 'completed') {
         return;
     }
 
-    // Calculate tokens from amount (amount is in cents)
-    const amountInDollars = amountTotal / 100;
-    let tokensAmount = 0;
-
-    // Match amount to package
-    if (amountInDollars === 5) tokensAmount = 10;
-    else if (amountInDollars === 10) tokensAmount = 25;
-    else if (amountInDollars === 20) tokensAmount = 60;
-
-    if (tokensAmount === 0) {
-        console.error(`Unknown payment amount: $${amountInDollars}`);
+    // Use tokensAmount from metadata/config to avoid mismatches with currency/amount mapping
+    if (!tokensAmount || Number.isNaN(tokensAmount) || tokensAmount <= 0) {
         return;
     }
 
@@ -164,10 +159,13 @@ export async function handleSuccessfulPayment(params: {
             userId,
             stripeSessionId,
             stripePaymentIntentId,
-            amount: amountInDollars,
+            amount: amountTotal / 100,
             currency,
             tokensAmount,
             status: 'completed',
+            metadata: {
+                packageId,
+            },
         });
     }
 
@@ -179,11 +177,10 @@ export async function handleSuccessfulPayment(params: {
         metadata: {
             stripeSessionId,
             stripePaymentIntentId,
-            packageAmount: amountInDollars,
+            packageAmount: amountTotal / 100,
+            packageId,
         },
     });
-
-    console.log(`Successfully added ${tokensAmount} tokens to user ${userId}`);
 }
 
 /**
@@ -200,8 +197,6 @@ export async function handleFailedPayment(params: {
         status: 'failed',
         stripePaymentIntentId,
     });
-
-    console.log(`Payment failed: ${stripeSessionId}`);
 }
 
 /**
@@ -219,7 +214,6 @@ export async function handleRefund(params: {
     });
 
     if (!purchase) {
-        console.error(`Purchase not found for payment intent: ${stripePaymentIntentId}`);
         return;
     }
 
@@ -265,10 +259,6 @@ export async function handleRefund(params: {
                 },
             },
         });
-
-        console.log(`Refunded ${purchase.tokensAmount} tokens from user ${purchase.userId}`);
-    } else {
-        console.warn(`User ${purchase.userId} doesn't have enough tokens for refund`);
     }
 }
 

@@ -57,11 +57,30 @@ export function getTokenPackageByAmount(tokens: number): TokenPackage | undefine
 }
 
 /**
+ * Get base app URL from environment variable
+ * Throws error in production if not configured
+ */
+function getAppUrl(): string {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    
+    if (!appUrl) {
+        // In development, use localhost as fallback
+        if (process.env.NODE_ENV === 'development') {
+            return 'http://localhost:3000';
+        }
+        // In production, throw error if not configured
+        throw new Error('NEXT_PUBLIC_APP_URL environment variable is required in production');
+    }
+    
+    return appUrl;
+}
+
+/**
  * Success and Cancel URLs
  */
 export const STRIPE_URLS = {
-    success: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success`,
-    cancel: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/cancel`,
+    success: `${getAppUrl()}/payment/success`,
+    cancel: `${getAppUrl()}/payment/cancel`,
 };
 
 /**

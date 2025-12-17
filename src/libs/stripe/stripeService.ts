@@ -32,7 +32,6 @@ export async function getOrCreateStripeCustomer(params: {
             await stripe.customers.retrieve(stripeCustomerId);
             return stripeCustomerId;
         } catch (error) {
-            console.error('Failed to retrieve existing customer:', error);
             // Continue to create new customer
         }
     }
